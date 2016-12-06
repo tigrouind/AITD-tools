@@ -64,7 +64,7 @@ namespace LifeDISA
 					int name = ReadShort(allBytes[n+10], allBytes[n+11]);
 					if(name != -1 && name != 0)
 					{
-						objectsByIndex.Add(i, namesByIndex[name]);
+						objectsByIndex.Add(i, getObjectName(namesByIndex[name], i));
 					}
 					
 					i++;
@@ -597,6 +597,13 @@ namespace LifeDISA
 				
 				if(!consecutiveIfs) writer.WriteLine();
 			}
+		}
+		
+		public static string getObjectName(string name, int index)
+		{
+			string objectName = name.TrimStart('"').TrimEnd('"').ToUpperInvariant();
+			objectName = string.Join("_", objectName.Split(' ').Where(x => x != "AN" && x != "A"));			
+			return objectName + "_" + index;
 		}
 		
 		public static string getActionName(int value)
