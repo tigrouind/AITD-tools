@@ -7,12 +7,12 @@ namespace TRACKDISA
 {
 	class Program
 	{
-		public static void Main(string[] args)
+		public static void Main()
 		{		
 			using (TextWriter writer = new StreamWriter("output.txt"))
 			{	
 				Regex r = new Regex(@"[0-9a-fA-F]{8}\.[0-9a-zA-Z]{3}", RegexOptions.IgnoreCase);				
-				foreach(var file in System.IO.Directory.GetFiles(@"E:\DARK\data\LISTTRAK")
+				foreach(var file in Directory.GetFiles(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"LISTTRAK"))
 			        .Where(x => r.IsMatch(Path.GetFileName(x)))
 	        		.Select(x => new
 	                {
@@ -127,7 +127,8 @@ namespace TRACKDISA
 						
 					case 0x11:
 					case 0x12:
-						writer.WriteLine("walk stairs {0} {1} {2}",
+						writer.WriteLine("walk stairs on {0} {1} {2} {3}",
+						                 macro == 0x11 ? "X" : "Z",
 						                 ReadShort(allbytes[i+0], allbytes[i+1]),
 						                 ReadShort(allbytes[i+2], allbytes[i+3]),
 						                 ReadShort(allbytes[i+4], allbytes[i+5]));					
