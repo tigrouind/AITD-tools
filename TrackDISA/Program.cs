@@ -104,11 +104,11 @@ namespace TRACKDISA
 						break;								
 						
 					case 0x0D:
-						writer.WriteLine("disable flag 0x0040");					
+						writer.WriteLine("disable triggers");					
 						break;
 						
 					case 0x0E:
-						writer.WriteLine("enable flag 0x0040");					
+						writer.WriteLine("enable triggers");					
 						break;	
 
 					case 0x0F:

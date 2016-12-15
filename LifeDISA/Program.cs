@@ -153,6 +153,7 @@ namespace LifeDISA
 				
 				string lifeString = life.ToString();
 				if(lifeString.StartsWith("IF")) lifeString = "IF";				
+				else if(lifeString == "MULTI_CASE") lifeString = "CASE";	
 				if(actor != -1) lifeString = objectsByIndex[actor] + "." + lifeString;
 				
 				if(consecutiveIfs)
@@ -177,7 +178,7 @@ namespace LifeDISA
 					case LifeEnum.IF_INF:
 						string paramA = evalvar();						
 						string paramB = evalvar();
-						if(paramA == "INHAND" || paramA == "COL_BY" || paramA == "HIT_BY")
+						if(paramA == "INHAND" || paramA == "COL_BY" || paramA == "HIT_BY" || paramA == "HIT" || paramA == "COLLIDING_ACTOR")
 							paramB = objectsByIndex[int.Parse(paramB)];
 						
 						switch(life)
@@ -413,7 +414,8 @@ namespace LifeDISA
 						pos +=2;
 
 						string lastSwitchVar = switchEvalVar[pos-4];
-						if(lastSwitchVar == "INHAND" || lastSwitchVar == "COL_BY" || lastSwitchVar == "HIT_BY")
+						if(lastSwitchVar == "INHAND" || lastSwitchVar == "COL_BY" || lastSwitchVar == "HIT_BY"
+						   || lastSwitchVar == "HIT" || lastSwitchVar == "COLLIDING_ACTOR")
 							writer.Write("{0}", objectsByIndex[curr]);
 						else if (lastSwitchVar == "ACTION")
 							writer.Write("{0}", getActionName(curr));
@@ -434,13 +436,18 @@ namespace LifeDISA
 						for(int n = 0; n < numcases; n++) {
 							curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);							
 							pos += 2;
+							
 														
-							if(lastSwitchVarb == "INHAND" || lastSwitchVarb == "COL_BY" || lastSwitchVarb == "HIT_BY")
-								writer.Write("{0} ", objectsByIndex[curr]);
+							if(lastSwitchVarb == "INHAND" || lastSwitchVarb == "COL_BY" || lastSwitchVarb == "HIT_BY"
+							   || lastSwitchVarb == "HIT" || lastSwitchVarb == "COLLIDING_ACTOR")
+								writer.Write("{0}", objectsByIndex[curr]);
 							else if (lastSwitchVarb == "ACTION")
-								writer.Write("{0} ", getActionName(curr));
+								writer.Write("{0}", getActionName(curr));
 							else					
-								writer.Write("{0} ", curr);														
+								writer.Write("{0}", curr);														
+							
+							if(n > 0) writer.Write(" ");
+							else writer.Write(", ");
 						}
 						
 						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
