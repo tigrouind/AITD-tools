@@ -34,13 +34,13 @@ namespace LifeDISA
 				line = Console.ReadLine().ToLower();
 			} 
 			while (line != "y" && line != "n");
-			IsCDROMVersion = line == "y" || line == "n";
+			IsCDROMVersion = line == "y";
 			Console.WriteLine();
 			
 			//dump names
-			if(File.Exists("ENGLISH.TXT"))
+			if(File.Exists(@"LISTLIFE\ENGLISH.TXT"))
 			{
-				string[] names = File.ReadAllLines(@"ENGLISH.TXT", Encoding.GetEncoding(850));
+				string[] names = File.ReadAllLines(@"LISTLIFE\ENGLISH.TXT", Encoding.GetEncoding(850));
 				namesByIndex = names
 					.Where(x => x.Contains(":"))
 					.Select(x =>  x.Split(':'))
@@ -52,9 +52,9 @@ namespace LifeDISA
 				return -1;
 			}
 			   			
-			if(File.Exists("OBJETS.ITD"))
+			if(File.Exists(@"LISTLIFE\OBJETS.ITD"))
 			{
-				allBytes = File.ReadAllBytes(@"OBJETS.ITD");
+				allBytes = File.ReadAllBytes(@"LISTLIFE\OBJETS.ITD");
 				int count = ReadShort(allBytes[0], allBytes[1]);
 			
 				int i = 0;
@@ -87,7 +87,7 @@ namespace LifeDISA
 			{					
 				//dump all
 				Regex r = new Regex(@"[0-9a-fA-F]{8}\.DAT", RegexOptions.IgnoreCase);				
-				foreach(var file in Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory)
+				foreach(var file in Directory.GetFiles(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "LISTLIFE"))
 			        .Where(x => r.IsMatch(Path.GetFileName(x)))
 	        		.Select(x => new
 	                {
@@ -110,7 +110,8 @@ namespace LifeDISA
 			List<int> elseIndent = new List<int>();
 			HashSet<int> gotosToIgnore = new HashSet<int>();
 			Dictionary<int, string> switchEvalVar = new Dictionary<int, string>();
-			
+			List<Tuple<int, int>> switchDefault = new List<Tuple<int, int>>();
+						
 			bool consecutiveIfs = false;
 			
 			allBytes = File.ReadAllBytes(filename);
@@ -126,11 +127,19 @@ namespace LifeDISA
 					WriteLine(writer, indentation.Count(), "END\r\n");
 				}
 				
-				while (elseIndent.Contains(pos))
+				if (elseIndent.Contains(pos))
 				{
 					elseIndent.RemoveAt(elseIndent.IndexOf(pos));
 					WriteLine(writer, indentation.Count()-1, "ELSE\r\n");
-				}				
+				}	
+
+				Tuple<int, int> defaultCase = switchDefault.FirstOrDefault(x => x.Item1 == pos);
+				if (defaultCase != null)
+				{					
+					switchDefault.RemoveAt(switchDefault.IndexOf(defaultCase));					
+					WriteLine(writer, indentation.Count(), "DEFAULT\r\n");
+					indentation.Add(defaultCase.Item2);
+				}
 				
 				int oldPos = pos;
 				int actor = -1;
@@ -274,6 +283,7 @@ namespace LifeDISA
 							gotoPos += 2;
 						}
 						
+						int switchEndGoto = -1;						
 						do
 						{
 							int casePos = ReadShort(allBytes[gotoPos+0], allBytes[gotoPos+1]);
@@ -282,11 +292,15 @@ namespace LifeDISA
 								switchEvalVar.Add(gotoPos, paramS);
 								gotoPos += 4; //skip case + value
 								
-								//goto
+								//goto just after case 
 								gotoPos += 2 + ReadShort(allBytes[gotoPos+0], allBytes[gotoPos+1])*2;							
 								if(ReadShort(allBytes[gotoPos-4], allBytes[gotoPos-3]) == (int)LifeEnum.GOTO)
 								{
-									gotosToIgnore.Add(gotoPos-4);
+									gotosToIgnore.Add(gotoPos-4); //goto at the end of the case statement (end of switch)
+									if(switchEndGoto == -1)
+									{										
+										switchEndGoto = gotoPos + ReadShort(allBytes[gotoPos-2], allBytes[gotoPos-1])*2;
+									}
 							   	}
 							}							
 							else if(casePos == (int)LifeEnum.MULTI_CASE)
@@ -296,11 +310,16 @@ namespace LifeDISA
 								casePos = ReadShort(allBytes[gotoPos+0], allBytes[gotoPos+1]);
 								gotoPos += 2 + casePos * 2; //skip values
 								
-								//goto
+								//goto just after case
 								gotoPos += 2 + ReadShort(allBytes[gotoPos+0], allBytes[gotoPos+1])*2;								
 								if(ReadShort(allBytes[gotoPos-4], allBytes[gotoPos-3]) == (int)LifeEnum.GOTO)
 								{
-									gotosToIgnore.Add(gotoPos-4);
+									gotosToIgnore.Add(gotoPos-4); //goto at the end of the case statement (end of switch)
+									if(switchEndGoto == -1)
+									{
+										//end of switch
+										switchEndGoto = gotoPos + ReadShort(allBytes[gotoPos-2], allBytes[gotoPos-1])*2;
+									}
 							   	}
 							}
 							else
@@ -308,9 +327,18 @@ namespace LifeDISA
 								endOfSwitch = true;
 							}
 						}
-						while(!endOfSwitch);
+						while(!endOfSwitch);	
 						
-						indentation.Add(gotoPos);
+						//should be equal, otherwise there is a default case
+						if(switchEndGoto != -1 && switchEndGoto != gotoPos)
+						{
+							switchDefault.Add(new Tuple<int, int>(gotoPos, switchEndGoto)); //default start + end pos
+							indentation.Add(switchEndGoto); //end of switch
+						}
+						else
+						{
+							indentation.Add(gotoPos); //end of switch
+						}
 												
 						break;
 												
