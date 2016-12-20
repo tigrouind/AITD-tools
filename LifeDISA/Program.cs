@@ -24,6 +24,8 @@ namespace LifeDISA
 		static bool IsCDROMVersion;
 		static Dictionary<int, string> objectsByIndex = new Dictionary<int, string>();
 		static Dictionary<int, string> namesByIndex = new Dictionary<int, string>();
+		
+		static string[] trackModes = { "NONE", "MANUAL", "FOLLOW", "TRACK"};
 
 		public static int Main()
 		{	
@@ -423,7 +425,15 @@ namespace LifeDISA
 						writer.Write("{0}", objectsByIndex[curr]);
 						break;
 						
-					case LifeEnum.MOVE:					
+					case LifeEnum.MOVE:	
+						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						pos +=2;
+						writer.Write("{0} ", trackModes[curr]);
+						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						pos +=2;
+						writer.Write("{0}", curr);
+						break;
+						
 					case LifeEnum.SET_BETA:
 					case LifeEnum.SET_ALPHA:					
 					case LifeEnum.HIT_OBJECT:
