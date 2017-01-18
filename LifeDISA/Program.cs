@@ -721,7 +721,7 @@ namespace LifeDISA
 				case 0x0:
 					return "ACTOR_COLLIDER";
 				case 0x1:
-					return "TRIGGER";
+					return "TRIGGER_COLLIDER";
 				case 0x2:
 					return "HARD_COLLIDER";
 				case 0x3:
