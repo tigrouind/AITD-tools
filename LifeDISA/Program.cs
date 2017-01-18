@@ -719,11 +719,11 @@ namespace LifeDISA
 			switch(curr)
 			{
 				case 0x0:
-					return "COLLIDING_ACTOR";
+					return "ACTOR_COLLIDER";
 				case 0x1:
 					return "TRIGGER";
 				case 0x2:
-					return "COLLIDER";
+					return "HARD_COLLIDER";
 				case 0x3:
 					return "HIT";
 				case 0x4:
