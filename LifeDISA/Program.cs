@@ -404,17 +404,27 @@ namespace LifeDISA
 						writer.Write("{0}", parser.GetValue("LIFES", curr, curr.ToString(), true));
 						break;
 						
+					case LifeEnum.FOUND_BODY:	
+						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						pos +=2;
+						writer.Write("{0}", parser.GetValue("BODYS", curr, curr.ToString(), true));
+						break;
+						
+					case LifeEnum.NEXT_MUSIC:
+					case LifeEnum.MUSIC:
+						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						pos +=2;
+						writer.Write("{0}", parser.GetValue("MUSIC", curr, curr.ToString(), true));
+						break;
+						
 					case LifeEnum.ANIM_REPEAT:
 					case LifeEnum.COPY_ANGLE:
 					case LifeEnum.TEST_COL:							
 					case LifeEnum.SPECIAL:
-					case LifeEnum.LIFE_MODE:			
-					case LifeEnum.FOUND_BODY:					
+					case LifeEnum.LIFE_MODE:												
 					case LifeEnum.FOUND_WEIGHT:
 					case LifeEnum.ALLOW_INVENTORY:												
-					case LifeEnum.WATER:					
-					case LifeEnum.MUSIC:
-					case LifeEnum.NEXT_MUSIC:
+					case LifeEnum.WATER:										
 					case LifeEnum.RND_FREQ:
 					case LifeEnum.LIGHT:
 					case LifeEnum.SHAKING:

@@ -19,7 +19,8 @@ namespace LifeDISA
 				"TRACKS",
 				"SOUNDS",
 				"MUSIC",
-				"BODYS"
+				"BODYS",
+				"PLAYER BODY"
 			}
 		);
 		
@@ -112,6 +113,14 @@ namespace LifeDISA
 				}				
 					
 				i++;
+			}
+			
+			if (sections.ContainsKey("PLAYER BODY") && sections.ContainsKey("BODYS"))
+			{
+				foreach (var keyValue in sections["PLAYER BODY"])
+				{
+					sections["BODYS"][keyValue.Key] = keyValue.Value;
+				}
 			}
 		}
 	}
