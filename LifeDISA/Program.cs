@@ -354,10 +354,18 @@ namespace LifeDISA
 						break;
 												
 					case LifeEnum.SOUND:
+						{
+							string param = evalvar();
+							writer.Write("{0}", parser.GetValue("SOUNDS", param, param, true));
+							break;
+						}
+						
 					case LifeEnum.BODY:
-						string param = evalvar();
-						writer.Write("{0}", param);	
-						break;
+						{
+							string param = evalvar();						
+							writer.Write("{0}", parser.GetValue("BODYS", param, param, true));
+							break;
+						}
 
 					case LifeEnum.SAMPLE_THEN:
 						string param1 = evalvar();

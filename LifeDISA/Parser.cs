@@ -18,9 +18,21 @@ namespace LifeDISA
 				"ANIMS",
 				"TRACKS",
 				"SOUNDS",
-				"MUSIC"
+				"MUSIC",
+				"BODYS"
 			}
 		);
+		
+		public string GetValue(string sectionname, string number, string defaultValue = "", bool nospaces = false)
+		{
+			int parsedNumber;
+			if(int.TryParse(number, out parsedNumber))
+			{
+				return GetValue(sectionname, parsedNumber, defaultValue, nospaces);
+			}
+			
+			return defaultValue;
+		}
 		
 		public string GetValue(string sectionname, int number, string defaultValue = "", bool nospaces = false)
 		{
