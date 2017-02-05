@@ -26,9 +26,16 @@ namespace LifeDISA
 		static Dictionary<int, string> namesByIndex = new Dictionary<int, string>();
 		
 		static string[] trackModes = { "NONE", "MANUAL", "FOLLOW", "TRACK"};
+		
+		static Parser parser = new Parser();
 
 		public static int Main()
-		{	
+		{					
+			if(File.Exists(@"LISTLIFE\vars.txt"))
+			{
+				parser.Load(@"LISTLIFE\vars.txt");
+			}
+			
 			string line;
 			do
 			{
@@ -98,7 +105,9 @@ namespace LifeDISA
                 	})
 		        	.OrderBy(x => x.FileNumber))				    
 				{		        	
-					writer.WriteLine("#{0} --------------------------------------------------", file.FileNumber);
+					writer.WriteLine("--------------------------------------------------");
+					writer.WriteLine("#{0} {1}", file.FileNumber, parser.GetValue("LIFES", file.FileNumber));
+					writer.WriteLine("--------------------------------------------------");
 					Dump(file.FilePath, writer);					
 				}
 			}	
@@ -190,7 +199,7 @@ namespace LifeDISA
 						string paramA = evalvar();						
 						string paramB = evalvar();
 						if(paramA == "INHAND" || paramA == "COL_BY" || paramA == "HIT_BY" || paramA == "HIT" || paramA == "COLLIDING_ACTOR")
-							paramB = objectsByIndex[int.Parse(paramB)];
+							paramB = objectsByIndex[int.Parse(paramB)];											
 						
 						switch(life)
 						{
@@ -382,6 +391,11 @@ namespace LifeDISA
 						break;						
 						
 					case LifeEnum.LIFE:
+						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						pos +=2;
+						writer.Write("{0}", parser.GetValue("LIFES", curr, curr.ToString(), true));
+						break;
+						
 					case LifeEnum.ANIM_REPEAT:
 					case LifeEnum.COPY_ANGLE:
 					case LifeEnum.TEST_COL:							
@@ -610,7 +624,7 @@ namespace LifeDISA
 					
 					case LifeEnum.SET:
 						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);						
-						writer.Write("VAR{0} = ", curr);
+						writer.Write(parser.GetValue("VARS", curr, "VAR" + curr, true) + " = ");
 						pos +=2;
 						writer.Write("{0}", evalvar());
 						break;
@@ -618,7 +632,7 @@ namespace LifeDISA
 					case LifeEnum.ADD:	
 					case LifeEnum.SUB:	
 						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);						
-						writer.Write("VAR{0} ", curr);
+						writer.Write(parser.GetValue("VARS", curr, "VAR" + curr, true) + " ");
 						pos +=2;
 						writer.Write("{0}", evalvar());
 						break;
@@ -626,7 +640,7 @@ namespace LifeDISA
 					case LifeEnum.INC:	
 					case LifeEnum.DEC:
 						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
-						writer.Write("VAR{0}", curr);
+						writer.Write(parser.GetValue("VARS", curr, "VAR" + curr, true) + " ");
 						pos += 2;
 						break;
 												
@@ -646,7 +660,7 @@ namespace LifeDISA
 		
 		public static string getObjectName(string name, int index)
 		{
-			string objectName = name.TrimStart('"').TrimEnd('"').ToUpperInvariant();
+			string objectName = name.TrimStart('"').TrimEnd('"').ToLowerInvariant();
 			objectName = string.Join("_", objectName.Split(' ').Where(x => x != "AN" && x != "A"));			
 			return objectName + "_" + index;
 		}
@@ -705,7 +719,7 @@ namespace LifeDISA
 				curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
 				pos +=2;
 				
-				return "VAR" + curr;
+				return parser.GetValue("VARS", curr, "VAR" + curr, true);
 			}
 
 			if((curr & 0x8000) == 0x8000) {

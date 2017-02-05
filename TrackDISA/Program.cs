@@ -2,13 +2,21 @@
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Linq;
+using LifeDISA;
 
 namespace TRACKDISA
 {
 	class Program
 	{
+		static Parser parser = new Parser();
+		
 		public static void Main()
-		{		
+		{	
+			if(File.Exists(@"LISTTRAK\vars.txt"))
+			{
+				parser.Load(@"LISTTRAK\vars.txt");
+			}
+			
 			using (TextWriter writer = new StreamWriter("output.txt"))
 			{	
 				Regex r = new Regex(@"[0-9a-fA-F]{8}\.[0-9a-zA-Z]{3}", RegexOptions.IgnoreCase);				
@@ -20,8 +28,10 @@ namespace TRACKDISA
 	               		FileNumber = Convert.ToInt32(Path.GetFileNameWithoutExtension(x), 16)
 	            	})
 		        	.OrderBy(x => x.FileNumber))				    
-				{		        	
-					writer.WriteLine("#{0} --------------------------------------------------", file.FileNumber);
+				{		     
+					writer.WriteLine("--------------------------------------------------");					
+					writer.WriteLine("#{0} {1}", file.FileNumber, parser.GetValue("TRACKS", file.FileNumber));
+					writer.WriteLine("--------------------------------------------------");					
 					Dump(file.FilePath, writer);
 				}
 			}
@@ -38,7 +48,7 @@ namespace TRACKDISA
 		public static void Dump(string filename, TextWriter writer)
 		{
 			int i = 0;
-			byte[] allbytes = System.IO.File.ReadAllBytes(filename);
+			byte[] allbytes = File.ReadAllBytes(filename);
 			
 			while(i < allbytes.Length)
 			{
