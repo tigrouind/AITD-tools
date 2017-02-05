@@ -198,8 +198,13 @@ namespace LifeDISA
 					case LifeEnum.IF_INF:
 						string paramA = evalvar();						
 						string paramB = evalvar();
-						if(paramA == "INHAND" || paramA == "COL_BY" || paramA == "HIT_BY" || paramA == "HIT" || paramA == "COLLIDING_ACTOR")
-							paramB = objectsByIndex[int.Parse(paramB)];											
+						
+						string paramAShort = paramA.Split('.').Last();
+						if(paramAShort == "INHAND" || paramAShort == "COL_BY" || paramAShort == "HIT_BY" || paramAShort == "HIT" || paramAShort == "COLLIDING_ACTOR")
+							paramB = objectsByIndex[int.Parse(paramB)];	
+
+						if(paramAShort == "ANIM")
+							paramB = parser.GetValue("ANIMS", paramB, paramB, true);
 						
 						switch(life)
 						{
@@ -418,6 +423,11 @@ namespace LifeDISA
 						break;
 						
 					case LifeEnum.ANIM_REPEAT:
+						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						pos +=2;
+						writer.Write("{0}", parser.GetValue("ANIMS", curr, curr.ToString(), true));
+						break;
+						
 					case LifeEnum.COPY_ANGLE:
 					case LifeEnum.TEST_COL:							
 					case LifeEnum.SPECIAL:
@@ -457,20 +467,32 @@ namespace LifeDISA
 						writer.Write("{0}", objectsByIndex[curr]);
 						break;
 						
-					case LifeEnum.MOVE:	
+					case LifeEnum.MOVE:							
 						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
 						pos +=2;
-						writer.Write("{0} ", trackModes[curr]);
+						writer.Write("{0} ", trackModes[curr]);												
+						int trackmode = curr;
 						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
 						pos +=2;
-						writer.Write("{0}", curr);
+						if(trackmode == 3)
+							writer.Write("{0}", parser.GetValue("TRACKS", curr, curr.ToString(), true));
+						else
+							writer.Write("{0}", curr);
+						break;
+						
+					case LifeEnum.ANIM_ONCE:
+					case LifeEnum.ANIM_ALL_ONCE:
+						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						pos +=2;
+						writer.Write("{0} ", parser.GetValue("ANIMS", curr, curr.ToString(), true));
+						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						pos +=2;
+						writer.Write("{0}", parser.GetValue("ANIMS", curr, curr.ToString(), true));
 						break;
 						
 					case LifeEnum.SET_BETA:
 					case LifeEnum.SET_ALPHA:					
 					case LifeEnum.HIT_OBJECT:
-					case LifeEnum.ANIM_ONCE:
-					case LifeEnum.ANIM_ALL_ONCE:
 						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
 						pos +=2;
 						writer.Write("{0} ", curr);
@@ -483,12 +505,16 @@ namespace LifeDISA
 						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
 						pos +=2;
 
-						string lastSwitchVar = switchEvalVar[pos-4];
+						string lastSwitchVar = switchEvalVar[pos-4].Split('.').Last();
 						if(lastSwitchVar == "INHAND" || lastSwitchVar == "COL_BY" || lastSwitchVar == "HIT_BY"
 						   || lastSwitchVar == "HIT" || lastSwitchVar == "COLLIDING_ACTOR")
 							writer.Write("{0}", objectsByIndex[curr]);
 						else if (lastSwitchVar == "ACTION")
 							writer.Write("{0}", getActionName(curr));
+						else if (lastSwitchVar == "ANIM")
+							writer.Write("{0}", parser.GetValue("ANIMS", curr, curr.ToString(), true));
+						else if (lastSwitchVar == "BODY")
+							writer.Write("{0}", parser.GetValue("BODYS", curr, curr.ToString(), true));
 						else					
 							writer.Write("{0}", curr);	
 						
@@ -506,13 +532,16 @@ namespace LifeDISA
 						for(int n = 0; n < numcases; n++) {
 							curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);							
 							pos += 2;
-							
-														
+																				
 							if(lastSwitchVarb == "INHAND" || lastSwitchVarb == "COL_BY" || lastSwitchVarb == "HIT_BY"
 							   || lastSwitchVarb == "HIT" || lastSwitchVarb == "COLLIDING_ACTOR")
 								writer.Write("{0}", objectsByIndex[curr]);
 							else if (lastSwitchVarb == "ACTION")
 								writer.Write("{0}", getActionName(curr));
+							else if (lastSwitchVarb == "ANIM")
+								writer.Write("{0}", parser.GetValue("ANIMS", curr, curr.ToString(), true));
+							else if (lastSwitchVarb == "BODY")
+								writer.Write("{0}", parser.GetValue("BODYS", curr, curr.ToString(), true));
 							else					
 								writer.Write("{0}", curr);														
 							
@@ -543,14 +572,21 @@ namespace LifeDISA
 						break;						
 						
 					case LifeEnum.HIT:
-						for(int n = 0; n < 4 ; n++) {
+						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						writer.Write("{0} ", parser.GetValue("ANIMS", curr, curr.ToString(), true));
+						pos += 2;
+						
+						
+						for(int n = 0; n < 3 ; n++) {
 							curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
 							writer.Write("{0} ", curr);
 							pos += 2;
 						}
 						writer.Write("{0} ", evalvar());
+						
+						
 						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
-						writer.Write("{0} ", curr);
+						writer.Write("{0} ", parser.GetValue("ANIMS", curr, curr.ToString(), true));
 						pos += 2;
 						break;
 						
@@ -565,15 +601,40 @@ namespace LifeDISA
 						
 						
 					case LifeEnum.ANIM_MOVE:	
-					case LifeEnum.THROW:
-						for(int n = 0; n < 7 ; n++) {
+						for(int i = 0 ; i < 7 ; i++)
+						{
 							curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
-							if(life == LifeEnum.THROW && n == 3)
-								writer.Write("{0} ", objectsByIndex[curr]);
-							else
-								writer.Write("{0} ", curr);
+							writer.Write("{0} ", parser.GetValue("ANIMS", curr, curr.ToString(), true));
 							pos += 2;
 						}
+						break;					
+						
+					case LifeEnum.THROW:
+						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						writer.Write("{0} ", parser.GetValue("ANIMS", curr, curr.ToString(), true));
+						pos += 2;
+						
+						for(int i = 0 ; i < 2 ; i++)
+						{
+							curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+							writer.Write("{0} ", curr);
+							pos += 2;
+						}						
+						
+						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						writer.Write("{0} ", objectsByIndex[curr]);
+						pos += 2;
+						
+						for(int i = 0 ; i < 2 ; i++)
+						{
+							curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+							writer.Write("{0} ", curr);
+							pos += 2;
+						}
+						
+						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						writer.Write("{0} ", parser.GetValue("ANIMS", curr, curr.ToString(), true));
+						pos += 2;						
 						break;
 											
 					case LifeEnum.PICTURE:						
@@ -631,9 +692,10 @@ namespace LifeDISA
 						break;
 					
 					case LifeEnum.ANIM_SAMPLE:
-						writer.Write(evalvar() + " ");
+						string eval = evalvar();
+						writer.Write(parser.GetValue("SOUNDS", eval, eval, true) + " ");
 						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
-						writer.Write(curr + " ");
+						writer.Write(parser.GetValue("ANIMS", curr, curr.ToString(), true) + " ");
 						pos += 2;
 						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
 						writer.Write(curr);
@@ -769,7 +831,7 @@ namespace LifeDISA
 				case 0x8:
 					return "END_FRAME";
 				case 0x9:
-					return "BODYNUM";
+					return "BODY";
 				case 0xA:
 					return "MARK";
 				case 0xB:
