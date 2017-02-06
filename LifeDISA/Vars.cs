@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 
 namespace LifeDISA
 {
-	public class Parser
+	public class Vars
 	{
 		Dictionary<string, Dictionary<int, string>> sections 
 			= new Dictionary<string, Dictionary<int, string>>();
@@ -20,29 +20,33 @@ namespace LifeDISA
 				"SOUNDS",
 				"MUSIC",
 				"BODYS",				
-				"PLAYER BODY"
+				"PLAYER BODY",
+				"ACTIONS"
 			}
 		);
 		
-		public string GetValue(string sectionname, string number, string defaultValue = "", bool nospaces = false)
+		public string GetText(string sectionName, string value, string defaultText = null, bool nospaces = true)
 		{
 			int parsedNumber;
-			if(int.TryParse(number, out parsedNumber))
+			if(int.TryParse(value, out parsedNumber))
 			{
-				return GetValue(sectionname, parsedNumber, defaultValue, nospaces);
+				return GetText(sectionName, parsedNumber, defaultText, nospaces);
 			}
 			
-			return defaultValue;
+			if (defaultText != null)
+			 	return defaultText;
+			
+			return value;
 		}
 		
-		public string GetValue(string sectionname, int number, string defaultValue = "", bool nospaces = false)
+		public string GetText(string sectionName, int value, string defaultText = null, bool nospaces = true)
 		{
 			string text;
 			Dictionary<int, string> section;
 			
-			if (sections.TryGetValue(sectionname, out section))
+			if (sections.TryGetValue(sectionName, out section))
 		    {
-	 		   	if(section.TryGetValue(number, out text))
+	 		   	if(section.TryGetValue(value, out text))
 				{	
 	 		   		if(nospaces)
 	 		   		{
@@ -54,7 +58,10 @@ namespace LifeDISA
 				}
 			}
 							
-			return defaultValue;
+			if (defaultText != null)
+			 	return defaultText;
+			
+			return value.ToString();
 		}
 		
 		public void Load(string filePath)
@@ -68,6 +75,8 @@ namespace LifeDISA
 			while(i < allLines.Length)
 			{
 				string line = allLines[i].Trim();
+				
+				//check if new section 
 				if(section.IsMatch(line))
 				{
 					if(sectionsToParse.Contains(line))
@@ -81,30 +90,28 @@ namespace LifeDISA
 					currentSection = null;
 				}
 				
+				//parse line if inside section
 				if(currentSection != null)
 				{
 					Match itemMatch = item.Match(line);
 					if(itemMatch.Success)
 					{						
-						string lineNumber = int.Parse(itemMatch.Groups[1].Value).ToString();
-						string nextNumber = itemMatch.Groups[3].Value.Trim();
-						if(!string.IsNullOrEmpty(nextNumber))
-						{													
-							nextNumber = int.Parse(itemMatch.Groups[3].Value).ToString(); //remove leading zeroes							 
-							while(nextNumber.Length < lineNumber.Length)
-							{
-								nextNumber = lineNumber[lineNumber.Length - nextNumber.Length - 1] + nextNumber;
-							}
+						int lineNumber = int.Parse(itemMatch.Groups[1].Value);
+						string nextNumberString = itemMatch.Groups[3].Value.Trim();
+						int nextNumber;
+						if(!string.IsNullOrEmpty(nextNumberString))
+						{																										
+							nextNumber = int.Parse(nextNumberString);
 						}
 						else
 						{
 							nextNumber = lineNumber;
 						}
 												
-						string text = itemMatch.Groups[4].Value.Trim('-', ' ');
+						string text = itemMatch.Groups[4].Value.Trim();
 						if(!string.IsNullOrEmpty(text))
 						{
-							for(int j = int.Parse(lineNumber); j <= int.Parse(nextNumber) ; j++)
+							for(int j = lineNumber; j <= nextNumber ; j++)
 							{								
 								currentSection[j] = text;
 							}
@@ -113,14 +120,6 @@ namespace LifeDISA
 				}				
 					
 				i++;
-			}
-			
-			if (sections.ContainsKey("PLAYER BODY") && sections.ContainsKey("BODYS"))
-			{
-				foreach (var keyValue in sections["PLAYER BODY"])
-				{
-					sections["BODYS"][keyValue.Key] = keyValue.Value;
-				}
 			}
 		}
 	}

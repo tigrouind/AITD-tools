@@ -8,13 +8,13 @@ namespace TRACKDISA
 {
 	class Program
 	{
-		static Parser parser = new Parser();
+		static Vars vars = new Vars();
 		
 		public static void Main()
 		{	
 			if(File.Exists(@"LISTTRAK\vars.txt"))
 			{
-				parser.Load(@"LISTTRAK\vars.txt");
+				vars.Load(@"LISTTRAK\vars.txt");
 			}
 			
 			using (TextWriter writer = new StreamWriter("output.txt"))
@@ -30,7 +30,7 @@ namespace TRACKDISA
 		        	.OrderBy(x => x.FileNumber))				    
 				{		     
 					writer.WriteLine("--------------------------------------------------");					
-					writer.WriteLine("#{0} {1}", file.FileNumber, parser.GetValue("TRACKS", file.FileNumber));
+					writer.WriteLine("#{0} {1}", file.FileNumber, vars.GetText("TRACKS", file.FileNumber, string.Empty, false));
 					writer.WriteLine("--------------------------------------------------");					
 					Dump(file.FilePath, writer);
 				}
