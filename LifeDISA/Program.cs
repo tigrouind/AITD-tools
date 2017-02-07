@@ -210,6 +210,12 @@ namespace LifeDISA
 						if(paramAShort == "BODY")
 							paramB = vars.GetText("BODYS", paramB);
 						
+						if(paramAShort == "KEYBOARD_INPUT")
+							paramB = vars.GetText("KEYBOARD INPUT", paramB);
+						
+						if(paramAShort.StartsWith("POSREL"))
+							paramB = vars.GetText("POSREL", paramB);
+						
 						switch(life)
 						{
 							case LifeEnum.IF_EGAL:
@@ -519,6 +525,10 @@ namespace LifeDISA
 							writer.Write("{0}", vars.GetText("ANIMS", curr));
 						else if (lastSwitchVar == "BODY")
 							writer.Write("{0}", vars.GetText("BODYS", curr));
+						else if (lastSwitchVar == "KEYBOARD_INPUT")
+								writer.Write("{0}", vars.GetText("KEYBOARD INPUT", curr));
+						else if(lastSwitchVar.StartsWith("POSREL"))
+							writer.Write("{0}", vars.GetText("POSREL", curr));
 						else					
 							writer.Write("{0}", curr);	
 						
@@ -531,7 +541,7 @@ namespace LifeDISA
 					case LifeEnum.MULTI_CASE:
 						int numcases =  ReadShort(allBytes[pos+0], allBytes[pos+1]);
 						pos += 2;
-						string lastSwitchVarb = switchEvalVar[pos-4];
+						string lastSwitchVarb = switchEvalVar[pos-4].Split('.').Last();
 						
 						for(int n = 0; n < numcases; n++) {
 							curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);							
@@ -546,6 +556,10 @@ namespace LifeDISA
 								writer.Write("{0}", vars.GetText("ANIMS", curr));
 							else if (lastSwitchVarb == "BODY")
 								writer.Write("{0}", vars.GetText("BODYS", curr));
+							else if (lastSwitchVarb == "KEYBOARD_INPUT")
+								writer.Write("{0}", vars.GetText("KEYBOARD INPUT", curr));
+							else if(lastSwitchVarb.StartsWith("POSREL"))
+								writer.Write("{0}", vars.GetText("POSREL", curr));
 							else					
 								writer.Write("{0}", curr);														
 							

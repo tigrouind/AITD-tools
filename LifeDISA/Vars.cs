@@ -21,7 +21,9 @@ namespace LifeDISA
 				"MUSIC",
 				"BODYS",				
 				"PLAYER BODY",
-				"ACTIONS"
+				"ACTIONS",
+				"POSREL",
+				"KEYBOARD INPUT"
 			}
 		);
 		
