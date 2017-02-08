@@ -14,3 +14,7 @@ Both floppy version and CD-ROM version are supported. AITD2 and 3 are not suppor
   - *OBJETS.ITD* (from AITD folder directly)
 
 - Start LifeDISA executable. A file named *output.txt* will be created
+
+# TrackDISA
+
+- Extract all files located in *LISTTRAK.PAK* inside a new folder named LISTTRAK, located in same folder as the TrackDISA executable.
