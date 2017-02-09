@@ -51,9 +51,11 @@ namespace LifeDISA
 	 		   	if(section.TryGetValue(value, out text))
 				{	
 	 		   		if(nospaces)
-	 		   		{
-	 		   			text = Regex.Replace(text, "[^A-Za-z0-9 ]", string.Empty);
-						text = Regex.Replace(text, "\\s+", "_");
+	 		   		{	
+						text = Regex.Replace(text, @"-", " ");	 		   			
+	 		   			text = Regex.Replace(text, @"/", " or ");
+	 		   			text = Regex.Replace(text, @"[^A-Za-z0-9 ]", string.Empty);
+						text = Regex.Replace(text, @"\s+", "_");
 	 		   		}
 	 		   		
 					return text;

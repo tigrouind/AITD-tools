@@ -30,7 +30,9 @@ namespace LifeDISA
 		static Vars vars = new Vars();
 
 		public static int Main()
-		{											
+		{			
+			Directory.CreateDirectory("LISTLIFE");
+			
 			string line;
 			do
 			{
@@ -107,7 +109,7 @@ namespace LifeDISA
 		        	.OrderBy(x => x.FileNumber))				    
 				{		        	
 					writer.WriteLine("--------------------------------------------------");
-					writer.WriteLine("#{0} {1}", file.FileNumber, vars.GetText("LIFES", file.FileNumber, string.Empty, false));
+					writer.WriteLine("#{0} {1}", file.FileNumber, vars.GetText("LIFES", file.FileNumber, string.Empty));
 					writer.WriteLine("--------------------------------------------------");
 					Dump(file.FilePath, writer);					
 				}

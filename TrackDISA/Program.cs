@@ -12,6 +12,8 @@ namespace TRACKDISA
 		
 		public static void Main()
 		{	
+			Directory.CreateDirectory("LISTTRAK");
+			
 			if(File.Exists(@"LISTTRAK\vars.txt"))
 			{
 				vars.Load(@"LISTTRAK\vars.txt");
