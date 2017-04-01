@@ -8,7 +8,7 @@ namespace TRACKDISA
 {
 	class Program
 	{
-		static Vars vars = new Vars();
+		static VarParser vars = new VarParser();
 		
 		public static void Main()
 		{	
@@ -16,7 +16,7 @@ namespace TRACKDISA
 			
 			if(File.Exists(@"LISTTRAK\vars.txt"))
 			{
-				vars.Load(@"LISTTRAK\vars.txt");
+				vars.Parse(@"LISTTRAK\vars.txt");
 			}
 			
 			using (TextWriter writer = new StreamWriter("output.txt"))

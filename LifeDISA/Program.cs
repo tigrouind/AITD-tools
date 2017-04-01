@@ -27,7 +27,7 @@ namespace LifeDISA
 		
 		static string[] trackModes = { "NONE", "MANUAL", "FOLLOW", "TRACK"};
 		
-		static Vars vars = new Vars();
+		static VarParser vars = new VarParser();
 
 		public static int Main()
 		{			
@@ -46,7 +46,7 @@ namespace LifeDISA
 			//parse vars 
 			if(File.Exists(@"LISTLIFE\vars.txt"))
 			{
-				vars.Load(@"LISTLIFE\vars.txt");
+				vars.Parse(@"LISTLIFE\vars.txt");
 			}
 			
 			//dump names
