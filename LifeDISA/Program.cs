@@ -440,9 +440,14 @@ namespace LifeDISA
 						writer.Write("{0}", vars.GetText("ANIMS", curr));
 						break;
 						
+					case LifeEnum.SPECIAL:						
+						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						pos +=2;
+						writer.Write("{0}", vars.GetText("SPECIAL", curr));
+						break;
+						
 					case LifeEnum.COPY_ANGLE:
-					case LifeEnum.TEST_COL:							
-					case LifeEnum.SPECIAL:
+					case LifeEnum.TEST_COL:		
 					case LifeEnum.LIFE_MODE:												
 					case LifeEnum.FOUND_WEIGHT:
 					case LifeEnum.ALLOW_INVENTORY:												
