@@ -8,7 +8,7 @@ namespace TRACKDISA
 {
 	class Program
 	{
-		static VarParser vars = new VarParser();
+		static VarParserExt vars = new VarParserExt();
 		
 		public static void Main()
 		{	

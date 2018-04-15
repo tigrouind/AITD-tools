@@ -27,7 +27,7 @@ namespace LifeDISA
 		
 		static string[] trackModes = { "NONE", "MANUAL", "FOLLOW", "TRACK"};
 		
-		static VarParser vars = new VarParser();
+		static VarParserExt vars = new VarParserExt();
 
 		public static int Main()
 		{			

@@ -8,46 +8,20 @@ namespace LifeDISA
 	{
 		readonly Dictionary<string, Dictionary<int, string>> sections 
 			= new Dictionary<string, Dictionary<int, string>>();
-		
-		public string GetText(string sectionName, string value, string defaultText = null, bool nospaces = true)
+				
+		public virtual string GetText(string sectionName, int value)
 		{
-			int parsedNumber;
-			if(int.TryParse(value, out parsedNumber))
-			{
-				return GetText(sectionName, parsedNumber, defaultText, nospaces);
-			}
-			
-			if (defaultText != null)
-			 	return defaultText;
-			
-			return value;
-		}
-		
-		public string GetText(string sectionName, int value, string defaultText = null, bool nospaces = true)
-		{
-			string text;
 			Dictionary<int, string> section;
-			
 			if (sections.TryGetValue(sectionName, out section))
-		    {
-	 		   	if(section.TryGetValue(value, out text))
-				{	
-	 		   		if(nospaces)
-	 		   		{	
-						text = Regex.Replace(text, @"-", " ");	 		   			
-	 		   			text = Regex.Replace(text, @"/", " or ");
-	 		   			text = Regex.Replace(text, @"[^A-Za-z0-9 ]", string.Empty);
-						text = Regex.Replace(text, @"\s+", "_");
-	 		   		}
-	 		   		
+			{
+				string text;
+				if(section.TryGetValue(value, out text))
+				{
 					return text;
 				}
 			}
-							
-			if (defaultText != null)
-			 	return defaultText;
-			
-			return value.ToString();
+	
+			return string.Empty;
 		}
 		
 		public void Parse(string filePath)
@@ -97,5 +71,44 @@ namespace LifeDISA
 				}					
 			}
 		}
+	}
+	
+	public class VarParserExt : VarParser
+	{		
+		public override string GetText(string sectionName, int value)
+		{
+			return GetText(sectionName, value, null);
+		}
+		
+		public string GetText(string sectionName, string value)
+		{
+			int parsedNumber;
+			if(int.TryParse(value, out parsedNumber))
+			{
+				return GetText(sectionName, parsedNumber);
+			}		
+			
+			return value;
+		}
+		
+		public string GetText(string sectionName, int value, string defaultText)
+		{
+			string text = base.GetText(sectionName, value);
+			
+			if (!string.IsNullOrEmpty(text))
+		    {
+				text = Regex.Replace(text, @"-", " ");	 		   			
+				text = Regex.Replace(text, @"/", " or ");
+				text = Regex.Replace(text, @"[^A-Za-z0-9 ]", string.Empty);
+				text = Regex.Replace(text, @"\s+", "_");
+				
+				return text;
+			}
+			
+			if (defaultText != null)
+			 	return defaultText;
+			
+			return value.ToString();
+		}		
 	}
 }
