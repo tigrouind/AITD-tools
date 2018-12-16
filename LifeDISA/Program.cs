@@ -616,14 +616,35 @@ namespace LifeDISA
 						break;
 						
 					case LifeEnum.DEF_ZV:	
-					case LifeEnum.FIRE:
 						for(int n = 0; n < 6; n++) {
 							curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
 							writer.Write("{0} ", curr);
 							pos += 2;
 						}
-						break;
+						break;						
 						
+					case LifeEnum.FIRE:
+						int fire_anim = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						pos += 2;
+						int shoot_frame = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						pos += 2;
+						int hotpoint = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						pos += 2;
+						int range = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						pos += 2;
+						int hitforce = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						pos += 2;
+						int next_anim = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						pos += 2;
+						
+						writer.Write("{0} {1} {2} {3} {4} {5}", 
+				             vars.GetText("ANIMS", fire_anim),
+				             shoot_frame, 
+				             hotpoint,
+				             range, 
+				             hitforce, 
+				             vars.GetText("ANIMS", next_anim));
+						break;						
 						
 					case LifeEnum.ANIM_MOVE:	
 						for(int i = 0 ; i < 7 ; i++)
