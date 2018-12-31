@@ -484,7 +484,7 @@ namespace LifeDISA
 						writer.Write("{0}", objectsByIndex[curr]);
 						break;
 						
-					case LifeEnum.MOVE:							
+					case LifeEnum.TRACKMODE:							
 						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
 						pos +=2;
 						writer.Write("{0} ", trackModes[curr]);												
@@ -893,7 +893,7 @@ namespace LifeDISA
 				case 0x13:
 					return "KEYBOARD_INPUT";
 				case 0x14:
-					return "BUTTON";
+					return "SPACE";
 				case 0x15:
 					return "COL_BY";
 				case 0x16:
