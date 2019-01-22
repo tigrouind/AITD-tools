@@ -491,10 +491,15 @@ namespace LifeDISA
 						int trackmode = curr;
 						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
 						pos +=2;
-						if(trackmode == 3)
-							writer.Write("{0}", vars.GetText("TRACKS", curr));
-						else
-							writer.Write("{0}", curr);
+						switch(trackmode)
+						{
+							case 2: //follow
+								writer.Write("{0}", objectsByIndex[curr]);
+								break;
+							case 3: //track
+								writer.Write("{0}", vars.GetText("TRACKS", curr));
+								break;
+						}
 						break;
 						
 					case LifeEnum.ANIM_ONCE:
