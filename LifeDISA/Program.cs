@@ -203,7 +203,7 @@ namespace LifeDISA
 						string paramB = evalvar();
 						
 						string paramAShort = paramA.Split('.').Last();
-						if(paramAShort == "INHAND" || paramAShort == "COL_BY" || paramAShort == "HIT_BY" || paramAShort == "HIT" || paramAShort == "COLLIDING_ACTOR")
+						if(isTargetingObject(paramAShort))
 							paramB = objectsByIndex[int.Parse(paramB)];	
 
 						if(paramAShort == "ANIM")
@@ -528,10 +528,9 @@ namespace LifeDISA
 						pos +=2;
 
 						string lastSwitchVar = switchEvalVar[pos-4].Split('.').Last();
-						if(lastSwitchVar == "INHAND" || lastSwitchVar == "COL_BY" || lastSwitchVar == "HIT_BY"
-						   || lastSwitchVar == "HIT" || lastSwitchVar == "COLLIDING_ACTOR")
+						if(isTargetingObject(lastSwitchVar))
 							writer.Write("{0}", objectsByIndex[curr]);
-						else if (lastSwitchVar == "ACTION")
+						else if (isTargetingAction(lastSwitchVar))
 							writer.Write("{0}", getActionName(curr));
 						else if (lastSwitchVar == "ANIM")
 							writer.Write("{0}", vars.GetText("ANIMS", curr));
@@ -559,10 +558,9 @@ namespace LifeDISA
 							curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);							
 							pos += 2;
 																				
-							if(lastSwitchVarb == "INHAND" || lastSwitchVarb == "COL_BY" || lastSwitchVarb == "HIT_BY"
-							   || lastSwitchVarb == "HIT" || lastSwitchVarb == "COLLIDING_ACTOR")
+							if(isTargetingObject(lastSwitchVarb))
 								writer.Write("{0}", objectsByIndex[curr]);
-							else if (lastSwitchVarb == "ACTION")
+							else if (isTargetingAction(lastSwitchVarb))
 								writer.Write("{0}", getActionName(curr));
 							else if (lastSwitchVarb == "ANIM")
 								writer.Write("{0}", vars.GetText("ANIMS", curr));
@@ -812,6 +810,21 @@ namespace LifeDISA
 			string eval = evalvarImpl(out actor);
 			if(actor != -1) eval = objectsByIndex[actor] + "." + eval;
 			return eval;
+		}
+		
+		public static bool isTargetingAction(string varName)
+		{
+			return varName == "ACTION"							
+				|| varName == "player_current_action";
+		}
+		
+		public static bool isTargetingObject(string varName)
+		{
+			return varName == "INHAND" 
+				|| varName == "COL_BY" 
+				|| varName == "HIT_BY" 
+				|| varName == "HIT" 
+				|| varName == "ACTOR_COLLIDER";
 		}
 		
 		public static string evalvarImpl(out int actor)
