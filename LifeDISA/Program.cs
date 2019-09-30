@@ -186,7 +186,8 @@ namespace LifeDISA
 				}
 				else
 				{
-					WriteLine(writer, indentation.Count(x => x > pos), lifeString + " ");
+					if(life != LifeEnum.C_VAR) lifeString += " ";
+					WriteLine(writer, indentation.Count(x => x > pos), lifeString);
 				}
 				
 				pos +=2;
