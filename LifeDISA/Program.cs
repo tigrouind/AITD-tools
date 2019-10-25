@@ -9,11 +9,11 @@ namespace LifeDISA
 {		
 	class Program
 	{
-		public static int pos;
+		static int pos;
 		
-		public static byte[] allBytes;
+		static byte[] allBytes;
 				
-		public static short ReadShort (byte a, byte b)
+		static short ReadShort (byte a, byte b)
 		{
 			unchecked
 			{
@@ -21,13 +21,13 @@ namespace LifeDISA
 			}
 		}
 		
-		static bool IsCDROMVersion;
-		static Dictionary<int, string> objectsByIndex = new Dictionary<int, string>();
-		static Dictionary<int, string> namesByIndex = new Dictionary<int, string>();
+		static bool isCDROMVersion;
+		static readonly Dictionary<int, string> objectsByIndex = new Dictionary<int, string>();
+		static readonly Dictionary<int, string> namesByIndex = new Dictionary<int, string>();
 		
 		static string[] trackModes = { "NONE", "MANUAL", "FOLLOW", "TRACK"};
 		
-		static VarParserExt vars = new VarParserExt();
+		static readonly VarParserExt vars = new VarParserExt();
 
 		public static int Main()
 		{			
@@ -44,16 +44,18 @@ namespace LifeDISA
 			string languageFile = validFolderNames
 				.Select(x => Path.Combine("GAMEDATA", x))
 				.Where(Directory.Exists)
-				.SelectMany(x => Directory.GetFiles(x))
+				.SelectMany(Directory.GetFiles)
 				.FirstOrDefault(x => x.Contains("00000000"));
 			
 			if (languageFile != null)
 			{
 				string[] names = File.ReadAllLines(languageFile, Encoding.GetEncoding(850));
-				namesByIndex = names
+				foreach(var item in names
 					.Where(x => x.Contains(":"))
-					.Select(x =>  x.Split(':'))
-					.ToDictionary(x => int.Parse(x[0].TrimStart('@')), x => "\"" + x[1] + "\"");				
+					.Select(x =>  x.Split(':')))
+				{
+					namesByIndex.Add(int.Parse(item[0].TrimStart('@')), "\"" + item[1] + "\"");
+				}
 			}
 			else
 			{
@@ -73,7 +75,7 @@ namespace LifeDISA
 					int name = ReadShort(allBytes[n+10], allBytes[n+11]);
 					if(name != -1 && name != 0)
 					{
-						objectsByIndex.Add(i, getObjectName(namesByIndex[name], i));
+						objectsByIndex.Add(i, GetObjectName(namesByIndex[name], i));
 					}
 					
 					i++;
@@ -92,14 +94,7 @@ namespace LifeDISA
 		    	if(!objectsByIndex.ContainsKey(i)) objectsByIndex[i] = "OBJ" + i;
 		    }
 		    
-			string line;
-			do
-			{
-				Console.Write("CD-ROM version [y/n] ? ");
-				line = Console.ReadLine().ToLower();
-			} 
-			while (line != "y" && line != "n");
-			IsCDROMVersion = line == "y";
+		    isCDROMVersion = AskForCDROMVersion();
 			Console.WriteLine();
 		    		   				
 			using (TextWriter writer = new StreamWriter("output.txt"))
@@ -124,8 +119,8 @@ namespace LifeDISA
 
 			return 0;
 		}
-
-		public static void Dump(string filename, TextWriter writer)
+		
+		static void Dump(string filename, TextWriter writer)
 		{
 			List<int> indentation = new List<int>();
 			List<int> elseIndent = new List<int>();
@@ -207,11 +202,11 @@ namespace LifeDISA
 					case LifeEnum.IF_SUP:
 					case LifeEnum.IF_INF_EGAL:
 					case LifeEnum.IF_INF:
-						string paramA = evalvar();						
-						string paramB = evalvar();
+						string paramA = Evalvar();						
+						string paramB = Evalvar();
 						
 						string paramAShort = paramA.Split('.').Last();
-						if(isTargetingObject(paramAShort))
+						if(IsTargetingObject(paramAShort))
 							paramB = objectsByIndex[int.Parse(paramB)];	
 
 						if(paramAShort == "ANIM")
@@ -281,8 +276,8 @@ namespace LifeDISA
 							//skip if evaluated vars
 							int dummyActor;
 							
-							evalvarImpl(out dummyActor);
-							evalvarImpl(out dummyActor);
+							EvalvarImpl(out dummyActor);
+							EvalvarImpl(out dummyActor);
 							
 							//check if the two if end up at same place
 							curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
@@ -305,7 +300,7 @@ namespace LifeDISA
 						break;						
 						
 					case LifeEnum.SWITCH:	
-						string paramS = evalvar();
+						string paramS = Evalvar();
 						writer.Write("{0}", paramS);	
 																			
 						//find end of switch
@@ -380,22 +375,22 @@ namespace LifeDISA
 												
 					case LifeEnum.SOUND:
 						{
-							string param = evalvar();
+							string param = Evalvar();
 							writer.Write("{0}", vars.GetText("SOUNDS", param));
 							break;
 						}
 						
 					case LifeEnum.BODY:
 						{
-							string param = evalvar();						
+							string param = Evalvar();						
 							writer.Write("{0}", vars.GetText("BODYS", param));
 							break;
 						}
 
 					case LifeEnum.SAMPLE_THEN:
-						string param1 = evalvar();
+						string param1 = Evalvar();
 						writer.Write("{0} ", param1);
-						string param2 = evalvar();
+						string param2 = Evalvar();
 						writer.Write("{0}", param2);
 						break;
 						
@@ -476,7 +471,7 @@ namespace LifeDISA
 						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
 						pos +=2;
 						writer.Write("{0} ", curr);
-						if(IsCDROMVersion)
+						if(isCDROMVersion)
 						{							
 							curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
 							pos +=2;
@@ -537,10 +532,10 @@ namespace LifeDISA
 						pos +=2;
 
 						string lastSwitchVar = switchEvalVar[pos-4].Split('.').Last();
-						if(isTargetingObject(lastSwitchVar))
+						if(IsTargetingObject(lastSwitchVar))
 							writer.Write("{0}", objectsByIndex[curr]);
-						else if (isTargetingAction(lastSwitchVar))
-							writer.Write("{0}", getActionName(curr));
+						else if (IsTargetingAction(lastSwitchVar))
+							writer.Write("{0}", GetActionName(curr));
 						else if (lastSwitchVar == "ANIM")
 							writer.Write("{0}", vars.GetText("ANIMS", curr));
 						else if (lastSwitchVar == "BODY")
@@ -567,10 +562,10 @@ namespace LifeDISA
 							curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);							
 							pos += 2;
 																				
-							if(isTargetingObject(lastSwitchVarb))
+							if(IsTargetingObject(lastSwitchVarb))
 								writer.Write("{0}", objectsByIndex[curr]);
-							else if (isTargetingAction(lastSwitchVarb))
-								writer.Write("{0}", getActionName(curr));
+							else if (IsTargetingAction(lastSwitchVarb))
+								writer.Write("{0}", GetActionName(curr));
 							else if (lastSwitchVarb == "ANIM")
 								writer.Write("{0}", vars.GetText("ANIMS", curr));
 							else if (lastSwitchVarb == "BODY")
@@ -619,7 +614,7 @@ namespace LifeDISA
 							writer.Write("{0} ", curr);
 							pos += 2;
 						}
-						writer.Write("{0} ", evalvar());
+						writer.Write("{0} ", Evalvar());
 						
 						
 						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
@@ -722,14 +717,14 @@ namespace LifeDISA
 						break;
 						
 					case LifeEnum.REP_SAMPLE:											
-						writer.Write("{0} ", evalvar());
+						writer.Write("{0} ", Evalvar());
 						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
 						writer.Write("{0} ", curr);
 						pos += 2;
 						break;
 						
 					case LifeEnum.DROP:
-						string ev = evalvar();
+						string ev = Evalvar();
 						int obj;
 						if(int.TryParse(ev, out obj))
 						{
@@ -750,7 +745,7 @@ namespace LifeDISA
 						break;
 					
 					case LifeEnum.ANIM_SAMPLE:
-						string eval = evalvar();
+						string eval = Evalvar();
 						writer.Write(vars.GetText("SOUNDS", eval) + " ");
 						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
 						writer.Write(vars.GetText("ANIMS", curr) + " ");
@@ -764,7 +759,7 @@ namespace LifeDISA
 						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);						
 						writer.Write(vars.GetText("VARS", curr, "VAR" + curr) + " = ");
 						pos +=2;
-						writer.Write("{0}", evalvar());
+						writer.Write("{0}", Evalvar());
 						break;
 						
 					case LifeEnum.ADD:	
@@ -772,7 +767,7 @@ namespace LifeDISA
 						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);						
 						writer.Write(vars.GetText("VARS", curr, "VAR" + curr) + " ");
 						pos +=2;
-						writer.Write("{0}", evalvar());
+						writer.Write("{0}", Evalvar());
 						break;
 						
 					case LifeEnum.INC:	
@@ -785,7 +780,7 @@ namespace LifeDISA
 					case LifeEnum.C_VAR:
 						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
 						pos += 2;						
-						writer.Write("{0} = {1}", curr, evalvar());
+						writer.Write("{0} = {1}", curr, Evalvar());
 						break;
 						
 					default:
@@ -796,38 +791,38 @@ namespace LifeDISA
 			}
 		}
 		
-		public static string getObjectName(string name, int index)
+		static string GetObjectName(string name, int index)
 		{
 			string objectName = name.TrimStart('"').TrimEnd('"').ToLowerInvariant();
 			objectName = string.Join("_", objectName.Split(' ').Where(x => x != "AN" && x != "A"));			
 			return objectName + "_" + index;
 		}
 		
-		public static string getActionName(int value)
+		static string GetActionName(int value)
 		{
 			return vars.GetText("ACTIONS", value);
 		}
 		
-		public static void WriteLine(TextWriter writer, int indentation, string text)
+		static void WriteLine(TextWriter writer, int indentation, string text)
 		{
 			writer.Write("{0}{1}",  new String('\t', indentation), text);
 		}
 		
-		public static string evalvar()
+		static string Evalvar()
 		{			
 			int actor;
-			string eval = evalvarImpl(out actor);
+			string eval = EvalvarImpl(out actor);
 			if(actor != -1) eval = objectsByIndex[actor] + "." + eval;
 			return eval;
 		}
 		
-		public static bool isTargetingAction(string varName)
+		static bool IsTargetingAction(string varName)
 		{
 			return varName == "ACTION"							
 				|| varName == "player_current_action";
 		}
 		
-		public static bool isTargetingObject(string varName)
+		static bool IsTargetingObject(string varName)
 		{
 			return varName == "INHAND" 
 				|| varName == "COL_BY" 
@@ -836,7 +831,19 @@ namespace LifeDISA
 				|| varName == "ACTOR_COLLIDER";
 		}
 		
-		public static string evalvarImpl(out int actor)
+		static bool AskForCDROMVersion()
+		{
+			string line;
+			do
+			{
+				Console.Write("CD-ROM version [y/n] ? ");
+				line = Console.ReadLine().ToLower();
+			} 
+			while (line != "y" && line != "n");
+			return line == "y";
+		}
+		
+		static string EvalvarImpl(out int actor)
 		{
 			int curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
 			pos +=2;
@@ -905,7 +912,7 @@ namespace LifeDISA
 				case 0xF:
 					return "COL_BY";
 				case 0x10:
-					string eval = evalvar();
+					string eval = Evalvar();
 					int objectIndex;
 					if(int.TryParse(eval, out objectIndex))
 						return "ISFOUND("+objectsByIndex[objectIndex]+")";

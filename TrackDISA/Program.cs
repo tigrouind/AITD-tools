@@ -8,7 +8,7 @@ namespace TRACKDISA
 {
 	class Program
 	{
-		static VarParserExt vars = new VarParserExt();
+		static readonly VarParserExt vars = new VarParserExt();
 		
 		public static int Main()
 		{	
@@ -47,7 +47,7 @@ namespace TRACKDISA
 			return 0;
 		}
 		
-		public static short ReadShort(byte a, byte b)
+		static short ReadShort(byte a, byte b)
 		{
 			unchecked
 			{
@@ -55,7 +55,7 @@ namespace TRACKDISA
 			}
 		}
 			
-		public static void Dump(string filename, TextWriter writer)
+		static void Dump(string filename, TextWriter writer)
 		{
 			int i = 0;
 			byte[] allbytes = File.ReadAllBytes(filename);
