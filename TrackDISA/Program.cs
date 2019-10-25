@@ -10,19 +10,25 @@ namespace TRACKDISA
 	{
 		static VarParserExt vars = new VarParserExt();
 		
-		public static void Main()
+		public static int Main()
 		{	
-			Directory.CreateDirectory("LISTTRAK");
+			Directory.CreateDirectory("GAMEDATA");
 			
-			if(File.Exists(@"LISTTRAK\vars.txt"))
+			if(File.Exists(@"GAMEDATA\vars.txt"))
 			{
-				vars.Parse(@"LISTTRAK\vars.txt");
+				vars.Parse(@"GAMEDATA\vars.txt");
+			}
+			
+			if(!Directory.Exists(@"GAMEDATA\LISTTRAK"))
+			{
+				Console.WriteLine("Folder LISTTRAK is required");
+				return -1;
 			}
 			
 			using (TextWriter writer = new StreamWriter("output.txt"))
 			{	
 				Regex r = new Regex(@"[0-9a-fA-F]{8}\.[0-9a-zA-Z]{3}", RegexOptions.IgnoreCase);				
-				foreach(var file in Directory.GetFiles(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"LISTTRAK"))
+				foreach(var file in Directory.GetFiles(@"GAMEDATA\LISTTRAK")
 			        .Where(x => r.IsMatch(Path.GetFileName(x)))
 	        		.Select(x => new
 	                {
@@ -37,6 +43,8 @@ namespace TRACKDISA
 					Dump(file.FilePath, writer);
 				}
 			}
+			
+			return 0;
 		}
 		
 		public static short ReadShort(byte a, byte b)

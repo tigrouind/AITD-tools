@@ -31,19 +31,25 @@ namespace LifeDISA
 
 		public static int Main()
 		{			
-			Directory.CreateDirectory("LISTLIFE");
-			
+			Directory.CreateDirectory("GAMEDATA");
 			
 			//parse vars 
-			if(File.Exists(@"LISTLIFE\vars.txt"))
+			if(File.Exists(@"GAMEDATA\vars.txt"))
 			{
-				vars.Parse(@"LISTLIFE\vars.txt");
+				vars.Parse(@"GAMEDATA\vars.txt");
 			}
 			
 			//dump names
-			if(File.Exists(@"LISTLIFE\ENGLISH.TXT"))
+			var validFolderNames = new [] {	"ENGLISH", "FRANCAIS", "DEUTSCH", "ESPAGNOL", "ITALIANO", "USA" };
+			string languageFile = validFolderNames
+				.Select(x => Path.Combine("GAMEDATA", x))
+				.Where(Directory.Exists)
+				.SelectMany(x => Directory.GetFiles(x))
+				.FirstOrDefault(x => x.Contains("00000000"));
+			
+			if (languageFile != null)
 			{
-				string[] names = File.ReadAllLines(@"LISTLIFE\ENGLISH.TXT", Encoding.GetEncoding(850));
+				string[] names = File.ReadAllLines(languageFile, Encoding.GetEncoding(850));
 				namesByIndex = names
 					.Where(x => x.Contains(":"))
 					.Select(x =>  x.Split(':'))
@@ -51,13 +57,13 @@ namespace LifeDISA
 			}
 			else
 			{
-				Console.WriteLine("ENGLISH.TXT is required");
+				Console.WriteLine("A folder named {0} is required", string.Join(" / ", validFolderNames));
 				return -1;
 			}
 			   			
-			if(File.Exists(@"LISTLIFE\OBJETS.ITD"))
+			if(File.Exists(@"GAMEDATA\OBJETS.ITD"))
 			{
-				allBytes = File.ReadAllBytes(@"LISTLIFE\OBJETS.ITD");
+				allBytes = File.ReadAllBytes(@"GAMEDATA\OBJETS.ITD");
 				int count = ReadShort(allBytes[0], allBytes[1]);
 			
 				int i = 0;
@@ -100,7 +106,7 @@ namespace LifeDISA
 			{					
 				//dump all
 				Regex r = new Regex(@"[0-9a-fA-F]{8}\.DAT", RegexOptions.IgnoreCase);				
-				foreach(var file in Directory.GetFiles(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "LISTLIFE"))
+				foreach(var file in Directory.GetFiles(Path.Combine(@"GAMEDATA\LISTLIFE"))
 			        .Where(x => r.IsMatch(Path.GetFileName(x)))
 	        		.Select(x => new
 	                {
