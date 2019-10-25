@@ -456,6 +456,7 @@ namespace LifeDISA
 					case LifeEnum.RND_FREQ:
 					case LifeEnum.LIGHT:
 					case LifeEnum.SHAKING:
+					case LifeEnum.FADE_MUSIC:
 						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
 						pos +=2;
 						writer.Write("{0}", curr);
