@@ -33,15 +33,6 @@ namespace LifeDISA
 		{			
 			Directory.CreateDirectory("LISTLIFE");
 			
-			string line;
-			do
-			{
-				Console.Write("CD-ROM version [y/n] ? ");
-				line = Console.ReadLine().ToLower();
-			} 
-			while (line != "y" && line != "n");
-			IsCDROMVersion = line == "y";
-			Console.WriteLine();
 			
 			//parse vars 
 			if(File.Exists(@"LISTLIFE\vars.txt"))
@@ -94,6 +85,16 @@ namespace LifeDISA
 		    {
 		    	if(!objectsByIndex.ContainsKey(i)) objectsByIndex[i] = "OBJ" + i;
 		    }
+		    
+			string line;
+			do
+			{
+				Console.Write("CD-ROM version [y/n] ? ");
+				line = Console.ReadLine().ToLower();
+			} 
+			while (line != "y" && line != "n");
+			IsCDROMVersion = line == "y";
+			Console.WriteLine();
 		    		   				
 			using (TextWriter writer = new StreamWriter("output.txt"))
 			{					
