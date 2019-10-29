@@ -256,11 +256,15 @@ namespace LifeDISA
 						//detect if else
 						int beforeGoto = pos+curr*2 - 4;
 						int next = ReadShort(allBytes[beforeGoto+0], allBytes[beforeGoto+1]);
-						if(next == (int)LifeEnum.GOTO) //will fail if there is 0x10 (eg: constant) right before end of if
+						int gotoPosition = beforeGoto+4 + ReadShort(allBytes[beforeGoto+2], allBytes[beforeGoto+3])*2;
+						
+						//detection might fail if there is 0x10 (eg: constant) right before end of if
+						//because of that, we also check if goto position is within bounds
+						if (next == (int)LifeEnum.GOTO && gotoPosition >= 0 && gotoPosition <= (allBytes.Length - 2)) 
 						{
 							gotosToIgnore.Add(beforeGoto);
 							elseIndent.Add(pos+curr*2);
-							indentation.Add(beforeGoto+4+ReadShort(allBytes[beforeGoto+2], allBytes[beforeGoto+3])*2);
+							indentation.Add(gotoPosition);
 						}
 						else
 						{
