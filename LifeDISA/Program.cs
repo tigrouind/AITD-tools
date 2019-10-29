@@ -176,6 +176,12 @@ namespace LifeDISA
 					continue;
 				}
 				
+				if((life == LifeEnum.ENDLIFE && pos == allBytes.Length - 2))
+				{
+					pos += 2;
+					continue;
+				}
+				
 				string lifeString = life.ToString();
 				if(lifeString.StartsWith("IF")) lifeString = "IF";				
 				else if(lifeString == "MULTI_CASE") lifeString = "CASE";	
@@ -250,7 +256,7 @@ namespace LifeDISA
 						//detect if else
 						int beforeGoto = pos+curr*2 - 4;
 						int next = ReadShort(allBytes[beforeGoto+0], allBytes[beforeGoto+1]);
-						if(next == (int)LifeEnum.GOTO) 
+						if(next == (int)LifeEnum.GOTO) //will fail if there is 0x10 (eg: constant) right before end of if
 						{
 							gotosToIgnore.Add(beforeGoto);
 							elseIndent.Add(pos+curr*2);
