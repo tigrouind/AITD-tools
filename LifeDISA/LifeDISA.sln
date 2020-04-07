@@ -4,8 +4,6 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # SharpDevelop 5.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LifeDISA", "LifeDISA\LifeDISA.csproj", "{403A45DE-D285-441B-9435-AE62E017AE04}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrackDISA", "TrackDISA\TrackDISA.csproj", "{E610A48C-4647-43DF-B7F2-3CCCD18E125B}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

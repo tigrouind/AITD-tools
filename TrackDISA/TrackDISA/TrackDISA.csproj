@@ -44,10 +44,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\LifeDISA\VarParser.cs">
+    <Compile Include="..\..\Shared\VarParser.cs">
       <Link>VarParser.cs</Link>
     </Compile>
-	<Compile Include="..\LifeDISA\VarParserExt.cs">
+    <Compile Include="..\..\Shared\VarParserExt.cs">
       <Link>VarParserExt.cs</Link>
     </Compile>
     <Compile Include="Program.cs" />
