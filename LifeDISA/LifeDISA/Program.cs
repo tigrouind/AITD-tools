@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using Shared;
 
 namespace LifeDISA
 {		
@@ -44,7 +45,7 @@ namespace LifeDISA
 			string languageFile = validFolderNames
 				.Select(x => Path.Combine("GAMEDATA", x))
 				.Where(Directory.Exists)
-				.SelectMany(Directory.GetFiles)
+				.SelectMany(x => Directory.GetFiles(x))
 				.FirstOrDefault(x => x.Contains("00000000"));
 			
 			if (languageFile != null)
@@ -101,7 +102,7 @@ namespace LifeDISA
 			{					
 				//dump all
 				Regex r = new Regex(@"[0-9a-fA-F]{8}\.DAT", RegexOptions.IgnoreCase);				
-				foreach(var file in Directory.GetFiles(Path.Combine(@"GAMEDATA\LISTLIFE"))
+				foreach(var file in Directory.GetFiles(@"GAMEDATA\LISTLIFE")
 			        .Where(x => r.IsMatch(Path.GetFileName(x)))
 	        		.Select(x => new
 	                {
@@ -126,7 +127,7 @@ namespace LifeDISA
 			List<int> elseIndent = new List<int>();
 			HashSet<int> gotosToIgnore = new HashSet<int>();
 			Dictionary<int, string> switchEvalVar = new Dictionary<int, string>();
-			List<Tuple<int, int>> switchDefault = new List<Tuple<int, int>>();
+			List<KeyValuePair<int, int>> switchDefault = new List<KeyValuePair<int, int>>();
 						
 			bool consecutiveIfs = false;
 			
@@ -148,13 +149,14 @@ namespace LifeDISA
 					elseIndent.RemoveAt(elseIndent.IndexOf(pos));
 					WriteLine(writer, indentation.Count()-1, "ELSE\r\n");
 				}	
-
-				Tuple<int, int> defaultCase = switchDefault.FirstOrDefault(x => x.Item1 == pos);
-				if (defaultCase != null)
+				
+				int defaultCase = switchDefault.FindIndex(x => x.Key == pos);
+				if (defaultCase != -1)
 				{					
-					switchDefault.RemoveAt(switchDefault.IndexOf(defaultCase));					
+					int indent = switchDefault[defaultCase].Value;
+					switchDefault.RemoveAt(defaultCase);					
 					WriteLine(writer, indentation.Count(), "DEFAULT\r\n");
-					indentation.Add(defaultCase.Item2);
+					indentation.Add(indent);
 				}
 				
 				int oldPos = pos;
@@ -373,7 +375,7 @@ namespace LifeDISA
 						//should be equal, otherwise there is a default case
 						if(switchEndGoto != -1 && switchEndGoto != gotoPos)
 						{
-							switchDefault.Add(new Tuple<int, int>(gotoPos, switchEndGoto)); //default start + end pos
+							switchDefault.Add(new KeyValuePair<int, int>(gotoPos, switchEndGoto)); //default start + end pos
 							indentation.Add(switchEndGoto); //end of switch
 						}
 						else
@@ -804,7 +806,7 @@ namespace LifeDISA
 		static string GetObjectName(string name, int index)
 		{
 			string objectName = name.TrimStart('"').TrimEnd('"').ToLowerInvariant();
-			objectName = string.Join("_", objectName.Split(' ').Where(x => x != "AN" && x != "A"));			
+			objectName = string.Join("_", objectName.Split(' ').Where(x => x != "AN" && x != "A").ToArray());			
 			return objectName + "_" + index;
 		}
 		

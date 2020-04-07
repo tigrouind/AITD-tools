@@ -2,9 +2,9 @@
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Linq;
-using LifeDISA;
+using Shared;
 
-namespace TRACKDISA
+namespace TrackDISA
 {
 	class Program
 	{
