@@ -64,7 +64,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ProcessMemoryReader.cs" />
+    <Compile Include="..\..\Shared\ProcessMemoryReader.cs">
+      <Link>ProcessMemoryReader.cs</Link>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

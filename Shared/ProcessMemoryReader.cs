@@ -91,4 +91,53 @@ public class ProcessMemoryReader
 
 		return -1;
 	}
+	
+	public void SearchForBytePattern(byte[] pattern, Action<byte[], int, int, long> found)
+	{
+		MEMORY_BASIC_INFORMATION mem_info = new MEMORY_BASIC_INFORMATION();
+
+		long min_address = 0;
+		long max_address = 0x7FFFFFFF;
+		byte[] buffer = new byte[81920];
+
+		//scan process memory regions
+		while (min_address < max_address
+			&& VirtualQueryEx(processHandle, (IntPtr)min_address, out mem_info, (uint)Marshal.SizeOf(typeof(MEMORY_BASIC_INFORMATION))) > 0)
+		{
+			//check if memory region is accessible
+			//skip regions smaller than 16M (default DOSBOX memory size)
+			if (mem_info.Protect == PAGE_READWRITE && mem_info.State == MEM_COMMIT && (mem_info.Type & MEM_PRIVATE) == MEM_PRIVATE
+				&& (int)mem_info.RegionSize >= 1024 * 1024 * 16)
+			{
+				long readPosition = (long)mem_info.BaseAddress;
+				int bytesToRead = (int)mem_info.RegionSize;
+
+				long bytesRead;
+				while (bytesToRead > 0 && (bytesRead = Read(buffer, readPosition, Math.Min(buffer.Length, bytesToRead))) > 0)
+				{
+					//search bytes pattern
+					for (int index = 0; index < bytesRead - pattern.Length + 1; index++)
+					{
+						if (IsMatch(buffer, pattern, index))
+						{
+							found(buffer, (int)bytesRead, index, readPosition + index);
+						}
+					}
+					
+					readPosition += bytesRead;
+					bytesToRead -= (int)bytesRead;
+				}
+			}
+						// move to next memory region
+			min_address = (long)mem_info.BaseAddress + (long)mem_info.RegionSize;
+		}
+	}
+
+	public bool IsMatch(byte[] x, byte[] y, int index)
+	{
+		for (int j = 0; j < y.Length; j++)
+			if (x[j + index] != y[j])
+				return false;
+		return true;
+	}
 }
