@@ -65,8 +65,8 @@ public class ProcessMemoryReader
 			processHandle = IntPtr.Zero;
 		}
 	}
-
-	public long SearchFor16MRegion()
+	
+	bool Get16MRegion(out long baseAddress, out long regionSize)
 	{
 		MEMORY_BASIC_INFORMATION mem_info = new MEMORY_BASIC_INFORMATION();
 
@@ -82,54 +82,56 @@ public class ProcessMemoryReader
 			if (mem_info.Protect == PAGE_READWRITE && mem_info.State == MEM_COMMIT && (mem_info.Type & MEM_PRIVATE) == MEM_PRIVATE
 			    && (int)mem_info.RegionSize >= 1024 * 1024 * 16)
 			{
-				return (long)mem_info.BaseAddress;				
+				baseAddress = (long)mem_info.BaseAddress;
+				regionSize = (long)mem_info.RegionSize;
+				return true;
 			}
 
 			// move to next memory region
 			min_address = (long)mem_info.BaseAddress + (long)mem_info.RegionSize;
 		}
+		
+		baseAddress = -1;
+		regionSize = -1;
+		return false;
+	}
 
-		return -1;
+	public long SearchFor16MRegion()
+	{
+		long baseAddress, regionSize;
+		if (Get16MRegion(out baseAddress, out regionSize))
+		{
+			return baseAddress;	
+		}
+		
+		return -1;		
 	}
 	
 	public void SearchForBytePattern(byte[] pattern, Action<byte[], int, int, long> found)
 	{
-		MEMORY_BASIC_INFORMATION mem_info = new MEMORY_BASIC_INFORMATION();
-
-		long min_address = 0;
-		long max_address = 0x7FFFFFFF;
 		byte[] buffer = new byte[81920];
+		long baseAddress, regionSize;
 
-		//scan process memory regions
-		while (min_address < max_address
-			&& VirtualQueryEx(processHandle, (IntPtr)min_address, out mem_info, (uint)Marshal.SizeOf(typeof(MEMORY_BASIC_INFORMATION))) > 0)
+		if (Get16MRegion(out baseAddress, out regionSize))
 		{
-			//check if memory region is accessible
-			//skip regions smaller than 16M (default DOSBOX memory size)
-			if (mem_info.Protect == PAGE_READWRITE && mem_info.State == MEM_COMMIT && (mem_info.Type & MEM_PRIVATE) == MEM_PRIVATE
-				&& (int)mem_info.RegionSize >= 1024 * 1024 * 16)
+			long readPosition = baseAddress;
+			int bytesToRead = (int)regionSize;
+			
+			long bytesRead;
+			while (bytesToRead > 0 && (bytesRead = Read(buffer, readPosition, Math.Min(buffer.Length, bytesToRead))) > 0)
 			{
-				long readPosition = (long)mem_info.BaseAddress;
-				int bytesToRead = (int)mem_info.RegionSize;
-
-				long bytesRead;
-				while (bytesToRead > 0 && (bytesRead = Read(buffer, readPosition, Math.Min(buffer.Length, bytesToRead))) > 0)
+				//search bytes pattern
+				for (int index = 0; index < bytesRead - pattern.Length + 1; index++)
 				{
-					//search bytes pattern
-					for (int index = 0; index < bytesRead - pattern.Length + 1; index++)
+					if (IsMatch(buffer, pattern, index))
 					{
-						if (IsMatch(buffer, pattern, index))
-						{
-							found(buffer, (int)bytesRead, index, readPosition + index);
-						}
+						found(buffer, (int)bytesRead, index, readPosition + index);
 					}
-					
-					readPosition += bytesRead;
-					bytesToRead -= (int)bytesRead;
 				}
+				
+				readPosition += bytesRead;
+				bytesToRead -= (int)bytesRead;
 			}
-						// move to next memory region
-			min_address = (long)mem_info.BaseAddress + (long)mem_info.RegionSize;
 		}
 	}
 
