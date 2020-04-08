@@ -117,7 +117,7 @@ namespace Shared
 			if (Get16MRegion(out baseAddress, out regionSize))
 			{
 				long readPosition = baseAddress;
-				int bytesToRead = (int)regionSize;
+				int bytesToRead = Math.Min((int)regionSize, 1024 * 640); //scan first 640K only
 				
 				long bytesRead;
 				while (bytesToRead > 0 && (bytesRead = Read(buffer, readPosition, Math.Min(buffer.Length, bytesToRead))) > 0)
