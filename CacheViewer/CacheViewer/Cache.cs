@@ -5,7 +5,7 @@ namespace CacheViewer
 	public class Cache
 	{
 		public string Name;
-		public Dictionary<int, Entry> Entries = new Dictionary<int, Entry>();
+		public Dictionary<int, CacheEntry> Entries = new Dictionary<int, CacheEntry>();
 		public long Address;
 		public byte[] Pattern;
 		

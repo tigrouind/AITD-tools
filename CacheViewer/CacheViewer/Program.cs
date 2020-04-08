@@ -120,10 +120,10 @@ namespace CacheViewer
 						int addr = 22 + i * 10;		
 						int key = buffer.ReadUnsignedShort(addr);
 						
-						Entry entry;
+						CacheEntry entry;
 						if(!ch.Entries.TryGetValue(key, out entry))
 						{
-							entry = new Entry();		
+							entry = new CacheEntry();		
 							entry.framestart = frame;
 							ch.Entries.Add(key, entry);
 						}								

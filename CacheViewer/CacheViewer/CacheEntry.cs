@@ -2,7 +2,7 @@
 
 namespace CacheViewer
 {
-	public class Entry
+	public class CacheEntry
 	{
 		public int id;
 		public int key; //from AITD
