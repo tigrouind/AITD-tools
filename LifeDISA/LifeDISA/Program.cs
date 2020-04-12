@@ -13,15 +13,7 @@ namespace LifeDISA
 		static int pos;
 		
 		static byte[] allBytes;
-				
-		static short ReadShort (byte a, byte b)
-		{
-			unchecked
-			{
-				return (short)(a | b << 8);
-			}
-		}
-		
+					
 		static bool isCDROMVersion;
 		static readonly Dictionary<int, string> objectsByIndex = new Dictionary<int, string>();
 		static readonly Dictionary<int, string> namesByIndex = new Dictionary<int, string>();
@@ -67,13 +59,13 @@ namespace LifeDISA
 			if(File.Exists(@"GAMEDATA\OBJETS.ITD"))
 			{
 				allBytes = File.ReadAllBytes(@"GAMEDATA\OBJETS.ITD");
-				int count = ReadShort(allBytes[0], allBytes[1]);
+				int count = allBytes.ReadShort(0);
 			
 				int i = 0;
 				for(int s = 0 ; s < count ; s++)
 				{
 					int n = s * 52 + 2;
-					int name = ReadShort(allBytes[n+10], allBytes[n+11]);
+					int name = allBytes.ReadShort(n+10);
 					if(name != -1 && name != 0)
 					{
 						objectsByIndex.Add(i, GetObjectName(namesByIndex[name], i));
@@ -161,12 +153,12 @@ namespace LifeDISA
 				
 				int oldPos = pos;
 				int actor = -1;
-				int curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+				int curr = allBytes.ReadShort(pos);
 				if((curr & 0x8000) == 0x8000)
 				{					
 					curr = curr & 0x7FFF;					
 					pos += 2;
-					actor = ReadShort(allBytes[pos+0], allBytes[pos+1]);	
+					actor = allBytes.ReadShort(pos);	
 				}
 				
 				LifeEnum life = (LifeEnum)Enum.ToObject(typeof(LifeEnum), curr);
@@ -252,13 +244,13 @@ namespace LifeDISA
 						}								
 						
 						//read goto
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						pos +=2;
 						
 						//detect if else
 						int beforeGoto = pos+curr*2 - 4;
-						int next = ReadShort(allBytes[beforeGoto+0], allBytes[beforeGoto+1]);
-						int gotoPosition = beforeGoto+4 + ReadShort(allBytes[beforeGoto+2], allBytes[beforeGoto+3])*2;
+						int next = allBytes.ReadShort(beforeGoto);
+						int gotoPosition = beforeGoto+4 + allBytes.ReadShort(beforeGoto+2)*2;
 						
 						//detection might fail if there is 0x10 (eg: constant) right before end of if
 						//because of that, we also check if goto position is within bounds
@@ -275,7 +267,7 @@ namespace LifeDISA
 						
 						//check if next instruction is also an if
 						int previousPos = pos;
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						pos += 2;
 						
 						if(curr == (int)LifeEnum.IF_EGAL ||
@@ -292,7 +284,7 @@ namespace LifeDISA
 							EvalvarImpl(out dummyActor);
 							
 							//check if the two if end up at same place
-							curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+							curr = allBytes.ReadShort(pos);
 							pos += 2;
 							
 							if((beforeGoto+4) == (pos+curr*2))
@@ -306,7 +298,7 @@ namespace LifeDISA
 						break;
 												
 					case LifeEnum.GOTO: //should never be called
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						pos +=2;
 						writer.Write("{0}", pos+curr*2);				
 						break;						
@@ -320,8 +312,8 @@ namespace LifeDISA
 						int gotoPos = pos;
 						
 						//fix for #353 : IF appearing just after switch (while a CASE is expected)
-						while(ReadShort(allBytes[gotoPos+0], allBytes[gotoPos+1]) != (int)LifeEnum.CASE &&
-						      ReadShort(allBytes[gotoPos+0], allBytes[gotoPos+1]) != (int)LifeEnum.MULTI_CASE)
+						while(allBytes.ReadShort(gotoPos) != (int)LifeEnum.CASE &&
+						      allBytes.ReadShort(gotoPos) != (int)LifeEnum.MULTI_CASE)
 						{
 							gotoPos += 2;
 						}
@@ -329,20 +321,20 @@ namespace LifeDISA
 						int switchEndGoto = -1;						
 						do
 						{
-							int casePos = ReadShort(allBytes[gotoPos+0], allBytes[gotoPos+1]);
+							int casePos = allBytes.ReadShort(gotoPos);
 							if(casePos == (int)LifeEnum.CASE)
 							{
 								switchEvalVar.Add(gotoPos, paramS);
 								gotoPos += 4; //skip case + value
 								
 								//goto just after case 
-								gotoPos += 2 + ReadShort(allBytes[gotoPos+0], allBytes[gotoPos+1])*2;							
-								if(ReadShort(allBytes[gotoPos-4], allBytes[gotoPos-3]) == (int)LifeEnum.GOTO)
+								gotoPos += 2 + allBytes.ReadShort(gotoPos)*2;							
+								if(allBytes.ReadShort(gotoPos-4) == (int)LifeEnum.GOTO)
 								{
 									gotosToIgnore.Add(gotoPos-4); //goto at the end of the case statement (end of switch)
 									if(switchEndGoto == -1)
 									{										
-										switchEndGoto = gotoPos + ReadShort(allBytes[gotoPos-2], allBytes[gotoPos-1])*2;
+										switchEndGoto = gotoPos + allBytes.ReadShort(gotoPos-2)*2;
 									}
 							   	}
 							}							
@@ -350,18 +342,18 @@ namespace LifeDISA
 							{
 								switchEvalVar.Add(gotoPos, paramS);
 								gotoPos += 2; //skip multi case
-								casePos = ReadShort(allBytes[gotoPos+0], allBytes[gotoPos+1]);
+								casePos = allBytes.ReadShort(gotoPos);
 								gotoPos += 2 + casePos * 2; //skip values
 								
 								//goto just after case
-								gotoPos += 2 + ReadShort(allBytes[gotoPos+0], allBytes[gotoPos+1])*2;								
-								if(ReadShort(allBytes[gotoPos-4], allBytes[gotoPos-3]) == (int)LifeEnum.GOTO)
+								gotoPos += 2 + allBytes.ReadShort(gotoPos)*2;								
+								if(allBytes.ReadShort(gotoPos-4) == (int)LifeEnum.GOTO)
 								{
 									gotosToIgnore.Add(gotoPos-4); //goto at the end of the case statement (end of switch)
 									if(switchEndGoto == -1)
 									{
 										//end of switch
-										switchEndGoto = gotoPos + ReadShort(allBytes[gotoPos-2], allBytes[gotoPos-1])*2;
+										switchEndGoto = gotoPos + allBytes.ReadShort(gotoPos-2)*2;
 									}
 							   	}
 							}
@@ -411,52 +403,52 @@ namespace LifeDISA
 					case LifeEnum.IN_HAND:
 					case LifeEnum.DELETE:
 					case LifeEnum.FOUND:
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						pos +=2;
 						writer.Write("{0}", objectsByIndex[curr]);
 						break;
 						
 					case LifeEnum.FOUND_NAME:						
 					case LifeEnum.MESSAGE:
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						pos +=2;
 						writer.Write("{0}", namesByIndex[curr]);
 						break;	
 
 					case LifeEnum.FOUND_FLAG:
 					case LifeEnum.FLAGS:	
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						pos +=2;
 						writer.Write("0x{0:X4}", curr);
 						break;						
 						
 					case LifeEnum.LIFE:
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						pos +=2;
 						writer.Write("{0}", vars.GetText("LIFES", curr));
 						break;
 						
 					case LifeEnum.FOUND_BODY:	
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						pos +=2;
 						writer.Write("{0}", vars.GetText("BODYS", curr));
 						break;
 						
 					case LifeEnum.NEXT_MUSIC:
 					case LifeEnum.MUSIC:
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						pos +=2;
 						writer.Write("{0}", vars.GetText("MUSIC", curr));
 						break;
 						
 					case LifeEnum.ANIM_REPEAT:
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						pos +=2;
 						writer.Write("{0}", vars.GetText("ANIMS", curr));
 						break;
 						
 					case LifeEnum.SPECIAL:						
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						pos +=2;
 						writer.Write("{0}", vars.GetText("SPECIAL", curr));
 						break;
@@ -471,41 +463,41 @@ namespace LifeDISA
 					case LifeEnum.LIGHT:
 					case LifeEnum.SHAKING:
 					case LifeEnum.FADE_MUSIC:
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						pos +=2;
 						writer.Write("{0}", curr);
 						break;
 						
 					case LifeEnum.READ:
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						pos +=2;
 						writer.Write("{0} ", curr);
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						pos +=2;
 						writer.Write("{0} ", curr);
 						if(isCDROMVersion)
 						{							
-							curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+							curr = allBytes.ReadShort(pos);
 							pos +=2;
 							writer.Write("{0}", curr);
 						}											
 						break;
 						
 					case LifeEnum.PUT_AT:
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						pos +=2;
 						writer.Write("{0} ", objectsByIndex[curr]);
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						pos +=2;
 						writer.Write("{0}", objectsByIndex[curr]);
 						break;
 						
 					case LifeEnum.TRACKMODE:							
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						pos +=2;
 						writer.Write("{0} ", trackModes[curr]);												
 						int trackmode = curr;
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						pos +=2;
 						switch(trackmode)
 						{
@@ -520,10 +512,10 @@ namespace LifeDISA
 						
 					case LifeEnum.ANIM_ONCE:
 					case LifeEnum.ANIM_ALL_ONCE:
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						pos +=2;
 						writer.Write("{0} ", vars.GetText("ANIMS", curr));
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						pos +=2;
 						writer.Write("{0}", vars.GetText("ANIMS", curr));
 						break;
@@ -531,16 +523,16 @@ namespace LifeDISA
 					case LifeEnum.SET_BETA:
 					case LifeEnum.SET_ALPHA:					
 					case LifeEnum.HIT_OBJECT:
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						pos +=2;
 						writer.Write("{0} ", curr);
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						pos +=2;
 						writer.Write("{0}", curr);
 						break;
 												
 					case LifeEnum.CASE:
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						pos +=2;
 
 						string lastSwitchVar = switchEvalVar[pos-4].Split('.').Last();
@@ -559,19 +551,19 @@ namespace LifeDISA
 						else					
 							writer.Write("{0}", curr);	
 						
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						pos +=2;
 
 						indentation.Add(pos+curr*2);									
 						break;
 
 					case LifeEnum.MULTI_CASE:
-						int numcases =  ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						int numcases =  allBytes.ReadShort(pos);
 						pos += 2;
 						string lastSwitchVarb = switchEvalVar[pos-4].Split('.').Last();
 						
 						for(int n = 0; n < numcases; n++) {
-							curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);							
+							curr = allBytes.ReadShort(pos);							
 							pos += 2;
 																				
 							if(IsTargetingObject(lastSwitchVarb))
@@ -593,7 +585,7 @@ namespace LifeDISA
 							else writer.Write(", ");
 						}
 						
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						pos +=2;
 						indentation.Add(pos+curr*2);						
 						break;
@@ -616,44 +608,44 @@ namespace LifeDISA
 						break;						
 						
 					case LifeEnum.HIT:
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						writer.Write("{0} ", vars.GetText("ANIMS", curr));
 						pos += 2;
 						
 						
 						for(int n = 0; n < 3 ; n++) {
-							curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+							curr = allBytes.ReadShort(pos);
 							writer.Write("{0} ", curr);
 							pos += 2;
 						}
 						writer.Write("{0} ", Evalvar());
 						
 						
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						writer.Write("{0} ", vars.GetText("ANIMS", curr));
 						pos += 2;
 						break;
 						
 					case LifeEnum.DEF_ZV:	
 						for(int n = 0; n < 6; n++) {
-							curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+							curr = allBytes.ReadShort(pos);
 							writer.Write("{0} ", curr);
 							pos += 2;
 						}
 						break;						
 						
 					case LifeEnum.FIRE:
-						int fire_anim = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						int fire_anim = allBytes.ReadShort(pos);
 						pos += 2;
-						int shoot_frame = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						int shoot_frame = allBytes.ReadShort(pos);
 						pos += 2;
-						int hotpoint = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						int hotpoint = allBytes.ReadShort(pos);
 						pos += 2;
-						int range = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						int range = allBytes.ReadShort(pos);
 						pos += 2;
-						int hitforce = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						int hitforce = allBytes.ReadShort(pos);
 						pos += 2;
-						int next_anim = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						int next_anim = allBytes.ReadShort(pos);
 						pos += 2;
 						
 						writer.Write("{0} {1} {2} {3} {4} {5}", 
@@ -668,61 +660,61 @@ namespace LifeDISA
 					case LifeEnum.ANIM_MOVE:	
 						for(int i = 0 ; i < 7 ; i++)
 						{
-							curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+							curr = allBytes.ReadShort(pos);
 							writer.Write("{0} ", vars.GetText("ANIMS", curr));
 							pos += 2;
 						}
 						break;					
 						
 					case LifeEnum.THROW:
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						writer.Write("{0} ", vars.GetText("ANIMS", curr));
 						pos += 2;
 						
 						for(int i = 0 ; i < 2 ; i++)
 						{
-							curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+							curr = allBytes.ReadShort(pos);
 							writer.Write("{0} ", curr);
 							pos += 2;
 						}						
 						
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						writer.Write("{0} ", objectsByIndex[curr]);
 						pos += 2;
 						
 						for(int i = 0 ; i < 2 ; i++)
 						{
-							curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+							curr = allBytes.ReadShort(pos);
 							writer.Write("{0} ", curr);
 							pos += 2;
 						}
 						
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						writer.Write("{0} ", vars.GetText("ANIMS", curr));
 						pos += 2;						
 						break;
 											
 					case LifeEnum.PICTURE:						
 					case LifeEnum.ANGLE:
-						int alpha = curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						int alpha = curr = allBytes.ReadShort(pos);
 						pos += 2;
-						int beta = curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						int beta = curr = allBytes.ReadShort(pos);
 						pos += 2;
-						int gamma = curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						int gamma = curr = allBytes.ReadShort(pos);
 						pos += 2;
 						writer.Write("{0} {1} {2}", alpha, beta, gamma);
 						break;
 						
 					case LifeEnum.CHANGEROOM:
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						writer.Write("E{0}", curr);
 						pos += 2;
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						writer.Write("R{0} ", curr);
 						pos += 2;
 						
 						for(int n = 0; n < 3 ; n++) {
-							curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+							curr = allBytes.ReadShort(pos);
 							writer.Write("{0} ", curr);
 							pos += 2;
 						}
@@ -730,7 +722,7 @@ namespace LifeDISA
 						
 					case LifeEnum.REP_SAMPLE:											
 						writer.Write("{0} ", Evalvar());
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						writer.Write("{0} ", curr);
 						pos += 2;
 						break;
@@ -743,14 +735,14 @@ namespace LifeDISA
 							ev = objectsByIndex[obj];
 						}
 						writer.Write("{0} ", ev);
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						writer.Write("{0} ", objectsByIndex[curr]);
 						pos += 2;
 						break;
 						
 					case LifeEnum.PUT:
 						for(int n = 0; n < 9; n++) {
-							curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+							curr = allBytes.ReadShort(pos);
 							writer.Write("{0} ", curr);
 							pos += 2;
 						}
@@ -759,16 +751,16 @@ namespace LifeDISA
 					case LifeEnum.ANIM_SAMPLE:
 						string eval = Evalvar();
 						writer.Write(vars.GetText("SOUNDS", eval) + " ");
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						writer.Write(vars.GetText("ANIMS", curr) + " ");
 						pos += 2;
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						writer.Write(curr);
 						pos += 2;
 						break;
 					
 					case LifeEnum.SET:
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);						
+						curr = allBytes.ReadShort(pos);						
 						writer.Write(vars.GetText("VARS", curr, "VAR" + curr) + " = ");
 						pos +=2;
 						writer.Write("{0}", Evalvar());
@@ -776,7 +768,7 @@ namespace LifeDISA
 						
 					case LifeEnum.ADD:	
 					case LifeEnum.SUB:	
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);						
+						curr = allBytes.ReadShort(pos);						
 						writer.Write(vars.GetText("VARS", curr, "VAR" + curr) + " ");
 						pos +=2;
 						writer.Write("{0}", Evalvar());
@@ -784,13 +776,13 @@ namespace LifeDISA
 						
 					case LifeEnum.INC:	
 					case LifeEnum.DEC:
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						writer.Write(vars.GetText("VARS", curr, "VAR" + curr) + " ");
 						pos += 2;
 						break;
 												
 					case LifeEnum.C_VAR:
-						curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+						curr = allBytes.ReadShort(pos);
 						pos += 2;						
 						writer.Write("{0} = {1}", curr, Evalvar());
 						break;
@@ -857,14 +849,14 @@ namespace LifeDISA
 		
 		static string EvalvarImpl(out int actor)
 		{
-			int curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+			int curr = allBytes.ReadShort(pos);
 			pos +=2;
 			
 			actor = -1;
 			if(curr == -1)
 			{
 				//CONST
-				curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+				curr = allBytes.ReadShort(pos);
 				pos +=2;
 				
 				return curr.ToString();
@@ -873,7 +865,7 @@ namespace LifeDISA
 			if(curr == 0)
 			{
 				//CONST
-				curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+				curr = allBytes.ReadShort(pos);
 				pos +=2;
 				
 				return vars.GetText("VARS", curr, "VAR" + curr);
@@ -881,7 +873,7 @@ namespace LifeDISA
 
 			if((curr & 0x8000) == 0x8000) {
 				//change actor					
-				actor = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+				actor = allBytes.ReadShort(pos);
 				pos +=2;											
 			}
 			
@@ -918,7 +910,7 @@ namespace LifeDISA
 				case 0xD:
 					return "ROOM_CHRONO";
 				case 0xE:
-					curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+					curr = allBytes.ReadShort(pos);
 					pos += 2;
 					return "DIST("+objectsByIndex[curr]+")";
 				case 0xF:
@@ -933,7 +925,7 @@ namespace LifeDISA
 				case 0x11:
 					return "ACTION";
 				case 0x12:
-					curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+					curr = allBytes.ReadShort(pos);
 					pos += 2;
 					return "POSREL("+objectsByIndex[curr]+")";
 				case 0x13:
@@ -955,7 +947,7 @@ namespace LifeDISA
 				case 0x1B:
 					return "CAMERA";
 				case 0x1C:
-					curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+					curr = allBytes.ReadShort(pos);
 					pos += 2;
 					return "RAND("+curr+")";
 				case 0x1D:
@@ -965,27 +957,27 @@ namespace LifeDISA
 				case 0x1F:
 					return "LIFE";
 				case 0x20:
-					curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+					curr = allBytes.ReadShort(pos);
 					pos += 2;
 					return "OBJECT("+objectsByIndex[curr]+")";
 				case 0x21:
 					return "ROOMY";
 				case 0x22:
-					curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+					curr = allBytes.ReadShort(pos);
 					pos += 2;
-					int curr2 = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+					int curr2 = allBytes.ReadShort(pos);
 					pos += 2;
 					return "TEST_ZV_END_ANIM (" + curr + " " + curr + ")";
 				case 0x23:
 					return "MUSIC";
 				case 0x24:
-					curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+					curr = allBytes.ReadShort(pos);
 					pos += 2;
 					return "C_VAR"+curr;
 				case 0x25:
 					return "STAGE";
 				case 0x26:
-					curr = ReadShort(allBytes[pos+0], allBytes[pos+1]);
+					curr = allBytes.ReadShort(pos);
 					pos += 2;
 					return "THROW("+objectsByIndex[curr]+")";
 				default:
