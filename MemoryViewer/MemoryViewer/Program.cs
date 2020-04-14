@@ -231,6 +231,7 @@ namespace MemoryViewer
 				
 				updatePos();
 				
+				SDL.SDL_SetRenderDrawColor(renderer, 8, 8, 8, 255);
 				SDL.SDL_RenderClear(renderer);
 								
 				int skip = 0;
@@ -243,6 +244,7 @@ namespace MemoryViewer
 					for(int n = 0 ; n < tn ; n++)
 					{					
 						long position = offset + skip + n * RESX * RESY;
+						if (position >= (pixelData.Length - 384*1024)) continue;
 						
 						for(int i = 0 ; i < pixels.Length ; i++)
 						{
