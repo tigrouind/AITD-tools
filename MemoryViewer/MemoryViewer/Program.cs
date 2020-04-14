@@ -67,7 +67,10 @@ namespace MemoryViewer
 				{
 					offset = Math.Max(offset, 0);				
 					offset = Math.Min(offset, pixelData.Length);
-					SDL.SDL_SetWindowTitle(window, string.Format("{0:X6} - {1:X6}", offset, mousePosition + offset));
+					
+					long mousePos = mousePosition + offset;
+					if(mousePos >= 640*1024) mousePos += 384*1024;
+					SDL.SDL_SetWindowTitle(window, string.Format("{0:X6} - {1:X6}", offset, mousePos));
 					
 					lastOffset = offset;
 					lastMousePosition = mousePosition;
@@ -110,7 +113,7 @@ namespace MemoryViewer
 							float sizex =  winx / (float)tmx;
 							int page = (int)Math.Floor(x / sizex);
 														
-							mousePosition = page * RESX * winy + (int)Math.Floor(x / sizex * RESX) + y * RESX;
+							mousePosition = page * RESX * winy + (int)Math.Floor(x / sizex * RESX) + y * RESX;							
 							break;
 							
 						case SDL.SDL_EventType.SDL_MOUSEBUTTONDOWN:
@@ -243,9 +246,12 @@ namespace MemoryViewer
 						
 						for(int i = 0 ; i < pixels.Length ; i++)
 						{
-							if(i+position < pixelData.Length)
+							long pos = i+position;
+							if(pos >= 640*1024) pos+= 384*1024;
+							
+							if(pos < pixelData.Length)
 							{
-								byte data = pixelData[i+position];
+								byte data = pixelData[pos];
 								pixels[i] = pal256[data];								
 							}
 							else
