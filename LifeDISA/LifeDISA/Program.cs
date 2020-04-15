@@ -47,13 +47,8 @@ namespace LifeDISA
 					.Where(x => x.Contains(":"))
 					.Select(x =>  x.Split(':')))
 				{
-					namesByIndex.Add(int.Parse(item[0].TrimStart('@')), "\"" + item[1] + "\"");
+					namesByIndex.Add(int.Parse(item[0].TrimStart('@')), item[1]);
 				}
-			}
-			else
-			{
-				Console.WriteLine("A folder named {0} is required", string.Join(" / ", validFolderNames));
-				return -1;
 			}
 			   			
 			if(File.Exists(@"GAMEDATA\OBJETS.ITD"))
@@ -65,30 +60,19 @@ namespace LifeDISA
 				for(int s = 0 ; s < count ; s++)
 				{
 					int n = s * 52 + 2;
-					int name = allBytes.ReadShort(n+10);
-					if(name != -1 && name != 0)
+					int index = allBytes.ReadShort(n+10);
+					if(index != -1 && index != 0)
 					{
-						objectsByIndex.Add(i, GetObjectName(namesByIndex[name], i));
+						string name = namesByIndex[index].ToLowerInvariant();
+						name = string.Join("_", name.Split(' ').Where(x => x != "an" && x != "a").ToArray());		
+						objectsByIndex.Add(i, name);
 					}
 					
 					i++;
 				}
 			}
-			else
-			{
-				Console.WriteLine("OBJETS.ITD is required");
-				return -1;
-			}
-			
-			objectsByIndex[-1] = "-1";			    
-		    objectsByIndex[1] = "PLAYER";
-		    for(int i = 0 ; i < 1000 ; i++)
-		    {
-		    	if(!objectsByIndex.ContainsKey(i)) objectsByIndex[i] = "OBJ" + i;
-		    }
-		    
+					    
 		    isCDROMVersion = AskForCDROMVersion();
-			Console.WriteLine();
 		    		   				
 			using (TextWriter writer = new StreamWriter("output.txt"))
 			{					
@@ -129,7 +113,6 @@ namespace LifeDISA
 			
 			while(pos < allBytes.Length)
 			{
-
 				while (indentation.Contains(pos))
 				{
 					indentation.RemoveAt(indentation.IndexOf(pos));
@@ -179,7 +162,7 @@ namespace LifeDISA
 				string lifeString = life.ToString();
 				if(lifeString.StartsWith("IF")) lifeString = "IF";				
 				else if(lifeString == "MULTI_CASE") lifeString = "CASE";	
-				if(actor != -1) lifeString = objectsByIndex[actor] + "." + lifeString;
+				if(actor != -1) lifeString = GetObject(actor) + "." + lifeString;
 				
 				if(consecutiveIfs)
 				{
@@ -206,8 +189,9 @@ namespace LifeDISA
 						string paramB = Evalvar();
 						
 						string paramAShort = paramA.Split('.').Last();
-						if(IsTargetingObject(paramAShort))
-							paramB = objectsByIndex[int.Parse(paramB)];	
+
+						if(paramAShort == "INHAND" || paramAShort == "COL_BY" || paramAShort == "HIT_BY" || paramAShort == "HIT" || paramAShort == "ACTOR_COLLIDER")
+							paramB = GetObject(int.Parse(paramB));
 
 						if(paramAShort == "ANIM")
 							paramB = vars.GetText("ANIMS", paramB);
@@ -405,14 +389,14 @@ namespace LifeDISA
 					case LifeEnum.FOUND:
 						curr = allBytes.ReadShort(pos);
 						pos +=2;
-						writer.Write("{0}", objectsByIndex[curr]);
+						writer.Write("{0}", GetObject(curr));
 						break;
 						
 					case LifeEnum.FOUND_NAME:						
 					case LifeEnum.MESSAGE:
 						curr = allBytes.ReadShort(pos);
 						pos +=2;
-						writer.Write("{0}", namesByIndex[curr]);
+						writer.Write("{0}", GetName(curr));
 						break;	
 
 					case LifeEnum.FOUND_FLAG:
@@ -486,23 +470,24 @@ namespace LifeDISA
 					case LifeEnum.PUT_AT:
 						curr = allBytes.ReadShort(pos);
 						pos +=2;
-						writer.Write("{0} ", objectsByIndex[curr]);
+						writer.Write("{0} ", GetObject(curr));
 						curr = allBytes.ReadShort(pos);
 						pos +=2;
-						writer.Write("{0}", objectsByIndex[curr]);
+						writer.Write("{0}", GetObject(curr));
 						break;
 						
 					case LifeEnum.TRACKMODE:							
 						curr = allBytes.ReadShort(pos);
 						pos +=2;
-						writer.Write("{0} ", trackModes[curr]);												
+						writer.Write("{0} ", GetTrackMode(curr));		
+						
 						int trackmode = curr;
 						curr = allBytes.ReadShort(pos);
 						pos +=2;
 						switch(trackmode)
 						{
 							case 2: //follow
-								writer.Write("{0}", objectsByIndex[curr]);
+								writer.Write("{0}", GetObject(curr));
 								break;
 							case 3: //track
 								writer.Write("{0}", vars.GetText("TRACKS", curr));
@@ -536,20 +521,8 @@ namespace LifeDISA
 						pos +=2;
 
 						string lastSwitchVar = switchEvalVar[pos-4].Split('.').Last();
-						if(IsTargetingObject(lastSwitchVar))
-							writer.Write("{0}", objectsByIndex[curr]);
-						else if (IsTargetingAction(lastSwitchVar))
-							writer.Write("{0}", GetActionName(curr));
-						else if (lastSwitchVar == "ANIM")
-							writer.Write("{0}", vars.GetText("ANIMS", curr));
-						else if (lastSwitchVar == "BODY")
-							writer.Write("{0}", vars.GetText("BODYS", curr));
-						else if (lastSwitchVar == "KEYBOARD_INPUT")
-								writer.Write("{0}", vars.GetText("KEYBOARD INPUT", curr));
-						else if(lastSwitchVar.StartsWith("POSREL"))
-							writer.Write("{0}", vars.GetText("POSREL", curr));
-						else					
-							writer.Write("{0}", curr);	
+						
+						writer.Write("{0}", GetSwitchCaseName(curr, lastSwitchVar));
 						
 						curr = allBytes.ReadShort(pos);
 						pos +=2;
@@ -565,22 +538,9 @@ namespace LifeDISA
 						for(int n = 0; n < numcases; n++) {
 							curr = allBytes.ReadShort(pos);							
 							pos += 2;
-																				
-							if(IsTargetingObject(lastSwitchVarb))
-								writer.Write("{0}", objectsByIndex[curr]);
-							else if (IsTargetingAction(lastSwitchVarb))
-								writer.Write("{0}", GetActionName(curr));
-							else if (lastSwitchVarb == "ANIM")
-								writer.Write("{0}", vars.GetText("ANIMS", curr));
-							else if (lastSwitchVarb == "BODY")
-								writer.Write("{0}", vars.GetText("BODYS", curr));
-							else if (lastSwitchVarb == "KEYBOARD_INPUT")
-								writer.Write("{0}", vars.GetText("KEYBOARD INPUT", curr));
-							else if(lastSwitchVarb.StartsWith("POSREL"))
-								writer.Write("{0}", vars.GetText("POSREL", curr));
-							else					
-								writer.Write("{0}", curr);														
 							
+							writer.Write("{0}", GetSwitchCaseName(curr, lastSwitchVarb));
+		
 							if(n > 0) writer.Write(" ");
 							else writer.Write(", ");
 						}
@@ -679,7 +639,7 @@ namespace LifeDISA
 						}						
 						
 						curr = allBytes.ReadShort(pos);
-						writer.Write("{0} ", objectsByIndex[curr]);
+						writer.Write("{0} ", GetObject(curr));
 						pos += 2;
 						
 						for(int i = 0 ; i < 2 ; i++)
@@ -732,11 +692,11 @@ namespace LifeDISA
 						int obj;
 						if(int.TryParse(ev, out obj))
 						{
-							ev = objectsByIndex[obj];
+							ev = GetObject(obj);
 						}
 						writer.Write("{0} ", ev);
 						curr = allBytes.ReadShort(pos);
-						writer.Write("{0} ", objectsByIndex[curr]);
+						writer.Write("{0} ", GetObject(curr));
 						pos += 2;
 						break;
 						
@@ -795,18 +755,75 @@ namespace LifeDISA
 			}
 		}
 		
-		static string GetObjectName(string name, int index)
+		static string GetSwitchCaseName(int value, string lastSwitchVar)
 		{
-			string objectName = name.TrimStart('"').TrimEnd('"').ToLowerInvariant();
-			objectName = string.Join("_", objectName.Split(' ').Where(x => x != "AN" && x != "A").ToArray());			
-			return objectName + "_" + index;
+			if(lastSwitchVar.StartsWith("POSREL"))
+			{
+				return vars.GetText("POSREL", value);
+			}
+			
+			switch (lastSwitchVar)
+			{
+				case "INHAND":
+				case "COL_BY":
+				case "HIT_BY":
+				case "HIT":
+				case "ACTOR_COLLIDER":
+					return GetObject(value);
+					
+				case "ACTION":
+				case "player_current_action":
+					return vars.GetText("ACTIONS", value);
+					
+				case "ANIM": 
+					return vars.GetText("ANIMS", value);
+					
+				case "BODY":
+					return vars.GetText("BODYS", value);
+				
+				case "KEYBOARD_INPUT":
+					return vars.GetText("KEYBOARD INPUT", value);
+								
+				default: 
+					return value.ToString();
+			}
 		}
 		
-		static string GetActionName(int value)
+		static string GetObject(int index)
 		{
-			return vars.GetText("ACTIONS", value);
+			if (index == -1)
+			{
+				return "-1";
+			}
+			
+			if (index == 1)
+			{
+				return "PLAYER";
+			}
+			
+			string text;
+			if (objectsByIndex.TryGetValue(index, out text))
+			{
+				return text + "_" + index;
+			}
+			return "OBJ" + index;
 		}
 		
+		static string GetName(int index)
+		{
+			string text;
+			if (namesByIndex.TryGetValue(index, out text))
+			{
+				return "\"" + text + "\"";
+			}
+			return "MSG" + index;
+		}
+		
+		static string GetTrackMode(int index)
+		{
+			return trackModes[index];
+		}
+				
 		static void WriteLine(TextWriter writer, int indentation, string text)
 		{
 			writer.Write("{0}{1}",  new String('\t', indentation), text);
@@ -816,23 +833,8 @@ namespace LifeDISA
 		{			
 			int actor;
 			string eval = EvalvarImpl(out actor);
-			if(actor != -1) eval = objectsByIndex[actor] + "." + eval;
+			if(actor != -1) eval = GetObject(actor) + "." + eval;
 			return eval;
-		}
-		
-		static bool IsTargetingAction(string varName)
-		{
-			return varName == "ACTION"							
-				|| varName == "player_current_action";
-		}
-		
-		static bool IsTargetingObject(string varName)
-		{
-			return varName == "INHAND" 
-				|| varName == "COL_BY" 
-				|| varName == "HIT_BY" 
-				|| varName == "HIT" 
-				|| varName == "ACTOR_COLLIDER";
 		}
 		
 		static bool AskForCDROMVersion()
@@ -912,22 +914,22 @@ namespace LifeDISA
 				case 0xE:
 					curr = allBytes.ReadShort(pos);
 					pos += 2;
-					return "DIST("+objectsByIndex[curr]+")";
+					return "DIST("+GetObject(curr)+")";
 				case 0xF:
 					return "COL_BY";
 				case 0x10:
 					string eval = Evalvar();
 					int objectIndex;
 					if(int.TryParse(eval, out objectIndex))
-						return "ISFOUND("+objectsByIndex[objectIndex]+")";
-					else
-						return "ISFOUND("+eval+")";							
+						return "ISFOUND("+GetObject(objectIndex)+")";
+					
+					return "ISFOUND("+eval+")";							
 				case 0x11:
 					return "ACTION";
 				case 0x12:
 					curr = allBytes.ReadShort(pos);
 					pos += 2;
-					return "POSREL("+objectsByIndex[curr]+")";
+					return "POSREL("+GetObject(curr)+")";
 				case 0x13:
 					return "KEYBOARD_INPUT";
 				case 0x14:
@@ -959,7 +961,7 @@ namespace LifeDISA
 				case 0x20:
 					curr = allBytes.ReadShort(pos);
 					pos += 2;
-					return "OBJECT("+objectsByIndex[curr]+")";
+					return "OBJECT("+GetObject(curr)+")";
 				case 0x21:
 					return "ROOMY";
 				case 0x22:
@@ -967,7 +969,7 @@ namespace LifeDISA
 					pos += 2;
 					int curr2 = allBytes.ReadShort(pos);
 					pos += 2;
-					return "TEST_ZV_END_ANIM (" + curr + " " + curr + ")";
+					return "TEST_ZV_END_ANIM(" + curr + " " + curr + ")";
 				case 0x23:
 					return "MUSIC";
 				case 0x24:
@@ -979,7 +981,7 @@ namespace LifeDISA
 				case 0x26:
 					curr = allBytes.ReadShort(pos);
 					pos += 2;
-					return "THROW("+objectsByIndex[curr]+")";
+					return "THROW("+GetObject(curr)+")";
 				default:
 					throw new NotImplementedException(curr.ToString());					
 			}
