@@ -14,6 +14,7 @@ namespace MemoryViewer
 			const int RESY = 240;
 			int winx = GetArgument(args, "-screen-width") ?? 320;
 			int winy = GetArgument(args, "-screen-height") ?? 240;
+			int memorySize = GetArgument(args, "-memory") ?? 1024+320;
 			
 			//init SDL
 			SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
@@ -50,7 +51,7 @@ namespace MemoryViewer
 				
 			bool quit = false;
 			uint[] pixels = new uint[RESX*RESY];
-			byte[] pixelData = new byte[1024*1024*2];
+			byte[] pixelData = new byte[memorySize * 1024];
 			long offset = 0, lastOffset = -1;	
 			ProcessMemoryReader memoryReader = null;
 			long memoryAddress = -1;
