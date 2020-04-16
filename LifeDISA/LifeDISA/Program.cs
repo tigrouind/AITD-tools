@@ -228,8 +228,7 @@ namespace LifeDISA
 						}								
 						
 						//read goto
-						curr = allBytes.ReadShort(pos);
-						pos +=2;
+						curr = GetParam();
 						
 						//detect if else
 						int beforeGoto = pos+curr*2 - 4;
@@ -251,8 +250,7 @@ namespace LifeDISA
 						
 						//check if next instruction is also an if
 						int previousPos = pos;
-						curr = allBytes.ReadShort(pos);
-						pos += 2;
+						curr = GetParam();
 						
 						if(curr == (int)LifeEnum.IF_EGAL ||
 						   curr == (int)LifeEnum.IF_DIFFERENT ||
@@ -268,8 +266,7 @@ namespace LifeDISA
 							EvalvarImpl(out dummyActor);
 							
 							//check if the two if end up at same place
-							curr = allBytes.ReadShort(pos);
-							pos += 2;
+							curr = GetParam();
 							
 							if((beforeGoto+4) == (pos+curr*2))
 							{
@@ -282,8 +279,7 @@ namespace LifeDISA
 						break;
 												
 					case LifeEnum.GOTO: //should never be called
-						curr = allBytes.ReadShort(pos);
-						pos +=2;
+						curr = GetParam();
 						writer.Write("{0}", pos+curr*2);				
 						break;						
 						
@@ -362,24 +358,15 @@ namespace LifeDISA
 						break;
 												
 					case LifeEnum.SOUND:
-						{
-							string param = Evalvar();
-							writer.Write("{0}", vars.GetText("SOUNDS", param));
-							break;
-						}
+						writer.Write("{0}", vars.GetText("SOUNDS", Evalvar()));
+						break;
 						
 					case LifeEnum.BODY:
-						{
-							string param = Evalvar();						
-							writer.Write("{0}", vars.GetText("BODYS", param));
-							break;
-						}
+						writer.Write("{0}", vars.GetText("BODYS", Evalvar()));
+						break;
 
 					case LifeEnum.SAMPLE_THEN:
-						string param1 = Evalvar();
-						writer.Write("{0} ", param1);
-						string param2 = Evalvar();
-						writer.Write("{0}", param2);
+						writer.Write("{0} {1}", Evalvar(), Evalvar());
 						break;
 						
 					case LifeEnum.CAMERA_TARGET:
@@ -387,54 +374,38 @@ namespace LifeDISA
 					case LifeEnum.IN_HAND:
 					case LifeEnum.DELETE:
 					case LifeEnum.FOUND:
-						curr = allBytes.ReadShort(pos);
-						pos +=2;
-						writer.Write("{0}", GetObject(curr));
+						writer.Write("{0}", GetObject(GetParam()));
 						break;
 						
 					case LifeEnum.FOUND_NAME:						
 					case LifeEnum.MESSAGE:
-						curr = allBytes.ReadShort(pos);
-						pos +=2;
-						writer.Write("{0}", GetName(curr));
+						writer.Write("{0}", GetName(GetParam()));
 						break;	
 
 					case LifeEnum.FOUND_FLAG:
 					case LifeEnum.FLAGS:	
-						curr = allBytes.ReadShort(pos);
-						pos +=2;
-						writer.Write("0x{0:X4}", curr);
+						writer.Write("0x{0:X4}", GetParam());
 						break;						
 						
 					case LifeEnum.LIFE:
-						curr = allBytes.ReadShort(pos);
-						pos +=2;
-						writer.Write("{0}", vars.GetText("LIFES", curr));
+						writer.Write("{0}", vars.GetText("LIFES", GetParam()));
 						break;
 						
 					case LifeEnum.FOUND_BODY:	
-						curr = allBytes.ReadShort(pos);
-						pos +=2;
-						writer.Write("{0}", vars.GetText("BODYS", curr));
+						writer.Write("{0}", vars.GetText("BODYS", GetParam()));
 						break;
 						
 					case LifeEnum.NEXT_MUSIC:
 					case LifeEnum.MUSIC:
-						curr = allBytes.ReadShort(pos);
-						pos +=2;
-						writer.Write("{0}", vars.GetText("MUSIC", curr));
+						writer.Write("{0}", vars.GetText("MUSIC", GetParam()));
 						break;
 						
 					case LifeEnum.ANIM_REPEAT:
-						curr = allBytes.ReadShort(pos);
-						pos +=2;
-						writer.Write("{0}", vars.GetText("ANIMS", curr));
+						writer.Write("{0}", vars.GetText("ANIMS", GetParam()));
 						break;
 						
 					case LifeEnum.SPECIAL:						
-						curr = allBytes.ReadShort(pos);
-						pos +=2;
-						writer.Write("{0}", vars.GetText("SPECIAL", curr));
+						writer.Write("{0}", vars.GetText("SPECIAL", GetParam()));
 						break;
 						
 					case LifeEnum.COPY_ANGLE:
@@ -447,97 +418,70 @@ namespace LifeDISA
 					case LifeEnum.LIGHT:
 					case LifeEnum.SHAKING:
 					case LifeEnum.FADE_MUSIC:
-						curr = allBytes.ReadShort(pos);
-						pos +=2;
-						writer.Write("{0}", curr);
+						writer.Write("{0}", GetParam());
 						break;
 						
 					case LifeEnum.READ:
-						curr = allBytes.ReadShort(pos);
-						pos +=2;
-						writer.Write("{0} ", curr);
-						curr = allBytes.ReadShort(pos);
-						pos +=2;
-						writer.Write("{0} ", curr);
-						if(isCDROMVersion)
+						writer.Write("{0} {1}", GetParam(), GetParam());
+						if (isCDROMVersion)
 						{							
-							curr = allBytes.ReadShort(pos);
-							pos +=2;
-							writer.Write("{0}", curr);
+							writer.Write(" {0}", GetParam());
 						}											
 						break;
 						
 					case LifeEnum.PUT_AT:
-						curr = allBytes.ReadShort(pos);
-						pos +=2;
-						writer.Write("{0} ", GetObject(curr));
-						curr = allBytes.ReadShort(pos);
-						pos +=2;
-						writer.Write("{0}", GetObject(curr));
+						writer.Write("{0} {1}", GetObject(GetParam()), GetObject(GetParam()));
 						break;
 						
 					case LifeEnum.TRACKMODE:							
-						curr = allBytes.ReadShort(pos);
-						pos +=2;
-						writer.Write("{0} ", GetTrackMode(curr));		
-						
-						int trackmode = curr;
-						curr = allBytes.ReadShort(pos);
-						pos +=2;
-						switch(trackmode)
+						curr = GetParam();
+						writer.Write("{0}", GetTrackMode(curr));
+												
+						switch(curr)
 						{
 							case 2: //follow
-								writer.Write("{0}", GetObject(curr));
+								writer.Write(" {0}", GetObject(GetParam()));
 								break;
+								
 							case 3: //track
-								writer.Write("{0}", vars.GetText("TRACKS", curr));
+								writer.Write(" {0}", vars.GetText("TRACKS", GetParam()));
+								break;
+								
+							default:
+								GetParam();
 								break;
 						}
 						break;
 						
 					case LifeEnum.ANIM_ONCE:
 					case LifeEnum.ANIM_ALL_ONCE:
-						curr = allBytes.ReadShort(pos);
-						pos +=2;
-						writer.Write("{0} ", vars.GetText("ANIMS", curr));
-						curr = allBytes.ReadShort(pos);
-						pos +=2;
-						writer.Write("{0}", vars.GetText("ANIMS", curr));
+						writer.Write("{0} {1}", 
+							vars.GetText("ANIMS", GetParam()), 
+							vars.GetText("ANIMS", GetParam()));
 						break;
 						
 					case LifeEnum.SET_BETA:
 					case LifeEnum.SET_ALPHA:					
 					case LifeEnum.HIT_OBJECT:
-						curr = allBytes.ReadShort(pos);
-						pos +=2;
-						writer.Write("{0} ", curr);
-						curr = allBytes.ReadShort(pos);
-						pos +=2;
-						writer.Write("{0}", curr);
+						writer.Write("{0} {1}", GetParam(), GetParam());
 						break;
 												
 					case LifeEnum.CASE:
-						curr = allBytes.ReadShort(pos);
-						pos +=2;
-
+						curr = GetParam();
 						string lastSwitchVar = switchEvalVar[pos-4].Split('.').Last();
 						
 						writer.Write("{0}", GetSwitchCaseName(curr, lastSwitchVar));
 						
-						curr = allBytes.ReadShort(pos);
-						pos +=2;
-
+						curr = GetParam();
 						indentation.Add(pos+curr*2);									
 						break;
 
 					case LifeEnum.MULTI_CASE:
-						int numcases =  allBytes.ReadShort(pos);
-						pos += 2;
+						int numcases = GetParam();
 						string lastSwitchVarb = switchEvalVar[pos-4].Split('.').Last();
 						
 						for(int n = 0; n < numcases; n++) {
-							curr = allBytes.ReadShort(pos);							
-							pos += 2;
+							curr = GetParam();
 							
 							writer.Write("{0}", GetSwitchCaseName(curr, lastSwitchVarb));
 		
@@ -545,8 +489,7 @@ namespace LifeDISA
 							else writer.Write(", ");
 						}
 						
-						curr = allBytes.ReadShort(pos);
-						pos +=2;
+						curr = GetParam();
 						indentation.Add(pos+curr*2);						
 						break;
 					
@@ -568,123 +511,62 @@ namespace LifeDISA
 						break;						
 						
 					case LifeEnum.HIT:
-						curr = allBytes.ReadShort(pos);
-						writer.Write("{0} ", vars.GetText("ANIMS", curr));
-						pos += 2;
-						
-						
-						for(int n = 0; n < 3 ; n++) {
-							curr = allBytes.ReadShort(pos);
-							writer.Write("{0} ", curr);
-							pos += 2;
-						}
-						writer.Write("{0} ", Evalvar());
-						
-						
-						curr = allBytes.ReadShort(pos);
-						writer.Write("{0} ", vars.GetText("ANIMS", curr));
-						pos += 2;
+						writer.Write("{0} {1} {2} {3} {4} {5}",
+							vars.GetText("ANIMS", GetParam()),
+							GetParam(), GetParam(), GetParam(),
+							Evalvar(),
+							vars.GetText("ANIMS", GetParam()));
 						break;
 						
 					case LifeEnum.DEF_ZV:	
-						for(int n = 0; n < 6; n++) {
-							curr = allBytes.ReadShort(pos);
-							writer.Write("{0} ", curr);
-							pos += 2;
-						}
+						writer.Write("{0} {1} {2} {3} {4} {5}",  
+				             GetParam(), GetParam(), GetParam(),
+				             GetParam(), GetParam(), GetParam());
 						break;						
 						
 					case LifeEnum.FIRE:
-						int fire_anim = allBytes.ReadShort(pos);
-						pos += 2;
-						int shoot_frame = allBytes.ReadShort(pos);
-						pos += 2;
-						int hotpoint = allBytes.ReadShort(pos);
-						pos += 2;
-						int range = allBytes.ReadShort(pos);
-						pos += 2;
-						int hitforce = allBytes.ReadShort(pos);
-						pos += 2;
-						int next_anim = allBytes.ReadShort(pos);
-						pos += 2;
-						
 						writer.Write("{0} {1} {2} {3} {4} {5}", 
-				             vars.GetText("ANIMS", fire_anim),
-				             shoot_frame, 
-				             hotpoint,
-				             range, 
-				             hitforce, 
-				             vars.GetText("ANIMS", next_anim));
+				             vars.GetText("ANIMS", GetParam()),
+				             GetParam(),  //shoot frame
+				             GetParam(),  //hotpoint
+				             GetParam(),  //range
+				             GetParam(),  //hitforce
+				             vars.GetText("ANIMS", GetParam()));
 						break;						
 						
 					case LifeEnum.ANIM_MOVE:	
-						for(int i = 0 ; i < 7 ; i++)
-						{
-							curr = allBytes.ReadShort(pos);
-							writer.Write("{0} ", vars.GetText("ANIMS", curr));
-							pos += 2;
-						}
+						writer.Write("{0} {1} {2} {3} {4} {5} {6}", 
+							vars.GetText("ANIMS", GetParam()),
+							vars.GetText("ANIMS", GetParam()),
+							vars.GetText("ANIMS", GetParam()),
+							vars.GetText("ANIMS", GetParam()),
+							vars.GetText("ANIMS", GetParam()),
+							vars.GetText("ANIMS", GetParam()),
+							vars.GetText("ANIMS", GetParam()));
 						break;					
 						
-					case LifeEnum.THROW:
-						curr = allBytes.ReadShort(pos);
-						writer.Write("{0} ", vars.GetText("ANIMS", curr));
-						pos += 2;
-						
-						for(int i = 0 ; i < 2 ; i++)
-						{
-							curr = allBytes.ReadShort(pos);
-							writer.Write("{0} ", curr);
-							pos += 2;
-						}						
-						
-						curr = allBytes.ReadShort(pos);
-						writer.Write("{0} ", GetObject(curr));
-						pos += 2;
-						
-						for(int i = 0 ; i < 2 ; i++)
-						{
-							curr = allBytes.ReadShort(pos);
-							writer.Write("{0} ", curr);
-							pos += 2;
-						}
-						
-						curr = allBytes.ReadShort(pos);
-						writer.Write("{0} ", vars.GetText("ANIMS", curr));
-						pos += 2;						
+					case LifeEnum.THROW:					
+						writer.Write("{0} {1} {2} {3} {4} {5} {6}", 
+							vars.GetText("ANIMS", GetParam()),
+							GetParam(), GetParam(), 
+							GetObject(GetParam()), 
+							GetParam(), GetParam(), 
+							vars.GetText("ANIMS", GetParam()));
 						break;
 											
 					case LifeEnum.PICTURE:						
 					case LifeEnum.ANGLE:
-						int alpha = curr = allBytes.ReadShort(pos);
-						pos += 2;
-						int beta = curr = allBytes.ReadShort(pos);
-						pos += 2;
-						int gamma = curr = allBytes.ReadShort(pos);
-						pos += 2;
-						writer.Write("{0} {1} {2}", alpha, beta, gamma);
+						writer.Write("{0} {1} {2}", GetParam(), GetParam(), GetParam());
 						break;
 						
 					case LifeEnum.CHANGEROOM:
-						curr = allBytes.ReadShort(pos);
-						writer.Write("E{0}", curr);
-						pos += 2;
-						curr = allBytes.ReadShort(pos);
-						writer.Write("R{0} ", curr);
-						pos += 2;
-						
-						for(int n = 0; n < 3 ; n++) {
-							curr = allBytes.ReadShort(pos);
-							writer.Write("{0} ", curr);
-							pos += 2;
-						}
+						writer.Write("E{0}R{1} {2} {3} {4}", 
+						             GetParam(), GetParam(), 
+						             GetParam(), GetParam(), GetParam());
 						break;
 						
 					case LifeEnum.REP_SAMPLE:											
-						writer.Write("{0} ", Evalvar());
-						curr = allBytes.ReadShort(pos);
-						writer.Write("{0} ", curr);
-						pos += 2;
+						writer.Write("{0} {1}", Evalvar(), GetParam());
 						break;
 						
 					case LifeEnum.DROP:
@@ -694,64 +576,48 @@ namespace LifeDISA
 						{
 							ev = GetObject(obj);
 						}
-						writer.Write("{0} ", ev);
-						curr = allBytes.ReadShort(pos);
-						writer.Write("{0} ", GetObject(curr));
-						pos += 2;
+						writer.Write("{0} {1}", ev, GetObject(GetParam()));
 						break;
 						
 					case LifeEnum.PUT:
-						for(int n = 0; n < 9; n++) {
-							curr = allBytes.ReadShort(pos);
-							writer.Write("{0} ", curr);
-							pos += 2;
-						}
+						writer.Write("{0} {1} {2} {3} {4} {5} {6} {7} {8}", 
+						             GetParam(), GetParam(), GetParam(), GetParam(), GetParam(),
+						             GetParam(), GetParam(), GetParam(), GetParam());
 						break;
 					
-					case LifeEnum.ANIM_SAMPLE:
-						string eval = Evalvar();
-						writer.Write(vars.GetText("SOUNDS", eval) + " ");
-						curr = allBytes.ReadShort(pos);
-						writer.Write(vars.GetText("ANIMS", curr) + " ");
-						pos += 2;
-						curr = allBytes.ReadShort(pos);
-						writer.Write(curr);
-						pos += 2;
+					case LifeEnum.ANIM_SAMPLE:						
+						writer.Write("{0} {1} {2}", 
+						    vars.GetText("SOUNDS", Evalvar()), 
+						    vars.GetText("ANIMS", GetParam()), 
+						    GetParam());
 						break;
-					
+						
 					case LifeEnum.SET:
-						curr = allBytes.ReadShort(pos);						
-						writer.Write(vars.GetText("VARS", curr, "VAR" + curr) + " = ");
-						pos +=2;
-						writer.Write("{0}", Evalvar());
+						curr = GetParam();				
+						writer.Write("{0} = {1}", vars.GetText("VARS", curr, "VAR" + curr), Evalvar());
 						break;
 						
 					case LifeEnum.ADD:	
 					case LifeEnum.SUB:	
-						curr = allBytes.ReadShort(pos);						
-						writer.Write(vars.GetText("VARS", curr, "VAR" + curr) + " ");
-						pos +=2;
-						writer.Write("{0}", Evalvar());
+						curr = GetParam();				
+						writer.Write("{0} {1}", vars.GetText("VARS", curr, "VAR" + curr), Evalvar());
 						break;
 						
 					case LifeEnum.INC:	
 					case LifeEnum.DEC:
-						curr = allBytes.ReadShort(pos);
+						curr = GetParam();
 						writer.Write(vars.GetText("VARS", curr, "VAR" + curr) + " ");
-						pos += 2;
 						break;
 												
-					case LifeEnum.C_VAR:
-						curr = allBytes.ReadShort(pos);
-						pos += 2;						
-						writer.Write("{0} = {1}", curr, Evalvar());
+					case LifeEnum.C_VAR:	
+						writer.Write("{0} = {1}", GetParam(), Evalvar());
 						break;
 						
 					default:
 						throw new NotImplementedException(life.ToString());						
 				}									
 				
-				if(!consecutiveIfs) writer.WriteLine();
+				if (!consecutiveIfs) writer.WriteLine();
 			}
 		}
 		
@@ -819,6 +685,13 @@ namespace LifeDISA
 			return "MSG" + index;
 		}
 		
+		static int GetParam()
+		{
+			int curr = allBytes.ReadShort(pos);
+			pos +=2;
+			return curr;
+		}
+		
 		static string GetTrackMode(int index)
 		{
 			return trackModes[index];
@@ -851,32 +724,25 @@ namespace LifeDISA
 		
 		static string EvalvarImpl(out int actor)
 		{
-			int curr = allBytes.ReadShort(pos);
-			pos +=2;
+			int curr = GetParam();
 			
 			actor = -1;
 			if(curr == -1)
 			{
-				//CONST
-				curr = allBytes.ReadShort(pos);
-				pos +=2;
-				
-				return curr.ToString();
+				//CONST				
+				return GetParam().ToString();
 			}
 			
 			if(curr == 0)
 			{
 				//CONST
-				curr = allBytes.ReadShort(pos);
-				pos +=2;
-				
+				curr = GetParam();
 				return vars.GetText("VARS", curr, "VAR" + curr);
 			}
 
 			if((curr & 0x8000) == 0x8000) {
 				//change actor					
-				actor = allBytes.ReadShort(pos);
-				pos +=2;											
+				actor = GetParam();							
 			}
 			
 			curr &= 0x7FFF;
@@ -912,24 +778,22 @@ namespace LifeDISA
 				case 0xD:
 					return "ROOM_CHRONO";
 				case 0xE:
-					curr = allBytes.ReadShort(pos);
-					pos += 2;
-					return "DIST("+GetObject(curr)+")";
+					return "DIST("+GetObject(GetParam())+")";
 				case 0xF:
 					return "COL_BY";
 				case 0x10:
 					string eval = Evalvar();
 					int objectIndex;
 					if(int.TryParse(eval, out objectIndex))
+					{
 						return "ISFOUND("+GetObject(objectIndex)+")";
+					}
 					
 					return "ISFOUND("+eval+")";							
 				case 0x11:
 					return "ACTION";
 				case 0x12:
-					curr = allBytes.ReadShort(pos);
-					pos += 2;
-					return "POSREL("+GetObject(curr)+")";
+					return "POSREL("+GetObject(GetParam())+")";
 				case 0x13:
 					return "KEYBOARD_INPUT";
 				case 0x14:
@@ -949,9 +813,7 @@ namespace LifeDISA
 				case 0x1B:
 					return "CAMERA";
 				case 0x1C:
-					curr = allBytes.ReadShort(pos);
-					pos += 2;
-					return "RAND("+curr+")";
+					return "RAND("+GetParam()+")";
 				case 0x1D:
 					return "FALLING";
 				case 0x1E:
@@ -959,29 +821,19 @@ namespace LifeDISA
 				case 0x1F:
 					return "LIFE";
 				case 0x20:
-					curr = allBytes.ReadShort(pos);
-					pos += 2;
-					return "OBJECT("+GetObject(curr)+")";
+					return "OBJECT("+GetObject(GetParam())+")";
 				case 0x21:
 					return "ROOMY";
 				case 0x22:
-					curr = allBytes.ReadShort(pos);
-					pos += 2;
-					int curr2 = allBytes.ReadShort(pos);
-					pos += 2;
-					return "TEST_ZV_END_ANIM(" + curr + " " + curr + ")";
+					return "TEST_ZV_END_ANIM(" + GetParam() + " " + GetParam() + ")";
 				case 0x23:
 					return "MUSIC";
 				case 0x24:
-					curr = allBytes.ReadShort(pos);
-					pos += 2;
-					return "C_VAR"+curr;
+					return "C_VAR"+GetParam();
 				case 0x25:
 					return "STAGE";
 				case 0x26:
-					curr = allBytes.ReadShort(pos);
-					pos += 2;
-					return "THROW("+GetObject(curr)+")";
+					return "THROW("+GetObject(GetParam())+")";
 				default:
 					throw new NotImplementedException(curr.ToString());					
 			}
