@@ -15,6 +15,8 @@ namespace LifeDISA
 		static byte[] allBytes;
 
 		static bool isCDROMVersion;
+		static bool isAITD2;
+		static Func<int, LifeEnum> macroTable;
 		static readonly Dictionary<int, string> objectsByIndex = new Dictionary<int, string>();
 		static readonly Dictionary<int, string> namesByIndex = new Dictionary<int, string>();
 
@@ -31,6 +33,28 @@ namespace LifeDISA
 			{
 				vars.Parse(@"GAMEDATA\vars.txt");
 			}
+			
+			Regex r = new Regex(@"[0-9a-fA-F]{8}\.DAT", RegexOptions.IgnoreCase);
+			var files = Directory.GetFiles(@"GAMEDATA\LISTLIFE")
+				.Where(x => r.IsMatch(Path.GetFileName(x)))
+				.ToList();
+			
+			LifeEnum[] table = MacroTable.AITD1;
+			if (files.Count < 60) //JITD
+			{
+				isAITD2 = true; 
+				table = MacroTable.AITD2;				
+			}
+			
+			macroTable = index => 
+			{
+				if(index >= 0 && index < table.Length)
+				{
+					return table[index];
+				}
+				
+				return (LifeEnum)index;
+			};
 
 			//dump names
 			var validFolderNames = new [] {	"ENGLISH", "FRANCAIS", "DEUTSCH", "ESPAGNOL", "ITALIANO", "USA" };
@@ -56,10 +80,11 @@ namespace LifeDISA
 				allBytes = File.ReadAllBytes(@"GAMEDATA\OBJETS.ITD");
 				int count = allBytes.ReadShort(0);
 
+				int offset = isAITD2 ? 54 : 52;
 				int i = 0;
 				for(int s = 0 ; s < count ; s++)
 				{
-					int n = s * 52 + 2;
+					int n = s * offset + 2;
 					int index = allBytes.ReadShort(n+10);
 					if(index != -1 && index != 0)
 					{
@@ -77,9 +102,7 @@ namespace LifeDISA
 			using (TextWriter writer = new StreamWriter("output.txt"))
 			{
 				//dump all
-				Regex r = new Regex(@"[0-9a-fA-F]{8}\.DAT", RegexOptions.IgnoreCase);
-				foreach(var file in Directory.GetFiles(@"GAMEDATA\LISTLIFE")
-					.Where(x => r.IsMatch(Path.GetFileName(x)))
+				foreach(var file in files
 					.Select(x => new
 					{
 						FilePath = x,
@@ -144,7 +167,7 @@ namespace LifeDISA
 					actor = allBytes.ReadShort(pos);
 				}
 
-				LifeEnum life = (LifeEnum)Enum.ToObject(typeof(LifeEnum), curr);
+				LifeEnum life = macroTable(curr);
 
 				//skip gotos
 				if(life == LifeEnum.GOTO && gotosToIgnore.Contains(oldPos))
@@ -232,12 +255,12 @@ namespace LifeDISA
 
 						//detect if else
 						int beforeGoto = pos+curr*2 - 4;
-						int next = allBytes.ReadShort(beforeGoto);
+						LifeEnum next = macroTable(allBytes.ReadShort(beforeGoto));
 						int gotoPosition = beforeGoto+4 + allBytes.ReadShort(beforeGoto+2)*2;
 
 						//detection might fail if there is 0x10 (eg: constant) right before end of if
 						//because of that, we also check if goto position is within bounds
-						if (next == (int)LifeEnum.GOTO && gotoPosition >= 0 && gotoPosition <= (allBytes.Length - 2))
+						if (next == LifeEnum.GOTO && gotoPosition >= 0 && gotoPosition <= (allBytes.Length - 2))
 						{
 							gotosToIgnore.Add(beforeGoto);
 							elseIndent.Add(pos+curr*2);
@@ -250,14 +273,14 @@ namespace LifeDISA
 
 						//check if next instruction is also an if
 						int previousPos = pos;
-						curr = GetParam();
+						next = macroTable(GetParam());
 
-						if(curr == (int)LifeEnum.IF_EGAL ||
-						   curr == (int)LifeEnum.IF_DIFFERENT ||
-						   curr == (int)LifeEnum.IF_INF ||
-						   curr == (int)LifeEnum.IF_INF_EGAL ||
-						   curr == (int)LifeEnum.IF_SUP ||
-						   curr == (int)LifeEnum.IF_SUP_EGAL)
+						if(next == LifeEnum.IF_EGAL ||
+						   next == LifeEnum.IF_DIFFERENT ||
+						   next == LifeEnum.IF_INF ||
+						   next == LifeEnum.IF_INF_EGAL ||
+						   next == LifeEnum.IF_SUP ||
+						   next == LifeEnum.IF_SUP_EGAL)
 						{
 							//skip if evaluated vars
 							int dummyActor;
@@ -292,8 +315,8 @@ namespace LifeDISA
 						int gotoPos = pos;
 
 						//fix for #353 : IF appearing just after switch (while a CASE is expected)
-						while(allBytes.ReadShort(gotoPos) != (int)LifeEnum.CASE &&
-							  allBytes.ReadShort(gotoPos) != (int)LifeEnum.MULTI_CASE)
+						while(macroTable(allBytes.ReadShort(gotoPos)) != LifeEnum.CASE &&
+						      macroTable(allBytes.ReadShort(gotoPos)) != LifeEnum.MULTI_CASE)
 						{
 							gotoPos += 2;
 						}
@@ -301,48 +324,56 @@ namespace LifeDISA
 						int switchEndGoto = -1;
 						do
 						{
-							int casePos = allBytes.ReadShort(gotoPos);
-							if(casePos == (int)LifeEnum.CASE)
+							LifeEnum casePos = macroTable(allBytes.ReadShort(gotoPos));
+							switch(casePos)
 							{
-								switchEvalVar.Add(gotoPos, paramS);
-								gotoPos += 4; //skip case + value
-
-								//goto just after case
-								gotoPos += 2 + allBytes.ReadShort(gotoPos)*2;
-								if(allBytes.ReadShort(gotoPos-4) == (int)LifeEnum.GOTO)
+								case LifeEnum.CASE:
 								{
-									gotosToIgnore.Add(gotoPos-4); //goto at the end of the case statement (end of switch)
-									if(switchEndGoto == -1)
+									switchEvalVar.Add(gotoPos, paramS);
+									gotoPos += 4; //skip case + value
+	
+									//goto just after case
+									gotoPos += 2 + allBytes.ReadShort(gotoPos)*2;
+									if (macroTable(allBytes.ReadShort(gotoPos-4)) == LifeEnum.GOTO)
 									{
-										switchEndGoto = gotoPos + allBytes.ReadShort(gotoPos-2)*2;
+										gotosToIgnore.Add(gotoPos-4); //goto at the end of the case statement (end of switch)
+										if (switchEndGoto == -1)
+										{
+											switchEndGoto = gotoPos + allBytes.ReadShort(gotoPos-2)*2;
+										}
 									}
-								}
-							}
-							else if(casePos == (int)LifeEnum.MULTI_CASE)
-							{
-								switchEvalVar.Add(gotoPos, paramS);
-								gotoPos += 2; //skip multi case
-								casePos = allBytes.ReadShort(gotoPos);
-								gotoPos += 2 + casePos * 2; //skip values
-
-								//goto just after case
-								gotoPos += 2 + allBytes.ReadShort(gotoPos)*2;
-								if(allBytes.ReadShort(gotoPos-4) == (int)LifeEnum.GOTO)
+									break;
+								}								
+									
+								case LifeEnum.MULTI_CASE:
 								{
-									gotosToIgnore.Add(gotoPos-4); //goto at the end of the case statement (end of switch)
-									if(switchEndGoto == -1)
+									switchEvalVar.Add(gotoPos, paramS);
+									gotoPos += 2; //skip multi case
+									
+									curr = allBytes.ReadShort(gotoPos);
+									gotoPos += 2 + curr * 2; //skip values
+	
+									//goto just after case
+									gotoPos += 2 + allBytes.ReadShort(gotoPos)*2;
+									if (macroTable(allBytes.ReadShort(gotoPos-4)) == LifeEnum.GOTO)
 									{
-										//end of switch
-										switchEndGoto = gotoPos + allBytes.ReadShort(gotoPos-2)*2;
+										gotosToIgnore.Add(gotoPos-4); //goto at the end of the case statement (end of switch)
+										if (switchEndGoto == -1)
+										{
+											//end of switch
+											switchEndGoto = gotoPos + allBytes.ReadShort(gotoPos-2)*2;
+										}
 									}
+									break;
 								}
-							}
-							else
-							{
-								endOfSwitch = true;
+								
+									
+								default:
+									endOfSwitch = true;
+									break;
 							}
 						}
-						while(!endOfSwitch);
+						while (!endOfSwitch);
 
 						//should be equal, otherwise there is a default case
 						if(switchEndGoto != -1 && switchEndGoto != gotoPos)
@@ -408,6 +439,8 @@ namespace LifeDISA
 						writer.Write("{0}", vars.GetText("SPECIAL", GetParam()));
 						break;
 
+					case LifeEnum.SET_INVENTORY:
+					case LifeEnum.PLAY_SEQUENCE:
 					case LifeEnum.COPY_ANGLE:
 					case LifeEnum.TEST_COL:
 					case LifeEnum.LIFE_MODE:
@@ -460,6 +493,7 @@ namespace LifeDISA
 							vars.GetText("ANIMS", GetParam()));
 						break;
 
+					case LifeEnum.ANIM_HYBRIDE_ONCE: 	
 					case LifeEnum.SET_BETA:
 					case LifeEnum.SET_ALPHA:
 					case LifeEnum.HIT_OBJECT:
@@ -480,7 +514,8 @@ namespace LifeDISA
 						int numcases = GetParam();
 						string lastSwitchVarb = switchEvalVar[pos-4].Split('.').Last();
 
-						for(int n = 0; n < numcases; n++) {
+						for(int n = 0; n < numcases; n++) 
+						{
 							curr = GetParam();
 
 							writer.Write("{0}", GetSwitchCaseName(curr, lastSwitchVarb));
@@ -493,6 +528,7 @@ namespace LifeDISA
 						indentation.Add(pos+curr*2);
 						break;
 
+					case LifeEnum.RESET_MOVE_MANUAL:
 					case LifeEnum.ENDLIFE:
 					case LifeEnum.RETURN:
 					case LifeEnum.END_SEQUENCE:
@@ -611,6 +647,10 @@ namespace LifeDISA
 
 					case LifeEnum.C_VAR:
 						writer.Write("{0} = {1}", GetParam(), Evalvar());
+						break;
+											
+					case LifeEnum.BODY_RESET:
+						writer.Write("{0} {1}", Evalvar(), Evalvar());
 						break;
 
 					default:
@@ -831,9 +871,18 @@ namespace LifeDISA
 				case 0x24:
 					return "C_VAR"+GetParam();
 				case 0x25:
+					if (isAITD2)
+					{
+						return "MATRIX(" + GetParam() + " " + GetParam() + ")";
+					}
 					return "STAGE";
 				case 0x26:
+					if (isAITD2)
+					{
+						return "TRIGGER_COLLIDER";	
+					}
 					return "THROW("+GetObject(GetParam())+")";
+					
 				default:
 					throw new NotImplementedException(curr.ToString());
 			}
