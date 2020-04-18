@@ -385,7 +385,34 @@ namespace LifeDISA
 						{
 							indentation.Add(gotoPos); //end of switch
 						}
+						break;
+						
+					case LifeEnum.CASE:
+						curr = GetParam();
+						string lastSwitchVar = switchEvalVar[pos-4].Split('.').Last();
 
+						writer.Write("{0}", GetSwitchCaseName(curr, lastSwitchVar));
+
+						curr = GetParam();
+						indentation.Add(pos+curr*2);
+						break;
+
+					case LifeEnum.MULTI_CASE:
+						int numcases = GetParam();
+						string lastSwitchVarb = switchEvalVar[pos-4].Split('.').Last();
+
+						for(int n = 0; n < numcases; n++) 
+						{
+							curr = GetParam();
+
+							writer.Write("{0}", GetSwitchCaseName(curr, lastSwitchVarb));
+
+							if(n > 0) writer.Write(" ");
+							else writer.Write(", ");
+						}
+
+						curr = GetParam();
+						indentation.Add(pos+curr*2);
 						break;
 
 					case LifeEnum.SOUND:
@@ -472,6 +499,11 @@ namespace LifeDISA
 
 						switch(curr)
 						{
+							case 0: //none
+							case 1: //manual
+								GetParam();
+								break;
+								
 							case 2: //follow
 								writer.Write(" {0}", GetObject(GetParam()));
 								break;
@@ -480,9 +512,7 @@ namespace LifeDISA
 								writer.Write(" {0}", vars.GetText("TRACKS", GetParam()));
 								break;
 
-							default:
-								GetParam();
-								break;
+
 						}
 						break;
 
@@ -498,34 +528,6 @@ namespace LifeDISA
 					case LifeEnum.SET_ALPHA:
 					case LifeEnum.HIT_OBJECT:
 						writer.Write("{0} {1}", GetParam(), GetParam());
-						break;
-
-					case LifeEnum.CASE:
-						curr = GetParam();
-						string lastSwitchVar = switchEvalVar[pos-4].Split('.').Last();
-
-						writer.Write("{0}", GetSwitchCaseName(curr, lastSwitchVar));
-
-						curr = GetParam();
-						indentation.Add(pos+curr*2);
-						break;
-
-					case LifeEnum.MULTI_CASE:
-						int numcases = GetParam();
-						string lastSwitchVarb = switchEvalVar[pos-4].Split('.').Last();
-
-						for(int n = 0; n < numcases; n++) 
-						{
-							curr = GetParam();
-
-							writer.Write("{0}", GetSwitchCaseName(curr, lastSwitchVarb));
-
-							if(n > 0) writer.Write(" ");
-							else writer.Write(", ");
-						}
-
-						curr = GetParam();
-						indentation.Add(pos+curr*2);
 						break;
 
 					case LifeEnum.RESET_MOVE_MANUAL:
@@ -605,14 +607,8 @@ namespace LifeDISA
 						writer.Write("{0} {1}", Evalvar(), GetParam());
 						break;
 
-					case LifeEnum.DROP:
-						string ev = Evalvar();
-						int obj;
-						if(int.TryParse(ev, out obj))
-						{
-							ev = GetObject(obj);
-						}
-						writer.Write("{0} {1}", ev, GetObject(GetParam()));
+					case LifeEnum.DROP:						
+						writer.Write("{0} {1}", GetObject(Evalvar()), GetObject(GetParam()));
 						break;
 
 					case LifeEnum.PUT:
@@ -693,6 +689,17 @@ namespace LifeDISA
 				default:
 					return value.ToString();
 			}
+		}
+		
+		static string GetObject(string index)
+		{
+			int value;
+			if(int.TryParse(index, out value))
+			{
+				index = GetObject(value);
+			}
+			
+			return index;
 		}
 
 		static string GetObject(int index)
@@ -822,14 +829,7 @@ namespace LifeDISA
 				case 0xF:
 					return "COL_BY";
 				case 0x10:
-					string eval = Evalvar();
-					int objectIndex;
-					if(int.TryParse(eval, out objectIndex))
-					{
-						return "ISFOUND("+GetObject(objectIndex)+")";
-					}
-
-					return "ISFOUND("+eval+")";
+					return "ISFOUND("+GetObject(Evalvar())+")";
 				case 0x11:
 					return "ACTION";
 				case 0x12:
