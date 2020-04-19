@@ -314,9 +314,11 @@ namespace LifeDISA
 						bool endOfSwitch = false;
 						int gotoPos = pos;
 
-						//fix for #353 : IF appearing just after switch (while a CASE is expected)
+						//fix for #353 : instructions just after switch (while a CASE is expected)
+						//this is result of a DEFAULT statement right after a SWITCH 
 						while(macroTable(allBytes.ReadShort(gotoPos)) != LifeEnum.CASE &&
-						      macroTable(allBytes.ReadShort(gotoPos)) != LifeEnum.MULTI_CASE)
+							  macroTable(allBytes.ReadShort(gotoPos)) != LifeEnum.MULTI_CASE &&
+							  gotoPos < (allBytes.Length - 2))
 						{
 							gotoPos += 2;
 						}
@@ -403,12 +405,10 @@ namespace LifeDISA
 
 						for(int n = 0; n < numcases; n++) 
 						{
+							if (n > 0) writer.Write(" ");
 							curr = GetParam();
 
-							writer.Write("{0}", GetSwitchCaseName(curr, lastSwitchVarb));
-
-							if(n > 0) writer.Write(" ");
-							else writer.Write(", ");
+							writer.Write("{0}", GetSwitchCaseName(curr, lastSwitchVarb));							
 						}
 
 						curr = GetParam();
