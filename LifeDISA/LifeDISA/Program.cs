@@ -11,16 +11,18 @@ namespace LifeDISA
 	class Program
 	{
 		static int pos;
-
 		static byte[] allBytes;
 
+		static LifeEnum[] table;
 		static bool isCDROMVersion;
 		static bool isAITD2;
-		static Func<int, LifeEnum> macroTable;
 		static readonly Dictionary<int, string> objectsByIndex = new Dictionary<int, string>();
 		static readonly Dictionary<int, string> namesByIndex = new Dictionary<int, string>();
 
 		static string[] trackModes = { "NONE", "MANUAL", "FOLLOW", "TRACK"};
+		
+		static LinkedList<Instruction> nodes;
+		static Dictionary<int, LinkedListNode<Instruction>> nodesMap;
 
 		static readonly VarParserExt vars = new VarParserExt();
 
@@ -39,23 +41,13 @@ namespace LifeDISA
 				.Where(x => r.IsMatch(Path.GetFileName(x)))
 				.ToList();
 			
-			LifeEnum[] table = MacroTable.AITD1;
+			table = MacroTable.AITD1;
 			if (files.Count < 60) //JITD
 			{
 				isAITD2 = true; 
 				table = MacroTable.AITD2;				
 			}
 			
-			macroTable = index => 
-			{
-				if(index >= 0 && index < table.Length)
-				{
-					return table[index];
-				}
-				
-				return (LifeEnum)index;
-			};
-
 			//dump names
 			var validFolderNames = new [] {	"ENGLISH", "FRANCAIS", "DEUTSCH", "ESPAGNOL", "ITALIANO", "USA" };
 			string languageFile = validFolderNames
@@ -108,99 +100,74 @@ namespace LifeDISA
 						FilePath = x,
 						FileNumber = Convert.ToInt32(Path.GetFileNameWithoutExtension(x), 16)
 					})
-					.OrderBy(x => x.FileNumber))
+		        	.OrderBy(x => x.FileNumber))
 				{
 					writer.WriteLine("--------------------------------------------------");
 					writer.WriteLine("#{0} {1}", file.FileNumber, vars.GetText("LIFES", file.FileNumber, string.Empty));
 					writer.WriteLine("--------------------------------------------------");
-					Dump(file.FilePath, writer);
+					ParseFile(file.FilePath);
+					Optimize();
+					Dump(writer);
 				}
 			}
 
 			return 0;
 		}
 
-		static void Dump(string filename, TextWriter writer)
+		static void ParseFile(string filename)
 		{
-			List<int> indentation = new List<int>();
-			List<int> elseIndent = new List<int>();
-			HashSet<int> gotosToIgnore = new HashSet<int>();
-			Dictionary<int, string> switchEvalVar = new Dictionary<int, string>();
-			List<KeyValuePair<int, int>> switchDefault = new List<KeyValuePair<int, int>>();
-
-			bool consecutiveIfs = false;
-
-			allBytes = File.ReadAllBytes(filename);
-
+			allBytes = File.ReadAllBytes(filename);			
 			pos = 0;
 
+			nodesMap = new Dictionary<int, LinkedListNode<Instruction>>();
+			nodes = new LinkedList<Instruction>();
 			while(pos < allBytes.Length)
-			{
-				while (indentation.Contains(pos))
-				{
-					indentation.RemoveAt(indentation.IndexOf(pos));
-					WriteLine(writer, indentation.Count(), "END\r\n");
-				}
+			{				
+				int position = pos;
 
-				if (elseIndent.Contains(pos))
-				{
-					elseIndent.RemoveAt(elseIndent.IndexOf(pos));
-					WriteLine(writer, indentation.Count()-1, "ELSE\r\n");
-				}
-
-				int defaultCase = switchDefault.FindIndex(x => x.Key == pos);
-				if (defaultCase != -1)
-				{
-					int indent = switchDefault[defaultCase].Value;
-					switchDefault.RemoveAt(defaultCase);
-					WriteLine(writer, indentation.Count(), "DEFAULT\r\n");
-					indentation.Add(indent);
-				}
-
-				int oldPos = pos;
+				int curr = allBytes.ReadShort(pos);		
 				int actor = -1;
-				int curr = allBytes.ReadShort(pos);
 				if((curr & 0x8000) == 0x8000)
 				{
 					curr = curr & 0x7FFF;
 					pos += 2;
 					actor = allBytes.ReadShort(pos);
 				}
-
-				LifeEnum life = macroTable(curr);
-
-				//skip gotos
-				if(life == LifeEnum.GOTO && gotosToIgnore.Contains(oldPos))
+				
+				LifeEnum life;
+				if(curr >= 0 && curr < table.Length)
 				{
-					pos += 4;
-					continue;
+					life = table[curr];
 				}
-
-				if((life == LifeEnum.ENDLIFE && pos == allBytes.Length - 2))
+				else
 				{
-					pos += 2;
-					continue;
+					life = (LifeEnum)curr;
 				}
-
+				
 				string lifeString = life.ToString();
 				if(lifeString.StartsWith("IF")) lifeString = "IF";
 				else if(lifeString == "MULTI_CASE") lifeString = "CASE";
 				if(actor != -1) lifeString = GetObject(actor) + "." + lifeString;
-
-				if(consecutiveIfs)
+				pos += 2;
+						
+				Instruction ins = new Instruction
 				{
-					writer.Write(" AND ");
-					consecutiveIfs = false;
-				}
-				else
-				{
-					if(life != LifeEnum.C_VAR) lifeString += " ";
-					WriteLine(writer, indentation.Count(x => x > pos), lifeString);
-				}
-
-				pos +=2;
-
-				switch(life)
+					Type = life,
+					Name = lifeString
+				};
+				
+				ParseArguments(life, ins);
+				var node = nodes.AddLast(ins);	
+				nodesMap.Add(position, node);
+			}							
+		}
+		
+		static void Optimize()
+		{				
+			for(var node = nodes.First; node != null; node = node.Next)
+			{
+				var ins = node.Value;
+				switch(ins.Type)
 				{
 					case LifeEnum.IF_EGAL:
 					case LifeEnum.IF_DIFFERENT:
@@ -208,486 +175,513 @@ namespace LifeDISA
 					case LifeEnum.IF_SUP:
 					case LifeEnum.IF_INF_EGAL:
 					case LifeEnum.IF_INF:
-						string paramA = Evalvar();
-						string paramB = Evalvar();
-
-						string paramAShort = paramA.Split('.').Last();
-
-						if(paramAShort == "INHAND" || paramAShort == "COL_BY" || paramAShort == "HIT_BY" || paramAShort == "HIT" || paramAShort == "ACTOR_COLLIDER")
-							paramB = GetObject(int.Parse(paramB));
-
-						if(paramAShort == "ANIM")
-							paramB = vars.GetText("ANIMS", paramB);
-
-						if(paramAShort == "BODY")
-							paramB = vars.GetText("BODYS", paramB);
-
-						if(paramAShort == "KEYBOARD_INPUT")
-							paramB = vars.GetText("KEYBOARD INPUT", paramB);
-
-						if(paramAShort.StartsWith("POSREL"))
-							paramB = vars.GetText("POSREL", paramB);
-
-						switch(life)
-						{
-							case LifeEnum.IF_EGAL:
-								writer.Write("{0} == {1}", paramA, paramB);
-								break;
-							case LifeEnum.IF_DIFFERENT:
-								writer.Write("{0} <> {1}", paramA, paramB);
-								break;
-							case LifeEnum.IF_SUP_EGAL:
-								writer.Write("{0} >= {1}", paramA, paramB);
-								break;
-							case LifeEnum.IF_SUP:
-								writer.Write("{0} > {1}", paramA, paramB);
-								break;
-							case LifeEnum.IF_INF_EGAL:
-								writer.Write("{0} <= {1}", paramA, paramB);
-								break;
-							case LifeEnum.IF_INF:
-								writer.Write("{0} < {1}", paramA, paramB);
-								break;
-						}
-
-						//read goto
-						curr = GetParam();
-
-						//detect if else
-						int beforeGoto = pos+curr*2 - 4;
-						LifeEnum next = macroTable(allBytes.ReadShort(beforeGoto));
-						int gotoPosition = beforeGoto+4 + allBytes.ReadShort(beforeGoto+2)*2;
-
-						//detection might fail if there is 0x10 (eg: constant) right before end of if
-						//because of that, we also check if goto position is within bounds
-						if (next == LifeEnum.GOTO && gotoPosition >= 0 && gotoPosition <= (allBytes.Length - 2))
-						{
-							gotosToIgnore.Add(beforeGoto);
-							elseIndent.Add(pos+curr*2);
-							indentation.Add(gotoPosition);
+					{
+						ins.IndentInc = true;
+													
+						//detect if else						
+						var target = nodesMap[ins.Goto];						
+						var previous = target.Previous;
+						if (previous.Value.Type == LifeEnum.GOTO)
+						{							
+							nodes.AddBefore(target, new Instruction { Name = "ELSE", IndentInc = true, IndentDec = true });	
+							nodes.AddBefore(nodesMap[previous.Value.Goto], new Instruction { Name = "END", IndentDec = true });
 						}
 						else
 						{
-							indentation.Add(pos+curr*2);
+							nodes.AddBefore(target, new Instruction { Name = "END", IndentDec = true });													
 						}
-
-						//check if next instruction is also an if
-						int previousPos = pos;
-						next = macroTable(GetParam());
-
-						if(next == LifeEnum.IF_EGAL ||
-						   next == LifeEnum.IF_DIFFERENT ||
-						   next == LifeEnum.IF_INF ||
-						   next == LifeEnum.IF_INF_EGAL ||
-						   next == LifeEnum.IF_SUP ||
-						   next == LifeEnum.IF_SUP_EGAL)
+					
+						//check for consecutive IFs
+						var next = node.Next;
+						while(next != null && 
+						    ( 
+				      		next.Value.Type == LifeEnum.IF_EGAL ||
+							next.Value.Type == LifeEnum.IF_DIFFERENT ||
+							next.Value.Type == LifeEnum.IF_INF ||
+							next.Value.Type == LifeEnum.IF_INF_EGAL ||
+							next.Value.Type == LifeEnum.IF_SUP ||
+							next.Value.Type == LifeEnum.IF_SUP_EGAL) && 
+						    target == nodesMap[next.Value.Goto]) //the IFs ends up at same place
 						{
-							//skip if evaluated vars
-							int dummyActor;
-
-							EvalvarImpl(out dummyActor);
-							EvalvarImpl(out dummyActor);
-
-							//check if the two if end up at same place
-							curr = GetParam();
-
-							if((beforeGoto+4) == (pos+curr*2))
-							{
-								consecutiveIfs = true;
-								indentation.RemoveAt(indentation.Count - 1);
-							}
-						}
-
-						pos = previousPos;
+							var after = next.Next;
+							ins.Separator = " AND "; 
+							ins.Arguments.Add(next.Value.Arguments[0]);
+							nodes.Remove(next);								
+							
+							next = after;
+						}	
 						break;
-
-					case LifeEnum.GOTO: //should never be called
-						curr = GetParam();
-						writer.Write("{0}", pos+curr*2);
-						break;
-
-					case LifeEnum.SWITCH:
-						string paramS = Evalvar();
-						writer.Write("{0}", paramS);
-
-						//find end of switch
-						bool endOfSwitch = false;
-						int gotoPos = pos;
-
-						//fix for #353 : instructions just after switch (while a CASE is expected)
-						//this is result of a DEFAULT statement right after a SWITCH 
-						while(macroTable(allBytes.ReadShort(gotoPos)) != LifeEnum.CASE &&
-							  macroTable(allBytes.ReadShort(gotoPos)) != LifeEnum.MULTI_CASE &&
-							  gotoPos < (allBytes.Length - 2))
+					}						
+						
+					case LifeEnum.SWITCH:	
+					{
+						ins.IndentInc = true;
+						
+						//instruction after switch should be CASE or MULTICASE 
+						//but if could be instructions (eg: DEFAULT after switch)
+						var target = node.Next;
+						while(target != null &&
+						      target.Value.Type != LifeEnum.CASE &&
+							  target.Value.Type != LifeEnum.MULTI_CASE)
 						{
-							gotoPos += 2;
+							target = target.Next;
 						}
-
-						int switchEndGoto = -1;
+								
+						//detect end of switch
+						string switchValue = node.Value.Arguments.First().Split('.').Last();
+						LinkedListNode<Instruction> endOfSwitch = null;
+						bool lastInstruction = false;
+						
 						do
 						{
-							LifeEnum casePos = macroTable(allBytes.ReadShort(gotoPos));
-							switch(casePos)
+							ins = target.Value;
+							switch(ins.Type)
 							{
 								case LifeEnum.CASE:
-								{
-									switchEvalVar.Add(gotoPos, paramS);
-									gotoPos += 4; //skip case + value
-	
-									//goto just after case
-									gotoPos += 2 + allBytes.ReadShort(gotoPos)*2;
-									if (macroTable(allBytes.ReadShort(gotoPos-4)) == LifeEnum.GOTO)
-									{
-										gotosToIgnore.Add(gotoPos-4); //goto at the end of the case statement (end of switch)
-										if (switchEndGoto == -1)
-										{
-											switchEndGoto = gotoPos + allBytes.ReadShort(gotoPos-2)*2;
-										}
-									}
-									break;
-								}								
-									
 								case LifeEnum.MULTI_CASE:
-								{
-									switchEvalVar.Add(gotoPos, paramS);
-									gotoPos += 2; //skip multi case
+								{				
+									ins.IndentInc = true;
 									
-									curr = allBytes.ReadShort(gotoPos);
-									gotoPos += 2 + curr * 2; //skip values
-	
-									//goto just after case
-									gotoPos += 2 + allBytes.ReadShort(gotoPos)*2;
-									if (macroTable(allBytes.ReadShort(gotoPos-4)) == LifeEnum.GOTO)
+									
+									for(int i = 0 ; i < ins.Arguments.Count ; i++)
 									{
-										gotosToIgnore.Add(gotoPos-4); //goto at the end of the case statement (end of switch)
-										if (switchEndGoto == -1)
+										ins.Arguments[i] = GetConditionName(switchValue, ins.Arguments[i]);
+									}
+									
+									target = nodesMap[ins.Goto];									
+									if (target.Previous.Value.Type == LifeEnum.GOTO)
+									{
+										if(endOfSwitch == null) 
 										{
-											//end of switch
-											switchEndGoto = gotoPos + allBytes.ReadShort(gotoPos-2)*2;
+											endOfSwitch = nodesMap[target.Previous.Value.Goto];
 										}
 									}
-									break;
-								}
-								
 									
+									nodes.AddBefore(target, new Instruction { Name = "END", IndentDec = true });
+									break;									
+								}
+																	
 								default:
-									endOfSwitch = true;
+									lastInstruction = true;
 									break;
 							}
 						}
-						while (!endOfSwitch);
-
-						//should be equal, otherwise there is a default case
-						if(switchEndGoto != -1 && switchEndGoto != gotoPos)
+						while (!lastInstruction);	
+								
+						//should be equal, otherwise there is a default case						
+						if(endOfSwitch != null && target != endOfSwitch)
 						{
-							switchDefault.Add(new KeyValuePair<int, int>(gotoPos, switchEndGoto)); //default start + end pos
-							indentation.Add(switchEndGoto); //end of switch
+							nodes.AddBefore(endOfSwitch, new Instruction { Name = "END", IndentDec = true });
+							nodes.AddBefore(endOfSwitch, new Instruction { Name = "END", IndentDec = true });
+							nodes.AddBefore(target, new Instruction { Name = "DEFAULT", IndentInc = true });							
 						}
 						else
 						{
-							indentation.Add(gotoPos); //end of switch
-						}
+							nodes.AddBefore(target, new Instruction { Name = "END", IndentDec = true });
+						}						
 						break;
-						
-					case LifeEnum.CASE:
-						curr = GetParam();
-						string lastSwitchVar = switchEvalVar[pos-4].Split('.').Last();
-
-						writer.Write("{0}", GetSwitchCaseName(curr, lastSwitchVar));
-
-						curr = GetParam();
-						indentation.Add(pos+curr*2);
-						break;
-
-					case LifeEnum.MULTI_CASE:
-						int numcases = GetParam();
-						string lastSwitchVarb = switchEvalVar[pos-4].Split('.').Last();
-
-						for(int n = 0; n < numcases; n++) 
-						{
-							if (n > 0) writer.Write(" ");
-							curr = GetParam();
-
-							writer.Write("{0}", GetSwitchCaseName(curr, lastSwitchVarb));							
-						}
-
-						curr = GetParam();
-						indentation.Add(pos+curr*2);
-						break;
-
-					case LifeEnum.SOUND:
-						writer.Write("{0}", vars.GetText("SOUNDS", Evalvar()));
-						break;
-
-					case LifeEnum.BODY:
-						writer.Write("{0}", vars.GetText("BODYS", Evalvar()));
-						break;
-
-					case LifeEnum.SAMPLE_THEN:
-						writer.Write("{0} {1}", Evalvar(), Evalvar());
-						break;
-
-					case LifeEnum.CAMERA_TARGET:
-					case LifeEnum.TAKE:
-					case LifeEnum.IN_HAND:
-					case LifeEnum.DELETE:
-					case LifeEnum.FOUND:
-						writer.Write("{0}", GetObject(GetParam()));
-						break;
-
-					case LifeEnum.FOUND_NAME:
-					case LifeEnum.MESSAGE:
-						writer.Write("{0}", GetName(GetParam()));
-						break;
-
-					case LifeEnum.FOUND_FLAG:
-					case LifeEnum.FLAGS:
-						writer.Write("0x{0:X4}", GetParam());
-						break;
-
-					case LifeEnum.LIFE:
-						writer.Write("{0}", vars.GetText("LIFES", GetParam()));
-						break;
-
-					case LifeEnum.FOUND_BODY:
-						writer.Write("{0}", vars.GetText("BODYS", GetParam()));
-						break;
-
-					case LifeEnum.NEXT_MUSIC:
-					case LifeEnum.MUSIC:
-						writer.Write("{0}", vars.GetText("MUSIC", GetParam()));
-						break;
-
-					case LifeEnum.ANIM_REPEAT:
-						writer.Write("{0}", vars.GetText("ANIMS", GetParam()));
-						break;
-
-					case LifeEnum.SPECIAL:
-						writer.Write("{0}", vars.GetText("SPECIAL", GetParam()));
-						break;
-
-					case LifeEnum.SET_INVENTORY:
-					case LifeEnum.PLAY_SEQUENCE:
-					case LifeEnum.COPY_ANGLE:
-					case LifeEnum.TEST_COL:
-					case LifeEnum.LIFE_MODE:
-					case LifeEnum.FOUND_WEIGHT:
-					case LifeEnum.ALLOW_INVENTORY:
-					case LifeEnum.WATER:
-					case LifeEnum.RND_FREQ:
-					case LifeEnum.LIGHT:
-					case LifeEnum.SHAKING:
-					case LifeEnum.FADE_MUSIC:
-						writer.Write("{0}", GetParam());
-						break;
-
-					case LifeEnum.READ:
-						writer.Write("{0} {1}", GetParam(), GetParam());
-						if (isCDROMVersion)
-						{
-							writer.Write(" {0}", GetParam());
-						}
-						break;
-
-					case LifeEnum.PUT_AT:
-						writer.Write("{0} {1}", GetObject(GetParam()), GetObject(GetParam()));
-						break;
-
-					case LifeEnum.TRACKMODE:
-						curr = GetParam();
-						writer.Write("{0}", GetTrackMode(curr));
-
-						switch(curr)
-						{
-							case 0: //none
-							case 1: //manual
-								GetParam();
-								break;
-								
-							case 2: //follow
-								writer.Write(" {0}", GetObject(GetParam()));
-								break;
-
-							case 3: //track
-								writer.Write(" {0}", vars.GetText("TRACKS", GetParam()));
-								break;
-
-
-						}
-						break;
-
-					case LifeEnum.ANIM_ONCE:
-					case LifeEnum.ANIM_ALL_ONCE:
-						writer.Write("{0} {1}",
-							vars.GetText("ANIMS", GetParam()),
-							vars.GetText("ANIMS", GetParam()));
-						break;
-
-					case LifeEnum.ANIM_HYBRIDE_ONCE: 	
-					case LifeEnum.SET_BETA:
-					case LifeEnum.SET_ALPHA:
-					case LifeEnum.HIT_OBJECT:
-						writer.Write("{0} {1}", GetParam(), GetParam());
-						break;
-
-					case LifeEnum.RESET_MOVE_MANUAL:
+					}
+				}
+			}
+			
+			for(var node = nodes.First; node != null; node = node.Next)
+			{
+				switch(node.Value.Type)
+				{
+					case LifeEnum.GOTO:
 					case LifeEnum.ENDLIFE:
-					case LifeEnum.RETURN:
-					case LifeEnum.END_SEQUENCE:
-					case LifeEnum.DO_MAX_ZV:
-					case LifeEnum.GAME_OVER:
-					case LifeEnum.WAIT_GAME_OVER:
-					case LifeEnum.STOP_HIT_OBJECT:
-					case LifeEnum.START_CHRONO:
-					case LifeEnum.UP_COOR_Y:
-					case LifeEnum.DO_MOVE:
-					case LifeEnum.MANUAL_ROT:
-					case LifeEnum.GET_HARD_CLIP:
-					case LifeEnum.DO_ROT_ZV:
-					case LifeEnum.DO_REAL_ZV:
-					case LifeEnum.DO_CARRE_ZV:
+						nodes.Remove(node);
 						break;
-
-					case LifeEnum.HIT:
-						writer.Write("{0} {1} {2} {3} {4} {5}",
-							vars.GetText("ANIMS", GetParam()),
-							GetParam(), GetParam(), GetParam(),
-							Evalvar(),
-							vars.GetText("ANIMS", GetParam()));
-						break;
-
-					case LifeEnum.DEF_ZV:
-						writer.Write("{0} {1} {2} {3} {4} {5}",
-							 GetParam(), GetParam(), GetParam(),
-							 GetParam(), GetParam(), GetParam());
-						break;
-
-					case LifeEnum.FIRE:
-						writer.Write("{0} {1} {2} {3} {4} {5}",
-							 vars.GetText("ANIMS", GetParam()),
-							 GetParam(),  //shoot frame
-							 GetParam(),  //hotpoint
-							 GetParam(),  //range
-							 GetParam(),  //hitforce
-							 vars.GetText("ANIMS", GetParam()));
-						break;
-
-					case LifeEnum.ANIM_MOVE:
-						writer.Write("{0} {1} {2} {3} {4} {5} {6}",
-							vars.GetText("ANIMS", GetParam()),
-							vars.GetText("ANIMS", GetParam()),
-							vars.GetText("ANIMS", GetParam()),
-							vars.GetText("ANIMS", GetParam()),
-							vars.GetText("ANIMS", GetParam()),
-							vars.GetText("ANIMS", GetParam()),
-							vars.GetText("ANIMS", GetParam()));
-						break;
-
-					case LifeEnum.THROW:
-						writer.Write("{0} {1} {2} {3} {4} {5} {6}",
-							vars.GetText("ANIMS", GetParam()),
-							GetParam(), GetParam(),
-							GetObject(GetParam()),
-							GetParam(), GetParam(),
-							vars.GetText("ANIMS", GetParam()));
-						break;
-
-					case LifeEnum.PICTURE:
-					case LifeEnum.ANGLE:
-						writer.Write("{0} {1} {2}", GetParam(), GetParam(), GetParam());
-						break;
-
-					case LifeEnum.CHANGEROOM:
-						writer.Write("E{0}R{1} {2} {3} {4}",
-									 GetParam(), GetParam(),
-									 GetParam(), GetParam(), GetParam());
-						break;
-
-					case LifeEnum.REP_SAMPLE:
-						writer.Write("{0} {1}", Evalvar(), GetParam());
-						break;
-
-					case LifeEnum.DROP:						
-						writer.Write("{0} {1}", GetObject(Evalvar()), GetObject(GetParam()));
-						break;
-
-					case LifeEnum.PUT:
-						writer.Write("{0} {1} {2} {3} {4} {5} {6} {7} {8}",
-									 GetParam(), GetParam(), GetParam(), GetParam(), GetParam(),
-									 GetParam(), GetParam(), GetParam(), GetParam());
-						break;
-
-					case LifeEnum.ANIM_SAMPLE:
-						writer.Write("{0} {1} {2}",
-							vars.GetText("SOUNDS", Evalvar()),
-							vars.GetText("ANIMS", GetParam()),
-							GetParam());
-						break;
-
-					case LifeEnum.SET:
-						curr = GetParam();
-						writer.Write("{0} = {1}", vars.GetText("VARS", curr, "VAR" + curr), Evalvar());
-						break;
-
-					case LifeEnum.ADD:
-					case LifeEnum.SUB:
-						curr = GetParam();
-						writer.Write("{0} {1}", vars.GetText("VARS", curr, "VAR" + curr), Evalvar());
-						break;
-
-					case LifeEnum.INC:
-					case LifeEnum.DEC:
-						curr = GetParam();
-						writer.Write(vars.GetText("VARS", curr, "VAR" + curr) + " ");
-						break;
-
-					case LifeEnum.C_VAR:
-						writer.Write("{0} = {1}", GetParam(), Evalvar());
-						break;
-											
-					case LifeEnum.BODY_RESET:
-						writer.Write("{0} {1}", Evalvar(), Evalvar());
-						break;
-
-					default:
-						throw new NotImplementedException(life.ToString());
+				}
+			}
+		}
+		
+		static void Dump(TextWriter writer)
+		{
+			int indent = 0;			
+			for(var node = nodes.First; node != null; node = node.Next)
+			{			
+				var ins = node.Value;
+				
+				if(ins.IndentDec) 
+				{
+					indent--;
 				}
 
-				if (!consecutiveIfs) writer.WriteLine();
+				writer.Write(new String('\t', indent));
+				writer.Write(ins.Name);
+				
+				if(ins.Arguments.Any())
+				{
+					writer.Write(" " + string.Join(ins.Separator ?? " ", ins.Arguments.ToArray()));
+				}
+				
+				writer.WriteLine();
+				
+				if(ins.IndentInc)
+				{
+					indent++;
+				}
+			}
+		}
+		
+		static void ParseArguments(LifeEnum life, Instruction ins)
+		{		
+			switch(life)
+			{
+				case LifeEnum.IF_EGAL:
+				case LifeEnum.IF_DIFFERENT:
+				case LifeEnum.IF_SUP_EGAL:
+				case LifeEnum.IF_SUP:
+				case LifeEnum.IF_INF_EGAL:
+				case LifeEnum.IF_INF:
+					string paramA = Evalvar();
+					string paramB = Evalvar();
+
+					string paramAShort = paramA.Split('.').Last();
+					paramB = GetConditionName(paramAShort, paramB);
+					
+					switch(life)
+					{
+						case LifeEnum.IF_EGAL:
+							ins.Add("{0} == {1}", paramA, paramB);
+							break;
+						case LifeEnum.IF_DIFFERENT:
+							ins.Add("{0} <> {1}", paramA, paramB);
+							break;
+						case LifeEnum.IF_SUP_EGAL:
+							ins.Add("{0} >= {1}", paramA, paramB);
+							break;
+						case LifeEnum.IF_SUP:
+							ins.Add("{0} > {1}", paramA, paramB);
+							break;
+						case LifeEnum.IF_INF_EGAL:
+							ins.Add("{0} <= {1}", paramA, paramB);
+							break;
+						case LifeEnum.IF_INF:
+							ins.Add("{0} < {1}", paramA, paramB);
+							break;
+					}
+					
+					ins.Goto = GetParam() * 2 + pos;
+					break;
+
+				case LifeEnum.GOTO: //should never be called
+					ins.Goto = GetParam() * 2 + pos;					
+					break;
+
+				case LifeEnum.SWITCH:
+					ins.Add(Evalvar());
+					break;
+					
+				case LifeEnum.CASE:
+					ins.Add(GetParam());
+					ins.Goto = GetParam() * 2 + pos;
+					break;
+
+				case LifeEnum.MULTI_CASE:
+					int numcases = GetParam();
+					for(int n = 0; n < numcases; n++) 
+					{
+						ins.Add(GetParam());
+					}
+
+					ins.Goto = GetParam() * 2 + pos;
+					break;
+
+				case LifeEnum.SOUND:
+					ins.Add(vars.GetText("SOUNDS", Evalvar()));
+					break;
+
+				case LifeEnum.BODY:
+					ins.Add(vars.GetText("BODYS", Evalvar()));
+					break;
+
+				case LifeEnum.SAMPLE_THEN:
+					ins.Add(Evalvar());
+					ins.Add(Evalvar());
+					break;
+
+				case LifeEnum.CAMERA_TARGET:
+				case LifeEnum.TAKE:
+				case LifeEnum.IN_HAND:
+				case LifeEnum.DELETE:
+				case LifeEnum.FOUND:
+					ins.Add(GetObject(GetParam()));
+					break;
+
+				case LifeEnum.FOUND_NAME:
+				case LifeEnum.MESSAGE:
+					ins.Add(GetName(GetParam()));
+					break;
+
+				case LifeEnum.FOUND_FLAG:
+				case LifeEnum.FLAGS:
+					ins.Add("0x{0:X4}", GetParam());
+					break;
+
+				case LifeEnum.LIFE:
+					ins.Add(vars.GetText("LIFES", GetParam()));
+					break;
+
+				case LifeEnum.FOUND_BODY:
+					ins.Add(vars.GetText("BODYS", GetParam()));
+					break;
+
+				case LifeEnum.NEXT_MUSIC:
+				case LifeEnum.MUSIC:
+					ins.Add(vars.GetText("MUSIC", GetParam()));
+					break;
+
+				case LifeEnum.ANIM_REPEAT:
+					ins.Add(vars.GetText("ANIMS", GetParam()));
+					break;
+
+				case LifeEnum.SPECIAL:
+					ins.Add(vars.GetText("SPECIAL", GetParam()));
+					break;
+
+				case LifeEnum.SET_INVENTORY:
+				case LifeEnum.PLAY_SEQUENCE:
+				case LifeEnum.COPY_ANGLE:
+				case LifeEnum.TEST_COL:
+				case LifeEnum.LIFE_MODE:
+				case LifeEnum.FOUND_WEIGHT:
+				case LifeEnum.ALLOW_INVENTORY:
+				case LifeEnum.WATER:
+				case LifeEnum.RND_FREQ:
+				case LifeEnum.LIGHT:
+				case LifeEnum.SHAKING:
+				case LifeEnum.FADE_MUSIC:
+					ins.Add(GetParam());
+					break;
+
+				case LifeEnum.READ:
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					if (isCDROMVersion)
+					{				
+						ins.Add(GetParam());
+					}
+					break;
+
+				case LifeEnum.PUT_AT:
+					ins.Add(GetObject(GetParam()));
+					ins.Add(GetObject(GetParam()));
+					break;
+
+				case LifeEnum.TRACKMODE:
+				{
+					int curr = GetParam();
+					ins.Add(GetTrackMode(curr));
+
+					switch(curr)
+					{
+						case 0: //none
+						case 1: //manual
+							GetParam();
+							break;
+							
+						case 2: //follow
+							ins.Add(GetObject(GetParam()));
+							break;
+
+						case 3: //track
+							ins.Add(vars.GetText("TRACKS", GetParam()));
+							break;
+					}
+					break;
+				}
+
+				case LifeEnum.ANIM_ONCE:
+				case LifeEnum.ANIM_ALL_ONCE:
+					ins.Add(vars.GetText("ANIMS", GetParam()));
+					ins.Add(vars.GetText("ANIMS", GetParam()));
+					break;
+
+				case LifeEnum.ANIM_HYBRIDE_ONCE: 	
+				case LifeEnum.SET_BETA:
+				case LifeEnum.SET_ALPHA:
+				case LifeEnum.HIT_OBJECT:
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					break;
+
+				case LifeEnum.RESET_MOVE_MANUAL:
+				case LifeEnum.ENDLIFE:
+				case LifeEnum.RETURN:
+				case LifeEnum.END_SEQUENCE:
+				case LifeEnum.DO_MAX_ZV:
+				case LifeEnum.GAME_OVER:
+				case LifeEnum.WAIT_GAME_OVER:
+				case LifeEnum.STOP_HIT_OBJECT:
+				case LifeEnum.START_CHRONO:
+				case LifeEnum.UP_COOR_Y:
+				case LifeEnum.DO_MOVE:
+				case LifeEnum.MANUAL_ROT:
+				case LifeEnum.GET_HARD_CLIP:
+				case LifeEnum.DO_ROT_ZV:
+				case LifeEnum.DO_REAL_ZV:
+				case LifeEnum.DO_CARRE_ZV:
+					break;
+
+				case LifeEnum.HIT:
+					ins.Add(vars.GetText("ANIMS", GetParam()));
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(Evalvar());
+					ins.Add(vars.GetText("ANIMS", GetParam()));
+					break;
+
+				case LifeEnum.DEF_ZV:
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					break;
+
+				case LifeEnum.FIRE:
+					ins.Add(vars.GetText("ANIMS", GetParam()));
+					ins.Add(GetParam());//shoot frame
+					ins.Add(GetParam()); //hotpoint
+					ins.Add(GetParam()); //range
+					ins.Add(GetParam());//hitforce
+					ins.Add(vars.GetText("ANIMS", GetParam()));
+					break;
+
+				case LifeEnum.ANIM_MOVE:
+					ins.Add(vars.GetText("ANIMS", GetParam()));
+		        	ins.Add(vars.GetText("ANIMS", GetParam()));
+	                ins.Add(vars.GetText("ANIMS", GetParam()));
+                    ins.Add(vars.GetText("ANIMS", GetParam()));
+	                ins.Add(vars.GetText("ANIMS", GetParam()));
+	                ins.Add(vars.GetText("ANIMS", GetParam()));
+					ins.Add(vars.GetText("ANIMS", GetParam()));
+					break;
+
+				case LifeEnum.THROW:
+					ins.Add(vars.GetText("ANIMS", GetParam()));
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetObject(GetParam()));
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(vars.GetText("ANIMS", GetParam()));
+					break;
+
+				case LifeEnum.PICTURE:
+				case LifeEnum.ANGLE:
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					break;
+
+				case LifeEnum.CHANGEROOM:
+					ins.Add("E{0}R{1}", GetParam(), GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					break;
+
+				case LifeEnum.REP_SAMPLE:
+					ins.Add(Evalvar());
+					ins.Add(GetParam());
+					break;
+
+				case LifeEnum.DROP:	
+					ins.Add(GetObject(Evalvar()));
+					ins.Add(GetObject(GetParam()));
+					break;
+
+				case LifeEnum.PUT:
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					break;
+
+				case LifeEnum.ANIM_SAMPLE:
+					ins.Add(vars.GetText("SOUNDS", Evalvar()));
+					ins.Add(vars.GetText("ANIMS", GetParam()));
+					ins.Add(GetParam());
+					break;
+
+				case LifeEnum.SET:
+				{
+					int curr = GetParam();
+					ins.Add("{0} = {1}", vars.GetText("VARS", curr, "VAR" + curr), Evalvar());
+					break;
+				}
+
+				case LifeEnum.ADD:
+				case LifeEnum.SUB:
+				{
+					int curr = GetParam();
+					ins.Add("{0} {1}", vars.GetText("VARS", curr, "VAR" + curr), Evalvar());
+					break;
+				}
+
+				case LifeEnum.INC:
+				case LifeEnum.DEC:
+				{
+					int curr = GetParam();
+					ins.Add(vars.GetText("VARS", curr, "VAR" + curr));
+					break;
+				}
+
+				case LifeEnum.C_VAR:
+					ins.Add("{0} = {1}", GetParam(), Evalvar());
+					break;
+										
+				case LifeEnum.BODY_RESET:
+					ins.Add(Evalvar());
+					ins.Add(Evalvar());
+					break;
+
+				default:
+					throw new NotImplementedException(life.ToString());
 			}
 		}
 
-		static string GetSwitchCaseName(int value, string lastSwitchVar)
+		static string GetConditionName(string valueA, string valueB)
 		{
-			if(lastSwitchVar.StartsWith("POSREL"))
+			if(valueA.StartsWith("POSREL"))
 			{
-				return vars.GetText("POSREL", value);
+				return vars.GetText("POSREL", valueB);
 			}
 
-			switch (lastSwitchVar)
+			switch (valueA)
 			{
 				case "INHAND":
 				case "COL_BY":
 				case "HIT_BY":
 				case "HIT":
 				case "ACTOR_COLLIDER":
-					return GetObject(value);
+					return GetObject(valueB);
 
 				case "ACTION":
 				case "player_current_action":
-					return vars.GetText("ACTIONS", value);
+					return vars.GetText("ACTIONS", valueB);
 
 				case "ANIM":
-					return vars.GetText("ANIMS", value);
+					return vars.GetText("ANIMS", valueB);
 
 				case "BODY":
-					return vars.GetText("BODYS", value);
+					return vars.GetText("BODYS", valueB);
 
 				case "KEYBOARD_INPUT":
-					return vars.GetText("KEYBOARD INPUT", value);
+					return vars.GetText("KEYBOARD INPUT", valueB);
 
 				default:
-					return value.ToString();
+					return valueB;
 			}
 		}
 		
@@ -742,13 +736,8 @@ namespace LifeDISA
 		static string GetTrackMode(int index)
 		{
 			return trackModes[index];
-		}
-
-		static void WriteLine(TextWriter writer, int indentation, string text)
-		{
-			writer.Write("{0}{1}",	new String('\t', indentation), text);
-		}
-
+		}		
+		
 		static string Evalvar()
 		{
 			int actor;
@@ -885,7 +874,7 @@ namespace LifeDISA
 					
 				default:
 					throw new NotImplementedException(curr.ToString());
-			}
+			}			
 		}
 	}
 }
