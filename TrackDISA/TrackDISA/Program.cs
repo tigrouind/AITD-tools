@@ -29,14 +29,14 @@ namespace TrackDISA
 			{	
 				Regex r = new Regex(@"[0-9a-fA-F]{8}\.[0-9a-zA-Z]{3}", RegexOptions.IgnoreCase);				
 				foreach(var file in Directory.GetFiles(@"GAMEDATA\LISTTRAK")
-			        .Where(x => r.IsMatch(Path.GetFileName(x)))
-	        		.Select(x => new
-	                {
-	               		FilePath = x,
-	               		FileNumber = Convert.ToInt32(Path.GetFileNameWithoutExtension(x), 16)
-	            	})
-		        	.OrderBy(x => x.FileNumber))				    
-				{		     
+					.Where(x => r.IsMatch(Path.GetFileName(x)))
+					.Select(x => new
+					{
+						FilePath = x,
+						FileNumber = Convert.ToInt32(Path.GetFileNameWithoutExtension(x), 16)
+					})
+					.OrderBy(x => x.FileNumber))					
+				{			 
 					writer.WriteLine("--------------------------------------------------");					
 					writer.WriteLine("#{0} {1}", file.FileNumber, vars.GetText("TRACKS", file.FileNumber, string.Empty));
 					writer.WriteLine("--------------------------------------------------");					
@@ -46,15 +46,7 @@ namespace TrackDISA
 			
 			return 0;
 		}
-		
-		static short ReadShort(byte a, byte b)
-		{
-			unchecked
-			{
-				return (short)(a | b << 8);
-			}
-		}
-			
+					
 		static void Dump(string filename, TextWriter writer)
 		{
 			int i = 0;
@@ -63,103 +55,104 @@ namespace TrackDISA
 			while(i < allbytes.Length)
 			{
 				writer.Write("{0,2}: ", i / 2);
-				int macro = ReadShort(allbytes[i+0], allbytes[i+1]);
+				int macro = allbytes.ReadShort(i+0);
 				i += 2;
-				switch (macro)
+				TrackEnum trackEnum = (TrackEnum)macro;
+				switch (trackEnum)
 				{
 						
-					case 0x00:
+					case TrackEnum.WARP:
 						writer.WriteLine("warp ROOM{0} {1} {2} {3}", 
-						                 ReadShort(allbytes[i+0], allbytes[i+1]),
-						                 ReadShort(allbytes[i+2], allbytes[i+3]),
-						                 ReadShort(allbytes[i+4], allbytes[i+5]),
-						                 ReadShort(allbytes[i+6], allbytes[i+7]));
-					    i += 8;
+							allbytes.ReadShort(i+0),
+							allbytes.ReadShort(i+2),
+							allbytes.ReadShort(i+4),
+							allbytes.ReadShort(i+6));
+						i += 8;
 						break;							
 						
-					case 0x01:
+					case TrackEnum.GOTO_POS:
 						writer.WriteLine("goto position ROOM{0} {1} {2}", 
-						                 ReadShort(allbytes[i+0], allbytes[i+1]),
-						                 ReadShort(allbytes[i+2], allbytes[i+3]),
-						                 ReadShort(allbytes[i+4], allbytes[i+5]));		
-					    i += 6;
+							allbytes.ReadShort(i+0),
+							allbytes.ReadShort(i+2),
+							allbytes.ReadShort(i+4));		
+						i += 6;
 						break;	
 						
-					case 0x02: //end
+					case TrackEnum.END: 
 						writer.WriteLine("end of track");
 						return;							
 						
-					case 0x03:
+					case TrackEnum.REWIND:
 						writer.WriteLine("rewind");					
 						return;
 						
-					case 0x04:
-						writer.WriteLine("mark {0}", ReadShort(allbytes[i+0], allbytes[i+1]));					
+					case TrackEnum.MARK:
+						writer.WriteLine("mark {0}", allbytes.ReadShort(i+0));					
 						i += 2;
 						break;	
 						
-					case 0x05:
+					case TrackEnum.SPEED_4:
 						writer.WriteLine("speed 4");					
 						break;	
 						
-					case 0x06:
+					case TrackEnum.SPEED_5:
 						writer.WriteLine("speed 5");					
 						break;	
 
-					case 0x07:
+					case TrackEnum.SPEED_0:
 						writer.WriteLine("speed 0");					
 						break;	
 
-					case 0x09:
-						writer.WriteLine("rotate {0}", ReadShort(allbytes[i+0], allbytes[i+1]) * 360 / 1024);					
+					case TrackEnum.ROTATE_X:
+						writer.WriteLine("rotate {0}", allbytes.ReadShort(i+0) * 360 / 1024);					
 						i += 2;
 						break;							
 						
-					case 0x0A:
-						writer.WriteLine("disable collision");					
+					case TrackEnum.COLLISION_ENABLE:
+						writer.WriteLine("enable collision");					
 						break;		
 
-					case 0x0B:
-						writer.WriteLine("enable collision");					
-						break;								
-						
-					case 0x0D:
-						writer.WriteLine("disable triggers");					
-						break;
-						
-					case 0x0E:
-						writer.WriteLine("enable triggers");					
+					case TrackEnum.COLLISION_DISABLE:
+						writer.WriteLine("disable collision");					
 						break;	
 
-					case 0x0F:
-						writer.WriteLine("warp ROOM{0} {1} {2} {3} {4}", 
-						                 ReadShort(allbytes[i+0], allbytes[i+1]),
-						                 ReadShort(allbytes[i+2], allbytes[i+3]),
-						                 ReadShort(allbytes[i+4], allbytes[i+5]),
-						                 ReadShort(allbytes[i+6], allbytes[i+7]),
-						                 ReadShort(allbytes[i+8], allbytes[i+9]));
-					    i += 10;
-						break;									
+					case TrackEnum.TRIGGERS_DISABLE:
+						writer.WriteLine("disable triggers");					
+						break;								
 						
-					case 0x10:
+					case TrackEnum.TRIGGERS_ENABLE:
+						writer.WriteLine("enable triggers");					
+						break;		
+
+					case TrackEnum.WARP_ROT:
+						writer.WriteLine("warp ROOM{0} {1} {2} {3} {4}", 
+							allbytes.ReadShort(i+0),
+							allbytes.ReadShort(i+2),
+							allbytes.ReadShort(i+4),
+							allbytes.ReadShort(i+6),
+							allbytes.ReadShort(i+8));
+						i += 10;
+						break;						
+						
+					case TrackEnum.STORE_POS:
 						writer.WriteLine("store position");					
 						break;
 						
-					case 0x11:
-					case 0x12:
+					case TrackEnum.STAIRS_X:	
+					case TrackEnum.STAIRS_Z:
 						writer.WriteLine("walk stairs on {0} {1} {2} {3}",
-						                 macro == 0x11 ? "X" : "Z",
-						                 ReadShort(allbytes[i+0], allbytes[i+1]),
-						                 ReadShort(allbytes[i+2], allbytes[i+3]),
-						                 ReadShort(allbytes[i+4], allbytes[i+5]));					
+							trackEnum == TrackEnum.STAIRS_X ? "X" : "Z",
+							allbytes.ReadShort(i+0),
+							allbytes.ReadShort(i+2),
+							allbytes.ReadShort(i+4));					
 						i += 6;
 						break;
 												
-					case 0x13:						
+					case TrackEnum.ROTATE_XYZ:						
 						writer.WriteLine("rotate {0} {1} {2}", 
-						                 ReadShort(allbytes[i+0], allbytes[i+1]) * 360 / 1024,
-						                 ReadShort(allbytes[i+2], allbytes[i+3]) * 360 / 1024,
-						                 ReadShort(allbytes[i+4], allbytes[i+5]) * 360 / 1024);
+							allbytes.ReadShort(i+0) * 360 / 1024,
+							allbytes.ReadShort(i+2) * 360 / 1024,
+							allbytes.ReadShort(i+4) * 360 / 1024);
 						i += 6;
 						break;
 
