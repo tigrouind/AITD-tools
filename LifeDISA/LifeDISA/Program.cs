@@ -287,15 +287,19 @@ namespace LifeDISA
 				}
 			}
 			
-			for(var node = nodes.First; node != null; node = node.Next)
+			var currentNode = nodes.First;
+			while(currentNode != null)
 			{
-				switch(node.Value.Type)
+				var nextNode = currentNode.Next;
+				switch(currentNode.Value.Type)
 				{
 					case LifeEnum.GOTO:
 					case LifeEnum.ENDLIFE:
-						nodes.Remove(node);
+						nodes.Remove(currentNode);
 						break;
 				}
+				
+				currentNode = nextNode;
 			}
 		}
 		
