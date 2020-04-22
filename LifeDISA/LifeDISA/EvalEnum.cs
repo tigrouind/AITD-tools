@@ -1,0 +1,48 @@
+﻿
+using System;
+
+namespace LifeDISA
+{
+	public enum EvalEnum
+	{
+		ACTOR_COLLIDER,
+		TRIGGER_COLLIDER, 
+		HARD_COLLIDER,
+		HIT,
+		HIT_BY,
+		ANIM,
+		END_ANIM,
+		FRAME,
+		END_FRAME,
+		BODY,
+		MARK,
+		NUM_TRACK,
+		CHRONO,
+		ROOM_CHRONO,
+		DIST,
+		COL_BY,
+		ISFOUND,
+		ACTION,
+		POSREL,
+		KEYBOARD_INPUT,
+		SPACE,
+		ALPHA,
+		BETA,
+		GAMMA,
+		INHAND,
+		HITFORCE,
+		CAMERA,
+		RAND,
+		FALLING,
+		ROOM,
+		LIFE,
+		OBJECT,
+		ROOMY,
+		TEST_ZV_END_ANIM,
+		MUSIC,
+		C_VAR,
+		STAGE,
+		THROW,
+		MATRIX
+	}
+}

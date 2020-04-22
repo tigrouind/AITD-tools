@@ -41,6 +41,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EvalEnum.cs" />
     <Compile Include="Instruction.cs" />
     <Compile Include="LifeEnum.cs" />
     <Compile Include="MacroTable.cs" />

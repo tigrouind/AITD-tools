@@ -14,6 +14,7 @@ namespace LifeDISA
 		static byte[] allBytes;
 
 		static LifeEnum[] table;
+		static EvalEnum[] tableEval;
 		static bool isCDROMVersion;
 		static bool isAITD2;
 		static readonly Dictionary<int, string> objectsByIndex = new Dictionary<int, string>();
@@ -42,10 +43,12 @@ namespace LifeDISA
 				.ToList();
 			
 			table = MacroTable.AITD1;
+			tableEval = MacroTable.AITD1Eval;
 			if (files.Count < 60) //JITD
 			{
 				isAITD2 = true; 
-				table = MacroTable.AITD2;				
+				table = MacroTable.AITD2;	
+				tableEval = MacroTable.AITD2Eval;				
 			}
 			
 			//dump names
@@ -737,14 +740,6 @@ namespace LifeDISA
 		{
 			return trackModes[index];
 		}		
-		
-		static string Evalvar()
-		{
-			int actor;
-			string eval = EvalvarImpl(out actor);
-			if(actor != -1) eval = GetObject(actor) + "." + eval;
-			return eval;
-		}
 
 		static bool AskForCDROMVersion()
 		{
@@ -758,11 +753,9 @@ namespace LifeDISA
 			return line == "y";
 		}
 
-		static string EvalvarImpl(out int actor)
+		static string Evalvar()
 		{
 			int curr = GetParam();
-
-			actor = -1;
 			if(curr == -1)
 			{
 				//CONST
@@ -776,105 +769,47 @@ namespace LifeDISA
 				return vars.GetText("VARS", curr, "VAR" + curr);
 			}
 
-			if((curr & 0x8000) == 0x8000) {
+			string result = string.Empty;
+			if((curr & 0x8000) == 0x8000) 
+			{
 				//change actor
-				actor = GetParam();
+				result = GetObject(GetParam()) + ".";
 			}
 
 			curr &= 0x7FFF;
 			curr--;
-			switch(curr)
+			var evalEnum = tableEval[curr];
+			
+			string parameter = string.Empty;
+			switch (evalEnum)
 			{
-				case 0x0:
-					return "ACTOR_COLLIDER";
-				case 0x1:
-					return "TRIGGER_COLLIDER";
-				case 0x2:
-					return "HARD_COLLIDER";
-				case 0x3:
-					return "HIT";
-				case 0x4:
-					return "HIT_BY";
-				case 0x5:
-					return "ANIM";
-				case 0x6:
-					return "END_ANIM";
-				case 0x7:
-					return "FRAME";
-				case 0x8:
-					return "END_FRAME";
-				case 0x9:
-					return "BODY";
-				case 0xA:
-					return "MARK";
-				case 0xB:
-					return "NUM_TRACK";
-				case 0xC:
-					return "CHRONO";
-				case 0xD:
-					return "ROOM_CHRONO";
-				case 0xE:
-					return "DIST("+GetObject(GetParam())+")";
-				case 0xF:
-					return "COL_BY";
-				case 0x10:
-					return "ISFOUND("+GetObject(Evalvar())+")";
-				case 0x11:
-					return "ACTION";
-				case 0x12:
-					return "POSREL("+GetObject(GetParam())+")";
-				case 0x13:
-					return "KEYBOARD_INPUT";
-				case 0x14:
-					return "SPACE";
-				case 0x15:
-					return "COL_BY";
-				case 0x16:
-					return "ALPHA";
-				case 0x17:
-					return "BETA";
-				case 0x18:
-					return "GAMMA";
-				case 0x19:
-					return "INHAND";
-				case 0x1A:
-					return "HITFORCE";
-				case 0x1B:
-					return "CAMERA";
-				case 0x1C:
-					return "RAND("+GetParam()+")";
-				case 0x1D:
-					return "FALLING";
-				case 0x1E:
-					return "ROOM";
-				case 0x1F:
-					return "LIFE";
-				case 0x20:
-					return "OBJECT("+GetObject(GetParam())+")";
-				case 0x21:
-					return "ROOMY";
-				case 0x22:
-					return "TEST_ZV_END_ANIM(" + GetParam() + " " + GetParam() + ")";
-				case 0x23:
-					return "MUSIC";
-				case 0x24:
-					return "C_VAR"+GetParam();
-				case 0x25:
-					if (isAITD2)
-					{
-						return "MATRIX(" + GetParam() + " " + GetParam() + ")";
-					}
-					return "STAGE";
-				case 0x26:
-					if (isAITD2)
-					{
-						return "TRIGGER_COLLIDER";	
-					}
-					return "THROW("+GetObject(GetParam())+")";
+				case EvalEnum.DIST:
+				case EvalEnum.POSREL:
+				case EvalEnum.OBJECT:
+				case EvalEnum.THROW:
+					parameter = string.Format("({0})", GetObject(GetParam()));
+					break;
 					
-				default:
-					throw new NotImplementedException(curr.ToString());
-			}			
+				case EvalEnum.ISFOUND:
+					parameter = string.Format("({0})", GetObject(Evalvar()));
+					break;
+					
+				case EvalEnum.RAND:
+					parameter = string.Format("({0})", GetParam());
+					break;
+					
+				case EvalEnum.C_VAR:
+					parameter = GetParam().ToString();
+					break;
+									
+				case EvalEnum.TEST_ZV_END_ANIM:
+				case EvalEnum.MATRIX:
+					parameter = string.Format("({0} {1})", GetParam(), GetParam());
+					break;				
+			}
+
+			result += evalEnum + parameter;
+			return result;
 		}
 	}
 }
