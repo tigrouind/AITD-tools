@@ -14,7 +14,6 @@ namespace MemoryViewer
 			const int RESY = 240;
 			int winx = GetArgument(args, "-screen-width") ?? 320;
 			int winy = GetArgument(args, "-screen-height") ?? 240;
-			int memorySize = GetArgument(args, "-memory") ?? 1024+320;
 			
 			//init SDL
 			SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
@@ -51,8 +50,8 @@ namespace MemoryViewer
 				
 			bool quit = false;
 			uint[] pixels = new uint[RESX*RESY];
-			byte[] pixelData = new byte[memorySize * 1024];
-			long offset = 0, lastOffset = -1;	
+			byte[] pixelData = new byte[(1024+256) * 1024];
+			int offset = 0, lastOffset = -1;	
 			ProcessMemoryReader memoryReader = null;
 			long memoryAddress = -1;
 			int mousePosition = 0, lastMousePosition = -1;
@@ -69,8 +68,8 @@ namespace MemoryViewer
 					offset = Math.Max(offset, 0);				
 					offset = Math.Min(offset, pixelData.Length);
 					
-					long mousePos = mousePosition + offset;
-					if(mousePos >= 640*1024) mousePos += 384*1024;
+					int mousePos = mousePosition + offset;
+					if(mousePos >= 640*1024) mousePos += (384+192)*1024;
 					SDL.SDL_SetWindowTitle(window, string.Format("{0:X6} - {1:X6}", offset, mousePos));
 					
 					lastOffset = offset;
@@ -200,6 +199,10 @@ namespace MemoryViewer
 						memoryReader.Close();
 						memoryReader = null;
 					}
+					else
+					{
+						Array.Copy(pixelData, (1024+192)*1024, pixelData, 640*1024, 64*1024);
+					}
 				}
 				
 				if(startScroll)
@@ -244,23 +247,20 @@ namespace MemoryViewer
 				{
 					for(int n = 0 ; n < tn ; n++)
 					{					
-						long position = offset + skip + n * RESX * RESY;
-						if (position >= (pixelData.Length - 384*1024)) continue;
+						int position = offset + skip + n * RESX * RESY;
+						if (position >= (640+64)*1024) continue;
 						
+						int src = position;
 						for(int i = 0 ; i < pixels.Length ; i++)
 						{
-							long pos = i+position;
-							if(pos >= 640*1024) pos+= 384*1024;
+							byte data = pixelData[src++];
+							pixels[i] = pal256[data];		
+						}
 							
-							if(pos < pixelData.Length)
-							{
-								byte data = pixelData[pos];
-								pixels[i] = pal256[data];								
-							}
-							else
-							{
-								pixels[i] = 0xff080808;
-							}
+						int start = Math.Max((640+64)*1024 - position, 0);
+						for(int i = start ; i < pixels.Length ; i++)
+						{
+							pixels[i] = 0xff080808;
 						}
 						
 						unsafe
