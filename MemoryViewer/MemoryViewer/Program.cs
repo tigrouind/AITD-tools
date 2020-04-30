@@ -241,15 +241,30 @@ namespace MemoryViewer
 				}
 				
 				updatePos();
-											
-				for(int i = 0 ; i < (640+64)*1024 ; i++)
+				
+				unsafe
 				{
-					byte data = pixelData[i];
-					if(data != oldPixelData[i])
+					fixed (byte* pixelsBytePtr = pixelData)
+					fixed (byte* oldPixelsBytePtr = oldPixelData)
 					{
-						pixels[i] = pal256[data];
+						ulong* pixelsPtr = (ulong*)pixelsBytePtr;
+						ulong* oldPixelsPtr = (ulong*)oldPixelsBytePtr;
+						
+						for(int i = 0 ; i < (640+64)*1024 ; i += 8)
+						{
+							if(*pixelsPtr != *oldPixelsPtr)
+							{
+								for(int j = i ; j < i + 8 ; j++)
+								{
+									pixels[j] = pal256[pixelData[j]];
+								}
+							}
+							
+							pixelsPtr++;
+							oldPixelsPtr++;
+						}
 					}
-				}
+				}			
 			
 				SDL.SDL_SetRenderDrawColor(renderer, 8, 8, 8, 255);
 				SDL.SDL_RenderClear(renderer);
