@@ -49,8 +49,10 @@ namespace MemoryViewer
 			}			
 				
 			bool quit = false;
-			uint[] pixels = new uint[RESX*RESY];
+			uint[] pixels = new uint[RESX * RESY * 11];
 			byte[] pixelData = new byte[(1024+256) * 1024];
+			byte[] oldPixelData = new byte[(1024+256) * 1024];
+			
 			int offset = 0, lastOffset = -1;	
 			ProcessMemoryReader memoryReader = null;
 			long memoryAddress = -1;
@@ -60,7 +62,12 @@ namespace MemoryViewer
 			float scrollVel = 0.0f, scrollPos = 0.0f;
 			int scrollStartPos = 0;
 			bool startScroll = false;
-					
+			
+			for(int i = (640+64)*1024 ; i < pixels.Length ; i++)
+			{
+				pixels[i] = 0xff080808;
+			}
+										
 			Action updatePos = () => 
 			{		
 				if(offset != lastOffset || lastMousePosition != mousePosition)
@@ -234,7 +241,16 @@ namespace MemoryViewer
 				}
 				
 				updatePos();
-				
+											
+				for(int i = 0 ; i < (640+64)*1024 ; i++)
+				{
+					byte data = pixelData[i];
+					if(data != oldPixelData[i])
+					{
+						pixels[i] = pal256[data];
+					}
+				}
+			
 				SDL.SDL_SetRenderDrawColor(renderer, 8, 8, 8, 255);
 				SDL.SDL_RenderClear(renderer);
 								
@@ -249,23 +265,10 @@ namespace MemoryViewer
 					{					
 						int position = offset + skip + n * RESX * RESY;
 						if (position >= (640+64)*1024) continue;
-						
-						int src = position;
-						for(int i = 0 ; i < pixels.Length ; i++)
-						{
-							byte data = pixelData[src++];
-							pixels[i] = pal256[data];		
-						}
-							
-						int start = Math.Max((640+64)*1024 - position, 0);
-						for(int i = start ; i < pixels.Length ; i++)
-						{
-							pixels[i] = 0xff080808;
-						}
-						
+												
 						unsafe
 						{
-							fixed (uint* pixelsBuf = pixels)
+							fixed (uint* pixelsBuf = &pixels[position])
 							{
 								SDL.SDL_UpdateTexture(texture, ref textureRect, (IntPtr)pixelsBuf, RESX * sizeof(uint));
 							}
@@ -281,6 +284,11 @@ namespace MemoryViewer
 				}
 				
 				SDL.SDL_RenderPresent(renderer);
+				
+				//swap buffers
+				var tmp = pixelData;
+				pixelData = oldPixelData;
+				oldPixelData = tmp;
 			}
 			
 			SDL.SDL_DestroyTexture(texture);
