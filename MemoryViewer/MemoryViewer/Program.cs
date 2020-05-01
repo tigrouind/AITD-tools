@@ -50,48 +50,32 @@ namespace MemoryViewer
 			byte[] pixelData = new byte[(1024+256) * 1024];
 			byte[] oldPixelData = new byte[(1024+256) * 1024];
 			
-			int offset = 0, lastOffset = -1;	
 			ProcessMemoryReader memoryReader = null;
 			long memoryAddress = -1;
 			int mousePosition = 0, lastMousePosition = -1;
 			uint lastCheck = 0;
-			
-			float scrollVel = 0.0f, scrollPos = 0.0f;
-			int scrollStartPos = 0;
-			bool startScroll = false;
 			
 			for(int i = (640+64)*1024 ; i < pixels.Length ; i++)
 			{
 				pixels[i] = 0xff080808;
 			}
 										
-			Action updatePos = () => 
+			Action updateWindowTitle = () => 
 			{		
-				if(offset != lastOffset || lastMousePosition != mousePosition)
+				if(lastMousePosition != mousePosition)
 				{
-					offset = Math.Max(offset, 0);				
-					offset = Math.Min(offset, pixelData.Length);
-					
-					int mousePos = mousePosition + offset;
+					int mousePos = mousePosition;
 					if(mousePos >= 640*1024) mousePos += (384+192)*1024;
-					SDL.SDL_SetWindowTitle(window, string.Format("{0:X6} - {1:X6}", offset, mousePos));
+					SDL.SDL_SetWindowTitle(window, string.Format("{0:X6}", mousePos));
 					
-					lastOffset = offset;
 					lastMousePosition = mousePosition;
 				}
 			};
-						
-			uint currentTime = SDL.SDL_GetTicks();
-			uint previousTime = currentTime;
-			
+									
 			while(!quit)
 			{
-				previousTime = currentTime;
-				currentTime = SDL.SDL_GetTicks();
-				float deltaTime = (currentTime - previousTime) / 1000.0f;
 				
-				SDL.SDL_Event sdlEvent;
-				
+				SDL.SDL_Event sdlEvent;				
 				while(SDL.SDL_PollEvent(out sdlEvent) != 0 && !quit)
 				{
 					switch(sdlEvent.type)
@@ -118,45 +102,7 @@ namespace MemoryViewer
 							int page = (int)Math.Floor(x / sizex);
 														
 							mousePosition = page * RESX * winy + (int)Math.Floor(x / sizex * RESX) + y * RESX;							
-							break;
-							
-						case SDL.SDL_EventType.SDL_MOUSEBUTTONDOWN:
-							scrollStartPos = GetMouseYPosition();
-							startScroll = true;
-							break;
-																
-						case SDL.SDL_EventType.SDL_MOUSEWHEEL:
-							scrollVel -= sdlEvent.wheel.y * 500;							
-							break;							
-							
-						case SDL.SDL_EventType.SDL_KEYDOWN:
-							switch(sdlEvent.key.keysym.sym)
-							{								
-								case SDL.SDL_Keycode.SDLK_DOWN:
-									offset += RESX;
-									break;
-
-								case SDL.SDL_Keycode.SDLK_UP:
-									offset -= RESX;	
-									break;
-									
-								case SDL.SDL_Keycode.SDLK_LEFT:
-									offset++;
-								break;
-
-								case SDL.SDL_Keycode.SDLK_RIGHT:
-									offset--;
-									break;
-													
-								case SDL.SDL_Keycode.SDLK_PAGEDOWN:
-									offset += winx * winy;
-									break;
-
-								case SDL.SDL_Keycode.SDLK_PAGEUP:
-									offset -= winx * winy;
-									break;
-							}
-							break;
+							break;										
 					}
 				}	
 								
@@ -209,35 +155,7 @@ namespace MemoryViewer
 					}
 				}
 				
-				if(startScroll)
-				{
-					if(!GetMouseState())
-					{
-						startScroll = false;
-					}
-					else
-					{
-						int mousePos = GetMouseYPosition();
-						scrollVel = (scrollStartPos - GetMouseYPosition()) / deltaTime;
-						scrollStartPos = mousePos;
-					}
-				}				
-
-				//scroll
-				scrollPos += scrollVel * deltaTime;
-				scrollVel *= (float)Math.Pow(0.008f, deltaTime);
-				int delta = (int)scrollPos;
-				if (delta <= -1 || delta >= 1)
-				{
-					offset += delta * RESX;
-					scrollPos -= delta;
-				}			
-				else
-				{
-					scrollVel = 0.0f;
-				}
-				
-				updatePos();
+				updateWindowTitle();
 				
 				unsafe
 				{
@@ -275,7 +193,7 @@ namespace MemoryViewer
 				{
 					for(int n = 0 ; n < tn ; n++)
 					{					
-						int position = offset + skip + n * RESX * RESY;
+						int position = skip + n * RESX * RESY;
 						if (position >= (640+64)*1024) continue;
 												
 						unsafe
@@ -309,19 +227,6 @@ namespace MemoryViewer
 			SDL.SDL_Quit();
 			
 			return 0;
-		}
-		
-		public static int GetMouseYPosition()
-		{
-			int x, y;
-			SDL.SDL_GetGlobalMouseState(out x, out y);
-			return y;
-		}
-		
-		public static bool GetMouseState()
-		{
-			int x, y;
-			return SDL.SDL_GetGlobalMouseState(out x, out y) != 0;
 		}
 		
 		public static int? GetArgument(string[] args, string name)
