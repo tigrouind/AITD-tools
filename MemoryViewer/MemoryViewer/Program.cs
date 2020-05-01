@@ -13,7 +13,9 @@ namespace MemoryViewer
 		public static int Main(string[] args)
 		{
 			const int RESX = 320;
-			const int RESY = 240;
+			const int RESY = 760;
+			const int COLS = 3;
+			
 			int winx = GetArgument(args, "-screen-width") ?? 320;
 			int winy = GetArgument(args, "-screen-height") ?? 240;
 			
@@ -54,12 +56,7 @@ namespace MemoryViewer
 			long memoryAddress = -1;
 			int mousePosition = 0, lastMousePosition = -1;
 			uint lastCheck = 0;
-			
-			for(int i = (640+64)*1024 ; i < pixels.Length ; i++)
-			{
-				pixels[i] = 0xff080808;
-			}
-										
+														
 			Action updateWindowTitle = () => 
 			{		
 				if(lastMousePosition != mousePosition)
@@ -93,16 +90,19 @@ namespace MemoryViewer
 							}							
 							break;
 							
-						case SDL.SDL_EventType.SDL_MOUSEMOTION:
+						case SDL.SDL_EventType.SDL_MOUSEMOTION:	
 							int x = sdlEvent.motion.x;
 							int y = sdlEvent.motion.y;
 							
-							int tmx = Math.Max(winx / RESX, 1); 
-							float sizex =  winx / (float)tmx;
-							int page = (int)Math.Floor(x / sizex);
+							int msizex = winx / COLS;
+							int msizey = (winy * COLS * (RESX * RESY)) / ((640+64)*1024);
+											
+							int page = x / msizex;
+							int pageSize = RESX * ((RESY * winy) / msizey);
 														
-							mousePosition = page * RESX * winy + (int)Math.Floor(x / sizex * RESX) + y * RESX;							
-							break;										
+							mousePosition = page * pageSize + ((x * RESX) / msizex) % RESX + ((y * RESY) / msizey) * RESX;
+							break;									
+																				
 					}
 				}	
 								
@@ -184,12 +184,12 @@ namespace MemoryViewer
 				SDL.SDL_SetRenderDrawColor(renderer, 8, 8, 8, 255);
 				SDL.SDL_RenderClear(renderer);
 								
-				int skip = 0;
-				int tm = Math.Max(winx / RESX, 1);
-				int tn = (int)Math.Ceiling(winy / (float)RESY);
-				float size =  winx / (float)tm;
+				int sizex = winx / COLS;
+				int sizey = (winy * COLS * (RESX * RESY)) / ((640+64)*1024);
+				int tn = (winy + sizey - 1) / sizey;
 				
-				for(int m = 0 ; m < tm ; m++)
+				int skip = 0;				
+				for(int m = 0 ; m < COLS ; m++)
 				{
 					for(int n = 0 ; n < tn ; n++)
 					{					
@@ -204,13 +204,14 @@ namespace MemoryViewer
 							}
 						}
 						
-						drawRect.x = (int)Math.Round(m * size);
-						drawRect.y = n * RESY;
-						drawRect.w = (int)Math.Round((m+1) * size) - drawRect.x;
+						drawRect.x = m * sizex;
+						drawRect.y = n * sizey;
+						drawRect.w = sizex;
+						drawRect.h = sizey;
 						SDL.SDL_RenderCopy(renderer, texture, ref textureRect, ref drawRect);
 					}
 					
-					skip += RESX * winy;
+					skip += RESX * ((RESY * winy) / sizey);
 				}
 				
 				SDL.SDL_RenderPresent(renderer);
