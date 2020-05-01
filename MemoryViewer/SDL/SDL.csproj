@@ -55,7 +55,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="LPUtf8StrMarshaler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SDL2.cs" />
     <Compile Include="SDL2_image.cs" />
