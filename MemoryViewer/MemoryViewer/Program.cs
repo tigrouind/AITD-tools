@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using SDL2;
 using Shared;
 
@@ -29,9 +31,11 @@ namespace MemoryViewer
 			SDL.SDL_Rect drawRect = new SDL.SDL_Rect { x = 0, y = 0, w = RESX, h = RESY };
 				
 			uint[] pal256 = new uint[256];
-			if(System.IO.File.Exists("palette.dat")) 
-			{
-				var palette = System.IO.File.ReadAllBytes("palette.dat");
+			using (var stream = Assembly.GetExecutingAssembly()
+			       .GetManifestResourceStream("MemoryViewer.palette.dat"))
+			using (BinaryReader br = new BinaryReader(stream))
+			{				
+				var palette = br.ReadBytes(768);
 				for(int i = 0; i < 256; i++) 
 				{
 					byte r = palette[i * 3 + 0];
@@ -40,13 +44,6 @@ namespace MemoryViewer
 					pal256[i] = (uint)(r << 16 | g << 8 | b);				
 				}
 			}
-			else
-			{
-				for(int i = 0; i < 256; i++) 
-				{
-					pal256[i] = (uint)(i << 16 | i << 8 | i);				
-				}
-			}			
 				
 			bool quit = false;
 			uint[] pixels = new uint[RESX * RESY * 11];
