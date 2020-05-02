@@ -71,7 +71,6 @@ namespace MemoryViewer
 									
 			while(!quit)
 			{
-				
 				SDL.SDL_Event sdlEvent;				
 				while(SDL.SDL_PollEvent(out sdlEvent) != 0 && !quit)
 				{
@@ -105,6 +104,8 @@ namespace MemoryViewer
 																				
 					}
 				}	
+				
+				updateWindowTitle();
 								
 				if(memoryReader == null)
 				{
@@ -149,38 +150,37 @@ namespace MemoryViewer
 						memoryReader.Close();
 						memoryReader = null;
 					}
-					else
-					{
-						Array.Copy(pixelData, (1024+192)*1024, pixelData, 640*1024, 64*1024);
-					}
 				}
 				
-				updateWindowTitle();
-				
-				unsafe
-				{
-					fixed (byte* pixelsBytePtr = pixelData)
-					fixed (byte* oldPixelsBytePtr = oldPixelData)
+				if(memoryReader != null)
+				{				
+					Array.Copy(pixelData, (1024+192)*1024, pixelData, 640*1024, 64*1024);
+					
+					unsafe
 					{
-						ulong* pixelsPtr = (ulong*)pixelsBytePtr;
-						ulong* oldPixelsPtr = (ulong*)oldPixelsBytePtr;
-						
-						for(int i = 0 ; i < (640+64)*1024 ; i += 8)
+						fixed (byte* pixelsBytePtr = pixelData)
+						fixed (byte* oldPixelsBytePtr = oldPixelData)
 						{
-							if(*pixelsPtr != *oldPixelsPtr)
-							{
-								for(int j = i ; j < i + 8 ; j++)
-								{
-									pixels[j] = pal256[pixelData[j]];
-								}
-							}
+							ulong* pixelsPtr = (ulong*)pixelsBytePtr;
+							ulong* oldPixelsPtr = (ulong*)oldPixelsBytePtr;
 							
-							pixelsPtr++;
-							oldPixelsPtr++;
+							for(int i = 0 ; i < (640+64)*1024 ; i += 8)
+							{
+								if(*pixelsPtr != *oldPixelsPtr)
+								{
+									for(int j = i ; j < i + 8 ; j++)
+									{
+										pixels[j] = pal256[pixelData[j]];
+									}
+								}	
+							
+								pixelsPtr++;
+								oldPixelsPtr++;
+							}
 						}
-					}
-				}			
-			
+					}						
+				}
+					
 				SDL.SDL_SetRenderDrawColor(renderer, 8, 8, 8, 255);
 				SDL.SDL_RenderClear(renderer);
 								
