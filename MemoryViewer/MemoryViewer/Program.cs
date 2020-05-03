@@ -49,8 +49,8 @@ namespace MemoryViewer
 				
 			bool quit = false;
 			uint[] pixels = new uint[RESX * RESY * 11];
-			byte[] pixelData = new byte[(1024+256) * 1024];
-			byte[] oldPixelData = new byte[(1024+256) * 1024];
+			byte[] pixelData = new byte[(640+64) * 1024];
+			byte[] oldPixelData = new byte[(640+64) * 1024];
 			
 			ProcessMemoryReader memoryReader = null;
 			long memoryAddress = -1;
@@ -62,7 +62,7 @@ namespace MemoryViewer
 				if(lastMousePosition != mousePosition)
 				{
 					int mousePos = mousePosition;
-					if(mousePos >= 640*1024) mousePos += (384+192)*1024;
+					if(mousePos >= 640*1024) mousePos += 384*1024; //skip UMA
 					SDL.SDL_SetWindowTitle(window, string.Format("{0:X6}", mousePos));
 					
 					lastMousePosition = mousePosition;
@@ -94,7 +94,7 @@ namespace MemoryViewer
 							int y = sdlEvent.motion.y;
 							
 							int msizex = winx / COLS;
-							int msizey = (winy * COLS * (RESX * RESY)) / ((640+64)*1024);
+							int msizey = (winy * COLS * (RESX * RESY)) / pixelData.Length;
 											
 							int page = x / msizex;
 							int pageSize = RESX * ((RESY * winy) / msizey);
@@ -144,8 +144,10 @@ namespace MemoryViewer
 				
 				if(memoryReader != null)
 				{
-					long result = memoryReader.Read(pixelData, memoryAddress, pixelData.Length);
-					if(result == 0 || result != pixelData.Length)
+					//DOS conventional memory (640KB)
+					//EMS memory (64000B) (skip 64KB (HMA) + 128KB (VCPI) + 32B)
+					if(memoryReader.Read(pixelData, memoryAddress, 640*1024) == 0 ||
+					   memoryReader.Read(pixelData, memoryAddress+(1024+192)*1024, 64*1024, 640*1024) == 0)
 					{						
 						memoryReader.Close();
 						memoryReader = null;
@@ -154,8 +156,6 @@ namespace MemoryViewer
 				
 				if(memoryReader != null)
 				{				
-					Array.Copy(pixelData, (1024+192)*1024, pixelData, 640*1024, 64*1024);
-					
 					unsafe
 					{
 						fixed (byte* pixelsBytePtr = pixelData)
@@ -164,7 +164,7 @@ namespace MemoryViewer
 							ulong* pixelsPtr = (ulong*)pixelsBytePtr;
 							ulong* oldPixelsPtr = (ulong*)oldPixelsBytePtr;
 							
-							for(int i = 0 ; i < (640+64)*1024 ; i += 8)
+							for(int i = 0 ; i < pixelData.Length ; i += 8)
 							{
 								if(*pixelsPtr != *oldPixelsPtr)
 								{
@@ -185,7 +185,7 @@ namespace MemoryViewer
 				SDL.SDL_RenderClear(renderer);
 								
 				int sizex = winx / COLS;
-				int sizey = (winy * COLS * (RESX * RESY)) / ((640+64)*1024);
+				int sizey = (winy * COLS * (RESX * RESY)) / pixelData.Length;
 				int tn = (winy + sizey - 1) / sizey;
 				
 				int skip = 0;				
@@ -194,7 +194,7 @@ namespace MemoryViewer
 					for(int n = 0 ; n < tn ; n++)
 					{					
 						int position = skip + n * RESX * RESY;
-						if (position >= (640+64)*1024) continue;
+						if (position >= pixelData.Length) continue;
 												
 						unsafe
 						{
