@@ -49,8 +49,8 @@ namespace MemoryViewer
 				
 			bool quit = false;
 			uint[] pixels = new uint[RESX * RESY * 11];
-			byte[] pixelData = new byte[(640+64) * 1024];
-			byte[] oldPixelData = new byte[(640+64) * 1024];
+			byte[] pixelData = new byte[640 * 1024 + 64000];
+			byte[] oldPixelData = new byte[640 * 1024 + 64000];
 			
 			ProcessMemoryReader memoryReader = null;
 			long memoryAddress = -1;
@@ -146,8 +146,8 @@ namespace MemoryViewer
 				{
 					//DOS conventional memory (640KB)
 					//EMS memory (64000B) (skip 64KB (HMA) + 128KB (VCPI) + 32B)
-					if(memoryReader.Read(pixelData, memoryAddress, 640*1024) == 0 ||
-					   memoryReader.Read(pixelData, memoryAddress+(1024+192)*1024, 64*1024, 640*1024) == 0)
+					if(memoryReader.Read(pixelData, memoryAddress, 640*1024) == 0 || 
+					   memoryReader.Read(pixelData, memoryAddress+(1024+192)*1024+32, 64000, 640*1024) == 0) 
 					{						
 						memoryReader.Close();
 						memoryReader = null;
