@@ -13,11 +13,11 @@ namespace MemoryViewer
 		public static int Main(string[] args)
 		{
 			const int RESX = 320;
-			const int RESY = 760;
-			const int COLS = 3;
+			const int RESY = 240;
 			
 			int winx = GetArgument(args, "-screen-width") ?? 320;
 			int winy = GetArgument(args, "-screen-height") ?? 240;
+			int scale = GetArgument(args, "-scale") ?? 1;
 			
 			//init SDL
 			SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
@@ -26,7 +26,7 @@ namespace MemoryViewer
 			IntPtr renderer = SDL.SDL_CreateRenderer(window, -1, SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL.SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC);
 			//IntPtr renderer = SDL.SDL_CreateRenderer(window, -1, SDL.SDL_RendererFlags.SDL_RENDERER_SOFTWARE);
 			
-			SDL.SDL_SetHint(SDL.SDL_HINT_RENDER_SCALE_QUALITY, "linear");
+			//SDL.SDL_SetHint(SDL.SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 			SDL.SDL_Rect textureRect = new SDL.SDL_Rect { x = 0, y = 0, w = RESX, h = RESY };
 			IntPtr texture = SDL.SDL_CreateTexture(renderer, SDL.SDL_PIXELFORMAT_ARGB8888, (int)SDL.SDL_TextureAccess.SDL_TEXTUREACCESS_STREAMING, RESX, RESY);
 			 
@@ -56,6 +56,11 @@ namespace MemoryViewer
 			long memoryAddress = -1;
 			int mousePosition = 0, lastMousePosition = -1;
 			uint lastCheck = 0;
+			
+			for(int i = (640+64)*1024 ; i < pixels.Length ; i++)
+			{
+				pixels[i] = 0xff080808;
+			}
 														
 			Action updateWindowTitle = () => 
 			{		
@@ -90,16 +95,14 @@ namespace MemoryViewer
 							break;
 							
 						case SDL.SDL_EventType.SDL_MOUSEMOTION:	
+							
 							int x = sdlEvent.motion.x;
 							int y = sdlEvent.motion.y;
 							
-							int msizex = winx / COLS;
-							int msizey = (winy * COLS * (RESX * RESY)) / pixelData.Length;
-											
-							int page = x / msizex;
-							int pageSize = RESX * ((RESY * winy) / msizey);
+							int page = x / (RESX * scale);
+							int pageSize = RESX * (winy / scale);
 														
-							mousePosition = page * pageSize + ((x * RESX) / msizex) % RESX + ((y * RESY) / msizey) * RESX;
+							mousePosition = page * pageSize + (y / scale) * RESX + (x / scale) % RESX;
 							break;									
 																				
 					}
@@ -184,12 +187,11 @@ namespace MemoryViewer
 				SDL.SDL_SetRenderDrawColor(renderer, 8, 8, 8, 255);
 				SDL.SDL_RenderClear(renderer);
 								
-				int sizex = winx / COLS;
-				int sizey = (winy * COLS * (RESX * RESY)) / pixelData.Length;
-				int tn = (winy + sizey - 1) / sizey;
+				int tm = (winx + RESX - 1) / RESX;
+				int tn = (winy + RESY - 1) / RESY;
 				
 				int skip = 0;				
-				for(int m = 0 ; m < COLS ; m++)
+				for(int m = 0 ; m < tm ; m++)
 				{
 					for(int n = 0 ; n < tn ; n++)
 					{					
@@ -204,14 +206,14 @@ namespace MemoryViewer
 							}
 						}
 						
-						drawRect.x = m * sizex;
-						drawRect.y = n * sizey;
-						drawRect.w = sizex;
-						drawRect.h = sizey;
+						drawRect.x = m * RESX * scale;
+						drawRect.y = n * RESY * scale;
+						drawRect.w = RESX * scale;
+						drawRect.h = RESY * scale;
 						SDL.SDL_RenderCopy(renderer, texture, ref textureRect, ref drawRect);
 					}
 					
-					skip += RESX * ((RESY * winy) / sizey);
+					skip += RESX * (winy / scale);
 				}
 				
 				SDL.SDL_RenderPresent(renderer);
