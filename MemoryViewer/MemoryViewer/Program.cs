@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using SDL2;
 using Shared;
 
@@ -51,29 +52,12 @@ namespace MemoryViewer
 			uint[] pixels = new uint[RESX * RESY * 11];
 			byte[] pixelData = new byte[640 * 1024 + 64000];
 			byte[] oldPixelData = new byte[640 * 1024 + 64000];
+			byte[] dosMemory = new byte[640 * 1024 + 64000];
 			
 			ProcessMemoryReader memoryReader = null;
 			long memoryAddress = -1;
-			int mousePosition = 0, lastMousePosition = -1;
 			uint lastCheck = 0;
-			
-			for(int i = (640+64)*1024 ; i < pixels.Length ; i++)
-			{
-				pixels[i] = 0xff080808;
-			}
 														
-			Action updateWindowTitle = () => 
-			{		
-				if(lastMousePosition != mousePosition)
-				{
-					int mousePos = mousePosition;
-					if(mousePos >= 640*1024) mousePos += 384*1024; //skip UMA
-					SDL.SDL_SetWindowTitle(window, string.Format("{0:X6}", mousePos));
-					
-					lastMousePosition = mousePosition;
-				}
-			};
-									
 			while(!quit)
 			{
 				SDL.SDL_Event sdlEvent;				
@@ -92,24 +76,10 @@ namespace MemoryViewer
 								winx = sdlEvent.window.data1;
 								winy = sdlEvent.window.data2;
 							}							
-							break;
-							
-						case SDL.SDL_EventType.SDL_MOUSEMOTION:	
-							
-							int x = sdlEvent.motion.x;
-							int y = sdlEvent.motion.y;
-							
-							int page = x / (RESX * scale);
-							int pageSize = RESX * (winy / scale);
-														
-							mousePosition = page * pageSize + (y / scale) * RESX + (x / scale) % RESX;
-							break;									
-																				
+							break;																											
 					}
 				}	
 				
-				updateWindowTitle();
-								
 				if(memoryReader == null)
 				{
 					uint time = SDL.SDL_GetTicks();
@@ -147,10 +117,8 @@ namespace MemoryViewer
 				
 				if(memoryReader != null)
 				{
-					//DOS conventional memory (640KB)
-					//EMS memory (64000B) (skip 64KB (HMA) + 128KB (VCPI) + 32B)
-					if(memoryReader.Read(pixelData, memoryAddress, 640*1024) == 0 || 
-					   memoryReader.Read(pixelData, memoryAddress+(1024+192)*1024+32, 64000, 640*1024) == 0) 
+					//DOS conventional memory (640KB)					
+					if(memoryReader.Read(dosMemory, memoryAddress, 640*1024) == 0)
 					{						
 						memoryReader.Close();
 						memoryReader = null;
@@ -159,6 +127,45 @@ namespace MemoryViewer
 				
 				if(memoryReader != null)
 				{				
+					//scan DOS memory control blocks (MCB)
+					int pos = 0x1190; 
+					byte blockType = dosMemory[pos];
+
+					int dest = 0;
+					while (blockType == 0x4D && pos <= (dosMemory.Length - 16))
+					{
+						var blockAddress = dosMemory.ReadUnsignedShort(pos + 1);
+						var blockSize = dosMemory.ReadUnsignedShort(pos + 3) * 16;
+						var blockOwner = Encoding.ASCII.GetString(dosMemory, pos + 8, 8).TrimEnd((char)0);
+							
+						pos += 16;											
+						if ((blockOwner == "INDARK" || blockOwner == "AITD2" || blockOwner == "AITD3") 
+						    && blockAddress != 0 && blockAddress != 8) //not free or allocated by DOS
+						{
+							Array.Copy(dosMemory, pos, pixelData, dest, blockSize);
+							dest += blockSize;
+							
+							//round up to next line
+							int reminder = 320 - dest % 320;
+							for (int i = 0 ; i < reminder; i++)
+							{
+								pixelData[dest++] = 0;
+							}							
+						}
+						
+						pos += blockSize;
+						blockType = dosMemory[pos];
+					}
+					
+					if((dest + 64000) <= pixelData.Length)
+					{
+						//EMS memory (64000B) (skip 64KB (HMA) + 128KB (VCPI) + 32B)
+						memoryReader.Read(pixelData, memoryAddress+(1024+192)*1024+32, 64000, dest);
+						dest += 64000;
+					}
+					
+					Array.Clear(pixelData, dest, pixelData.Length - dest);
+							
 					unsafe
 					{
 						fixed (byte* pixelsBytePtr = pixelData)
@@ -184,7 +191,6 @@ namespace MemoryViewer
 					}						
 				}
 					
-				SDL.SDL_SetRenderDrawColor(renderer, 8, 8, 8, 255);
 				SDL.SDL_RenderClear(renderer);
 								
 				int tm = (winx + RESX - 1) / RESX;
