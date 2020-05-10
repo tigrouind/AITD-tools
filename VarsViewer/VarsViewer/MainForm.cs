@@ -6,8 +6,7 @@ using Microsoft.VisualBasic;
 namespace VarsViewer
 {
 	public partial class MainForm : Form
-	{
-		int width, height;		
+	{	
 		float cellWidth, cellHeight;
 		Var lastToolTip;
 
@@ -35,11 +34,8 @@ namespace VarsViewer
 
 		void MainFormPaint(object sender, PaintEventArgs e)
 		{
-			width = ClientSize.Width;
-			height = ClientSize.Height;
-		
-			cellWidth = width / 21.0f;
-			cellHeight = height / 16.0f;
+			cellWidth = ClientSize.Width / 21.0f;
+			cellHeight = ClientSize.Height / 16.0f;
 			
 			DrawHeader(e);
 			DrawCells(e);
@@ -53,22 +49,22 @@ namespace VarsViewer
 			}
 		}
 		
-		void MainFormFormClosed(object sender, FormClosedEventArgs e)
-		{
-			worker.Shutdown();
-		}
-		
 		void MainFormLoad(object sender, EventArgs e)
 		{					
 			worker.Start();
 		}
 		
+		void MainFormFormClosed(object sender, FormClosedEventArgs e)
+		{
+			worker.Shutdown();
+		}		
+		
 		protected override void WndProc(ref Message m)
 		{
 		    if (m.Msg == 0x0112) // WM_SYSCOMMAND
 		    {
-		        int wParam = (m.WParam.ToInt32() & 0xFFF0); //maxi		        
-		        if (wParam == 0xF030 || wParam == 0xF020 || wParam == 0xF120)
+		        int wParam = (m.WParam.ToInt32() & 0xFFF0);      
+		        if (wParam == 0xF030 || wParam == 0xF020 || wParam == 0xF120) //SC_MAXIMIZE / SC_MINIMIZE / SC_RESTORE
 		        {
 		             Invalidate();
 		        }
@@ -219,25 +215,27 @@ namespace VarsViewer
 			}
 		}
 		
-		bool FindVarBehindCursor(Point position, Var[] vars, out Var var)
+		bool FindVarBehindCursor(Point position, Var[] vars, out Var result)
 		{
-			for(int i = 0 ; i < vars.Length ; i++)
+			foreach(Var var in vars)
 			{
-				var = vars[i];
 				if(var.Rectangle.Contains(position))
 				{
+					result = var;
 					return true;
 				}
 			}
 			
-			var = null;
+			result = null;
 			return false;
 		}
 
 		void MainFormMouseClick(object sender, MouseEventArgs e)
 		{
 			Var var;
-			if ((FindVarBehindCursor(e.Location, worker.Vars, out var) || FindVarBehindCursor(e.Location, worker.Cvars, out var)) && var.MemoryAddress >= 0)
+			if (e.Button == MouseButtons.Left && (FindVarBehindCursor(e.Location, worker.Vars, out var) 
+			  || FindVarBehindCursor(e.Location, worker.Cvars, out var))
+			  && var.MemoryAddress >= 0)
 			{
 				string input = Interaction.InputBox(string.Empty, string.Format("#{0} {1}", var.Index, var.Name), var.Value.ToString(),
                                           (DesktopLocation.X + Width) / 2, (DesktopLocation.Y + Height) / 2);
@@ -245,7 +243,7 @@ namespace VarsViewer
 				short value;
 				if(short.TryParse(input, out value))
 				{
-					worker.Write(var.MemoryAddress, value);
+					worker.Write(var, value);
 				}
 			}
 		}

@@ -9,12 +9,11 @@ namespace VarsViewer
 {
 	public class Worker
 	{
-		ProcessMemoryReader processReader;
+		ProcessMemoryReader processReader;		
 		Thread thread;
-		Action needRefreshCallback;
-		bool running = true;
-		readonly VarParser varParser = new VarParser();		
-		
+		readonly Action needRefreshCallback;		
+		bool running = true;		
+				
 		long varsMemoryAddress = -1;
 		long cvarsMemoryAddress = -1;		
 		readonly byte[] memory = new byte[512];					
@@ -23,12 +22,13 @@ namespace VarsViewer
 			
 		public readonly Var[] Vars = new Var[207];		
 		public readonly Var[] Cvars = new Var[44];		
+		readonly VarParser varParser = new VarParser();		
 						
 		public bool Compare;
 		public bool IgnoreDifferences = true;
 		public bool Freeze;
 		
-		public Worker(Action needRefresh)
+		public Worker(Action needRefreshCallback)
 		{
 			//parse vars.txt file
 			const string varPath = @"GAMEDATA\vars.txt";
@@ -39,9 +39,19 @@ namespace VarsViewer
 						
 			InitVars(Vars, "VARS");
 			InitVars(Cvars, "C_VARS");
-			this.needRefreshCallback = needRefresh;
+			this.needRefreshCallback = needRefreshCallback;
 		}
-
+						
+		void InitVars(Var[] data, string sectionName)
+		{
+			for(int i = 0 ; i < data.Length ; i++)
+			{
+				var var = new Var();
+				var.Index = i;
+				var.Name = varParser.GetText(sectionName, var.Index);		
+				data[i] = var;
+			}
+		}
 		
 		public void Start()
 		{
@@ -120,6 +130,11 @@ namespace VarsViewer
 			}
 		}	
 				
+		public void Shutdown()
+		{
+			running = false;
+		}
+		
 		bool CheckDifferences(Var[] data, long offset)
 		{
 			bool needRefresh = false;
@@ -183,17 +198,7 @@ namespace VarsViewer
 			
 			return needRefresh;
 		}		
-				
-		void InitVars(Var[] data, string sectionName)
-		{
-			for(int i = 0 ; i < data.Length ; i++)
-			{
-				var var = new Var();
-				var.Index = i;
-				var.Name = varParser.GetText(sectionName, var.Index);		
-				data[i] = var;
-			}
-		}
+	
 		
 		public void SaveState()
 		{
@@ -209,20 +214,6 @@ namespace VarsViewer
 			}
 		}
 
-		public void Shutdown()
-		{
-			running = false;
-		}
-		
-		public void Write(long address, short value)
-		{
-			if(processReader != null && varsMemoryAddress != -1 && cvarsMemoryAddress != -1)
-			{
-				memory.Write(value, 0);
-				processReader.Write(memory, address, 2);
-			}
-		}
-				
 		void SearchDosBox()
 		{
 			int[] processIds = Process.GetProcesses()
@@ -247,5 +238,14 @@ namespace VarsViewer
 				processReader = new ProcessMemoryReader(processIds.First());
 			}
 		}
+				
+		public void Write(Var var, short value)
+		{
+			if(processReader != null && varsMemoryAddress != -1 && cvarsMemoryAddress != -1)
+			{
+				memory.Write(value, 0);
+				processReader.Write(memory, var.MemoryAddress, 2);
+			}
+		}				
 	}
 }
