@@ -61,72 +61,67 @@ namespace VarsViewer
 		
 		public void Run()
 		{
-			while(running)
+			while (running)
 			{
-				while (running && (processReader == null || varsMemoryAddress == -1 || cvarsMemoryAddress == -1))
+				if (processReader == null)
 				{
-					while(running && processReader == null)
+					SearchDosBox();
+				}
+								
+				if (processReader != null && (varsMemoryAddress == -1 || cvarsMemoryAddress == -1))
+				{
+					if (!processReader.SearchForBytePattern(varsMemoryPattern, (buf, len, index, readPosition) => 
+						{ 
+							varsMemoryAddress = readPosition;
+						}) || 
+						!processReader.SearchForBytePattern(cvarsMemoryPattern, (buf, len, index, readPosition) => 
+						{	
+                           	cvarsMemoryAddress = readPosition; 
+                       	})
+					)
 					{
-						SearchDosBox();
-						if(processReader == null)
-						{
-							Thread.Sleep(1000);
-						}
-					}
-									
-					while (running && processReader != null && (varsMemoryAddress == -1 || cvarsMemoryAddress == -1))
-					{
-						if (!processReader.SearchForBytePattern(varsMemoryPattern, (buf, len, index, readPosition) => 
-							{ 
-								varsMemoryAddress = readPosition;
-							}) || 
-							!processReader.SearchForBytePattern(cvarsMemoryPattern, (buf, len, index, readPosition) => 
-							{	
-	                           	cvarsMemoryAddress = readPosition; 
-	                       	})
-						)
-						{
-							processReader.Close();
-							processReader = null;
-						}
-						
-						if (processReader != null && (varsMemoryAddress == -1 || cvarsMemoryAddress == -1))
-						{
-							Thread.Sleep(1000);
-						}
+						processReader.Close();
+						processReader = null;
 					}
 				}	
 				
-				if (!Freeze)
-				{					
-					bool needRefresh = false;
-					if (processReader.Read(memory, varsMemoryAddress, 207 * 2) > 0)
-					{					
-						needRefresh |= CheckDifferences(Vars, varsMemoryAddress);
-					}
-					else
+				if (processReader != null && varsMemoryAddress != -1 && cvarsMemoryAddress != -1)
+				{		
+					if (!Freeze)
 					{
-						varsMemoryAddress = -1;
+						bool needRefresh = false;
+						if (processReader.Read(memory, varsMemoryAddress, 207 * 2) > 0)
+						{					
+							needRefresh |= CheckDifferences(Vars, varsMemoryAddress);
+						}
+						else
+						{
+							varsMemoryAddress = -1;
+						}
+						
+						if (processReader.Read(memory, cvarsMemoryAddress, 44 * 2) > 0)
+						{
+							needRefresh |=CheckDifferences(Cvars, cvarsMemoryAddress);
+						}
+						else
+						{
+							cvarsMemoryAddress = -1;
+						}
+						
+						IgnoreDifferences = false; 
+											
+						if (needRefresh && running)
+						{
+							needRefreshCallback();
+						}
 					}
 					
-					if (processReader.Read(memory, cvarsMemoryAddress, 44 * 2) > 0)
-					{
-						needRefresh |=CheckDifferences(Cvars, cvarsMemoryAddress);
-					}
-					else
-					{
-						cvarsMemoryAddress = -1;
-					}
-					
-					IgnoreDifferences = false; 
-										
-					if (needRefresh && running)
-					{
-						needRefreshCallback();
-					}
+					Thread.Sleep(16); //60 Hz
 				}
-				
-				Thread.Sleep(16); //60 Hz
+				else
+				{
+					Thread.Sleep(1000);
+				}				
 			}
 		}	
 				

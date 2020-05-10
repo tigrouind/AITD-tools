@@ -32,38 +32,34 @@ namespace CacheViewer
             	Pattern = Encoding.ASCII.GetBytes(x) 
             }).ToArray();
 								
-			while(true)
+			while (true)
 			{			
-				while (memoryReader == null || cache.Any(x => x.Address < 0))
+				if (memoryReader == null)
 				{
-					while(memoryReader == null)
-					{
-						SearchDosBox();
-						if (memoryReader == null) 
-						{
-							Thread.Sleep(1000);
-						}
-					}
-					
-					while (memoryReader != null && cache.Any(x => x.Address < 0))
-					{
-						SearchPatterns();	
-						if (memoryReader != null && cache.Any(x => x.Address < 0))
-						{
-							Thread.Sleep(1000);	
-					    }
-					}				
+					SearchDosBox();
+				}
+				
+				if (memoryReader != null && cache.Any(x => x.Address < 0))
+				{
+					SearchPatterns();						
 				}
 						
-				ReadMemory();
-				
-				if (memoryReader != null)
+				if (memoryReader != null && cache.All(x => x.Address >= 0))
 				{
-					Render();	
-				}				
-				
-				Thread.Sleep(250);
-				frame++;
+					ReadMemory();
+					
+					if (cache.All(x => x.Address >= 0)) 
+					{
+						Render();
+					}
+
+					Thread.Sleep(250);
+					frame++;
+				}											
+				else
+				{
+					Thread.Sleep(1000);	
+			    }
 			}
 		}
 		
