@@ -8,6 +8,7 @@ namespace Shared
 	{
 		const int PROCESS_QUERY_INFORMATION = 0x0400;
 		const int PROCESS_VM_READ = 0x0010;
+		const int PROCESS_VM_WRITE = 0x0020;
 		const int PROCESS_VM_OPERATION = 0x0008;
 		const int MEM_COMMIT = 0x00001000;
 		const int MEM_PRIVATE = 0x20000;
@@ -33,6 +34,9 @@ namespace Shared
 	
 		[DllImport("kernel32.dll")]
 		static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, IntPtr lpBuffer, int dwSize, out IntPtr lpNumberOfBytesRead);
+		
+		[DllImport("kernel32.dll")]
+		static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, int dwSize, out IntPtr lpNumberOfBytesWritten);
 	
 		[DllImport("kernel32.dll")]
 		static extern int VirtualQueryEx(IntPtr hProcess, IntPtr lpAddress, out MEMORY_BASIC_INFORMATION lpBuffer, uint dwLength);
@@ -41,7 +45,7 @@ namespace Shared
 	
 		public ProcessMemoryReader(int processId)
 		{
-			this.processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ | PROCESS_VM_OPERATION, false, processId);
+			this.processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION, false, processId);
 		}
 	
 		~ProcessMemoryReader()
@@ -71,6 +75,16 @@ namespace Shared
 						return (long)bytesRead;
 					}
 				}
+			}
+			return 0;
+		}
+		
+		public long Write(byte[] buffer, long offset, int count)
+		{
+			IntPtr bytesWritten;
+			if (WriteProcessMemory(processHandle, new IntPtr(offset), buffer, count, out bytesWritten))
+			{
+				return (long)bytesWritten;
 			}
 			return 0;
 		}
@@ -125,7 +139,7 @@ namespace Shared
 			return -1;		
 		}
 		
-		public void SearchForBytePattern(byte[] pattern, Action<byte[], int, int, long> found)
+		public bool SearchForBytePattern(byte[] pattern, Action<byte[], int, int, long> found)
 		{
 			byte[] buffer = new byte[81920];
 			long baseAddress, regionSize;
@@ -150,7 +164,11 @@ namespace Shared
 					readPosition += bytesRead;
 					bytesToRead -= (int)bytesRead;
 				}
+				
+				return true;
 			}
+			
+			return false;
 		}
 	
 		public bool IsMatch(byte[] x, byte[] y, int index)
