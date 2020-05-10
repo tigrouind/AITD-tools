@@ -11,12 +11,13 @@ namespace VarsViewer
 		float cellWidth, cellHeight;
 		Var lastToolTip;
 
-		Brush greenBrush = new SolidBrush(Color.FromArgb(255, 43, 193, 118));
-		Brush grayBrush = new SolidBrush(Color.FromArgb(255, 28, 28, 38));	
-		Brush lightGrayBrush = new SolidBrush(Color.FromArgb(255, 47, 47, 57));	
-		Brush darkGrayBrush = new SolidBrush(Color.FromArgb(255, 17, 17, 17));	
-		Brush whiteBrush = new SolidBrush(Color.FromArgb(255, 255, 255, 255));		
-		Brush redBrush = new SolidBrush(Color.FromArgb(255, 240, 68, 77));	
+		readonly Brush greenBrush = new SolidBrush(Color.FromArgb(255, 43, 193, 118));
+		readonly Brush grayBrush = new SolidBrush(Color.FromArgb(255, 28, 28, 38));	
+		readonly Brush lightGrayBrush = new SolidBrush(Color.FromArgb(255, 47, 47, 57));	
+		readonly Brush darkGrayBrush = new SolidBrush(Color.FromArgb(255, 17, 17, 17));	
+		readonly Brush whiteBrush = new SolidBrush(Color.FromArgb(255, 255, 255, 255));		
+		readonly Brush redBrush = new SolidBrush(Color.FromArgb(255, 240, 68, 77));	
+		readonly Brush blueBrush = new SolidBrush(Color.FromArgb(64, 0, 162, 232));
 		
 		readonly Font font = new Font("Arial", 13.0f);
 		readonly StringFormat format = new StringFormat();	
@@ -55,10 +56,7 @@ namespace VarsViewer
 			
 			if (worker.Freeze)
 			{
-				using(Brush brush = new SolidBrush(Color.FromArgb(64, 0, 162, 232)))
-				{
-					e.Graphics.FillRectangle(brush, e.ClipRectangle);
-				}
+				e.Graphics.FillRectangle(blueBrush, e.ClipRectangle);
 			}
 		}
 		
