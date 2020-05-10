@@ -36,7 +36,7 @@ namespace CacheViewer
 			{			
 				if (memoryReader == null)
 				{
-					SearchDosBox();
+					memoryReader = ProcessMemoryReader.SearchDosBox();
 				}
 				
 				if (memoryReader != null && cache.Any(x => x.Address < 0))
@@ -60,31 +60,6 @@ namespace CacheViewer
 				{
 					Thread.Sleep(1000);	
 			    }
-			}
-		}
-		
-		static void SearchDosBox()
-		{
-			int[] processIds = Process.GetProcesses()
-				.Where(x =>
-					{
-						string name;
-						try
-						{
-							name = x.ProcessName;
-						}
-						catch
-						{
-							name = string.Empty;
-						}
-						return name.StartsWith("DOSBOX", StringComparison.InvariantCultureIgnoreCase);
-					})
-				.Select(x => x.Id)
-				.ToArray();
-				
-			if(processIds.Any())
-			{
-				memoryReader = new ProcessMemoryReader(processIds.First());
 			}
 		}
 		

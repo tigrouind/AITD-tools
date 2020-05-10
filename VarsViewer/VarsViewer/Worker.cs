@@ -65,7 +65,7 @@ namespace VarsViewer
 			{
 				if (processReader == null)
 				{
-					SearchDosBox();
+					processReader = ProcessMemoryReader.SearchDosBox();
 				}
 								
 				if (processReader != null && (varsMemoryAddress == -1 || cvarsMemoryAddress == -1))
@@ -195,8 +195,7 @@ namespace VarsViewer
 			
 			return needRefresh;
 		}		
-	
-		
+			
 		public void SaveState()
 		{
 			SaveState(Vars);
@@ -211,31 +210,6 @@ namespace VarsViewer
 			}
 		}
 
-		void SearchDosBox()
-		{
-			int[] processIds = Process.GetProcesses()
-				.Where(x =>
-					{
-						string name;
-						try
-						{
-							name = x.ProcessName;
-						}
-						catch
-						{
-							name = string.Empty;
-						}
-						return name.StartsWith("DOSBOX", StringComparison.InvariantCultureIgnoreCase);
-					})
-				.Select(x => x.Id)
-				.ToArray();
-				
-			if(processIds.Any())
-			{
-				processReader = new ProcessMemoryReader(processIds.First());
-			}
-		}
-				
 		public void Write(Var var, short value)
 		{
 			if(processReader != null && varsMemoryAddress != -1 && cvarsMemoryAddress != -1)

@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System;
 using System.Linq;
 
@@ -177,6 +178,33 @@ namespace Shared
 				if (x[j + index] != y[j])
 					return false;
 			return true;
+		}
+		
+		public static ProcessMemoryReader SearchDosBox()
+		{
+			int? processId = Process.GetProcesses()
+				.Where(x => GetProcessName(x).StartsWith("DOSBOX", StringComparison.InvariantCultureIgnoreCase))
+				.Select(x => x.Id)
+				.FirstOrDefault();
+				
+			if(processId.HasValue)
+			{
+				return new ProcessMemoryReader(processId.Value);
+			}
+			
+			return null;
+		}
+		
+		static string GetProcessName(Process process)
+		{
+			try
+			{
+				return process.ProcessName;
+			}
+			catch
+			{
+				return string.Empty;
+			}
 		}
 	}
 }

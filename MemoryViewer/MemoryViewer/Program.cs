@@ -87,32 +87,16 @@ namespace MemoryViewer
 					if ((time - lastCheck) > 1000)
 					{
 						lastCheck = time;					
-						int[] processIds = Process.GetProcesses()
-						.Where(x =>
-							{
-								string name;
-								try
-								{
-									name = x.ProcessName;
-								}
-								catch
-								{
-									name = string.Empty;
-								}
-								return name.StartsWith("DOSBOX", StringComparison.InvariantCultureIgnoreCase);
-							})
-						.Select(x => x.Id)
-						.ToArray();
-				
-						if (processIds.Any())
+										
+						memoryReader = ProcessMemoryReader.SearchDosBox();
+						if (memoryReader != null)
 						{
-							memoryReader = new ProcessMemoryReader(processIds.First());								
 							memoryAddress = memoryReader.SearchFor16MRegion();			
 							if(memoryAddress == -1)
 							{
 								memoryReader = null;
-							}							
-						}			
+							}			
+						}
 					}							
 				}	
 				
