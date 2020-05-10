@@ -264,8 +264,15 @@ namespace VarsViewer
 		
 		void MainFormMouseLeave(object sender, EventArgs e)
 		{
-			if(lastToolTip != null) Invalidate(lastToolTip.Rectangle);
-			lastToolTip = null;
+			if (!ClientRectangle.Contains(PointToClient(Cursor.Position)))
+			{
+				if(lastToolTip != null)
+				{
+					Invalidate(lastToolTip.Rectangle);
+					lastToolTip = null;
+					toolTip.Hide(this);					
+				}
+			}
 		}
 		
 		void Invalidate(RectangleF rectangle)
