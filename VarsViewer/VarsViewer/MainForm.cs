@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 using Microsoft.VisualBasic;
 
@@ -23,13 +24,25 @@ namespace VarsViewer
 
 		public MainForm()
 		{					
-			worker = new Worker(() => this.BeginInvoke(new Action(NeedRefresh)));		
+			worker = new Worker(() => this.Invoke(new Action(NeedRefresh)));		
 			InitializeComponent();			
 		}
 		
 		void NeedRefresh()
 		{
-			Invalidate();
+			using(Region region = new Region(Rectangle.Empty))
+			{
+				foreach(Var var in worker.Vars.Concat(worker.Cvars))
+				{
+					if (var.Refresh)
+					{
+						var.Refresh = false;
+						region.Union(var.Rectangle);
+					}
+				}
+				
+				Invalidate(region);
+			}
 		}
 
 		void MainFormPaint(object sender, PaintEventArgs e)
@@ -47,6 +60,10 @@ namespace VarsViewer
 					e.Graphics.FillRectangle(brush, e.ClipRectangle);
 				}
 			}
+		}
+		
+		protected override void OnPaintBackground(PaintEventArgs e)
+		{
 		}
 		
 		void MainFormLoad(object sender, EventArgs e)
@@ -85,7 +102,6 @@ namespace VarsViewer
 				case Keys.C:
 					worker.Compare = !worker.Compare;
 					worker.IgnoreDifferences = !worker.Compare;	
-					Invalidate();
 					break;
 				
 				case Keys.F:
@@ -95,7 +111,6 @@ namespace VarsViewer
 
 				case Keys.S:
 					worker.SaveState();
-					Invalidate();
 					break;
 			}
 		}
@@ -210,7 +225,8 @@ namespace VarsViewer
 					toolTip.Hide(this);
 				}
 				
-				Invalidate();
+				if(var != null) Invalidate(var.Rectangle);
+				if(lastToolTip != null) Invalidate(lastToolTip.Rectangle);
 				lastToolTip = var;
 			}
 		}
@@ -250,8 +266,16 @@ namespace VarsViewer
 		
 		void MainFormMouseLeave(object sender, EventArgs e)
 		{
+			if(lastToolTip != null) Invalidate(lastToolTip.Rectangle);
 			lastToolTip = null;
-			Invalidate();
+		}
+		
+		void Invalidate(RectangleF rectangle)
+		{
+			using (var region = new Region(rectangle))
+			{
+				Invalidate(region);
+			}
 		}
 	}
 }

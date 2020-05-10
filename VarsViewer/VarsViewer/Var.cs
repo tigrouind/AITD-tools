@@ -7,7 +7,9 @@ namespace VarsViewer
 	{		
 		public string Text;
 		public bool Difference;
+		
 		public RectangleF Rectangle;
+		public bool Refresh;
 		
 		public int Index;
 		public string Name;

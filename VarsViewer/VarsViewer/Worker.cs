@@ -173,7 +173,7 @@ namespace VarsViewer
 				//check differences
 				bool difference = (currenttime - var.Time) < 5000;	
 				string newText = string.Empty;
-				if (value != 0 || var.Difference)
+				if (value != 0 || difference)
 				{
 					newText = value.ToString();
 				}
@@ -181,12 +181,14 @@ namespace VarsViewer
 				if(var.Difference != difference)
 				{
 					var.Difference = difference;
+					var.Refresh = true;
 					needRefresh = true;
 				}
 				
 				if(var.Text != newText)
 				{
 					var.Text = newText;
+					var.Refresh = true;
 					needRefresh = true;
 				}
 			}
