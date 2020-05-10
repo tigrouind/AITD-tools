@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -11,8 +10,8 @@ namespace VarsViewer
 	{
 		ProcessMemoryReader processReader;		
 		Thread thread;
-		readonly Action needRefreshCallback;		
-		bool running = true;		
+		readonly Action refreshCallback;		
+		bool running;		
 				
 		long varsMemoryAddress = -1;
 		long cvarsMemoryAddress = -1;		
@@ -21,28 +20,32 @@ namespace VarsViewer
 		readonly byte[] cvarsMemoryPattern = { 0x31, 0x00, 0x0E, 0x01, 0xBC, 0x02, 0x12, 0x00, 0x06, 0x00, 0x13, 0x00, 0x14, 0x00, 0x01 };
 			
 		public readonly Var[] Vars = new Var[207];		
-		public readonly Var[] Cvars = new Var[44];		
-		readonly VarParser varParser = new VarParser();		
+		public readonly Var[] Cvars = new Var[44];			
 						
 		public bool Compare;
 		public bool IgnoreDifferences = true;
 		public bool Freeze;
 		
-		public Worker(Action needRefreshCallback)
+		public Worker(Action refreshCallback)
 		{
-			//parse vars.txt file
+			InitVars();
+			this.refreshCallback = refreshCallback;
+		}
+
+		void InitVars()
+		{
+			var varParser = new VarParser();
 			const string varPath = @"GAMEDATA\vars.txt";
 			if (File.Exists(varPath))
 			{	
 				varParser.Parse(varPath, "VARS", "C_VARS");
 			}
 						
-			InitVars(Vars, "VARS");
-			InitVars(Cvars, "C_VARS");
-			this.needRefreshCallback = needRefreshCallback;
+			InitVars(varParser, Vars, "VARS");
+			InitVars(varParser, Cvars, "C_VARS");
 		}
-						
-		void InitVars(Var[] data, string sectionName)
+		
+		void InitVars(VarParser varParser, Var[] data, string sectionName)
 		{
 			for(int i = 0 ; i < data.Length ; i++)
 			{
@@ -55,8 +58,12 @@ namespace VarsViewer
 		
 		public void Start()
 		{
-			thread = new Thread(Run);
-			thread.Start();
+			if (!running)
+			{
+				running = true;
+				thread = new Thread(Run);
+				thread.Start();
+			}
 		}
 		
 		public void Run()
@@ -112,7 +119,7 @@ namespace VarsViewer
 											
 						if (needRefresh && running)
 						{
-							needRefreshCallback();
+							refreshCallback();
 						}
 					}
 					
