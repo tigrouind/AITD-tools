@@ -6,7 +6,7 @@ namespace CacheViewer
 	{
 		public string Name;
 		public Dictionary<int, CacheEntry> Entries = new Dictionary<int, CacheEntry>();
-		public long Address;
+		public long Address = -1;
 		public byte[] Pattern;
 		
 		public int MaxFreeData;

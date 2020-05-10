@@ -33,29 +33,34 @@ namespace CacheViewer
             }).ToArray();
 								
 			while(true)
-			{	
-				while (memoryReader == null)
+			{			
+				while (memoryReader == null || cache.Any(x => x.Address < 0))
 				{
-					SearchDosBox();
-					
-					if (memoryReader == null)
+					while(memoryReader == null)
 					{
-						Thread.Sleep(1000);
+						SearchDosBox();
+						if (memoryReader == null) 
+						{
+							Thread.Sleep(1000);
+						}
 					}
-				}				
-				
-				while (cache.Any(x => x.Address == 0))
-				{
-					SearchPatterns();	
 					
-					if (cache.Any(x => x.Address == 0))
+					while (memoryReader != null && cache.Any(x => x.Address < 0))
 					{
-						Thread.Sleep(1000);	
-					}					
+						SearchPatterns();	
+						if (memoryReader != null && cache.Any(x => x.Address < 0))
+						{
+							Thread.Sleep(1000);	
+					    }
+					}				
 				}
 						
 				ReadMemory();
-				Render();
+				
+				if (memoryReader != null)
+				{
+					Render();	
+				}				
 				
 				Thread.Sleep(250);
 				frame++;
@@ -90,7 +95,7 @@ namespace CacheViewer
 		static void SearchPatterns()
 		{
 			var listPattern = Encoding.ASCII.GetBytes("List");
-			memoryReader.SearchForBytePattern(listPattern, (buf, len, index, readPosition) => 
+			if(!memoryReader.SearchForBytePattern(listPattern, (buf, len, index, readPosition) => 
             {
               	foreach(var ch in cache)
 				{
@@ -100,7 +105,11 @@ namespace CacheViewer
 						ch.Address = readPosition;		
 					}
 				}                                        	                   		
-         	});
+      		}))
+			{
+				memoryReader.Close();
+				memoryReader = null;
+			}
 		}
 		
 		static void ReadMemory()
@@ -148,54 +157,51 @@ namespace CacheViewer
 				}
 				else
 				{
-					memoryReader = null;
-					break;
+					ch.Address = -1;
 				}
 			}
 		}
 		
 		static void Render()
-		{
+		{			
 			Console.Clear();
-			if (memoryReader != null)
-			{					
-				int column = 0;
-				foreach(var ch in cache)
+				
+			int column = 0;
+			foreach(var ch in cache)
+			{
+				Console.Write(column * 22 + 6, 0, ConsoleColor.Gray, "{0}", ch.Name);
+				Console.Write(column * 22 + 0, 1, ConsoleColor.Gray, "{0,5:D}/{1,5:D} {2,3:D}/{3,3:D}", ch.MaxFreeData - ch.SizeFreeData, ch.MaxFreeData, ch.NumUsedEntry, ch.NumMaxEntry);
+				
+				//Array.Sort(entries, 0, numUsedEntry, comparer);
+				int row = 0;
+				foreach (var entry in ch.Entries.Values
+				         .OrderByDescending(x => x.time)
+				         .ThenByDescending(x => x.id))
 				{
-					Console.Write(column * 22 + 6, 0, ConsoleColor.Gray, "{0}", ch.Name);
-					Console.Write(column * 22 + 0, 1, ConsoleColor.Gray, "{0,5:D}/{1,5:D} {2,3:D}/{3,3:D}", ch.MaxFreeData - ch.SizeFreeData, ch.MaxFreeData, ch.NumUsedEntry, ch.NumMaxEntry);
-					
-					//Array.Sort(entries, 0, numUsedEntry, comparer);
-					int row = 0;
-					foreach (var entry in ch.Entries.Values
-					         .OrderByDescending(x => x.time)
-					         .ThenByDescending(x => x.id))
+					var color = ConsoleColor.Gray;		
+						
+					if (entry.touched)
 					{
-						var color = ConsoleColor.Gray;		
-							
-						if (entry.touched)
-						{
-							color = ConsoleColor.DarkYellow;
-						}
-						
-						if (frame - entry.frame > 0) //removed
-						{
-							color = ConsoleColor.Black | ConsoleColor.BackgroundDarkGray;
-						}
-						
-						if (frame - entry.framestart < 12) //added
-						{
-							color = ConsoleColor.Black | ConsoleColor.BackgroundDarkGreen;
-						}
-						
-						Console.Write(column * 22 + 1, row + 3, color, "{0,5:D} {1} {2,5:D}", entry.key, FormatSize(entry.size).PadLeft(6), entry.time / 60);
-						row++;
-					}			
-					column++;
-				}
+						color = ConsoleColor.DarkYellow;
+					}
+					
+					if (frame - entry.frame > 0) //removed
+					{
+						color = ConsoleColor.Black | ConsoleColor.BackgroundDarkGray;
+					}
+					
+					if (frame - entry.framestart < 12) //added
+					{
+						color = ConsoleColor.Black | ConsoleColor.BackgroundDarkGreen;
+					}
+					
+					Console.Write(column * 22 + 1, row + 3, color, "{0,5:D} {1} {2,5:D}", entry.key, FormatSize(entry.size).PadLeft(6), entry.time / 60);
+					row++;
+				}			
+				column++;
 			}
 			
-			Console.Flush();
+			Console.Flush();			
 		}
 	
 		static string FormatSize(int length)
