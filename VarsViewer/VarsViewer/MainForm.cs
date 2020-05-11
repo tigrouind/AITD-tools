@@ -51,8 +51,8 @@ namespace VarsViewer
 			cellWidth = ClientSize.Width / 21.0f;
 			cellHeight = ClientSize.Height / 16.0f;
 			
-			DrawHeader(e);
-			DrawCells(e);
+			DrawTab(e, worker.Vars, 0);
+			DrawTab(e, worker.Cvars, 12);
 			
 			if (toolTipText != string.Empty)
 			{
@@ -136,61 +136,45 @@ namespace VarsViewer
 			
 			return rect;
 		}
+				
+		void DrawTab(PaintEventArgs e, Var[] vars, int position)
+		{
+			DrawHeader(e, vars, position);
+			DrawCells(e, vars, position);
+		}
 		
-		void DrawHeader(PaintEventArgs e)
+		void DrawHeader(PaintEventArgs e, Var[] vars, int position)
 		{ 
-			DrawCell(e, 0, 0,  string.Empty, greenBrush, grayBrush, StringAlignment.Center);
-			DrawCell(e, 0, 12, string.Empty, greenBrush, grayBrush, StringAlignment.Near);	
+			DrawCell(e, 0, position,  string.Empty, greenBrush, grayBrush, StringAlignment.Center);
 			
 			for(int i = 0 ; i < 20 ; i++)
 			{
-				DrawCell(e, i + 1, 0, i.ToString(), greenBrush, grayBrush, StringAlignment.Center);				
-				DrawCell(e, i + 1, 12, i.ToString(), greenBrush, grayBrush, StringAlignment.Center);
+				DrawCell(e, i + 1, position, i.ToString(), greenBrush, grayBrush, StringAlignment.Center);		
 			}
 			
-			for(int i = 0 ; i < 11 ; i++)
+			int rows = (vars.Length + 19) / 20;
+			for(int i = 0 ; i < rows ; i++)
 			{
-				DrawCell(e, 0, i + 1, (i * 20).ToString(), greenBrush, grayBrush, StringAlignment.Far);
-			}
-			
-			for(int i = 0 ; i < 3 ; i++)
-			{
-				DrawCell(e, 0, i + 13, (i * 20).ToString(), greenBrush, grayBrush, StringAlignment.Far);
+				DrawCell(e, 0, i + 1 + position, (i * 20).ToString(), greenBrush, grayBrush, StringAlignment.Far);
 			}
 		}
-		
-		void DrawCells(PaintEventArgs e)
-		{							
-			for(int j = 0 ; j < 11 ; j++)
+
+		void DrawCells(PaintEventArgs e, Var[] vars, int position)
+		{						
+			int rows = (vars.Length + 19) / 20;
+			for(int j = 0 ; j < rows ; j++)
 			{
 				for(int i = 0 ; i < 20 ; i++)
 				{
 					int index = j * 20 + i;					
-					if(index < worker.Vars.Length)
+					if(index < vars.Length)
 					{
-						Var var = worker.Vars[index];
-						var.Rectangle = DrawCell(e, i + 1, j + 1, var.Text, GetBackgroundBrush(var), whiteBrush, StringAlignment.Center);
+						Var var = vars[index];
+						var.Rectangle = DrawCell(e, i + 1, j + position + 1, var.Text, GetBackgroundBrush(var), whiteBrush, StringAlignment.Center);
 					}
 					else
 					{
-						DrawCell(e, i + 1, j + 1, string.Empty, lightGrayBrush, grayBrush, StringAlignment.Center);
-					}
-				}
-			}	
-
-			for(int j = 0 ; j < 3 ; j++)
-			{
-				for(int i = 0 ; i < 20 ; i++)
-				{
-					int index = j * 20 + i;
-					if(index < worker.Cvars.Length)
-					{
-						Var var = worker.Cvars[index];
-						var.Rectangle = DrawCell(e, i + 1, j + 13, var.Text, GetBackgroundBrush(var), whiteBrush, StringAlignment.Center);
-					}
-					else
-					{
-						DrawCell(e, i + 1, j + 13, string.Empty, lightGrayBrush, grayBrush, StringAlignment.Center);
+						DrawCell(e, i + 1, j + position + 1, string.Empty, lightGrayBrush, grayBrush, StringAlignment.Center);
 					}
 				}
 			}	
