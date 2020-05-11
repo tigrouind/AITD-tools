@@ -36,18 +36,13 @@ namespace VarsViewer
 		
 		void NeedRefresh()
 		{
-			using(Region region = new Region(Rectangle.Empty))
+			foreach(Var var in worker.Vars.Concat(worker.Cvars))
 			{
-				foreach(Var var in worker.Vars.Concat(worker.Cvars))
+				if (var.Refresh)
 				{
-					if (var.Refresh)
-					{
-						var.Refresh = false;
-						region.Union(var.Rectangle);
-					}
+					var.Refresh = false;
+					Invalidate(var.Rectangle);
 				}
-				
-				Invalidate(region);
 			}
 		}
 
