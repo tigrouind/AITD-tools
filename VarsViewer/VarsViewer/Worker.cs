@@ -96,10 +96,11 @@ namespace VarsViewer
 				{		
 					if (!Freeze)
 					{
+						int time = Environment.TickCount;
 						bool needRefresh = false;
 						if (processReader.Read(memory, varsMemoryAddress, 207 * 2) > 0)
 						{					
-							needRefresh |= CheckDifferences(Vars, varsMemoryAddress);
+							needRefresh |= CheckDifferences(Vars, varsMemoryAddress, time);
 						}
 						else
 						{
@@ -108,7 +109,7 @@ namespace VarsViewer
 						
 						if (processReader.Read(memory, cvarsMemoryAddress, 44 * 2) > 0)
 						{
-							needRefresh |=CheckDifferences(Cvars, cvarsMemoryAddress);
+							needRefresh |=CheckDifferences(Cvars, cvarsMemoryAddress, time);
 						}
 						else
 						{
@@ -132,16 +133,14 @@ namespace VarsViewer
 			}
 		}	
 				
-		public void Shutdown()
+		public void Stop()
 		{
 			running = false;
 		}
 		
-		bool CheckDifferences(Var[] data, long offset)
+		bool CheckDifferences(Var[] data, long offset, int time)
 		{
-			bool needRefresh = false;
-			int currenttime = Environment.TickCount;
-			
+			bool needRefresh = false;					
 			for (int i = 0; i < data.Length; i++)
 			{
 				Var var = data[i];
@@ -171,14 +170,14 @@ namespace VarsViewer
 					}
 					else
 					{
-						var.Time = currenttime;
+						var.Time = time;
 					}
 				}
 	
 				var.MemoryAddress = offset + i * 2;
 	
 				//check differences
-				bool difference = (currenttime - var.Time) < 5000;	
+				bool difference = (time - var.Time) < 5000;	
 				string newText = string.Empty;
 				if (value != 0 || difference)
 				{

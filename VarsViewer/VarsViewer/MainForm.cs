@@ -72,7 +72,7 @@ namespace VarsViewer
 		
 		void MainFormFormClosed(object sender, FormClosedEventArgs e)
 		{
-			worker.Shutdown();
+			worker.Stop();
 		}		
 		
 		protected override void WndProc(ref Message m)
@@ -117,7 +117,7 @@ namespace VarsViewer
 		RectangleF DrawCell(PaintEventArgs e, int x, int y, string text, Brush back, Brush front, StringAlignment alignment)
 		{
 			var rect = new RectangleF(x * cellWidth, y * cellHeight, cellWidth, cellHeight);
-			if(new RectangleF(e.ClipRectangle.Location, e.ClipRectangle.Size).IntersectsWith(rect))
+			if (rect.IntersectsWith(e.ClipRectangle))
 			{
 				format.LineAlignment = StringAlignment.Center;
 				format.Alignment = alignment;
@@ -189,10 +189,7 @@ namespace VarsViewer
 		void MainFormMouseMove(object sender, MouseEventArgs e)
 		{		
 			Var var;
-			if (!FindVarBehindCursor(e.Location, worker.Vars, out var))
-			{				
-				FindVarBehindCursor(e.Location, worker.Cvars, out var);
-			}
+			TryFindVarAtPosition(e.Location, out var);
 			
 			if(selectedVar != var)
 			{			
@@ -210,29 +207,20 @@ namespace VarsViewer
 				selectedVar = var;
 			}
 		}
-		
-		bool FindVarBehindCursor(Point position, Var[] vars, out Var result)
+				
+		bool TryFindVarAtPosition(Point position, out Var result)
 		{
-			foreach(Var var in vars)
-			{
-				if(var.Rectangle.Contains(position))
-				{
-					result = var;
-					return true;
-				}
-			}
+			result = worker.Vars.Concat(worker.Cvars)
+				.FirstOrDefault(x => x.Rectangle.Contains(position));
 			
-			result = null;
-			return false;
+			return result != null;
 		}
 
 		void MainFormMouseClick(object sender, MouseEventArgs e)
 		{
 			Var var;
 		
-			if (e.Button == MouseButtons.Left && (FindVarBehindCursor(e.Location, worker.Vars, out var) 
-			  || FindVarBehindCursor(e.Location, worker.Cvars, out var))
-			  && var.MemoryAddress >= 0)
+			if (e.Button == MouseButtons.Left && TryFindVarAtPosition(e.Location, out var) && var.MemoryAddress >= 0)
 			{
 				string input = Interaction.InputBox(string.Empty, string.Format("#{0} {1}", var.Index, var.Name), var.Value.ToString(),
                                           (DesktopLocation.X + Width) / 2, (DesktopLocation.Y + Height) / 2);
