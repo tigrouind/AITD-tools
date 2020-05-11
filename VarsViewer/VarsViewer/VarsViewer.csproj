@@ -55,6 +55,7 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ToolTip.cs" />
     <Compile Include="Var.cs" />
     <Compile Include="Worker.cs" />
   </ItemGroup>

@@ -10,10 +10,9 @@ namespace VarsViewer
 	{	
 		float cellWidth, cellHeight;
 		
-		Var tooltipVar;
-		RectangleF toolTipRect;
-		string toolTipText;
+		Var selectedVar;
 
+		readonly ToolTip toolTip;
 		readonly Brush greenBrush = new SolidBrush(Color.FromArgb(255, 43, 193, 118));
 		readonly Brush grayBrush = new SolidBrush(Color.FromArgb(255, 28, 28, 38));	
 		readonly Brush lightGrayBrush = new SolidBrush(Color.FromArgb(255, 47, 47, 57));	
@@ -21,7 +20,6 @@ namespace VarsViewer
 		readonly Brush whiteBrush = new SolidBrush(Color.FromArgb(255, 255, 255, 255));		
 		readonly Brush redBrush = new SolidBrush(Color.FromArgb(255, 240, 68, 77));	
 		readonly Brush blueBrush = new SolidBrush(Color.FromArgb(64, 0, 162, 232));
-		readonly Brush darkGreenBrush = new SolidBrush(Color.FromArgb(255, 21, 103, 79));
 		
 		readonly Font font = new Font("Arial", 13.0f);	
 		readonly StringFormat format = new StringFormat();	
@@ -29,7 +27,8 @@ namespace VarsViewer
 		readonly Worker worker;	
 		
 		public MainForm()
-		{					
+		{			
+			toolTip = new ToolTip(this);			
 			worker = new Worker(() => this.Invoke(new Action(NeedRefresh)));		
 			InitializeComponent();			
 		}
@@ -54,14 +53,7 @@ namespace VarsViewer
 			DrawTab(e, worker.Vars, 0);
 			DrawTab(e, worker.Cvars, 12);
 			
-			if (toolTipText != string.Empty)
-			{
-				format.LineAlignment = StringAlignment.Center;
-				format.Alignment = StringAlignment.Center;
-				
-				e.Graphics.FillRectangle(darkGreenBrush, toolTipRect);
-				e.Graphics.DrawString(toolTipText, font, whiteBrush, toolTipRect, format);				
-			}
+			toolTip.OnPaint(e);
 			
 			if (worker.Freeze)
 			{
@@ -182,7 +174,7 @@ namespace VarsViewer
 		
 		Brush GetBackgroundBrush(Var var)
 		{
-			if(tooltipVar == var)
+			if(selectedVar == var)
 			{
 				return darkGrayBrush;
 			}
@@ -202,35 +194,20 @@ namespace VarsViewer
 				FindVarBehindCursor(e.Location, worker.Cvars, out var);
 			}
 			
-			if(tooltipVar != var)
-			{
-				RectangleF rect;
-				
+			if(selectedVar != var)
+			{			
 				if(var != null)
 				{	
-					toolTipText = string.Format("#{0}\n{1}", var.Index, var.Name);
-					
-					var size = TextRenderer.MeasureText(toolTipText, font, new Size(250, int.MaxValue), 
-					                                    TextFormatFlags.WordBreak | TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
-					var point = new PointF((var.Rectangle.Left + var.Rectangle.Right - size.Width) / 2.0f, var.Rectangle.Bottom);
-					
-					rect = new RectangleF(Math.Max(Math.Min(point.X, ClientRectangle.Width - size.Width), 0.0f),
-					                      Math.Max(Math.Min(point.Y, ClientRectangle.Height - size.Height), 0.0f), size.Width, size.Height);										
+					toolTip.Show(string.Format("#{0}\n{1}", var.Index, var.Name), var.Rectangle);
 				}
 				else
 				{
-					toolTipText = string.Empty;
-					rect = RectangleF.Empty;
+					toolTip.Hide();
 				}
 				
-				if(rect != RectangleF.Empty) Invalidate(rect);	
-				if(toolTipRect != RectangleF.Empty) Invalidate(toolTipRect);
-								
 				if(var != null) Invalidate(var.Rectangle);
-				if(tooltipVar != null) Invalidate(tooltipVar.Rectangle);
-				
-				tooltipVar = var;
-				toolTipRect = rect;
+				if(selectedVar != null) Invalidate(selectedVar.Rectangle);
+				selectedVar = var;
 			}
 		}
 		
@@ -272,19 +249,13 @@ namespace VarsViewer
 		{
 			if (!ClientRectangle.Contains(PointToClient(Cursor.Position)))
 			{
-				if(tooltipVar != null)
+				if(selectedVar != null)
 				{
-					Invalidate(tooltipVar.Rectangle);					
-					tooltipVar = null;					
+					Invalidate(selectedVar.Rectangle);					
+					selectedVar = null;					
 				}
 				
-				if(toolTipRect != RectangleF.Empty)
-				{
-					Invalidate(toolTipRect);
-					toolTipRect = Rectangle.Empty;
-				}
-				
-				toolTipText = string.Empty;		
+				toolTip.Hide();
 			}
 		}
 		
