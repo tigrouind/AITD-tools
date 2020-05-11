@@ -9,7 +9,10 @@ namespace VarsViewer
 	public partial class MainForm : Form
 	{	
 		float cellWidth, cellHeight;
-		Var lastToolTip;
+		
+		Var tooltipVar;
+		RectangleF toolTipRect;
+		string toolTipText;
 
 		readonly Brush greenBrush = new SolidBrush(Color.FromArgb(255, 43, 193, 118));
 		readonly Brush grayBrush = new SolidBrush(Color.FromArgb(255, 28, 28, 38));	
@@ -18,11 +21,13 @@ namespace VarsViewer
 		readonly Brush whiteBrush = new SolidBrush(Color.FromArgb(255, 255, 255, 255));		
 		readonly Brush redBrush = new SolidBrush(Color.FromArgb(255, 240, 68, 77));	
 		readonly Brush blueBrush = new SolidBrush(Color.FromArgb(64, 0, 162, 232));
+		readonly Brush darkGreenBrush = new SolidBrush(Color.FromArgb(255, 21, 103, 79));
 		
-		readonly Font font = new Font("Arial", 13.0f);
+		readonly Font font = new Font("Arial", 13.0f);	
 		readonly StringFormat format = new StringFormat();	
-		readonly Worker worker;		
-
+		
+		readonly Worker worker;	
+		
 		public MainForm()
 		{					
 			worker = new Worker(() => this.Invoke(new Action(NeedRefresh)));		
@@ -53,6 +58,15 @@ namespace VarsViewer
 			
 			DrawHeader(e);
 			DrawCells(e);
+			
+			if (toolTipText != string.Empty)
+			{
+				format.LineAlignment = StringAlignment.Center;
+				format.Alignment = StringAlignment.Center;
+				
+				e.Graphics.FillRectangle(darkGreenBrush, toolTipRect);
+				e.Graphics.DrawString(toolTipText, font, whiteBrush, toolTipRect, format);				
+			}
 			
 			if (worker.Freeze)
 			{
@@ -189,7 +203,7 @@ namespace VarsViewer
 		
 		Brush GetBackgroundBrush(Var var)
 		{
-			if(lastToolTip == var)
+			if(tooltipVar == var)
 			{
 				return darkGrayBrush;
 			}
@@ -209,23 +223,35 @@ namespace VarsViewer
 				FindVarBehindCursor(e.Location, worker.Cvars, out var);
 			}
 			
-			if(lastToolTip != var)
+			if(tooltipVar != var)
 			{
+				RectangleF rect;
+				
 				if(var != null)
-				{
-					toolTip.Show(string.Format("#{0} {1}", var.Index, var.Name), this,
-				             	(int)((var.Rectangle.Left + var.Rectangle.Right) / 2.0f),
-				             	(int)((var.Rectangle.Top + var.Rectangle.Bottom) / 2.0f),
-				             	5000);					
+				{	
+					toolTipText = string.Format("#{0}\n{1}", var.Index, var.Name);
+					
+					var size = TextRenderer.MeasureText(toolTipText, font, new Size(250, int.MaxValue), 
+					                                    TextFormatFlags.WordBreak | TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+					var point = new PointF((var.Rectangle.Left + var.Rectangle.Right - size.Width) / 2.0f, var.Rectangle.Bottom);
+					
+					rect = new RectangleF(Math.Max(Math.Min(point.X, ClientRectangle.Width - size.Width), 0.0f),
+					                      Math.Max(Math.Min(point.Y, ClientRectangle.Height - size.Height), 0.0f), size.Width, size.Height);										
 				}
 				else
 				{
-					toolTip.Hide(this);
+					toolTipText = string.Empty;
+					rect = RectangleF.Empty;
 				}
 				
+				if(rect != RectangleF.Empty) Invalidate(rect);	
+				if(toolTipRect != RectangleF.Empty) Invalidate(toolTipRect);
+								
 				if(var != null) Invalidate(var.Rectangle);
-				if(lastToolTip != null) Invalidate(lastToolTip.Rectangle);
-				lastToolTip = var;
+				if(tooltipVar != null) Invalidate(tooltipVar.Rectangle);
+				
+				tooltipVar = var;
+				toolTipRect = rect;
 			}
 		}
 		
@@ -247,6 +273,7 @@ namespace VarsViewer
 		void MainFormMouseClick(object sender, MouseEventArgs e)
 		{
 			Var var;
+		
 			if (e.Button == MouseButtons.Left && (FindVarBehindCursor(e.Location, worker.Vars, out var) 
 			  || FindVarBehindCursor(e.Location, worker.Cvars, out var))
 			  && var.MemoryAddress >= 0)
@@ -266,12 +293,19 @@ namespace VarsViewer
 		{
 			if (!ClientRectangle.Contains(PointToClient(Cursor.Position)))
 			{
-				if(lastToolTip != null)
+				if(tooltipVar != null)
 				{
-					Invalidate(lastToolTip.Rectangle);
-					lastToolTip = null;
-					toolTip.Hide(this);					
+					Invalidate(tooltipVar.Rectangle);					
+					tooltipVar = null;					
 				}
+				
+				if(toolTipRect != RectangleF.Empty)
+				{
+					Invalidate(toolTipRect);
+					toolTipRect = Rectangle.Empty;
+				}
+				
+				toolTipText = string.Empty;		
 			}
 		}
 		
