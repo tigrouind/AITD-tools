@@ -104,23 +104,23 @@ namespace CacheViewer
 						if(!ch.Entries.TryGetValue(key, out entry))
 						{
 							entry = new CacheEntry();		
-							entry.framestart = frame;
+							entry.FrameStart = frame;
 							ch.Entries.Add(key, entry);
 						}								
 						
-						entry.key = key;
-						entry.id = i;
-						entry.size = buffer.ReadUnsignedShort(addr+4);									
-						entry.time = buffer.ReadInt(addr+6);
-						entry.touched = entry.time != entry.lasttime;
-						entry.lasttime = entry.time;
-						entry.frame = frame;
+						entry.Key = key;
+						entry.Id = i;
+						entry.Size = buffer.ReadUnsignedShort(addr+4);									
+						entry.Time = buffer.ReadInt(addr+6);
+						entry.Touched = entry.Time != entry.LastTime;
+						entry.LastTime = entry.Time;
+						entry.Frame = frame;
 					}
 					
 					foreach (int key in ch.Entries.Keys.ToArray())
 					{
 						var entry = ch.Entries[key];
-						if ((frame - entry.frame) >= 15)
+						if ((frame - entry.Frame) >= 15)
 						{
 							ch.Entries.Remove(key);
 						}
@@ -146,27 +146,27 @@ namespace CacheViewer
 				//Array.Sort(entries, 0, numUsedEntry, comparer);
 				int row = 0;
 				foreach (var entry in ch.Entries.Values
-				         .OrderByDescending(x => x.time)
-				         .ThenByDescending(x => x.id))
+				         .OrderByDescending(x => x.Time)
+				         .ThenByDescending(x => x.Id))
 				{
 					var color = ConsoleColor.Gray;		
 						
-					if (entry.touched)
+					if (entry.Touched)
 					{
 						color = ConsoleColor.DarkYellow;
 					}
 					
-					if (frame - entry.frame > 0) //removed
+					if (frame - entry.Frame > 0) //removed
 					{
 						color = ConsoleColor.Black | ConsoleColor.BackgroundDarkGray;
 					}
 					
-					if (frame - entry.framestart < 12) //added
+					if (frame - entry.FrameStart < 12) //added
 					{
 						color = ConsoleColor.Black | ConsoleColor.BackgroundDarkGreen;
 					}
 					
-					Console.Write(column * 22 + 1, row + 3, color, "{0,5:D} {1} {2,5:D}", entry.key, FormatSize(entry.size).PadLeft(6), entry.time / 60);
+					Console.Write(column * 22 + 1, row + 3, color, "{0,5:D} {1} {2,5:D}", entry.Key, FormatSize(entry.Size).PadLeft(6), entry.Time / 60);
 					row++;
 				}			
 				column++;

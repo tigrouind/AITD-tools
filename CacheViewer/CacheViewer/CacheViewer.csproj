@@ -47,7 +47,6 @@
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
     <DefineConstants>TRACE</DefineConstants>
     <StartAction>Project</StartAction>
-    <StartArguments>ListBod2</StartArguments>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />

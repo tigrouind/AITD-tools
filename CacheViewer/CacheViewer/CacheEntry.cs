@@ -4,13 +4,13 @@ namespace CacheViewer
 {
 	public class CacheEntry
 	{
-		public int id;
-		public int key; //from AITD
-		public int time; //from AITD
-		public int lasttime;
-		public bool touched; //time != lasttime
-		public int size; //from AITD
-		public int frame; //last frame
-		public int framestart; //frame added 
+		public int Id;
+		public int Key; //from AITD
+		public int Time; //from AITD
+		public int LastTime;
+		public bool Touched; //time != lasttime
+		public int Size; //from AITD
+		public int Frame; //last frame
+		public int FrameStart; //frame added 
 	}
 }
