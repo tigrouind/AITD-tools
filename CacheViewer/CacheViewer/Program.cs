@@ -11,6 +11,7 @@ namespace CacheViewer
 		static ProcessMemoryReader memoryReader;
 		static byte[] buffer = new byte[640 * 1024];
 		static Cache[] cache;
+		static long address;
 		
 		public static void Main(string[] args)
 		{					
@@ -29,41 +30,47 @@ namespace CacheViewer
             	Name = x, 
             	Pattern = Encoding.ASCII.GetBytes(x) 
             }).ToArray();
-								
+					
+			int frame = 0;
 			while (true)
 			{			
-				if (memoryReader == null)
+				if(frame % 4 == 0)
 				{
-					int processId = DosBox.SearchProcess();
-					if(processId != -1)
+					if (memoryReader == null)
 					{
-						memoryReader = new ProcessMemoryReader(processId);
+						int processId = DosBox.SearchProcess();
+						if(processId != -1)
+						{
+							memoryReader = new ProcessMemoryReader(processId);
+							address = memoryReader.SearchFor16MRegion();			
+							if(address == -1)
+							{
+								memoryReader.Close();
+								memoryReader = null;
+							}
+						}
+					}
+					
+					if (memoryReader != null && cache.Any(x => x.Address == -1))
+					{
+						SearchPatterns();		
 					}
 				}
-				
-				if (memoryReader != null && cache.Any(x => x.Address < 0))
-				{
-					SearchPatterns();						
-				}
 						
-				if (memoryReader != null && cache.All(x => x.Address >= 0))
+				if (memoryReader != null)
 				{
 					ReadMemory();
 					Render();
-
-					Thread.Sleep(250);
-				}											
-				else
-				{
-					Thread.Sleep(1000);	
-			    }
+				}				
+									
+				Thread.Sleep(250);
+				frame++;
 			}
 		}
 		
 		static void SearchPatterns()
 		{			
-			long address = memoryReader.SearchFor16MRegion();
-			if(address >= 0 && memoryReader.Read(buffer, address, buffer.Length) > 0)
+			if(memoryReader.Read(buffer, address, buffer.Length) > 0) //640K
 			{
 				foreach(var block in DosBox.GetMCBs(buffer))
 				{
@@ -88,10 +95,14 @@ namespace CacheViewer
 		static void ReadMemory()
 		{
 			int ticks = Environment.TickCount;
-			foreach(var ch in cache)
+			foreach(var ch in cache.Where(x => x.Address != -1))
 			{
-				if (memoryReader.Read(buffer, ch.Address, 4096) != 0 && 
-				    ch.Pattern.SequenceEqual(buffer.Take(ch.Pattern.Length)))
+				bool readSuccess;
+				
+				if ((readSuccess = memoryReader.Read(buffer, ch.Address - 16, 4) > 0) &&
+				    buffer.ReadUnsignedShort(1) != 0 && //block is still allocated
+				    (readSuccess = memoryReader.Read(buffer, ch.Address, 4096) > 0) &&
+				    ch.Pattern.SequenceEqual(buffer.Take(ch.Pattern.Length))) //pattern is matching
 				{
 					ch.MaxFreeData = buffer.ReadUnsignedShort(10);
 					ch.SizeFreeData = buffer.ReadUnsignedShort(12);
@@ -134,9 +145,15 @@ namespace CacheViewer
 						}
 					}											
 				}
-				else
+				else if (readSuccess)
 				{
 					ch.Address = -1;
+				}
+				else
+				{
+					memoryReader.Close();
+					memoryReader = null;
+					return;
 				}
 			}
 		}
@@ -146,7 +163,7 @@ namespace CacheViewer
 			Console.Clear();
 				
 			int column = 0;
-			foreach(var ch in cache)
+			foreach(var ch in cache.Where(x => x.Address != -1))
 			{
 				Console.Write(column * 22 + 6, 0, ConsoleColor.Gray, "{0}", ch.Name);
 				Console.Write(column * 22 + 0, 1, ConsoleColor.Gray, "{0,5:D}/{1,5:D} {2,3:D}/{3,3:D}", ch.MaxFreeData - ch.SizeFreeData, ch.MaxFreeData, ch.NumUsedEntry, ch.NumMaxEntry);
@@ -176,7 +193,8 @@ namespace CacheViewer
 					
 					Console.Write(column * 22 + 1, row + 3, color, "{0,5:D} {1} {2,5:D}", entry.Key, FormatSize(entry.Size).PadLeft(6), entry.Time / 60);
 					row++;
-				}			
+				}		
+				
 				column++;
 			}
 			
