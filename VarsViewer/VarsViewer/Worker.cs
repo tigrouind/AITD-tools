@@ -72,20 +72,17 @@ namespace VarsViewer
 			{
 				if (processReader == null)
 				{
-					processReader = ProcessMemoryReader.SearchDosBox();
+					int processId = DosBox.SearchProcess();
+					if (processId != -1)
+					{
+						processReader = new ProcessMemoryReader(processId);
+					}
 				}
 								
 				if (processReader != null && (varsMemoryAddress == -1 || cvarsMemoryAddress == -1))
 				{
-					if (!processReader.SearchForBytePattern(varsMemoryPattern, (buf, len, index, readPosition) => 
-						{ 
-							varsMemoryAddress = readPosition;
-						}) || 
-						!processReader.SearchForBytePattern(cvarsMemoryPattern, (buf, len, index, readPosition) => 
-						{	
-                           	cvarsMemoryAddress = readPosition; 
-                       	})
-					)
+					if ((varsMemoryAddress = processReader.SearchForBytePattern(varsMemoryPattern)) == -1 ||
+					    (cvarsMemoryAddress = processReader.SearchForBytePattern(cvarsMemoryPattern)) == -1)
 					{
 						processReader.Close();
 						processReader = null;

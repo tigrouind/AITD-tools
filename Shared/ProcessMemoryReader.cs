@@ -140,7 +140,7 @@ namespace Shared
 			return -1;		
 		}
 		
-		public bool SearchForBytePattern(byte[] pattern, Action<byte[], int, int, long> found)
+		public long SearchForBytePattern(byte[] pattern)
 		{
 			byte[] buffer = new byte[81920];
 			long baseAddress, regionSize;
@@ -158,53 +158,24 @@ namespace Shared
 					{
 						if (IsMatch(buffer, pattern, index))
 						{
-							found(buffer, (int)bytesRead, index, readPosition + index);
+							return readPosition + index;
 						}
 					}
 					
 					readPosition += bytesRead;
 					bytesToRead -= (int)bytesRead;
 				}
-				
-				return true;
 			}
 			
-			return false;
+			return -1;
 		}
 	
-		public bool IsMatch(byte[] x, byte[] y, int index)
+		bool IsMatch(byte[] x, byte[] y, int index)
 		{
 			for (int j = 0; j < y.Length; j++)
 				if (x[j + index] != y[j])
 					return false;
 			return true;
-		}
-		
-		public static ProcessMemoryReader SearchDosBox()
-		{
-			int? processId = Process.GetProcesses()
-				.Where(x => GetProcessName(x).StartsWith("DOSBOX", StringComparison.InvariantCultureIgnoreCase))
-				.Select(x => x.Id)
-				.FirstOrDefault();
-				
-			if(processId.HasValue)
-			{
-				return new ProcessMemoryReader(processId.Value);
-			}
-			
-			return null;
-		}
-		
-		static string GetProcessName(Process process)
-		{
-			try
-			{
-				return process.ProcessName;
-			}
-			catch
-			{
-				return string.Empty;
-			}
 		}
 	}
 }

@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading;
 using SDL2;
 using Shared;
 
@@ -58,6 +55,7 @@ namespace MemoryViewer
 			ProcessMemoryReader memoryReader = null;
 			long memoryAddress = -1;
 			uint lastCheck = 0;
+			int owner = 0;
 														
 			while(!quit)
 			{
@@ -84,13 +82,14 @@ namespace MemoryViewer
 				if(memoryReader == null)
 				{
 					uint time = SDL.SDL_GetTicks();
-					if ((time - lastCheck) > 1000)
+					if ((time - lastCheck) > 1000 || lastCheck == 0)
 					{
 						lastCheck = time;					
 										
-						memoryReader = ProcessMemoryReader.SearchDosBox();
-						if (memoryReader != null)
+						int processId = DosBox.SearchProcess();
+						if (processId != -1)
 						{
+							memoryReader = new ProcessMemoryReader(processId);
 							memoryAddress = memoryReader.SearchFor16MRegion();			
 							if(memoryAddress == -1)
 							{
@@ -108,38 +107,32 @@ namespace MemoryViewer
 						memoryReader.Close();
 						memoryReader = null;
 					}
+					else
+					{						
+						//find owner with largest number of blocks
+						owner = DosBox.GetMCBs(dosMemory)
+							.GroupBy(x => x.Owner)
+							.OrderByDescending(x => x.Count())
+							.Select(x => x.Key)
+							.FirstOrDefault();
+					}
 				}
 				
 				if(memoryReader != null)
-				{				
-					//scan DOS memory control blocks (MCB)
-					int pos = 0x1190; 
-					byte blockType = dosMemory[pos];
-
+				{								
 					int dest = 0;
-					while (blockType == 0x4D && pos <= (dosMemory.Length - 16))
+					foreach(var block in DosBox.GetMCBs(dosMemory)
+				        .Where(x => x.Owner == owner))
 					{
-						var blockAddress = dosMemory.ReadUnsignedShort(pos + 1);
-						var blockSize = dosMemory.ReadUnsignedShort(pos + 3) * 16;
-						var blockOwner = Encoding.ASCII.GetString(dosMemory, pos + 8, 8).TrimEnd((char)0);
-							
-						pos += 16;											
-						if ((blockOwner == "INDARK" || blockOwner == "AITD2" || blockOwner == "AITD3") 
-						    && blockAddress != 0 && blockAddress != 8) //not free or allocated by DOS
-						{
-							Array.Copy(dosMemory, pos, pixelData, dest, blockSize);
-							dest += blockSize;
-							
-							//round up to next line
-							int reminder = 320 - dest % 320;
-							for (int i = 0 ; i < reminder; i++)
-							{
-								pixelData[dest++] = 0;
-							}							
-						}
+						Array.Copy(dosMemory, block.Position, pixelData, dest, block.Size * 16);
+						dest += block.Size * 16;
 						
-						pos += blockSize;
-						blockType = dosMemory[pos];
+						//round up to next line
+						int reminder = 320 - dest % 320;
+						for (int i = 0 ; i < reminder; i++)
+						{
+							pixelData[dest++] = 0;
+						}							
 					}
 					
 					if((dest + 64000) <= pixelData.Length)

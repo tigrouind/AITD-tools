@@ -9,7 +9,7 @@ namespace CacheViewer
 	class Program
 	{
 		static ProcessMemoryReader memoryReader;
-		static byte[] buffer = new byte[4096];
+		static byte[] buffer = new byte[640 * 1024];
 		static Cache[] cache;
 		static int ticks;
 		
@@ -37,7 +37,11 @@ namespace CacheViewer
 				
 				if (memoryReader == null)
 				{
-					memoryReader = ProcessMemoryReader.SearchDosBox();
+					int processId = DosBox.SearchProcess();
+					if(processId != -1)
+					{
+						memoryReader = new ProcessMemoryReader(processId);
+					}
 				}
 				
 				if (memoryReader != null && cache.Any(x => x.Address < 0))
@@ -64,19 +68,27 @@ namespace CacheViewer
 		}
 		
 		static void SearchPatterns()
-		{
-			var listPattern = Encoding.ASCII.GetBytes("List");
-			if(!memoryReader.SearchForBytePattern(listPattern, (buf, len, index, readPosition) => 
-            {
-              	foreach(var ch in cache)
+		{			
+			long address = memoryReader.SearchFor16MRegion();
+			if(address >= 0)
+			{
+				if (memoryReader.Read(buffer, address, buffer.Length) > 0)
 				{
-					var pat = ch.Pattern;						
-					if (index < (len - pat.Length + 1) && memoryReader.IsMatch(buf, pat, index) && !IsString(buf, len, index + pat.Length))
+					foreach(var block in DosBox.GetMCBs(buffer))
 					{
-						ch.Address = readPosition;		
+						int position = block.Position;						
+						foreach(var ch in cache)
+						{	
+							var pattern = ch.Pattern;
+							if (pattern.SequenceEqual(buffer.Skip(position).Take(pattern.Length)))
+							{
+								ch.Address = address + position;		
+							}
+						}
 					}
-				}                                        	                   		
-      		}))
+				}
+			}			
+			else
 			{
 				memoryReader.Close();
 				memoryReader = null;
@@ -88,13 +100,13 @@ namespace CacheViewer
 			foreach(var ch in cache)
 			{
 				if (memoryReader.Read(buffer, ch.Address, 4096) != 0 && 
-				    memoryReader.IsMatch(buffer, ch.Pattern, 0))
+				    ch.Pattern.SequenceEqual(buffer.Take(ch.Pattern.Length)))
 				{
 					ch.MaxFreeData = buffer.ReadUnsignedShort(10);
 					ch.SizeFreeData = buffer.ReadUnsignedShort(12);
 					ch.NumMaxEntry = buffer.ReadUnsignedShort(14);
 					ch.NumUsedEntry =  Math.Min((int)buffer.ReadUnsignedShort(16), 100);
-					
+										
 					for (int i = 0 ; i < ch.NumUsedEntry ; i++)
 					{			
 						int addr = 22 + i * 10;		
@@ -183,13 +195,6 @@ namespace CacheViewer
 			}
 			
 			return length + " B";
-		}
-		
-		static bool IsString(byte[] buf, int length, int index)
-		{
-			return (index+0) < length && char.IsLetter((char)buf[index+1])
-				&& (index+1) < length && char.IsLetter((char)buf[index+2])
-				&& (index+2) < length && char.IsLetter((char)buf[index+3]);
 		}
 	}
 }
