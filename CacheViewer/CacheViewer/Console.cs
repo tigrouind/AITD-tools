@@ -43,13 +43,23 @@ namespace CacheViewer
 		{
 			[FieldOffset(0)] public char UnicodeChar;
 			[FieldOffset(0)] public byte AsciiChar;
+			
+			public bool Equals(CharUnion obj)
+			{
+				return UnicodeChar == obj.UnicodeChar && AsciiChar == obj.AsciiChar;
+			}
 		}
 		
 		[StructLayout(LayoutKind.Explicit)]
-		public struct CharInfo
+		public struct CharInfo : IEquatable<CharInfo>
 		{
 			[FieldOffset(0)] public CharUnion Char;
 			[FieldOffset(2)] public short Attributes;
+			
+			public bool Equals(CharInfo obj)
+			{
+				return Attributes == obj.Attributes && Char.Equals(obj.Char);
+			}
 		}
 		
 		[StructLayout(LayoutKind.Sequential)]
@@ -61,9 +71,11 @@ namespace CacheViewer
 			public short Bottom;
 		}
 		
+		static readonly short SIZEX = 120;
+		static readonly short SIZEY = 80;
 		static readonly SafeFileHandle handle;
-		static readonly CharInfo[] buf = new CharInfo[120 * 80];
-	    static SmallRect rect = new SmallRect { Left = 0, Top = 0, Right = 120, Bottom = 80 };
+		static CharInfo[] buf = new CharInfo[SIZEX * SIZEY];
+		static CharInfo[] previousBuf = new CharInfo[SIZEX * SIZEY];
 		
 		static Console() 
 		{
@@ -82,20 +94,54 @@ namespace CacheViewer
 		{
 			foreach (char ch in string.Format(format, value))
 			{		
-				if (x < 120 && y < 80)
+				if (x < SIZEX && y < SIZEY)
 				{
-					buf[y * 120 + x] = new CharInfo { Char = new CharUnion { UnicodeChar = (char)ch }, Attributes = (short)color };
+					buf[y * SIZEX + x] = new CharInfo { Char = new CharUnion { UnicodeChar = (char)ch }, Attributes = (short)color };
 				}
 				
 				x++;
 			}
 		}
+		
+		static bool CompareBuffers(out SmallRect rect)
+		{
+			bool refresh = false;
+			rect = new SmallRect { Left = short.MaxValue, Top = short.MaxValue, Right = short.MinValue, Bottom = short.MinValue };
+			
+			for (short y = 0 ; y < SIZEY ; y++)
+			{
+				for (short x = 0 ; x < SIZEX ; x++)
+				{
+					int i = x + y * SIZEX;
+					if (!buf[i].Equals(previousBuf[i]))
+					{
+						refresh = true;
+						rect.Left = Math.Min(rect.Left, x);
+						rect.Top = Math.Min(rect.Top, y);	
+						rect.Right = Math.Max(rect.Right, x);									
+						rect.Bottom = Math.Max(rect.Bottom, y);						
+					}
+				}
+			}
+			
+			return refresh;
+		}
+		
 		public static void Flush()
-		{		
-	        WriteConsoleOutput(handle, buf,
-	          new Coord { X = 120, Y = 80 },
-	          new Coord { X = 0, Y = 0 },
-	          ref rect);
+		{	
+			SmallRect rect;
+			if (CompareBuffers(out rect))
+			{
+	        	WriteConsoleOutput(handle, buf,
+				    new Coord { X = SIZEX, Y = SIZEY },
+	          		new Coord { X = rect.Left, Y = rect.Top },
+		          	ref rect);
+			}
+			
+			//swap
+			var tmp = buf;
+			buf = previousBuf;
+			previousBuf = tmp;
 		}
 	}
 }
