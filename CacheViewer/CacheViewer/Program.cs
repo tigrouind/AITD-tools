@@ -38,17 +38,7 @@ namespace CacheViewer
 				{
 					if (memoryReader == null)
 					{
-						int processId = DosBox.SearchProcess();
-						if(processId != -1)
-						{
-							memoryReader = new ProcessMemoryReader(processId);
-							address = memoryReader.SearchFor16MRegion();			
-							if(address == -1)
-							{
-								memoryReader.Close();
-								memoryReader = null;
-							}
-						}
+						SearchDosBox();
 					}
 					
 					if (memoryReader != null && cache.Any(x => x.Address == -1))
@@ -65,6 +55,21 @@ namespace CacheViewer
 									
 				Thread.Sleep(250);
 				frame++;
+			}
+		}
+		
+		static void SearchDosBox()
+		{
+			int processId = DosBox.SearchProcess();
+			if(processId != -1)
+			{
+				memoryReader = new ProcessMemoryReader(processId);
+				address = memoryReader.SearchFor16MRegion();			
+				if(address == -1)
+				{
+					memoryReader.Close();
+					memoryReader = null;
+				}
 			}
 		}
 		
@@ -133,6 +138,7 @@ namespace CacheViewer
 						entry.Ticks = ticks;
 					}
 					
+					//entries removal
 					foreach (int key in ch.Entries.Keys.ToArray())
 					{
 						var entry = ch.Entries[key];
