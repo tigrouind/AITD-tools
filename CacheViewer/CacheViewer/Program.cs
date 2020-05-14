@@ -11,7 +11,6 @@ namespace CacheViewer
 		static ProcessMemoryReader memoryReader;
 		static byte[] buffer = new byte[640 * 1024];
 		static Cache[] cache;
-		static int ticks;
 		
 		public static void Main(string[] args)
 		{					
@@ -33,8 +32,6 @@ namespace CacheViewer
 								
 			while (true)
 			{			
-				ticks = Environment.TickCount;
-				
 				if (memoryReader == null)
 				{
 					int processId = DosBox.SearchProcess();
@@ -52,11 +49,7 @@ namespace CacheViewer
 				if (memoryReader != null && cache.All(x => x.Address >= 0))
 				{
 					ReadMemory();
-					
-					if (cache.All(x => x.Address >= 0)) 
-					{
-						Render();
-					}
+					Render();
 
 					Thread.Sleep(250);
 				}											
@@ -70,20 +63,17 @@ namespace CacheViewer
 		static void SearchPatterns()
 		{			
 			long address = memoryReader.SearchFor16MRegion();
-			if(address >= 0)
+			if(address >= 0 && memoryReader.Read(buffer, address, buffer.Length) > 0)
 			{
-				if (memoryReader.Read(buffer, address, buffer.Length) > 0)
+				foreach(var block in DosBox.GetMCBs(buffer))
 				{
-					foreach(var block in DosBox.GetMCBs(buffer))
-					{
-						int position = block.Position;						
-						foreach(var ch in cache)
-						{	
-							var pattern = ch.Pattern;
-							if (pattern.SequenceEqual(buffer.Skip(position).Take(pattern.Length)))
-							{
-								ch.Address = address + position;		
-							}
+					int position = block.Position;						
+					foreach(var ch in cache)
+					{	
+						var pattern = ch.Pattern;
+						if (pattern.SequenceEqual(buffer.Skip(position).Take(pattern.Length)))
+						{
+							ch.Address = address + position;		
 						}
 					}
 				}
@@ -97,6 +87,7 @@ namespace CacheViewer
 		
 		static void ReadMemory()
 		{
+			int ticks = Environment.TickCount;
 			foreach(var ch in cache)
 			{
 				if (memoryReader.Read(buffer, ch.Address, 4096) != 0 && 
@@ -105,7 +96,7 @@ namespace CacheViewer
 					ch.MaxFreeData = buffer.ReadUnsignedShort(10);
 					ch.SizeFreeData = buffer.ReadUnsignedShort(12);
 					ch.NumMaxEntry = buffer.ReadUnsignedShort(14);
-					ch.NumUsedEntry =  Math.Min((int)buffer.ReadUnsignedShort(16), 100);
+					ch.NumUsedEntry = Math.Min((int)buffer.ReadUnsignedShort(16), 100);
 										
 					for (int i = 0 ; i < ch.NumUsedEntry ; i++)
 					{			
@@ -124,7 +115,9 @@ namespace CacheViewer
 						entry.Id = i;
 						entry.Size = buffer.ReadUnsignedShort(addr+4);									
 						entry.Time = buffer.ReadInt(addr+6);
-						entry.Touched = entry.Time != entry.LastTime;
+						
+						entry.Touched = entry.Time != entry.LastTime;						
+						entry.Added = (ticks - entry.StartTicks) < 3000;
 						entry.LastTime = entry.Time;
 						entry.Ticks = ticks;
 					}
@@ -132,7 +125,10 @@ namespace CacheViewer
 					foreach (int key in ch.Entries.Keys.ToArray())
 					{
 						var entry = ch.Entries[key];
-						if ((ticks - entry.Ticks) >= 3750)
+						
+						int removedSince = ticks - entry.Ticks;
+						entry.Removed = removedSince > 0;						
+						if (removedSince >= 3750)
 						{
 							ch.Entries.Remove(key);
 						}
@@ -161,19 +157,19 @@ namespace CacheViewer
 				         .ThenByDescending(x => x.StartTicks)
 				         .ThenByDescending(x => x.Id))
 				{
-					var color = ConsoleColor.Gray;		
+					var color = ConsoleColor.Gray;								
 						
 					if (entry.Touched)
 					{
 						color = ConsoleColor.DarkYellow;
 					}
 					
-					if (ticks - entry.Ticks > 0) //removed
+					if (entry.Removed)
 					{
 						color = ConsoleColor.Black | ConsoleColor.BackgroundDarkGray;
 					}
 					
-					if (ticks - entry.StartTicks < 3000) //added
+					if (entry.Added)
 					{
 						color = ConsoleColor.Black | ConsoleColor.BackgroundDarkGreen;
 					}
