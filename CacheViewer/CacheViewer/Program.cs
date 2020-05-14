@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -144,10 +143,10 @@ namespace CacheViewer
 				Console.Write(column * 22 + 6, 0, ConsoleColor.Gray, "{0}", ch.Name);
 				Console.Write(column * 22 + 0, 1, ConsoleColor.Gray, "{0,5:D}/{1,5:D} {2,3:D}/{3,3:D}", ch.MaxFreeData - ch.SizeFreeData, ch.MaxFreeData, ch.NumUsedEntry, ch.NumMaxEntry);
 				
-				//Array.Sort(entries, 0, numUsedEntry, comparer);
 				int row = 0;
 				foreach (var entry in ch.Entries.Values
-				         .OrderByDescending(x => x.Time)
+				         .OrderByDescending(x => x.Time / 60)
+				         .ThenByDescending(x => x.StartTicks)
 				         .ThenByDescending(x => x.Id))
 				{
 					var color = ConsoleColor.Gray;		
