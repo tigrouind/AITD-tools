@@ -12,7 +12,7 @@ namespace CacheViewer
 		static ProcessMemoryReader memoryReader;
 		static byte[] buffer = new byte[4096];
 		static Cache[] cache;
-		static int frame;
+		static int ticks;
 		
 		public static void Main(string[] args)
 		{					
@@ -34,6 +34,8 @@ namespace CacheViewer
 								
 			while (true)
 			{			
+				ticks = Environment.TickCount;
+				
 				if (memoryReader == null)
 				{
 					memoryReader = ProcessMemoryReader.SearchDosBox();
@@ -54,7 +56,6 @@ namespace CacheViewer
 					}
 
 					Thread.Sleep(250);
-					frame++;
 				}											
 				else
 				{
@@ -104,7 +105,7 @@ namespace CacheViewer
 						if(!ch.Entries.TryGetValue(key, out entry))
 						{
 							entry = new CacheEntry();		
-							entry.FrameStart = frame;
+							entry.StartTicks = ticks;
 							ch.Entries.Add(key, entry);
 						}								
 						
@@ -114,13 +115,13 @@ namespace CacheViewer
 						entry.Time = buffer.ReadInt(addr+6);
 						entry.Touched = entry.Time != entry.LastTime;
 						entry.LastTime = entry.Time;
-						entry.Frame = frame;
+						entry.Ticks = ticks;
 					}
 					
 					foreach (int key in ch.Entries.Keys.ToArray())
 					{
 						var entry = ch.Entries[key];
-						if ((frame - entry.Frame) >= 15)
+						if ((ticks - entry.Ticks) >= 3750)
 						{
 							ch.Entries.Remove(key);
 						}
@@ -156,12 +157,12 @@ namespace CacheViewer
 						color = ConsoleColor.DarkYellow;
 					}
 					
-					if (frame - entry.Frame > 0) //removed
+					if (ticks - entry.Ticks > 0) //removed
 					{
 						color = ConsoleColor.Black | ConsoleColor.BackgroundDarkGray;
 					}
 					
-					if (frame - entry.FrameStart < 12) //added
+					if (ticks - entry.StartTicks < 3000) //added
 					{
 						color = ConsoleColor.Black | ConsoleColor.BackgroundDarkGreen;
 					}

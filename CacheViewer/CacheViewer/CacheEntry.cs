@@ -10,7 +10,7 @@ namespace CacheViewer
 		public int LastTime;
 		public bool Touched; //time != lasttime
 		public int Size; //from AITD
-		public int Frame; //last frame
-		public int FrameStart; //frame added 
+		public int Ticks; //last time
+		public int StartTicks; //time added 
 	}
 }
