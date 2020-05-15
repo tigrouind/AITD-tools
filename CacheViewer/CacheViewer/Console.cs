@@ -84,15 +84,12 @@ namespace CacheViewer
 	    
 	    public static void Clear()
 		{
-			for(int i = 0 ; i < buf.Length ; i++)
-			{
-				buf[i] = new CharInfo { Char = new CharUnion { UnicodeChar = (char)0 }, Attributes = 0 };
-			}
+	    	Array.Clear(buf, 0, buf.Length);
 		}
-		
-		public static void Write(int x, int y, ConsoleColor color, string format, params object[] value)
-		{
-			foreach (char ch in string.Format(format, value))
+	    
+	    public static void Write(int x, int y, ConsoleColor color, string text)
+	    {
+	    	foreach (char ch in text)
 			{		
 				if (x < SIZEX && y < SIZEY)
 				{
@@ -101,6 +98,11 @@ namespace CacheViewer
 				
 				x++;
 			}
+	    }
+		
+		public static void Write(int x, int y, ConsoleColor color, string format, params object[] value)
+		{
+			Write(x, y, color, string.Format(format, value));
 		}
 		
 		static bool CompareBuffers(out SmallRect rect)

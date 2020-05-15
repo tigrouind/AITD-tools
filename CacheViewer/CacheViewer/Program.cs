@@ -8,7 +8,7 @@ namespace CacheViewer
 {
 	class Program
 	{
-		static ProcessMemoryReader memoryReader;
+		static ProcessMemoryReader processReader;
 		static byte[] buffer = new byte[640 * 1024];
 		static Cache[] cache;
 		static long address;
@@ -33,22 +33,22 @@ namespace CacheViewer
 					
 			while (true)
 			{			
-				if (memoryReader == null)
+				if (processReader == null)
 				{
 					SearchDosBox();
 				}
 				
-				if (memoryReader != null && cache.Any(x => x.Address == -1))
+				if (processReader != null && cache.Any(x => x.Address == -1))
 				{
 					SearchPatterns();		
 				}
 						
-				if (memoryReader != null)
+				if (processReader != null)
 				{
 					ReadMemory();
 				}	
 
-				if (memoryReader != null)
+				if (processReader != null)
 				{
 					Render();
 					Thread.Sleep(250);
@@ -65,8 +65,8 @@ namespace CacheViewer
 			int processId = DosBox.SearchProcess();
 			if (processId != -1)
 			{
-				memoryReader = new ProcessMemoryReader(processId);
-				address = memoryReader.SearchFor16MRegion();			
+				processReader = new ProcessMemoryReader(processId);
+				address = processReader.SearchFor16MRegion();			
 				if (address == -1)
 				{
 					CloseReader();
@@ -76,7 +76,7 @@ namespace CacheViewer
 		
 		static void SearchPatterns()
 		{			
-			if(memoryReader.Read(buffer, address, buffer.Length) > 0) //640K
+			if (processReader.Read(buffer, address, buffer.Length) > 0) //640K
 			{
 				foreach(var block in DosBox.GetMCBs(buffer))
 				{
@@ -99,14 +99,14 @@ namespace CacheViewer
 		
 		static void ReadMemory()
 		{
+			bool readSuccess = true;
+			
 			int ticks = Environment.TickCount;
 			foreach (var ch in cache.Where(x => x.Address != -1))
 			{
-				bool readSuccess;
-				
-				if ((readSuccess = memoryReader.Read(buffer, ch.Address - 16, 4) > 0) &&
+				if ((readSuccess = processReader.Read(buffer, ch.Address - 16, 4) > 0) &&
 				    buffer.ReadUnsignedShort(1) != 0 && //block is still allocated
-				    (readSuccess = memoryReader.Read(buffer, ch.Address, 4096) > 0) &&
+				    (readSuccess = processReader.Read(buffer, ch.Address, 4096) > 0) &&
 				    ch.Pattern.SequenceEqual(buffer.Take(ch.Pattern.Length))) //pattern is matching
 				{
 					ch.MaxFreeData = buffer.ReadUnsignedShort(10);
@@ -120,7 +120,7 @@ namespace CacheViewer
 						int key = buffer.ReadUnsignedShort(addr);
 						
 						CacheEntry entry;
-						if(!ch.Entries.TryGetValue(key, out entry))
+						if (!ch.Entries.TryGetValue(key, out entry))
 						{
 							entry = new CacheEntry();		
 							entry.StartTicks = ticks;
@@ -155,23 +155,23 @@ namespace CacheViewer
 				{
 					ch.Address = -1;
 				}
-				else
-				{
-					CloseReader();
-					break;
-				}
+			}
+			
+			if (!readSuccess)
+			{
+				CloseReader();
 			}
 		}
 		
 		static void CloseReader()
 		{
-			foreach(var ch in cache)
+			foreach (var ch in cache)
 			{
 				ch.Address = -1;
 			}
 			
-			memoryReader.Close();
-			memoryReader = null;
+			processReader.Close();
+			processReader = null;
 		}
 		
 		static void Render()
@@ -179,10 +179,11 @@ namespace CacheViewer
 			Console.Clear();
 				
 			int column = 0;
-			foreach(var ch in cache.Where(x => x.Address != -1))
+			foreach (var ch in cache.Where(x => x.Address != -1))
 			{
-				Console.Write(column * 22 + 6, 0, ConsoleColor.Gray, "{0}", ch.Name);
-				Console.Write(column * 22 + 0, 1, ConsoleColor.Gray, "{0,5:D}/{1,5:D} {2,3:D}/{3,3:D}", ch.MaxFreeData - ch.SizeFreeData, ch.MaxFreeData, ch.NumUsedEntry, ch.NumMaxEntry);
+				Console.Write(column * 22 + 6, 0, ConsoleColor.Gray, ch.Name);
+				Console.Write(column * 22 + 0, 1, ConsoleColor.Gray, "{0,5:D}/{1,5:D} {2,3:D}/{3,3:D}", 
+				              ch.MaxFreeData - ch.SizeFreeData, ch.MaxFreeData, ch.NumUsedEntry, ch.NumMaxEntry);
 				
 				int row = 0;
 				foreach (var entry in ch.Entries.Values
@@ -207,7 +208,7 @@ namespace CacheViewer
 						color = ConsoleColor.Black | ConsoleColor.BackgroundDarkGreen;
 					}
 					
-					Console.Write(column * 22 + 1, row + 3, color, "{0,5:D} {1} {2,5:D}", entry.Key, FormatSize(entry.Size).PadLeft(6), entry.Time / 60);
+					Console.Write(column * 22 + 1, row + 3, color, "{0,5:D} {1,6} {2,5:D}", entry.Key, FormatSize(entry.Size), entry.Time / 60);
 					row++;
 				}		
 				

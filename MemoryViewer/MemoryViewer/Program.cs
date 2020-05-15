@@ -52,7 +52,7 @@ namespace MemoryViewer
 			byte[] oldPixelData = new byte[640 * 1024 + 64000];
 			byte[] dosMemory = new byte[640 * 1024 + 64000];
 			
-			ProcessMemoryReader memoryReader = null;
+			ProcessMemoryReader processReader = null;
 			long memoryAddress = -1;
 			uint lastCheck = 0;
 			int owner = 0;
@@ -79,7 +79,7 @@ namespace MemoryViewer
 					}
 				}	
 				
-				if (memoryReader == null)
+				if (processReader == null)
 				{
 					uint time = SDL.SDL_GetTicks();
 					if ((time - lastCheck) > 1000 || lastCheck == 0)
@@ -89,23 +89,23 @@ namespace MemoryViewer
 						int processId = DosBox.SearchProcess();
 						if (processId != -1)
 						{
-							memoryReader = new ProcessMemoryReader(processId);
-							memoryAddress = memoryReader.SearchFor16MRegion();			
+							processReader = new ProcessMemoryReader(processId);
+							memoryAddress = processReader.SearchFor16MRegion();			
 							if(memoryAddress == -1)
 							{
-								memoryReader.Close();
-								memoryReader = null;
+								processReader.Close();
+								processReader = null;
 							}			
 						}
 					}							
 				}	
 				
-				if (memoryReader != null)
+				if (processReader != null)
 				{
 					//EMS memory (64000B) (skip 64KB (HMA) + 128KB (VCPI) + 32B)
 					//DOS conventional memory (640KB)					
-					if(memoryReader.Read(pixelData, memoryAddress+(1024+192)*1024+32, 64000) > 0 && 
-					   memoryReader.Read(dosMemory, memoryAddress, 640*1024) > 0)
+					if(processReader.Read(pixelData, memoryAddress+(1024+192)*1024+32, 64000) > 0 && 
+					   processReader.Read(dosMemory, memoryAddress, 640*1024) > 0)
 					{						
 						//find owner with largest number of blocks
 						owner = DosBox.GetMCBs(dosMemory)
@@ -116,12 +116,12 @@ namespace MemoryViewer
 					}
 					else
 					{						
-						memoryReader.Close();
-						memoryReader = null;
+						processReader.Close();
+						processReader = null;
 					}
 				}
 				
-				if(memoryReader != null)
+				if(processReader != null)
 				{								
 					int dest = 64000;
 					foreach(var block in DosBox.GetMCBs(dosMemory)
