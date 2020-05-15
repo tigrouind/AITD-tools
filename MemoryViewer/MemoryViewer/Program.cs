@@ -102,8 +102,10 @@ namespace MemoryViewer
 				
 				if (memoryReader != null)
 				{
+					//EMS memory (64000B) (skip 64KB (HMA) + 128KB (VCPI) + 32B)
 					//DOS conventional memory (640KB)					
-					if(memoryReader.Read(dosMemory, memoryAddress, 640*1024) > 0)
+					if(memoryReader.Read(pixelData, memoryAddress+(1024+192)*1024+32, 64000) > 0 && 
+					   memoryReader.Read(dosMemory, memoryAddress, 640*1024) > 0)
 					{						
 						//find owner with largest number of blocks
 						owner = DosBox.GetMCBs(dosMemory)
@@ -121,7 +123,7 @@ namespace MemoryViewer
 				
 				if(memoryReader != null)
 				{								
-					int dest = 0;
+					int dest = 64000;
 					foreach(var block in DosBox.GetMCBs(dosMemory)
 				        .Where(x => x.Owner == owner))
 					{
@@ -134,13 +136,6 @@ namespace MemoryViewer
 						{
 							pixelData[dest++] = 0;
 						}							
-					}
-					
-					if((dest + 64000) <= pixelData.Length)
-					{
-						//EMS memory (64000B) (skip 64KB (HMA) + 128KB (VCPI) + 32B)
-						memoryReader.Read(pixelData, memoryAddress+(1024+192)*1024+32, 64000, dest);
-						dest += 64000;
 					}
 					
 					Array.Clear(pixelData, dest, pixelData.Length - dest);
