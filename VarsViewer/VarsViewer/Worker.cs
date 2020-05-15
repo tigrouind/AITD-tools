@@ -12,7 +12,8 @@ namespace VarsViewer
 		Thread thread;
 		readonly Action refreshCallback;		
 		bool running;		
-				
+	
+		long memoryAddress;
 		long varsMemoryAddress = -1;
 		long cvarsMemoryAddress = -1;		
 		readonly byte[] memory = new byte[512];					
@@ -76,41 +77,44 @@ namespace VarsViewer
 					if (processId != -1)
 					{
 						processReader = new ProcessMemoryReader(processId);
+						memoryAddress = processReader.SearchFor16MRegion();			
+						if(memoryAddress == -1)
+						{
+							CloseReader();
+						}			
 					}
 				}
 								
 				if (processReader != null && (varsMemoryAddress == -1 || cvarsMemoryAddress == -1))
 				{
-					if ((varsMemoryAddress = processReader.SearchForBytePattern(varsMemoryPattern)) == -1 ||
-					    (cvarsMemoryAddress = processReader.SearchForBytePattern(cvarsMemoryPattern)) == -1)
+					if(!processReader.SearchForBytePattern(varsMemoryPattern, memoryAddress, out varsMemoryAddress) || 
+					   !processReader.SearchForBytePattern(cvarsMemoryPattern, memoryAddress, out cvarsMemoryAddress))
 					{
-						processReader.Close();
-						processReader = null;
-					}
+						CloseReader();
+					}					
 				}	
 				
 				if (processReader != null && varsMemoryAddress != -1 && cvarsMemoryAddress != -1)
 				{		
 					if (!Freeze)
-					{
-						int time = Environment.TickCount;
+					{		
 						bool needRefresh = false;
-						if (processReader.Read(memory, varsMemoryAddress, 207 * 2) > 0)
-						{					
+						int time = Environment.TickCount;	
+						
+						bool result;
+						if (result = (processReader.Read(memory, varsMemoryAddress, 207 * 2) > 0))
+						{		
 							needRefresh |= CheckDifferences(Vars, varsMemoryAddress, time);
 						}
-						else
-						{
-							varsMemoryAddress = -1;
+						
+						if (result = (processReader.Read(memory, cvarsMemoryAddress, 44 * 2) > 0))
+						{		
+							needRefresh |= CheckDifferences(Cvars, cvarsMemoryAddress, time);
 						}
 						
-						if (processReader.Read(memory, cvarsMemoryAddress, 44 * 2) > 0)
+						if (!result)
 						{
-							needRefresh |=CheckDifferences(Cvars, cvarsMemoryAddress, time);
-						}
-						else
-						{
-							cvarsMemoryAddress = -1;
+							CloseReader();
 						}
 						
 						IgnoreDifferences = false; 
@@ -118,7 +122,7 @@ namespace VarsViewer
 						if (needRefresh && running)
 						{
 							refreshCallback();
-						}
+						}							
 					}
 					
 					Thread.Sleep(16); //60 Hz
@@ -133,6 +137,13 @@ namespace VarsViewer
 		public void Stop()
 		{
 			running = false;
+		}
+		
+		void CloseReader()
+		{
+			varsMemoryAddress = cvarsMemoryAddress = -1;
+			processReader.Close();
+			processReader = null;
 		}
 		
 		bool CheckDifferences(Var[] data, long offset, int time)
@@ -215,7 +226,7 @@ namespace VarsViewer
 
 		public void Write(Var var, short value)
 		{
-			if(processReader != null && varsMemoryAddress != -1 && cvarsMemoryAddress != -1)
+			if(processReader != null)
 			{
 				memory.Write(value, 0);
 				processReader.Write(memory, var.MemoryAddress, 2);

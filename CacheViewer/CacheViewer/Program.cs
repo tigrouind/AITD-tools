@@ -15,12 +15,12 @@ namespace CacheViewer
 		
 		public static void Main(string[] args)
 		{					
-			if(args.Length == 0)
+			if (args.Length == 0)
 			{
 				args = new [] { "ListSamp", "ListBod2", "ListAni2", "ListLife", "ListTrak" };
 			}
 			
-			if(args.Length > 5)
+			if (args.Length > 5)
 			{
 				args = args.Take(5).ToArray();
 			}								
@@ -31,44 +31,45 @@ namespace CacheViewer
             	Pattern = Encoding.ASCII.GetBytes(x) 
             }).ToArray();
 					
-			int frame = 0;
 			while (true)
 			{			
-				if(frame % 4 == 0)
+				if (memoryReader == null)
 				{
-					if (memoryReader == null)
-					{
-						SearchDosBox();
-					}
-					
-					if (memoryReader != null && cache.Any(x => x.Address == -1))
-					{
-						SearchPatterns();		
-					}
+					SearchDosBox();
+				}
+				
+				if (memoryReader != null && cache.Any(x => x.Address == -1))
+				{
+					SearchPatterns();		
 				}
 						
 				if (memoryReader != null)
 				{
 					ReadMemory();
+				}	
+
+				if (memoryReader != null)
+				{
 					Render();
-				}				
-									
-				Thread.Sleep(250);
-				frame++;
+					Thread.Sleep(250);
+				}	
+				else				
+				{
+					Thread.Sleep(1000);
+				}
 			}
 		}
 		
 		static void SearchDosBox()
 		{
 			int processId = DosBox.SearchProcess();
-			if(processId != -1)
+			if (processId != -1)
 			{
 				memoryReader = new ProcessMemoryReader(processId);
 				address = memoryReader.SearchFor16MRegion();			
-				if(address == -1)
+				if (address == -1)
 				{
-					memoryReader.Close();
-					memoryReader = null;
+					CloseReader();
 				}
 			}
 		}
@@ -92,15 +93,14 @@ namespace CacheViewer
 			}			
 			else
 			{
-				memoryReader.Close();
-				memoryReader = null;
+				CloseReader();
 			}
 		}
 		
 		static void ReadMemory()
 		{
 			int ticks = Environment.TickCount;
-			foreach(var ch in cache.Where(x => x.Address != -1))
+			foreach (var ch in cache.Where(x => x.Address != -1))
 			{
 				bool readSuccess;
 				
@@ -157,11 +157,21 @@ namespace CacheViewer
 				}
 				else
 				{
-					memoryReader.Close();
-					memoryReader = null;
-					return;
+					CloseReader();
+					break;
 				}
 			}
+		}
+		
+		static void CloseReader()
+		{
+			foreach(var ch in cache)
+			{
+				ch.Address = -1;
+			}
+			
+			memoryReader.Close();
+			memoryReader = null;
 		}
 		
 		static void Render()

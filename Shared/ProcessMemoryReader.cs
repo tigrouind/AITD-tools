@@ -140,34 +140,32 @@ namespace Shared
 			return -1;		
 		}
 		
-		public long SearchForBytePattern(byte[] pattern)
+		public bool SearchForBytePattern(byte[] pattern, long baseAddress, out long foundAddress)
 		{
 			byte[] buffer = new byte[81920];
-			long baseAddress, regionSize;
 	
-			if (Get16MRegion(out baseAddress, out regionSize))
+			int bytesToRead = 640 * 1024;
+			long readPosition = baseAddress;
+			
+			long bytesRead;
+			while (bytesToRead > 0 && (bytesRead = Read(buffer, readPosition, Math.Min(buffer.Length, bytesToRead))) > 0)
 			{
-				long readPosition = baseAddress;
-				int bytesToRead = Math.Min((int)regionSize, 1024 * 640); //scan first 640K only
-				
-				long bytesRead;
-				while (bytesToRead > 0 && (bytesRead = Read(buffer, readPosition, Math.Min(buffer.Length, bytesToRead))) > 0)
+				//search bytes pattern
+				for (int index = 0; index < bytesRead - pattern.Length + 1; index++)
 				{
-					//search bytes pattern
-					for (int index = 0; index < bytesRead - pattern.Length + 1; index++)
+					if (IsMatch(buffer, pattern, index))
 					{
-						if (IsMatch(buffer, pattern, index))
-						{
-							return readPosition + index;
-						}
+						foundAddress = readPosition + index;
+						return true;
 					}
-					
-					readPosition += bytesRead;
-					bytesToRead -= (int)bytesRead;
 				}
+				
+				readPosition += bytesRead;
+				bytesToRead -= (int)bytesRead;
 			}
 			
-			return -1;
+			foundAddress = -1;
+			return bytesToRead == 0;
 		}
 	
 		bool IsMatch(byte[] x, byte[] y, int index)

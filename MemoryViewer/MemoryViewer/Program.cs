@@ -79,7 +79,7 @@ namespace MemoryViewer
 					}
 				}	
 				
-				if(memoryReader == null)
+				if (memoryReader == null)
 				{
 					uint time = SDL.SDL_GetTicks();
 					if ((time - lastCheck) > 1000 || lastCheck == 0)
@@ -93,21 +93,17 @@ namespace MemoryViewer
 							memoryAddress = memoryReader.SearchFor16MRegion();			
 							if(memoryAddress == -1)
 							{
+								memoryReader.Close();
 								memoryReader = null;
 							}			
 						}
 					}							
 				}	
 				
-				if(memoryReader != null)
+				if (memoryReader != null)
 				{
 					//DOS conventional memory (640KB)					
-					if(memoryReader.Read(dosMemory, memoryAddress, 640*1024) == 0)
-					{						
-						memoryReader.Close();
-						memoryReader = null;
-					}
-					else
+					if(memoryReader.Read(dosMemory, memoryAddress, 640*1024) > 0)
 					{						
 						//find owner with largest number of blocks
 						owner = DosBox.GetMCBs(dosMemory)
@@ -115,6 +111,11 @@ namespace MemoryViewer
 							.OrderByDescending(x => x.Count())
 							.Select(x => x.Key)
 							.FirstOrDefault();
+					}
+					else
+					{						
+						memoryReader.Close();
+						memoryReader = null;
 					}
 				}
 				
