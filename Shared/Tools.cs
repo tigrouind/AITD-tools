@@ -20,11 +20,11 @@ namespace Shared
 			}
 		}
 		
-		public static int ReadInt(this byte[] data, int offset)
+		public static uint ReadUnsignedInt(this byte[] data, int offset)
 		{
 			unchecked
 			{
-				return (int)(data[offset] | data[offset + 1] << 8 | data[offset + 2] << 16 | data[offset + 3] << 24);
+				return (uint)(data[offset] | data[offset + 1] << 8 | data[offset + 2] << 16 | data[offset + 3] << 24);
 			}
 		}
 		

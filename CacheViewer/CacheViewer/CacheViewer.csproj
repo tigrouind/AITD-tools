@@ -36,7 +36,7 @@
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <StartAction>Project</StartAction>
-    <StartArguments>ListSamp ListBod2 ListAni2 ListLife ListTrak</StartArguments>
+    <StartArguments>ListSamp ListBod2 ListAni2 ListLife ListTrak _MEMORY_ </StartArguments>
     <BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">

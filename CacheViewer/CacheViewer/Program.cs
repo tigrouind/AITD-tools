@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -12,17 +13,18 @@ namespace CacheViewer
 		static byte[] buffer = new byte[640 * 1024];
 		static Cache[] cache;
 		static long address;
+		static List<int> toRemove = new List<int>();
 		
 		public static void Main(string[] args)
 		{					
 			if (args.Length == 0)
 			{
-				args = new [] { "ListSamp", "ListBod2", "ListAni2", "ListLife", "ListTrak" };
+				args = new [] { "ListSamp", "ListBod2", "ListAni2", "ListLife", "ListTrak", "_MEMORY_" };
 			}
 			
-			if (args.Length > 5)
+			if (args.Length > 6)
 			{
-				args = args.Take(5).ToArray();
+				args = args.Take(6).ToArray();
 			}								
 					
 			cache = args.Select(x => new Cache
@@ -117,39 +119,47 @@ namespace CacheViewer
 					for (int i = 0 ; i < ch.NumUsedEntry ; i++)
 					{			
 						int addr = 22 + i * 10;		
-						int key = buffer.ReadUnsignedShort(addr);
+						int id = buffer.ReadUnsignedShort(addr);
 						
 						CacheEntry entry;
-						if (!ch.Entries.TryGetValue(key, out entry))
+						if (!ch.Entries.TryGetValue(id, out entry))
 						{
 							entry = new CacheEntry();		
 							entry.StartTicks = ticks;
-							ch.Entries.Add(key, entry);
+							ch.Entries.Add(id, entry);
 						}								
 						
-						entry.Key = key;
-						entry.Id = i;
+						entry.Id = id;
 						entry.Size = buffer.ReadUnsignedShort(addr+4);									
-						entry.Time = buffer.ReadInt(addr+6);
 						
-						entry.Touched = entry.Time != entry.LastTime;						
-						entry.Added = (ticks - entry.StartTicks) < 3000;
-						entry.LastTime = entry.Time;
+						if (ch.Name != "_MEMORY_")
+						{
+							entry.Time = buffer.ReadUnsignedInt(addr+6);
+							entry.Touched = entry.Time != entry.LastTime;
+							entry.LastTime = entry.Time;
+						}						
+										
+						entry.Added = (ticks - entry.StartTicks) < 3000;						
 						entry.Ticks = ticks;
 					}
 					
 					//entries removal
-					foreach (int key in ch.Entries.Keys.ToArray())
+					toRemove.Clear();					
+					foreach (var item in ch.Entries)
 					{
-						var entry = ch.Entries[key];
-						
+						var entry = item.Value;
 						int removedSince = ticks - entry.Ticks;
 						entry.Removed = removedSince > 0;						
-						if (removedSince >= 3750)
+						if (removedSince >= 3000)
 						{
-							ch.Entries.Remove(key);
+							toRemove.Add(item.Key);
 						}
-					}											
+					}
+										
+					foreach (var key in toRemove)
+					{
+						ch.Entries.Remove(key);
+					}										
 				}
 				else if (readSuccess)
 				{
@@ -179,38 +189,40 @@ namespace CacheViewer
 			Console.Clear();
 				
 			int column = 0;
-			foreach (var ch in cache.Where(x => x.Address != -1))
+			foreach (var ch in cache)
 			{
-				Console.Write(column * 22 + 6, 0, ConsoleColor.Gray, ch.Name);
-				Console.Write(column * 22 + 0, 1, ConsoleColor.Gray, "{0,5:D}/{1,5:D} {2,3:D}/{3,3:D}", 
-				              ch.MaxFreeData - ch.SizeFreeData, ch.MaxFreeData, ch.NumUsedEntry, ch.NumMaxEntry);
-				
-				int row = 0;
-				foreach (var entry in ch.Entries.Values
-				         .OrderByDescending(x => x.Time / 60)
-				         .ThenByDescending(x => x.StartTicks)
-				         .ThenByDescending(x => x.Id))
+				if (ch.Address != -1)
 				{
-					var color = ConsoleColor.Gray;								
+					Console.Write(column * 20 + 6, 0, ConsoleColor.Gray, ch.Name);
+					Console.Write(column * 20 + 0, 1, ConsoleColor.Gray, "{0,5:D}/{1,5:D} {2,3:D}/{3,3:D}", 
+					              ch.MaxFreeData - ch.SizeFreeData, ch.MaxFreeData, ch.NumUsedEntry, ch.NumMaxEntry);
+					
+					int row = 0;
+					foreach (var entry in ch.Entries.Values
+					         .OrderByDescending(x => x.Time / 60)
+					         .ThenByDescending(x => x.StartTicks))
+					{
+						var color = ConsoleColor.Gray;								
+							
+						if (entry.Touched)
+						{
+							color = ConsoleColor.DarkYellow;
+						}
+
+						if (entry.Added)
+						{
+							color = ConsoleColor.Black | ConsoleColor.BackgroundDarkGreen;
+						}
 						
-					if (entry.Touched)
-					{
-						color = ConsoleColor.DarkYellow;
-					}
-					
-					if (entry.Removed)
-					{
-						color = ConsoleColor.Black | ConsoleColor.BackgroundDarkGray;
-					}
-					
-					if (entry.Added)
-					{
-						color = ConsoleColor.Black | ConsoleColor.BackgroundDarkGreen;
-					}
-					
-					Console.Write(column * 22 + 1, row + 3, color, "{0,5:D} {1,6} {2,5:D}", entry.Key, FormatSize(entry.Size), entry.Time / 60);
-					row++;
-				}		
+						if (entry.Removed)
+						{
+							color = ConsoleColor.Black | ConsoleColor.BackgroundDarkGray;
+						}
+						
+						Console.Write(column * 20, row + 3, color, "{0,6:D} {1,6} {2,5:D}", entry.Id, FormatSize(entry.Size), entry.Time / 60);
+						row++;
+					}		
+				}
 				
 				column++;
 			}
