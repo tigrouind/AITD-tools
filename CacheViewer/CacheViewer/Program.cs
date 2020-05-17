@@ -87,7 +87,7 @@ namespace CacheViewer
 					foreach(var ch in cache)
 					{	
 						var pattern = ch.Pattern;
-						if (pattern.SequenceEqual(buffer.Skip(position).Take(pattern.Length)))
+						if (buffer.IsMatch(pattern, position))
 						{
 							ch.Address = address + position;		
 						}
@@ -107,19 +107,19 @@ namespace CacheViewer
 			int ticks = Environment.TickCount;
 			foreach (var ch in cache.Where(x => x.Address != -1))
 			{
-				if ((readSuccess = processReader.Read(buffer, ch.Address - 16, 4) > 0) &&
+				if ((readSuccess = processReader.Read(buffer, ch.Address - 16, 4096) > 0) &&
 				    buffer.ReadUnsignedShort(1) != 0 && //block is still allocated
-				    (readSuccess = processReader.Read(buffer, ch.Address, 4096) > 0) &&
-				    ch.Pattern.SequenceEqual(buffer.Take(ch.Pattern.Length))) //pattern is matching
+				    buffer.IsMatch(ch.Pattern, 16)) //pattern is still matching
 				{
-					ch.MaxFreeData = buffer.ReadUnsignedShort(10);
-					ch.SizeFreeData = buffer.ReadUnsignedShort(12);
-					ch.NumMaxEntry = buffer.ReadUnsignedShort(14);
-					ch.NumUsedEntry = Math.Min((int)buffer.ReadUnsignedShort(16), 100);
+					const int offset = 16;
+					ch.MaxFreeData = buffer.ReadUnsignedShort(offset + 10);
+					ch.SizeFreeData = buffer.ReadUnsignedShort(offset + 12);
+					ch.NumMaxEntry = buffer.ReadUnsignedShort(offset + 14);
+					ch.NumUsedEntry = Math.Min((int)buffer.ReadUnsignedShort(offset + 16), 100);
 										
 					for (int i = 0 ; i < ch.NumUsedEntry ; i++)
 					{			
-						int addr = 22 + i * 10;		
+						int addr = 22 + i * 10 + offset;		
 						int id = buffer.ReadUnsignedShort(addr);
 						
 						CacheEntry entry;

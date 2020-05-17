@@ -36,5 +36,18 @@ namespace Shared
 				data[offset + 1] = (byte)(value >> 8);
 			}
 		}
+			
+		public static bool IsMatch(this byte[] x, byte[] y, int index)
+		{
+			for (int j = 0; j < y.Length; j++)
+			{
+				if (x[j + index] != y[j])
+				{
+					return false;
+				}
+			}
+			
+			return true;
+		}
 	}
 }

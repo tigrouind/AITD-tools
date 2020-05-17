@@ -153,7 +153,7 @@ namespace Shared
 				//search bytes pattern
 				for (int index = 0; index < bytesRead - pattern.Length + 1; index++)
 				{
-					if (IsMatch(buffer, pattern, index))
+					if (buffer.IsMatch(pattern, index))
 					{
 						foundAddress = readPosition + index;
 						return true;
@@ -166,14 +166,6 @@ namespace Shared
 			
 			foundAddress = -1;
 			return bytesToRead == 0;
-		}
-	
-		bool IsMatch(byte[] x, byte[] y, int index)
-		{
-			for (int j = 0; j < y.Length; j++)
-				if (x[j + index] != y[j])
-					return false;
-			return true;
 		}
 	}
 }
