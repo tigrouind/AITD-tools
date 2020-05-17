@@ -17,6 +17,7 @@ namespace MemoryViewer
 			int winx = GetArgument(args, "-screen-width") ?? 320;
 			int winy = GetArgument(args, "-screen-height") ?? 240;
 			int scale = GetArgument(args, "-scale") ?? 1;
+			bool mcb = (GetArgument(args, "-mcb") ?? 1) == 1;
 			
 			//init SDL
 			SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
@@ -104,15 +105,18 @@ namespace MemoryViewer
 				{
 					//EMS memory (64000B) (skip 64KB (HMA) + 128KB (VCPI) + 32B)
 					//DOS conventional memory (640KB)					
-					if(processReader.Read(pixelData, memoryAddress+(1024+192)*1024+32, 64000) > 0 && 
-					   processReader.Read(dosMemory, memoryAddress, 640*1024) > 0)
-					{						
-						//find owner with largest number of blocks
-						owner = DosBox.GetMCBs(dosMemory)
-							.GroupBy(x => x.Owner)
-							.OrderByDescending(x => x.Count())
-							.Select(x => x.Key)
-							.FirstOrDefault();
+					if(processReader.Read(pixelData, memoryAddress+(1024+192)*1024+32, 64000) > 0 &&
+					   processReader.Read(mcb ? dosMemory : pixelData, memoryAddress, 640*1024, mcb ? 0 : 64000) > 0)
+					{				
+						if (mcb)
+						{
+							//find owner with largest number of blocks
+							owner = DosBox.GetMCBs(dosMemory)
+								.GroupBy(x => x.Owner)
+								.OrderByDescending(x => x.Count())
+								.Select(x => x.Key)
+								.FirstOrDefault();
+						}
 					}
 					else
 					{						
@@ -121,25 +125,28 @@ namespace MemoryViewer
 					}
 				}
 				
-				if(processReader != null)
-				{								
-					int dest = 64000;
-					foreach(var block in DosBox.GetMCBs(dosMemory)
-				        .Where(x => x.Owner == owner))
-					{
-						Array.Copy(dosMemory, block.Position, pixelData, dest, block.Size * 16);
-						dest += block.Size * 16;
-						
-						//round up to next line
-						int reminder = 320 - dest % 320;
-						for (int i = 0 ; i < reminder; i++)
+				if (processReader != null)
+				{					
+					if (mcb)
+					{										
+						int dest = 64000;
+						foreach(var block in DosBox.GetMCBs(dosMemory)
+					        .Where(x => x.Owner == owner))
 						{
-							pixelData[dest++] = 0;
-						}							
-					}
-					
-					Array.Clear(pixelData, dest, pixelData.Length - dest);
+							Array.Copy(dosMemory, block.Position, pixelData, dest, block.Size * 16);
+							dest += block.Size * 16;
 							
+							//round up to next line
+							int reminder = 320 - dest % 320;
+							for (int i = 0 ; i < reminder; i++)
+							{
+								pixelData[dest++] = 0;
+							}							
+						}
+						
+						Array.Clear(pixelData, dest, pixelData.Length - dest);
+					}
+											
 					unsafe
 					{
 						fixed (byte* pixelsBytePtr = pixelData)
