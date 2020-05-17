@@ -36,28 +36,29 @@ namespace Shared
 		
 		public static IEnumerable<DosMCB> GetMCBs(byte[] memory)
 		{
-			//scan DOS memory control blocks chain (MCB)
+			//scan DOS memory control block (MCB) chain 
 			int pos = 0x1190; 
-			byte blockTag = memory[pos];
 			
-			while (blockTag == 0x4D && pos <= (memory.Length - 16)) //last tag should be 0x5A
+			while (pos <= (memory.Length - 16)) 
 			{
+				var blockTag = memory[pos];
 				var blockOwner = memory.ReadUnsignedShort(pos + 1);
 				var blockSize = memory.ReadUnsignedShort(pos + 3);
 				
-				pos += 16;											
-				if (blockOwner != 0 && blockOwner != 8) //not free or allocated for DOS
+				if (blockTag != 0x4D && blockTag != 0x5A) //last tag should be 0x5A
 				{
-					yield return new DosMCB
-					{
-						Position = pos,
-						Size = blockSize,
-						Owner = blockOwner
-					};
+					break;
 				}
+					
+				pos += 16;											
+				yield return new DosMCB
+				{
+					Position = pos,
+					Size = blockSize,
+					Owner = blockOwner
+				};
 				
 				pos += blockSize * 16;
-				blockTag = memory[pos];
 			}
 		}
 	}

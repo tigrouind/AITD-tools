@@ -112,6 +112,7 @@ namespace MemoryViewer
 						{
 							//find owner with largest number of blocks
 							owner = DosBox.GetMCBs(dosMemory)
+								.Where(x => x.Owner != 0 && x.Owner != 8) //free or owned by DOS
 								.GroupBy(x => x.Owner)
 								.OrderByDescending(x => x.Count())
 								.Select(x => x.Key)
