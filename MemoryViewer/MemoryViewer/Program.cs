@@ -14,9 +14,9 @@ namespace MemoryViewer
 			const int RESX = 320;
 			const int RESY = 240;
 			
-			int winx = GetArgument(args, "-screen-width") ?? 320;
-			int winy = GetArgument(args, "-screen-height") ?? 240;
-			int scale = GetArgument(args, "-scale") ?? 1;
+			int winx = GetArgument(args, "-screen-width") ?? 640;
+			int winy = GetArgument(args, "-screen-height") ?? 480;
+			int zoom = GetArgument(args, "-zoom") ?? 2;
 			bool mcb = (GetArgument(args, "-mcb") ?? 1) == 1;
 			
 			//init SDL
@@ -194,14 +194,14 @@ namespace MemoryViewer
 							}
 						}
 						
-						drawRect.x = m * RESX * scale;
-						drawRect.y = n * RESY * scale;
-						drawRect.w = RESX * scale;
-						drawRect.h = RESY * scale;
+						drawRect.x = m * RESX * zoom;
+						drawRect.y = n * RESY * zoom;
+						drawRect.w = RESX * zoom;
+						drawRect.h = RESY * zoom;
 						SDL.SDL_RenderCopy(renderer, texture, ref textureRect, ref drawRect);
 					}
 					
-					skip += RESX * (winy / scale);
+					skip += RESX * (winy / zoom);
 				}
 				
 				SDL.SDL_RenderPresent(renderer);
