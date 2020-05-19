@@ -6,7 +6,7 @@ namespace Shared
 	public struct DosMCB
 	{
 		public int Position;
-		public ushort Owner;
-		public ushort Size;
+		public int Owner;
+		public int Size;
 	}
 }

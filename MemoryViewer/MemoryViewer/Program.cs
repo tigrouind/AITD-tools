@@ -13,11 +13,11 @@ namespace MemoryViewer
 		{
 			const int RESX = 320;
 			const int RESY = 240;
+			bool mcb = false;
 			
 			int winx = GetArgument(args, "-screen-width") ?? 640;
 			int winy = GetArgument(args, "-screen-height") ?? 480;
 			int zoom = GetArgument(args, "-zoom") ?? 2;
-			bool mcb = (GetArgument(args, "-mcb") ?? 1) == 1;
 			
 			//init SDL
 			SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
@@ -48,16 +48,15 @@ namespace MemoryViewer
 			}
 				
 			bool quit = false;
-			uint[] pixels = new uint[RESX * RESY * 11];
+			uint[] pixels = new uint[RESX * RESY * 10];
 			byte[] pixelData = new byte[640 * 1024 + 64000];
 			byte[] oldPixelData = new byte[640 * 1024 + 64000];
-			byte[] dosMemory = new byte[640 * 1024 + 64000];
+			byte[] dosMemory = new byte[640 * 1024];
 			
 			ProcessMemoryReader processReader = null;
 			long memoryAddress = -1;
 			uint lastCheck = 0;
-			int owner = 0;
-														
+						
 			while(!quit)
 			{
 				SDL.SDL_Event sdlEvent;				
@@ -67,6 +66,13 @@ namespace MemoryViewer
 					{
 						case SDL.SDL_EventType.SDL_QUIT:
 							quit = true;
+							break;
+							
+						case SDL.SDL_EventType.SDL_KEYDOWN:
+							if(sdlEvent.key.keysym.sym == SDL.SDL_Keycode.SDLK_SPACE)
+							{
+								mcb = !mcb;
+							}
 							break;
 							
 						case SDL.SDL_EventType.SDL_WINDOWEVENT:
@@ -103,80 +109,51 @@ namespace MemoryViewer
 				
 				if (processReader != null)
 				{
-					//EMS memory (64000B) (skip 64KB (HMA) + 128KB (VCPI) + 32B)
+					//EMS memory (64000B) (skip 64KB (HMA) + 128KB (VCPI))
 					//DOS conventional memory (640KB)					
-					if(processReader.Read(pixelData, memoryAddress+(1024+192)*1024+32, 64000) > 0 &&
-					   processReader.Read(mcb ? dosMemory : pixelData, memoryAddress, 640*1024, mcb ? 0 : 64000) > 0)
+					if(!(processReader.Read(pixelData, memoryAddress+32+(1024+192)*1024, 64000) > 0 &&
+					    (processReader.Read(dosMemory, memoryAddress+32, dosMemory.Length) > 0)))
 					{				
-						if (mcb)
-						{
-							//find owner with largest number of blocks
-							owner = DosBox.GetMCBs(dosMemory)
-								.Where(x => x.Owner != 0 && x.Owner != 8) //free or owned by DOS
-								.GroupBy(x => x.Owner)
-								.OrderByDescending(x => x.Count())
-								.Select(x => x.Key)
-								.FirstOrDefault();
-						}
-					}
-					else
-					{						
 						processReader.Close();
 						processReader = null;
 					}
 				}
 				
-				if (processReader != null)
-				{					
-					if (mcb)
-					{										
-						int dest = 64000;
-						foreach(var block in DosBox.GetMCBs(dosMemory)
-					        .Where(x => x.Owner == owner))
-						{
-							Array.Copy(dosMemory, block.Position, pixelData, dest, block.Size * 16);
-							dest += block.Size * 16;
-							
-							//round up to next line
-							int reminder = 320 - dest % 320;
-							for (int i = 0 ; i < reminder; i++)
-							{
-								pixelData[dest++] = 0;
-							}							
-						}
-						
-						Array.Clear(pixelData, dest, pixelData.Length - dest);
-					}
-											
-					unsafe
+				Array.Copy(dosMemory, 0, pixelData, 64000, dosMemory.Length);
+				
+				if (mcb)
+				{
+					DisplayMCB(dosMemory, pixelData);
+				}	
+				
+				unsafe
+				{
+					fixed (byte* pixelsBytePtr = pixelData)
+					fixed (byte* oldPixelsBytePtr = oldPixelData)
 					{
-						fixed (byte* pixelsBytePtr = pixelData)
-						fixed (byte* oldPixelsBytePtr = oldPixelData)
+						ulong* pixelsPtr = (ulong*)pixelsBytePtr;
+						ulong* oldPixelsPtr = (ulong*)oldPixelsBytePtr;
+						
+						for(int i = 0 ; i < pixelData.Length ; i += 8)
 						{
-							ulong* pixelsPtr = (ulong*)pixelsBytePtr;
-							ulong* oldPixelsPtr = (ulong*)oldPixelsBytePtr;
-							
-							for(int i = 0 ; i < pixelData.Length ; i += 8)
+							if(*pixelsPtr != *oldPixelsPtr)
 							{
-								if(*pixelsPtr != *oldPixelsPtr)
+								for(int j = i ; j < i + 8 ; j++)
 								{
-									for(int j = i ; j < i + 8 ; j++)
-									{
-										pixels[j] = pal256[pixelData[j]];
-									}
-								}	
-							
-								pixelsPtr++;
-								oldPixelsPtr++;
-							}
+									pixels[j] = pal256[pixelData[j]];
+								}
+							}	
+						
+							pixelsPtr++;
+							oldPixelsPtr++;
 						}
-					}						
+					}
 				}
 					
 				SDL.SDL_RenderClear(renderer);
 								
-				int tm = (winx + RESX - 1) / RESX;
-				int tn = (winy + RESY - 1) / RESY;
+				int tm = (winx + RESX * zoom - 1) / (RESX * zoom);
+				int tn = (winy + RESY * zoom - 1) / (RESY * zoom);
 				
 				int skip = 0;				
 				for(int m = 0 ; m < tm ; m++)
@@ -220,6 +197,26 @@ namespace MemoryViewer
 			return 0;
 		}
 		
+		static void DisplayMCB(byte[] dosMemory, byte[] pixelData)
+		{
+			bool inverse = true;
+			foreach(var block in DosBox.GetMCBs(dosMemory))
+			{
+				int dest = 64000 + block.Position - 16;
+				int length = Math.Min(block.Size + 16, pixelData.Length - dest);
+				
+				byte color = inverse ? (byte)189 : (byte)187;
+				if(block.Owner == 0) color = 169; //free
+				
+				for (int i = 0 ; i < length ; i++)
+				{													
+					pixelData[dest++] = color;
+				}										
+
+				inverse = !inverse;
+			}
+		}
+				
 		public static int? GetArgument(string[] args, string name)
 		{
 			int index = Array.IndexOf(args, name);

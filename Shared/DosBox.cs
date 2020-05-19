@@ -37,28 +37,31 @@ namespace Shared
 		public static IEnumerable<DosMCB> GetMCBs(byte[] memory)
 		{
 			//scan DOS memory control block (MCB) chain 
-			int pos = 0x1190; 
-			
-			while (pos <= (memory.Length - 16)) 
+			int pos = memory.ReadUnsignedShort(0x0824) * 16;
+			while (pos <= (memory.Length - 16))
 			{
 				var blockTag = memory[pos];
 				var blockOwner = memory.ReadUnsignedShort(pos + 1);
 				var blockSize = memory.ReadUnsignedShort(pos + 3);
 				
-				if (blockTag != 0x4D && blockTag != 0x5A) //last tag should be 0x5A
+				if (blockTag != 0x4D && blockTag != 0x5A) 
 				{
 					break;
 				}
-					
-				pos += 16;											
+														
 				yield return new DosMCB
 				{
-					Position = pos,
-					Size = blockSize,
+					Position = pos + 16,
+					Size = blockSize * 16,
 					Owner = blockOwner
 				};
 				
-				pos += blockSize * 16;
+				if(blockTag == 0x5A) //last tag should be 0x5A
+				{
+					break;
+				}
+				
+				pos += blockSize * 16 + 16;
 			}
 		}
 	}
