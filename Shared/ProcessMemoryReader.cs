@@ -34,7 +34,7 @@ namespace Shared
 		static extern bool CloseHandle(IntPtr hObject);
 	
 		[DllImport("kernel32.dll")]
-		static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, IntPtr lpBuffer, int dwSize, out IntPtr lpNumberOfBytesRead);
+		static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, int dwSize, out IntPtr lpNumberOfBytesRead);
 		
 		[DllImport("kernel32.dll")]
 		static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, int dwSize, out IntPtr lpNumberOfBytesWritten);
@@ -53,29 +53,13 @@ namespace Shared
 		{
 			Close();
 		}
-	
-		public long Read(byte[] buffer, long address, int count)
-		{
-			return Read(buffer, address, count, 0);
-		}
-		
-		public long Read(byte[] buffer, long address, int count, int offset)
-		{
-			if((offset + count) > buffer.Length)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
 			
+		public long Read(byte[] buffer, long address, int count)
+		{			
 			IntPtr bytesRead;
-			unsafe
-			{	
-				fixed (byte* ptr = buffer)
-				{				
-					if (ReadProcessMemory(processHandle, new IntPtr(address), new IntPtr((void*)(ptr+offset)), count, out bytesRead))
-					{
-						return (long)bytesRead;
-					}
-				}
+			if (ReadProcessMemory(processHandle, new IntPtr(address), buffer, count, out bytesRead))
+			{
+				return (long)bytesRead;
 			}
 			return 0;
 		}
