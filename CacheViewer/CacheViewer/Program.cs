@@ -16,7 +16,9 @@ namespace CacheViewer
 		static List<int> toRemove = new List<int>();
 		
 		public static void Main(string[] args)
-		{					
+		{		
+			System.Console.Title = "AITD cache viewer";
+			
 			if (args.Length == 0)
 			{
 				args = new [] { "ListSamp", "ListBod2", "ListAni2", "ListLife", "ListTrak", "_MEMORY_" };

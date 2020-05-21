@@ -37,6 +37,7 @@
 			this.ClientSize = new System.Drawing.Size(960, 540);
 			this.DoubleBuffered = true;
 			this.Name = "MainForm";
+			this.Text = "AITD vars viewer";
 			this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.MainFormFormClosed);
 			this.Load += new System.EventHandler(this.MainFormLoad);
 			this.ResizeEnd += new System.EventHandler(this.MainFormResizeEnd);
