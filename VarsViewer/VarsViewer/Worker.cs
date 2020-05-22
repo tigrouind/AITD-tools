@@ -8,25 +8,25 @@ namespace VarsViewer
 {
 	public class Worker
 	{
-		ProcessMemoryReader processReader;		
+		ProcessMemoryReader processReader;
 		Thread thread;
-		readonly Action refreshCallback;		
-		bool running;		
-	
+		readonly Action refreshCallback;
+		bool running;
+
 		long memoryAddress;
 		long varsMemoryAddress = -1;
-		long cvarsMemoryAddress = -1;		
-		readonly byte[] memory = new byte[512];					
+		long cvarsMemoryAddress = -1;
+		readonly byte[] memory = new byte[512];
 		readonly byte[] varsMemoryPattern = { 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2E, 0x00, 0x2F, 0x00, 0x00, 0x00, 0x00 };
 		readonly byte[] cvarsMemoryPattern = { 0x31, 0x00, 0x0E, 0x01, 0xBC, 0x02, 0x12, 0x00, 0x06, 0x00, 0x13, 0x00, 0x14, 0x00, 0x01 };
-			
-		public readonly Var[] Vars = new Var[207];		
-		public readonly Var[] Cvars = new Var[44];			
-						
+
+		public readonly Var[] Vars = new Var[207];
+		public readonly Var[] Cvars = new Var[44];
+
 		public bool Compare;
 		public bool IgnoreDifferences = true;
 		public bool Freeze;
-		
+
 		public Worker(Action refreshCallback)
 		{
 			InitVars();
@@ -38,25 +38,25 @@ namespace VarsViewer
 			var varParser = new VarParser();
 			const string varPath = @"GAMEDATA\vars.txt";
 			if (File.Exists(varPath))
-			{	
+			{
 				varParser.Parse(varPath, "VARS", "C_VARS");
 			}
-						
+
 			InitVars(varParser, Vars, "VARS");
 			InitVars(varParser, Cvars, "C_VARS");
 		}
-		
+
 		void InitVars(VarParser varParser, Var[] data, string sectionName)
 		{
 			for(int i = 0 ; i < data.Length ; i++)
 			{
 				var var = new Var();
 				var.Index = i;
-				var.Name = varParser.GetText(sectionName, var.Index);		
+				var.Name = varParser.GetText(sectionName, var.Index);
 				data[i] = var;
 			}
 		}
-		
+
 		public void Start()
 		{
 			if (!running)
@@ -66,7 +66,7 @@ namespace VarsViewer
 				thread.Start();
 			}
 		}
-		
+
 		public void Run()
 		{
 			while (running)
@@ -77,84 +77,84 @@ namespace VarsViewer
 					if (processId != -1)
 					{
 						processReader = new ProcessMemoryReader(processId);
-						memoryAddress = processReader.SearchFor16MRegion();			
+						memoryAddress = processReader.SearchFor16MRegion();
 						if(memoryAddress == -1)
 						{
 							CloseReader();
-						}			
+						}
 					}
 				}
-								
+
 				if (processReader != null && (varsMemoryAddress == -1 || cvarsMemoryAddress == -1))
 				{
-					if(!processReader.SearchForBytePattern(varsMemoryPattern, memoryAddress, out varsMemoryAddress) || 
+					if(!processReader.SearchForBytePattern(varsMemoryPattern, memoryAddress, out varsMemoryAddress) ||
 					   !processReader.SearchForBytePattern(cvarsMemoryPattern, memoryAddress, out cvarsMemoryAddress))
 					{
 						CloseReader();
-					}					
-				}	
-				
+					}
+				}
+
 				if (processReader != null && varsMemoryAddress != -1 && cvarsMemoryAddress != -1)
-				{		
+				{
 					if (!Freeze)
-					{		
+					{
 						bool needRefresh = false;
-						int time = Environment.TickCount;	
-						
+						int time = Environment.TickCount;
+
 						bool result;
 						if (result = (processReader.Read(memory, varsMemoryAddress, 207 * 2) > 0))
-						{		
+						{
 							needRefresh |= CheckDifferences(Vars, varsMemoryAddress, time);
 						}
-						
+
 						if (result = (processReader.Read(memory, cvarsMemoryAddress, 44 * 2) > 0))
-						{		
+						{
 							needRefresh |= CheckDifferences(Cvars, cvarsMemoryAddress, time);
 						}
-						
+
 						if (!result)
 						{
 							CloseReader();
 						}
-						
-						IgnoreDifferences = false; 
-											
+
+						IgnoreDifferences = false;
+
 						if (needRefresh && running)
 						{
 							refreshCallback();
-						}							
+						}
 					}
-					
+
 					Thread.Sleep(16); //60 Hz
 				}
 				else
 				{
 					Thread.Sleep(1000);
-				}				
+				}
 			}
-		}	
-				
+		}
+
 		public void Stop()
 		{
 			running = false;
 		}
-		
+
 		void CloseReader()
 		{
 			varsMemoryAddress = cvarsMemoryAddress = -1;
 			processReader.Close();
 			processReader = null;
 		}
-		
+
 		bool CheckDifferences(Var[] data, long offset, int time)
 		{
-			bool needRefresh = false;					
+			bool needRefresh = false;
 			for (int i = 0; i < data.Length; i++)
 			{
 				Var var = data[i];
 				int oldValue = var.Value;
 				short value;
-	
+
 				if (Compare)
 				{
 					value = var.SaveState;
@@ -163,9 +163,9 @@ namespace VarsViewer
 				{
 					value = memory.ReadShort(i * 2 + 0);
 				}
-	
+
 				var.Value = value;
-	
+
 				if (IgnoreDifferences)
 				{
 					var.Time = 0;
@@ -181,24 +181,24 @@ namespace VarsViewer
 						var.Time = time;
 					}
 				}
-	
+
 				var.MemoryAddress = offset + i * 2;
-	
+
 				//check differences
-				bool difference = (time - var.Time) < 5000;	
+				bool difference = (time - var.Time) < 5000;
 				string newText = string.Empty;
 				if (value != 0 || difference)
 				{
 					newText = value.ToString();
 				}
-				
+
 				if(var.Difference != difference)
 				{
 					var.Difference = difference;
 					var.Refresh = true;
 					needRefresh = true;
 				}
-				
+
 				if(var.Text != newText)
 				{
 					var.Text = newText;
@@ -206,16 +206,16 @@ namespace VarsViewer
 					needRefresh = true;
 				}
 			}
-			
+
 			return needRefresh;
-		}		
-			
+		}
+
 		public void SaveState()
 		{
 			SaveState(Vars);
 			SaveState(Cvars);
 		}
-				
+
 		void SaveState(Var[] data)
 		{
 			foreach(Var var in data)
@@ -231,6 +231,6 @@ namespace VarsViewer
 				memory.Write(value, 0);
 				processReader.Write(memory, var.MemoryAddress, 2);
 			}
-		}				
+		}
 	}
 }

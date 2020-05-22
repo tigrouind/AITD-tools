@@ -94,7 +94,7 @@ namespace LifeDISA
 			LifeEnum.SAMPLE_THEN_REPEAT,
 			LifeEnum.WAIT_GAME_OVER
 		};
-		
+
 		public static LifeEnum[] AITD2 =
 		{
 			LifeEnum.DO_MOVE,
@@ -197,7 +197,7 @@ namespace LifeDISA
 			LifeEnum.DEF_SEQUENCE_SAMPLE,
 			LifeEnum.READ_ON_PICTURE
 		};
-		
+
 		public static EvalEnum[] AITD1Eval =
 		{
 			EvalEnum.ACTOR_COLLIDER,
@@ -240,7 +240,7 @@ namespace LifeDISA
 			EvalEnum.STAGE,
 			EvalEnum.THROW
 		};
-		
+
 		public static EvalEnum[] AITD2Eval =
 		{
 			EvalEnum.ACTOR_COLLIDER,
@@ -268,7 +268,7 @@ namespace LifeDISA
 			EvalEnum.ALPHA,
 			EvalEnum.BETA,
 			EvalEnum.GAMMA,
-			EvalEnum.INHAND, 
+			EvalEnum.INHAND,
 			EvalEnum.HITFORCE,
 			EvalEnum.CAMERA,
 			EvalEnum.RAND,

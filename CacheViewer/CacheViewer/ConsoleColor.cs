@@ -1,7 +1,7 @@
 ﻿using System;
 
 namespace CacheViewer
-{	
+{
 	[Flags]
 	public enum ConsoleColor : short
     {
@@ -21,7 +21,7 @@ namespace CacheViewer
         Magenta = 13,
         Yellow = 14,
         White = 15,
-        
+
         BackgroundBlack = 0 << 4,
         BackgroundDarkBlue = 1 << 4,
         BackgroundDarkGreen = 2 << 4,

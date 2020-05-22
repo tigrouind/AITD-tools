@@ -17,9 +17,9 @@ namespace CacheViewer
 					source[j + 1] = source[j];
 					j--;
 				}
-				
+
 				source[j + 1] = item;
-			}    
+			}
 		}
 	}
 }

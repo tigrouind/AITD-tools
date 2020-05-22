@@ -6,7 +6,7 @@ namespace LifeDISA
 	public enum EvalEnum
 	{
 		ACTOR_COLLIDER,
-		TRIGGER_COLLIDER, 
+		TRIGGER_COLLIDER,
 		HARD_COLLIDER,
 		HIT,
 		HIT_BY,

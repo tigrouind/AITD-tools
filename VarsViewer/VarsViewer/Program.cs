@@ -11,14 +11,14 @@ namespace VarsViewer
 		{
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
-			
+
 			var form = new MainForm();
 			var width = GetArgument(args, "-screen-width") ?? 1024;
-			var height = GetArgument(args, "-screen-height") ?? 576;			
+			var height = GetArgument(args, "-screen-height") ?? 576;
 			form.Size = new Size(width, height);
-			
+
 			Application.Run(form);
-		}	
+		}
 
 		static int? GetArgument(string[] args, string name)
 		{
@@ -31,8 +31,8 @@ namespace VarsViewer
 					return value;
 				}
 			}
-			
+
 			return null;
-		}			
+		}
 	}
 }

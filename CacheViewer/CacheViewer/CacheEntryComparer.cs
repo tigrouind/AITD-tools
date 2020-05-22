@@ -9,6 +9,6 @@ namespace CacheViewer
 		public int Compare(CacheEntry x, CacheEntry y)
 		{
 			return -x.TimePerSecond.CompareTo(y.TimePerSecond);
-		}		
+		}
 	}
 }
