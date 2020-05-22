@@ -7,6 +7,7 @@ namespace CacheViewer
 		public int Id; //from AITD		
 		public int Size; //from AITD				
 		public uint Time; //from AITD
+		public uint TimePerSecond;
 		public uint LastTime;
 		
 		public bool Touched; 

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -13,7 +12,7 @@ namespace CacheViewer
 		static byte[] buffer = new byte[640 * 1024];
 		static Cache[] cache;
 		static long address;
-		static List<int> toRemove = new List<int>();
+		static CacheEntryComparer comparer = new CacheEntryComparer();
 		
 		public static void Main(string[] args)
 		{		
@@ -124,12 +123,12 @@ namespace CacheViewer
 						int addr = 22 + i * 10 + offset;		
 						int id = buffer.ReadUnsignedShort(addr);
 						
-						CacheEntry entry;
-						if (!ch.Entries.TryGetValue(id, out entry))
+						CacheEntry entry = ch.Entries.Find(x => x.Id == id);
+						if (entry == null)
 						{
 							entry = new CacheEntry();		
 							entry.StartTicks = ticks;
-							ch.Entries.Add(id, entry);
+							ch.Entries.Insert(0, entry);
 						}								
 						
 						entry.Id = id;
@@ -138,6 +137,8 @@ namespace CacheViewer
 						if (ch.Name != "_MEMORY_")
 						{
 							entry.Time = buffer.ReadUnsignedInt(addr+6);
+							entry.TimePerSecond = entry.Time / 60;
+							
 							if (entry.Time != entry.LastTime)
 							{
 								entry.TouchedTicks = ticks;
@@ -151,23 +152,14 @@ namespace CacheViewer
 						entry.Ticks = ticks;
 					}
 					
-					//entries removal
-					toRemove.Clear();					
-					foreach (var item in ch.Entries)
+					//removal
+					ch.Entries.RemoveAll(x => (ticks - x.Ticks) > 3000);					
+					foreach (var entry in ch.Entries)
 					{
-						var entry = item.Value;
-						int removedSince = ticks - entry.Ticks;
-						entry.Removed = removedSince > 0;						
-						if (removedSince >= 3000)
-						{
-							toRemove.Add(item.Key);
-						}
-					}
-										
-					foreach (var key in toRemove)
-					{
-						ch.Entries.Remove(key);
-					}										
+						entry.Removed = (ticks - entry.Ticks) > 0;
+					}	
+
+					ch.Entries.InsertionSort(comparer);
 				}
 				else if (readSuccess)
 				{
@@ -206,9 +198,7 @@ namespace CacheViewer
 					              ch.MaxFreeData - ch.SizeFreeData, ch.MaxFreeData, ch.NumUsedEntry, ch.NumMaxEntry);
 					
 					int row = 0;
-					foreach (var entry in ch.Entries.Values
-					         .OrderByDescending(x => x.Time / 60)
-					         .ThenByDescending(x => x.StartTicks))
+					foreach (var entry in ch.Entries)
 					{
 						var color = ConsoleColor.Gray;								
 							

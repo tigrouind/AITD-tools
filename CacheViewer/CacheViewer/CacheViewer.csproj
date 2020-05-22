@@ -56,9 +56,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Cache.cs" />
+    <Compile Include="CacheEntryComparer.cs" />
     <Compile Include="Console.cs" />
     <Compile Include="ConsoleColor.cs" />
     <Compile Include="CacheEntry.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
