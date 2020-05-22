@@ -97,7 +97,7 @@ namespace Shared
 				//check if memory region is accessible
 				//skip regions smaller than 16M (default DOSBOX memory size)
 				if (mem_info.Protect == PAGE_READWRITE && mem_info.State == MEM_COMMIT && (mem_info.Type & MEM_PRIVATE) == MEM_PRIVATE
-				    && (int)mem_info.RegionSize >= 1024 * 1024 * 16)
+					&& (int)mem_info.RegionSize >= 1024 * 1024 * 16)
 				{
 					baseAddress = (long)mem_info.BaseAddress;
 					regionSize = (long)mem_info.RegionSize;

@@ -9,13 +9,13 @@ namespace CacheViewer
 	{
 		[DllImport("Kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
 		static extern SafeFileHandle CreateFile(
-		    string fileName,
-		    [MarshalAs(UnmanagedType.U4)] uint fileAccess,
-		    [MarshalAs(UnmanagedType.U4)] uint fileShare,
-		    IntPtr securityAttributes,
-		    [MarshalAs(UnmanagedType.U4)] FileMode creationDisposition,
-		    [MarshalAs(UnmanagedType.U4)] int flags,
-		    IntPtr template);
+			string fileName,
+			[MarshalAs(UnmanagedType.U4)] uint fileAccess,
+			[MarshalAs(UnmanagedType.U4)] uint fileShare,
+			IntPtr securityAttributes,
+			[MarshalAs(UnmanagedType.U4)] FileMode creationDisposition,
+			[MarshalAs(UnmanagedType.U4)] int flags,
+			IntPtr template);
 
 		[DllImport("kernel32.dll", SetLastError = true)]
 		static extern bool WriteConsoleOutput(
@@ -82,14 +82,14 @@ namespace CacheViewer
 			handle = CreateFile("CONOUT$", 0x40000000, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
 		}
 
-	    public static void Clear()
+		public static void Clear()
 		{
-	    	Array.Clear(buf, 0, buf.Length);
+			Array.Clear(buf, 0, buf.Length);
 		}
 
-	    public static void Write(int x, int y, ConsoleColor color, string text)
-	    {
-	    	foreach (char ch in text)
+		public static void Write(int x, int y, ConsoleColor color, string text)
+		{
+			foreach (char ch in text)
 			{
 				if (x < SIZEX && y < SIZEY)
 				{
@@ -98,7 +98,7 @@ namespace CacheViewer
 
 				x++;
 			}
-	    }
+		}
 
 		public static void Write(int x, int y, ConsoleColor color, string format, params object[] value)
 		{
@@ -134,10 +134,10 @@ namespace CacheViewer
 			SmallRect rect;
 			if (CompareBuffers(out rect))
 			{
-	        	WriteConsoleOutput(handle, buf,
-				    new Coord { X = SIZEX, Y = SIZEY },
-	          		new Coord { X = rect.Left, Y = rect.Top },
-		          	ref rect);
+				WriteConsoleOutput(handle, buf,
+					new Coord { X = SIZEX, Y = SIZEY },
+					new Coord { X = rect.Left, Y = rect.Top },
+					ref rect);
 			}
 
 			//swap

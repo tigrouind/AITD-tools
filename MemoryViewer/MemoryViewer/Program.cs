@@ -34,7 +34,7 @@ namespace MemoryViewer
 
 			uint[] pal256 = new uint[256];
 			using (var stream = Assembly.GetExecutingAssembly()
-			       .GetManifestResourceStream("MemoryViewer.palette.dat"))
+				   .GetManifestResourceStream("MemoryViewer.palette.dat"))
 			using (BinaryReader br = new BinaryReader(stream))
 			{
 				var palette = br.ReadBytes(768);
@@ -112,7 +112,7 @@ namespace MemoryViewer
 					//EMS memory (64000B) (skip 64KB (HMA) + 128KB (VCPI))
 					//DOS conventional memory (640KB)
 					if(!(processReader.Read(pixelData, memoryAddress+32+(1024+192)*1024, 64000) > 0 &&
-					    (processReader.Read(dosMemory, memoryAddress+32, dosMemory.Length) > 0)))
+						(processReader.Read(dosMemory, memoryAddress+32, dosMemory.Length) > 0)))
 					{
 						processReader.Close();
 						processReader = null;

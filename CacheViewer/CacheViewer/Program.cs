@@ -29,10 +29,10 @@ namespace CacheViewer
 			}
 
 			cache = args.Select(x => new Cache
-            {
-            	Name = x,
-            	Pattern = Encoding.ASCII.GetBytes(x)
-            }).ToArray();
+			{
+				Name = x,
+				Pattern = Encoding.ASCII.GetBytes(x)
+			}).ToArray();
 
 			while (true)
 			{
@@ -82,7 +82,7 @@ namespace CacheViewer
 			if (processReader.Read(buffer, address + 32, buffer.Length) > 0) //640K
 			{
 				foreach(var block in DosBox.GetMCBs(buffer)
-			        .Where(x => x.Owner != 0 && x.Owner != 8)) //free or owned by DOS
+						.Where(x => x.Owner != 0 && x.Owner != 8)) //free or owned by DOS
 				{
 					int position = block.Position;
 					foreach(var ch in cache)
@@ -109,8 +109,8 @@ namespace CacheViewer
 			foreach (var ch in cache.Where(x => x.Address != -1))
 			{
 				if ((readSuccess = processReader.Read(buffer, ch.Address - 16, 4096) > 0) &&
-				    buffer.ReadUnsignedShort(1) != 0 && //block is still allocated
-				    buffer.IsMatch(ch.Pattern, 16)) //pattern is still matching
+					buffer.ReadUnsignedShort(1) != 0 && //block is still allocated
+					buffer.IsMatch(ch.Pattern, 16)) //pattern is still matching
 				{
 					const int offset = 16;
 					ch.MaxFreeData = buffer.ReadUnsignedShort(offset + 10);
@@ -192,7 +192,7 @@ namespace CacheViewer
 				{
 					Console.Write(column * 20 + 6, 0, ConsoleColor.Gray, ch.Name);
 					Console.Write(column * 20 + 0, 1, ConsoleColor.Gray, "{0,5:D}/{1,5:D} {2,3:D}/{3,3:D}",
-					              ch.MaxFreeData - ch.SizeFreeData, ch.MaxFreeData, ch.NumUsedEntry, ch.NumMaxEntry);
+									ch.MaxFreeData - ch.SizeFreeData, ch.MaxFreeData, ch.NumUsedEntry, ch.NumMaxEntry);
 
 					int row = 0;
 					foreach (var entry in ch.Entries)

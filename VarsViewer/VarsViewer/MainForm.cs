@@ -77,16 +77,16 @@ namespace VarsViewer
 
 		protected override void WndProc(ref Message m)
 		{
-		    if (m.Msg == 0x0112) // WM_SYSCOMMAND
-		    {
-		        int wParam = (m.WParam.ToInt32() & 0xFFF0);
-		        if (wParam == 0xF030 || wParam == 0xF020 || wParam == 0xF120) //SC_MAXIMIZE / SC_MINIMIZE / SC_RESTORE
-		        {
-		             Invalidate();
-		        }
-		    }
+			if (m.Msg == 0x0112) // WM_SYSCOMMAND
+			{
+				int wParam = (m.WParam.ToInt32() & 0xFFF0);
+				if (wParam == 0xF030 || wParam == 0xF020 || wParam == 0xF120) //SC_MAXIMIZE / SC_MINIMIZE / SC_RESTORE
+				{
+					 Invalidate();
+				}
+			}
 
-		    base.WndProc(ref m);
+			base.WndProc(ref m);
 		}
 
 		void MainFormResizeEnd(object sender, EventArgs e)
@@ -223,7 +223,7 @@ namespace VarsViewer
 			if (e.Button == MouseButtons.Left && TryFindVarAtPosition(e.Location, out var) && var.MemoryAddress >= 0)
 			{
 				string input = Interaction.InputBox(string.Empty, string.Format("#{0} {1}", var.Index, var.Name), var.Value.ToString(),
-                                          (DesktopLocation.X + Width) / 2, (DesktopLocation.Y + Height) / 2);
+										(DesktopLocation.X + Width) / 2, (DesktopLocation.Y + Height) / 2);
 
 				short value;
 				if(short.TryParse(input, out value))

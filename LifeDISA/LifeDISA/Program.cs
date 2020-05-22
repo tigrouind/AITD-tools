@@ -103,7 +103,7 @@ namespace LifeDISA
 						FilePath = x,
 						FileNumber = Convert.ToInt32(Path.GetFileNameWithoutExtension(x), 16)
 					})
-		        	.OrderBy(x => x.FileNumber))
+					.OrderBy(x => x.FileNumber))
 				{
 					writer.WriteLine("--------------------------------------------------");
 					writer.WriteLine("#{0} {1}", file.FileNumber, vars.GetText("LIFES", file.FileNumber, string.Empty));
@@ -197,14 +197,14 @@ namespace LifeDISA
 						//check for consecutive IFs
 						var next = node.Next;
 						while(next != null &&
-						    (
-				      		next.Value.Type == LifeEnum.IF_EGAL ||
+							(
+							next.Value.Type == LifeEnum.IF_EGAL ||
 							next.Value.Type == LifeEnum.IF_DIFFERENT ||
 							next.Value.Type == LifeEnum.IF_INF ||
 							next.Value.Type == LifeEnum.IF_INF_EGAL ||
 							next.Value.Type == LifeEnum.IF_SUP ||
 							next.Value.Type == LifeEnum.IF_SUP_EGAL) &&
-						    target == nodesMap[next.Value.Goto]) //the IFs ends up at same place
+							target == nodesMap[next.Value.Goto]) //the IFs ends up at same place
 						{
 							var after = next.Next;
 							ins.Separator = " AND ";
@@ -224,7 +224,7 @@ namespace LifeDISA
 						//but if could be instructions (eg: DEFAULT after switch)
 						var target = node.Next;
 						while(target != null &&
-						      target.Value.Type != LifeEnum.CASE &&
+							  target.Value.Type != LifeEnum.CASE &&
 							  target.Value.Type != LifeEnum.MULTI_CASE)
 						{
 							target = target.Next;
@@ -561,11 +561,11 @@ namespace LifeDISA
 
 				case LifeEnum.ANIM_MOVE:
 					ins.Add(vars.GetText("ANIMS", GetParam()));
-		        	ins.Add(vars.GetText("ANIMS", GetParam()));
-	                ins.Add(vars.GetText("ANIMS", GetParam()));
-                    ins.Add(vars.GetText("ANIMS", GetParam()));
-	                ins.Add(vars.GetText("ANIMS", GetParam()));
-	                ins.Add(vars.GetText("ANIMS", GetParam()));
+					ins.Add(vars.GetText("ANIMS", GetParam()));
+					ins.Add(vars.GetText("ANIMS", GetParam()));
+					ins.Add(vars.GetText("ANIMS", GetParam()));
+					ins.Add(vars.GetText("ANIMS", GetParam()));
+					ins.Add(vars.GetText("ANIMS", GetParam()));
 					ins.Add(vars.GetText("ANIMS", GetParam()));
 					break;
 

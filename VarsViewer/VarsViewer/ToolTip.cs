@@ -37,12 +37,12 @@ namespace VarsViewer
 		public void Show(string text, RectangleF rectangle)
 		{
 			var textSize = TextRenderer.MeasureText(text, font, new Size(250, int.MaxValue),
-					     TextFormatFlags.WordBreak | TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+							TextFormatFlags.WordBreak | TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
 
 			var point = new PointF((rectangle.Left + rectangle.Right - textSize.Width) / 2.0f, rectangle.Bottom);
 
 			var rect = new RectangleF(Math.Max(Math.Min(point.X, parent.ClientRectangle.Width - textSize.Width), 0.0f),
-			                          Math.Max(Math.Min(point.Y, parent.ClientRectangle.Height - textSize.Height), 0.0f), textSize.Width, textSize.Height);
+									  Math.Max(Math.Min(point.Y, parent.ClientRectangle.Height - textSize.Height), 0.0f), textSize.Width, textSize.Height);
 
 			if(toolTipRect != RectangleF.Empty) Invalidate(toolTipRect);
 			if(rect != RectangleF.Empty) Invalidate(rect);
