@@ -13,7 +13,8 @@ namespace CacheViewer
 		public bool Added; 
 		public bool Removed;
 		
-		public int Ticks; //last ticks
+		public int TouchedTicks; //time != lasTtime
+		public int Ticks; //last time seen
 		public int StartTicks; //time added 
 	}
 }

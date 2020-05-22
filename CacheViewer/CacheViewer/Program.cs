@@ -138,8 +138,13 @@ namespace CacheViewer
 						if (ch.Name != "_MEMORY_")
 						{
 							entry.Time = buffer.ReadUnsignedInt(addr+6);
-							entry.Touched = entry.Time != entry.LastTime;
-							entry.LastTime = entry.Time;
+							if (entry.Time != entry.LastTime)
+							{
+								entry.TouchedTicks = ticks;
+								entry.LastTime = entry.Time;
+							}
+							
+							entry.Touched = (entry.Ticks - entry.TouchedTicks) < 1000;							
 						}						
 										
 						entry.Added = (ticks - entry.StartTicks) < 3000;						
