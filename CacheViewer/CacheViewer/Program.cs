@@ -132,7 +132,8 @@ namespace CacheViewer
 						}								
 						
 						entry.Id = id;
-						entry.Size = buffer.ReadUnsignedShort(addr+4);									
+						entry.Size = buffer.ReadUnsignedShort(addr+4);
+						entry.Ticks = ticks;
 						
 						if (ch.Name != "_MEMORY_")
 						{
@@ -143,19 +144,15 @@ namespace CacheViewer
 							{
 								entry.TouchedTicks = ticks;
 								entry.LastTime = entry.Time;
-							}
-							
-							entry.Touched = (entry.Ticks - entry.TouchedTicks) < 1000;							
-						}						
-										
-						entry.Added = (ticks - entry.StartTicks) < 3000;						
-						entry.Ticks = ticks;
+							}				
+						}	
 					}
-					
-					//removal
+
 					ch.Entries.RemoveAll(x => (ticks - x.Ticks) > 3000);					
 					foreach (var entry in ch.Entries)
 					{
+						entry.Touched = (ticks - entry.TouchedTicks) < 1000;	
+						entry.Added = (ticks - entry.StartTicks) < 3000;
 						entry.Removed = (ticks - entry.Ticks) > 0;
 					}	
 
