@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using System;
 using System.Linq;
+using System.Text;
 
 namespace Shared
 {
@@ -83,7 +84,7 @@ namespace Shared
 			}
 		}
 
-		bool Get16MRegion(out long baseAddress, out long regionSize)
+		public long SearchFor16MRegion()
 		{
 			MEMORY_BASIC_INFORMATION mem_info = new MEMORY_BASIC_INFORMATION();
 
@@ -96,41 +97,31 @@ namespace Shared
 			{
 				//check if memory region is accessible
 				//skip regions smaller than 16M (default DOSBOX memory size)
+				long foundAddress = -1;
 				if (mem_info.Protect == PAGE_READWRITE && mem_info.State == MEM_COMMIT && (mem_info.Type & MEM_PRIVATE) == MEM_PRIVATE
-					&& (int)mem_info.RegionSize >= 1024 * 1024 * 16)
-				{
-					baseAddress = (long)mem_info.BaseAddress;
-					regionSize = (long)mem_info.RegionSize;
-					return true;
+					&& (int)mem_info.RegionSize >= 1024 * 1024 * 16 
+					&& SearchForBytePattern(Encoding.ASCII.GetBytes("CON "), (long)mem_info.BaseAddress, out foundAddress, 4096) && foundAddress != -1)
+				{					
+					return (long)mem_info.BaseAddress;
 				}
 
 				// move to next memory region
 				min_address = (long)mem_info.BaseAddress + (long)mem_info.RegionSize;
 			}
 
-			baseAddress = -1;
-			regionSize = -1;
-			return false;
-		}
-
-		public long SearchFor16MRegion()
-		{
-			long baseAddress, regionSize;
-			if (Get16MRegion(out baseAddress, out regionSize))
-			{
-				return baseAddress;
-			}
-
 			return -1;
 		}
-
+		
 		public bool SearchForBytePattern(byte[] pattern, long baseAddress, out long foundAddress)
+		{
+			return SearchForBytePattern(pattern, baseAddress, out foundAddress, 640 * 1024);
+		}
+
+		public bool SearchForBytePattern(byte[] pattern, long baseAddress, out long foundAddress, int bytesToRead)
 		{
 			byte[] buffer = new byte[81920];
 
-			int bytesToRead = 640 * 1024;
 			long readPosition = baseAddress;
-
 			long bytesRead;
 			while (bytesToRead > 0 && (bytesRead = Read(buffer, readPosition, Math.Min(buffer.Length, bytesToRead))) > 0)
 			{
