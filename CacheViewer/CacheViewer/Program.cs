@@ -79,7 +79,7 @@ namespace CacheViewer
 
 		static void SearchPatterns()
 		{
-			if (processReader.Read(buffer, address + 32, buffer.Length) > 0) //640K
+			if (processReader.Read(buffer, address, buffer.Length) > 0) //640K
 			{
 				foreach(var block in DosBox.GetMCBs(buffer)
 						.Where(x => x.Owner != 0 && x.Owner != 8)) //free or owned by DOS
@@ -90,7 +90,7 @@ namespace CacheViewer
 						var pattern = ch.Pattern;
 						if (buffer.IsMatch(pattern, position))
 						{
-							ch.Address = address + 32 + position;
+							ch.Address = address + position;
 						}
 					}
 				}

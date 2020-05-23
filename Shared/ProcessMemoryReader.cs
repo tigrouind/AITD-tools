@@ -101,8 +101,8 @@ namespace Shared
 				if (mem_info.Protect == PAGE_READWRITE && mem_info.State == MEM_COMMIT && (mem_info.Type & MEM_PRIVATE) == MEM_PRIVATE
 					&& (int)mem_info.RegionSize >= 1024 * 1024 * 16 
 					&& SearchForBytePattern(Encoding.ASCII.GetBytes("CON "), (long)mem_info.BaseAddress, out foundAddress, 4096) && foundAddress != -1)
-				{					
-					return (long)mem_info.BaseAddress;
+				{
+					return (long)mem_info.BaseAddress + 32; //skip Windows 32-bytes memory allocation header
 				}
 
 				// move to next memory region

@@ -111,8 +111,8 @@ namespace MemoryViewer
 				{
 					//EMS memory (64000B) (skip 64KB (HMA) + 128KB (VCPI))
 					//DOS conventional memory (640KB)
-					if(!(processReader.Read(pixelData, memoryAddress+32+(1024+192)*1024, 64000) > 0 &&
-						(processReader.Read(dosMemory, memoryAddress+32, dosMemory.Length) > 0)))
+					if(!(processReader.Read(pixelData, memoryAddress+(1024+192)*1024, 64000) > 0 &&
+						(processReader.Read(dosMemory, memoryAddress, dosMemory.Length) > 0)))
 					{
 						processReader.Close();
 						processReader = null;
