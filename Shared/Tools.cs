@@ -27,6 +27,14 @@ namespace Shared
 				return (uint)(data[offset] | data[offset + 1] << 8 | data[offset + 2] << 16 | data[offset + 3] << 24);
 			}
 		}
+		
+		public static int ReadFarPointer(this byte[] data, int offset)
+		{
+			unchecked
+			{
+				return (data[offset] | data[offset + 1] << 8) + (data[offset + 2] << 4 | data[offset + 3] << 12);
+			}
+		}
 
 		public static void Write(this byte[] data, short value, int offset)
 		{
@@ -39,9 +47,9 @@ namespace Shared
 
 		public static bool IsMatch(this byte[] x, byte[] y, int index)
 		{
-			for (int j = 0; j < y.Length; j++)
+			for (int i = 0; i < y.Length; i++)
 			{
-				if (x[j + index] != y[j])
+				if (x[i + index] != y[i])
 				{
 					return false;
 				}

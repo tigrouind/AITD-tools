@@ -16,12 +16,10 @@ namespace VarsViewer
 		long memoryAddress;
 		long varsMemoryAddress = -1;
 		long cvarsMemoryAddress = -1;
-		readonly byte[] memory = new byte[512];
-		readonly byte[] varsMemoryPattern = { 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2E, 0x00, 0x2F, 0x00, 0x00, 0x00, 0x00 };
-		readonly byte[] cvarsMemoryPattern = { 0x31, 0x00, 0x0E, 0x01, 0xBC, 0x02, 0x12, 0x00, 0x06, 0x00, 0x13, 0x00, 0x14, 0x00, 0x01 };
+		readonly byte[] memory = new byte[640 * 1024];
 
 		public readonly Var[] Vars = new Var[207];
-		public readonly Var[] Cvars = new Var[44];
+		public readonly Var[] Cvars = new Var[45];
 
 		public bool Compare;
 		public bool IgnoreDifferences = true;
@@ -78,7 +76,7 @@ namespace VarsViewer
 					{
 						processReader = new ProcessMemoryReader(processId);
 						memoryAddress = processReader.SearchFor16MRegion();
-						if(memoryAddress == -1)
+						if (memoryAddress == -1)
 						{
 							CloseReader();
 						}
@@ -86,9 +84,16 @@ namespace VarsViewer
 				}
 
 				if (processReader != null && (varsMemoryAddress == -1 || cvarsMemoryAddress == -1))
-				{
-					if(!processReader.SearchForBytePattern(varsMemoryPattern, memoryAddress, out varsMemoryAddress) ||
-					   !processReader.SearchForBytePattern(cvarsMemoryPattern, memoryAddress, out cvarsMemoryAddress))
+				{		
+					int entryPoint, varsPointer;
+					if (processReader.Read(memory, memoryAddress, memory.Length) > 0 && 
+					    DosBox.GetExeEntryPoint(memory, out entryPoint) && 
+					    (varsPointer = memory.ReadFarPointer(entryPoint + 0x2184B)) != 0)
+					{
+						varsMemoryAddress = memoryAddress + varsPointer;
+						cvarsMemoryAddress = memoryAddress + entryPoint + 0x22074;
+					}
+					else
 					{
 						CloseReader();
 					}

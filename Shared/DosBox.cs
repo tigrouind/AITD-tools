@@ -64,5 +64,22 @@ namespace Shared
 				pos += blockSize * 16 + 16;
 			}
 		}
+		
+		public static bool GetExeEntryPoint(byte[] memory, out int entryPoint)
+		{
+			int psp = memory.ReadUnsignedShort(0x0B30) * 16; 
+			if (psp > 0)
+			{
+				int exeSize = memory.ReadUnsignedShort(psp - 16 + 3) * 16;
+				if (exeSize > 100 * 1024) //is AITD exe loaded yet?
+				{
+					entryPoint = psp + 0x100;
+					return true;
+				}
+			}
+	
+			entryPoint = -1;
+			return false;
+		}
 	}
 }
