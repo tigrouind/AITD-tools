@@ -90,6 +90,7 @@ namespace Shared
 
 			long min_address = 0;
 			long max_address = 0x7FFFFFFF;
+			byte[] memory = new byte[4096];
 
 			//scan process memory regions
 			while (min_address < max_address
@@ -97,10 +98,10 @@ namespace Shared
 			{
 				//check if memory region is accessible
 				//skip regions smaller than 16M (default DOSBOX memory size)
-				long foundAddress = -1;
 				if (mem_info.Protect == PAGE_READWRITE && mem_info.State == MEM_COMMIT && (mem_info.Type & MEM_PRIVATE) == MEM_PRIVATE
 					&& (int)mem_info.RegionSize >= 1024 * 1024 * 16 
-					&& SearchForBytePattern(Encoding.ASCII.GetBytes("CON "), (long)mem_info.BaseAddress, out foundAddress, 4096) && foundAddress != -1)
+					&& Read(memory, (long)mem_info.BaseAddress, memory.Length) > 0
+					&& Tools.IndexOf(memory, Encoding.ASCII.GetBytes("CON ")) != -1)
 				{
 					return (long)mem_info.BaseAddress + 32; //skip Windows 32-bytes memory allocation header
 				}
@@ -110,37 +111,6 @@ namespace Shared
 			}
 
 			return -1;
-		}
-		
-		public bool SearchForBytePattern(byte[] pattern, long baseAddress, out long foundAddress)
-		{
-			return SearchForBytePattern(pattern, baseAddress, out foundAddress, 640 * 1024);
-		}
-
-		public bool SearchForBytePattern(byte[] pattern, long baseAddress, out long foundAddress, int bytesToRead)
-		{
-			byte[] buffer = new byte[81920];
-
-			long readPosition = baseAddress;
-			long bytesRead;
-			while (bytesToRead > 0 && (bytesRead = Read(buffer, readPosition, Math.Min(buffer.Length, bytesToRead))) > 0)
-			{
-				//search bytes pattern
-				for (int index = 0; index < bytesRead - pattern.Length + 1; index++)
-				{
-					if (buffer.IsMatch(pattern, index))
-					{
-						foundAddress = readPosition + index;
-						return true;
-					}
-				}
-
-				readPosition += bytesRead;
-				bytesToRead -= (int)bytesRead;
-			}
-
-			foundAddress = -1;
-			return bytesToRead == 0;
 		}
 	}
 }

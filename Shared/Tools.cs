@@ -32,7 +32,7 @@ namespace Shared
 		{
 			unchecked
 			{
-				return (data[offset] | data[offset + 1] << 8) + (data[offset + 2] << 4 | data[offset + 3] << 12);
+				return ReadUnsignedShort(data, offset) + ReadUnsignedShort(data, offset + 2) * 16;
 			}
 		}
 
@@ -45,17 +45,30 @@ namespace Shared
 			}
 		}
 
-		public static bool IsMatch(this byte[] x, byte[] y, int index)
+		public static int IndexOf(byte[] buffer, byte[] pattern)
 		{
-			for (int i = 0; i < y.Length; i++)
+			for (int index = 0; index < buffer.Length - pattern.Length + 1; index++)
 			{
-				if (x[i + index] != y[i])
+				if (buffer.IsMatch(pattern, index))
+				{
+					return index;
+				}
+			}
+	
+			return -1;
+		}
+
+		public static bool IsMatch(this byte[] buffer, byte[] pattern, int index)
+		{
+			for (int i = 0; i < pattern.Length; i++)
+			{
+				if (buffer[i + index] != pattern[i])
 				{
 					return false;
 				}
 			}
-
+	
 			return true;
-		}
+		}		
 	}
 }
