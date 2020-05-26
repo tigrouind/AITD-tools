@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using Shared;
 
@@ -85,14 +86,24 @@ namespace VarsViewer
 
 				if (processReader != null && (varsMemoryAddress == -1 || cvarsMemoryAddress == -1))
 				{		
-					int entryPoint, varsPointer;
+					int entryPoint;
 					if (processReader.Read(memory, memoryAddress, memory.Length) > 0 && 
-					    DosBox.GetExeEntryPoint(memory, out entryPoint) && 
-					    (varsPointer = memory.ReadFarPointer(entryPoint + 0x2184B)) != 0)
-					{
-						varsMemoryAddress = memoryAddress + varsPointer;
-						cvarsMemoryAddress = memoryAddress + entryPoint + 0x22074;
-					}
+					   DosBox.GetExeEntryPoint(memory, out entryPoint))
+					{						
+						int varAddress, cvarAddress;
+						GetMemoryAddresses(out varAddress, out cvarAddress);
+						
+						int varsPointer;
+						if ((varsPointer = memory.ReadFarPointer(entryPoint + varAddress)) != 0)
+						{
+							varsMemoryAddress = memoryAddress + varsPointer;
+							cvarsMemoryAddress = memoryAddress + entryPoint + cvarAddress;
+						}													
+						else
+						{
+							CloseReader();
+						}
+					} 
 					else
 					{
 						CloseReader();
@@ -149,6 +160,23 @@ namespace VarsViewer
 			varsMemoryAddress = cvarsMemoryAddress = -1;
 			processReader.Close();
 			processReader = null;
+		}
+		
+		void GetMemoryAddresses(out int varAddress, out int cvarAddress)
+		{
+			//check if CDROM/floppy version
+			byte[] cdPattern = Encoding.ASCII.GetBytes("CD Not Found");
+			bool isCDROMVersion = Tools.IndexOf(memory, cdPattern) != -1;
+			if (isCDROMVersion)
+			{
+				varAddress = 0x2184B;
+				cvarAddress = 0x22074;
+			}
+			else
+			{
+				varAddress = 0x2048E;
+				cvarAddress = 0x204B8;
+			}
 		}
 
 		bool CheckDifferences(Var[] data, long offset, int time)
