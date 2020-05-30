@@ -69,6 +69,21 @@ namespace Shared
 			}
 	
 			return true;
+		}	
+
+		public static int? GetArgument(string[] args, string name)
+		{
+			int index = Array.IndexOf(args, name);
+			if (index >= 0 && index < (args.Length - 1))
+			{
+				int value;
+				if (int.TryParse(args[index + 1], out value))
+				{
+					return value;
+				}
+			}
+
+			return null;
 		}		
 	}
 }

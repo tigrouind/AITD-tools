@@ -17,9 +17,9 @@ namespace MemoryViewer
 		{
 			bool mcb = false;
 
-			winx = GetArgument(args, "-screen-width") ?? 640;
-			winy = GetArgument(args, "-screen-height") ?? 480;
-			zoom = GetArgument(args, "-zoom") ?? 2;
+			winx = Tools.GetArgument(args, "-screen-width") ?? 640;
+			winy = Tools.GetArgument(args, "-screen-height") ?? 480;
+			zoom = Tools.GetArgument(args, "-zoom") ?? 2;
 
 			//init SDL
 			SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
@@ -108,6 +108,7 @@ namespace MemoryViewer
 				Update(pixelData, oldPixelData, pixels, palette);
 				UpdateMCB(pixelData, oldPixelData, 64000, mcbPixels);
 
+				//render
 				SDL.SDL_RenderClear(renderer);
 
 				int tm = (winx + RESX * zoom - 1) / (RESX * zoom);
@@ -164,10 +165,10 @@ namespace MemoryViewer
 		}
 		
 		static void UpdateMCB(byte[] pixelData, byte[] oldPixelData, int offset, uint[] pixels)
-		{
-			bool inverse = true;
+		{		
 			if (!DosBox.GetMCBs(pixelData, offset).SequenceEqual(DosBox.GetMCBs(oldPixelData, offset)))
-			{			
+			{	
+				bool inverse = true;
 				foreach (var block in DosBox.GetMCBs(pixelData, offset))
 				{
 					int dest = block.Position - 16;
@@ -186,7 +187,7 @@ namespace MemoryViewer
 			}
 		}
 		
-		static void Render(IntPtr renderer, IntPtr texture, int tm, int tn, uint[] pixels)
+		static unsafe void Render(IntPtr renderer, IntPtr texture, int tm, int tn, uint[] pixels)
 		{
 			SDL.SDL_Rect textureRect = new SDL.SDL_Rect 
 			{ 
@@ -204,12 +205,9 @@ namespace MemoryViewer
 					int position = skip + n * RESX * RESY;
 					if ((position + RESY * RESY) > pixels.Length) continue;
 
-					unsafe
+					fixed (uint* pixelsBuf = &pixels[position])
 					{
-						fixed (uint* pixelsBuf = &pixels[position])
-						{
-							SDL.SDL_UpdateTexture(texture, ref textureRect, (IntPtr)pixelsBuf, RESX * sizeof(uint));
-						}
+						SDL.SDL_UpdateTexture(texture, ref textureRect, (IntPtr)pixelsBuf, RESX * sizeof(uint));
 					}
 
 					SDL.SDL_Rect drawRect = new SDL.SDL_Rect 
@@ -225,21 +223,6 @@ namespace MemoryViewer
 
 				skip += RESX * (winy / zoom);
 			}
-		}
-
-		static int? GetArgument(string[] args, string name)
-		{
-			int index = Array.IndexOf(args, name);
-			if (index >= 0 && index < (args.Length - 1))
-			{
-				int value;
-				if (int.TryParse(args[index + 1], out value))
-				{
-					return value;
-				}
-			}
-
-			return null;
 		}
 		
 		static uint[] LoadPalette()
