@@ -9,15 +9,17 @@ namespace MemoryViewer
 {
 	class Program
 	{
+		const int RESX = 320;
+		const int RESY = 240;
+		static int winx, winy, zoom;
+			
 		public static int Main(string[] args)
 		{
-			const int RESX = 320;
-			const int RESY = 240;
 			bool mcb = false;
 
-			int winx = GetArgument(args, "-screen-width") ?? 640;
-			int winy = GetArgument(args, "-screen-height") ?? 480;
-			int zoom = GetArgument(args, "-zoom") ?? 2;
+			winx = GetArgument(args, "-screen-width") ?? 640;
+			winy = GetArgument(args, "-screen-height") ?? 480;
+			zoom = GetArgument(args, "-zoom") ?? 2;
 
 			//init SDL
 			SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
@@ -27,11 +29,8 @@ namespace MemoryViewer
 			//IntPtr renderer = SDL.SDL_CreateRenderer(window, -1, SDL.SDL_RendererFlags.SDL_RENDERER_SOFTWARE);
 
 			//SDL.SDL_SetHint(SDL.SDL_HINT_RENDER_SCALE_QUALITY, "linear");
-			SDL.SDL_Rect textureRect = new SDL.SDL_Rect { x = 0, y = 0, w = RESX, h = RESY };
 			IntPtr texture = SDL.SDL_CreateTexture(renderer, SDL.SDL_PIXELFORMAT_ARGB8888, (int)SDL.SDL_TextureAccess.SDL_TEXTUREACCESS_STREAMING, RESX, RESY);
-
-			SDL.SDL_Rect drawRect = new SDL.SDL_Rect { x = 0, y = 0, w = RESX, h = RESY };
-
+			
 			uint[] pal256 = new uint[256];
 			using (var stream = Assembly.GetExecutingAssembly()
 				   .GetManifestResourceStream("MemoryViewer.palette.dat"))
@@ -52,6 +51,7 @@ namespace MemoryViewer
 			byte[] pixelData = new byte[640 * 1024 + 64000];
 			byte[] oldPixelData = new byte[640 * 1024 + 64000];
 			byte[] dosMemory = new byte[640 * 1024];
+			uint[] mcbPixels = new uint[RESX * RESY * 10];
 
 			ProcessMemoryReader processReader = null;
 			long memoryAddress = -1;
@@ -117,13 +117,15 @@ namespace MemoryViewer
 						processReader.Close();
 						processReader = null;
 					}
-				}
-
-				Array.Copy(dosMemory, 0, pixelData, 64000, dosMemory.Length);
-
+					else						
+					{
+						Array.Copy(dosMemory, 0, pixelData, 64000, dosMemory.Length);						
+					}
+				}				
+				
 				if (mcb)
 				{
-					DisplayMCB(dosMemory, pixelData);
+					UpdateMCB(dosMemory, mcbPixels);
 				}
 
 				unsafe
@@ -154,33 +156,16 @@ namespace MemoryViewer
 
 				int tm = (winx + RESX * zoom - 1) / (RESX * zoom);
 				int tn = (winy + RESY * zoom - 1) / (RESY * zoom);
-
-				int skip = 0;
-				for(int m = 0 ; m < tm ; m++)
+				
+				SDL.SDL_SetTextureBlendMode(texture, SDL.SDL_BlendMode.SDL_BLENDMODE_NONE);
+				Render(renderer, texture, tm, tn, pixels);
+				
+				if (mcb)
 				{
-					for(int n = 0 ; n < tn ; n++)
-					{
-						int position = skip + n * RESX * RESY;
-						if (position >= pixelData.Length) continue;
-
-						unsafe
-						{
-							fixed (uint* pixelsBuf = &pixels[position])
-							{
-								SDL.SDL_UpdateTexture(texture, ref textureRect, (IntPtr)pixelsBuf, RESX * sizeof(uint));
-							}
-						}
-
-						drawRect.x = m * RESX * zoom;
-						drawRect.y = n * RESY * zoom;
-						drawRect.w = RESX * zoom;
-						drawRect.h = RESY * zoom;
-						SDL.SDL_RenderCopy(renderer, texture, ref textureRect, ref drawRect);
-					}
-
-					skip += RESX * (winy / zoom);
+					SDL.SDL_SetTextureBlendMode(texture, SDL.SDL_BlendMode.SDL_BLENDMODE_BLEND);
+					Render(renderer, texture, tm, tn, mcbPixels);
 				}
-
+				
 				SDL.SDL_RenderPresent(renderer);
 
 				//swap buffers
@@ -197,7 +182,7 @@ namespace MemoryViewer
 			return 0;
 		}
 
-		static void DisplayMCB(byte[] dosMemory, byte[] pixelData)
+		static void UpdateMCB(byte[] dosMemory, uint[] pixelData)
 		{
 			bool inverse = true;
 			foreach(var block in DosBox.GetMCBs(dosMemory))
@@ -205,8 +190,8 @@ namespace MemoryViewer
 				int dest = 64000 + block.Position - 16;
 				int length = Math.Min(block.Size + 16, pixelData.Length - dest);
 
-				byte color = inverse ? (byte)189 : (byte)187;
-				if(block.Owner == 0) color = 169; //free
+				uint color = inverse ? 0x90800000 : 0x90000080;
+				if (block.Owner == 0) color = 0x90008000; //free
 
 				for (int i = 0 ; i < length ; i++)
 				{
@@ -216,8 +201,49 @@ namespace MemoryViewer
 				inverse = !inverse;
 			}
 		}
+		
+		static void Render(IntPtr renderer, IntPtr texture, int tm, int tn, uint[] pixels)
+		{
+			SDL.SDL_Rect textureRect = new SDL.SDL_Rect 
+			{ 
+				x = 0, 
+				y = 0, 
+				w = RESX, 
+				h = RESY 
+			};
+			
+			int skip = 0;
+			for(int m = 0 ; m < tm ; m++)
+			{
+				for(int n = 0 ; n < tn ; n++)
+				{
+					int position = skip + n * RESX * RESY;
+					if ((position + RESY * RESY) > pixels.Length) continue;
 
-		public static int? GetArgument(string[] args, string name)
+					unsafe
+					{
+						fixed (uint* pixelsBuf = &pixels[position])
+						{
+							SDL.SDL_UpdateTexture(texture, ref textureRect, (IntPtr)pixelsBuf, RESX * sizeof(uint));
+						}
+					}
+
+					SDL.SDL_Rect drawRect = new SDL.SDL_Rect 
+					{
+						x = m * RESX * zoom, 
+						y = n * RESY * zoom, 
+						w = RESX * zoom, 
+						h = RESY * zoom 
+					};
+					
+					SDL.SDL_RenderCopy(renderer, texture, ref textureRect, ref drawRect);
+				}
+
+				skip += RESX * (winy / zoom);
+			}
+		}
+
+		static int? GetArgument(string[] args, string name)
 		{
 			int index = Array.IndexOf(args, name);
 			if (index >= 0 && index < (args.Length - 1))
