@@ -81,7 +81,7 @@ namespace CacheViewer
 		{
 			if (processReader.Read(buffer, address, buffer.Length) > 0) //640K
 			{
-				foreach(var block in DosBox.GetMCBs(buffer)
+				foreach(var block in DosBox.GetMCBs(buffer, 0)
 						.Where(x => x.Owner != 0 && x.Owner != 8)) //free or owned by DOS
 				{
 					int position = block.Position;

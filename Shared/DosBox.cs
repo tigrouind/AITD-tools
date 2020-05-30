@@ -34,10 +34,10 @@ namespace Shared
 			}
 		}
 
-		public static IEnumerable<DosMCB> GetMCBs(byte[] memory)
+		public static IEnumerable<DosMCB> GetMCBs(byte[] memory, int offset)
 		{
 			//scan DOS memory control block (MCB) chain
-			int pos = memory.ReadUnsignedShort(0x0824) * 16;
+			int pos = memory.ReadUnsignedShort(0x0824 + offset) * 16 + offset;
 			while (pos <= (memory.Length - 16))
 			{
 				var blockTag = memory[pos];

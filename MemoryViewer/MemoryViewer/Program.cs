@@ -31,27 +31,13 @@ namespace MemoryViewer
 			//SDL.SDL_SetHint(SDL.SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 			IntPtr texture = SDL.SDL_CreateTexture(renderer, SDL.SDL_PIXELFORMAT_ARGB8888, (int)SDL.SDL_TextureAccess.SDL_TEXTUREACCESS_STREAMING, RESX, RESY);
 			
-			uint[] pal256 = new uint[256];
-			using (var stream = Assembly.GetExecutingAssembly()
-				   .GetManifestResourceStream("MemoryViewer.palette.dat"))
-			using (BinaryReader br = new BinaryReader(stream))
-			{
-				var palette = br.ReadBytes(768);
-				for(int i = 0; i < 256; i++)
-				{
-					byte r = palette[i * 3 + 0];
-					byte g = palette[i * 3 + 1];
-					byte b = palette[i * 3 + 2];
-					pal256[i] = (uint)(r << 16 | g << 8 | b);
-				}
-			}
+			uint[] palette = LoadPalette();
 
 			bool quit = false;
 			uint[] pixels = new uint[RESX * RESY * 10];
+			uint[] mcbPixels = new uint[RESX * RESY * 10];			
 			byte[] pixelData = new byte[640 * 1024 + 64000];
-			byte[] oldPixelData = new byte[640 * 1024 + 64000];
-			byte[] dosMemory = new byte[640 * 1024];
-			uint[] mcbPixels = new uint[RESX * RESY * 10];
+			byte[] oldPixelData = new byte[640 * 1024 + 64000];			
 
 			ProcessMemoryReader processReader = null;
 			long memoryAddress = -1;
@@ -112,45 +98,15 @@ namespace MemoryViewer
 					//EMS memory (64000B) (skip 64KB (HMA) + 128KB (VCPI))
 					//DOS conventional memory (640KB)
 					if(!(processReader.Read(pixelData, memoryAddress+(1024+192)*1024, 64000) > 0 &&
-						(processReader.Read(dosMemory, memoryAddress, dosMemory.Length) > 0)))
+						(processReader.Read(pixelData, memoryAddress, 640 * 1024, 64000) > 0)))
 					{
 						processReader.Close();
 						processReader = null;
 					}
-					else						
-					{
-						Array.Copy(dosMemory, 0, pixelData, 64000, dosMemory.Length);						
-					}
-				}				
-				
-				if (mcb)
-				{
-					UpdateMCB(dosMemory, mcbPixels);
 				}
 
-				unsafe
-				{
-					fixed (byte* pixelsBytePtr = pixelData)
-					fixed (byte* oldPixelsBytePtr = oldPixelData)
-					{
-						ulong* pixelsPtr = (ulong*)pixelsBytePtr;
-						ulong* oldPixelsPtr = (ulong*)oldPixelsBytePtr;
-
-						for(int i = 0 ; i < pixelData.Length ; i += 8)
-						{
-							if(*pixelsPtr != *oldPixelsPtr)
-							{
-								for(int j = i ; j < i + 8 ; j++)
-								{
-									pixels[j] = pal256[pixelData[j]];
-								}
-							}
-
-							pixelsPtr++;
-							oldPixelsPtr++;
-						}
-					}
-				}
+				Update(pixelData, oldPixelData, pixels, palette);
+				UpdateMCB(pixelData, oldPixelData, 64000, mcbPixels);
 
 				SDL.SDL_RenderClear(renderer);
 
@@ -181,24 +137,52 @@ namespace MemoryViewer
 
 			return 0;
 		}
+		
+		static unsafe void Update(byte[] pixelData, byte[] oldPixelData, uint[] pixels, uint[] palette)
+		{
+			//compare current vs old and only update pixels that have changed
+			fixed (byte* pixelsBytePtr = pixelData)
+			fixed (byte* oldPixelsBytePtr = oldPixelData)
+			{
+				ulong* pixelsPtr = (ulong*)pixelsBytePtr;
+				ulong* oldPixelsPtr = (ulong*)oldPixelsBytePtr;
 
-		static void UpdateMCB(byte[] dosMemory, uint[] pixelData)
+				for(int i = 0 ; i < pixelData.Length ; i += 8)
+				{
+					if(*pixelsPtr != *oldPixelsPtr)
+					{
+						for(int j = i ; j < i + 8 ; j++)
+						{
+							pixels[j] = palette[pixelData[j]];
+						}
+					}
+
+					pixelsPtr++;
+					oldPixelsPtr++;
+				}
+			}
+		}
+		
+		static void UpdateMCB(byte[] pixelData, byte[] oldPixelData, int offset, uint[] pixels)
 		{
 			bool inverse = true;
-			foreach(var block in DosBox.GetMCBs(dosMemory))
-			{
-				int dest = 64000 + block.Position - 16;
-				int length = Math.Min(block.Size + 16, pixelData.Length - dest);
-
-				uint color = inverse ? 0x90800000 : 0x90000080;
-				if (block.Owner == 0) color = 0x90008000; //free
-
-				for (int i = 0 ; i < length ; i++)
+			if (!DosBox.GetMCBs(pixelData, offset).SequenceEqual(DosBox.GetMCBs(oldPixelData, offset)))
+			{			
+				foreach (var block in DosBox.GetMCBs(pixelData, offset))
 				{
-					pixelData[dest++] = color;
+					int dest = block.Position - 16;
+					int length = Math.Min(block.Size + 16, pixels.Length - dest);
+	
+					uint color = inverse ? 0x90800000 : 0x90000080; //used
+					if (block.Owner == 0) color = 0x90008000; //free
+	
+					for (int i = 0 ; i < length ; i++)
+					{
+						pixels[dest++] = color;
+					}
+					
+					inverse = !inverse;
 				}
-
-				inverse = !inverse;
 			}
 		}
 		
@@ -213,9 +197,9 @@ namespace MemoryViewer
 			};
 			
 			int skip = 0;
-			for(int m = 0 ; m < tm ; m++)
+			for (int m = 0 ; m < tm ; m++)
 			{
-				for(int n = 0 ; n < tn ; n++)
+				for (int n = 0 ; n < tn ; n++)
 				{
 					int position = skip + n * RESX * RESY;
 					if ((position + RESY * RESY) > pixels.Length) continue;
@@ -249,13 +233,33 @@ namespace MemoryViewer
 			if (index >= 0 && index < (args.Length - 1))
 			{
 				int value;
-				if(int.TryParse(args[index + 1], out value))
+				if (int.TryParse(args[index + 1], out value))
 				{
 					return value;
 				}
 			}
 
 			return null;
+		}
+		
+		static uint[] LoadPalette()
+		{
+			var palette = new uint[256];
+			using (var stream = Assembly.GetExecutingAssembly()
+				   .GetManifestResourceStream("MemoryViewer.palette.dat"))
+			using (BinaryReader br = new BinaryReader(stream))
+			{
+				var buffer = br.ReadBytes(768);
+				for(int i = 0; i < palette.Length; i++)
+				{
+					byte r = buffer[i * 3 + 0];
+					byte g = buffer[i * 3 + 1];
+					byte b = buffer[i * 3 + 2];
+					palette[i] = (uint)(r << 16 | g << 8 | b);
+				}
+			}
+			
+			return palette;
 		}
 	}
 }
