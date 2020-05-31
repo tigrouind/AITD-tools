@@ -51,9 +51,9 @@ namespace Shared
 
 				yield return new DosMCB
 				{
-					Position = pos + 16,
+					Position = pos + 16 - offset,
 					Size = blockSize * 16,
-					Owner = blockOwner
+					Owner = blockOwner * 16
 				};
 
 				if(blockTag == 0x5A) //last tag should be 0x5A

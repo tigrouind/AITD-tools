@@ -168,13 +168,17 @@ namespace MemoryViewer
 		{		
 			if (!DosBox.GetMCBs(pixelData, offset).SequenceEqual(DosBox.GetMCBs(oldPixelData, offset)))
 			{	
+				int psp = pixelData.ReadUnsignedShort(0x0B30 + offset) * 16;
+				
 				bool inverse = true;
 				foreach (var block in DosBox.GetMCBs(pixelData, offset))
 				{
-					int dest = block.Position - 16;
+					int dest = block.Position - 16 + offset;
 					int length = Math.Min(block.Size + 16, pixels.Length - dest);
 	
-					uint color = inverse ? 0x90800000 : 0x90000080; //used
+					uint color = inverse ? 0x900080F0 : 0x902000A0; //used
+					if (block.Position == psp) color = 0x90800000; //current executable
+					if (block.Owner != psp && block.Owner != 0) color = 0x90808000;
 					if (block.Owner == 0) color = 0x90008000; //free
 	
 					for (int i = 0 ; i < length ; i++)
