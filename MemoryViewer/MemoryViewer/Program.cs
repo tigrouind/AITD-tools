@@ -176,10 +176,11 @@ namespace MemoryViewer
 					int dest = block.Position - 16 + offset;
 					int length = Math.Min(block.Size + 16, pixels.Length - dest);
 	
-					uint color = inverse ? 0x900080F0 : 0x902000A0; //used
-					if (block.Position == psp) color = 0x90800000; //current executable
-					if (block.Owner != psp && block.Owner != 0) color = 0x90808000;
+					uint color;					
 					if (block.Owner == 0) color = 0x90008000; //free
+					else if (block.Owner != psp) color = 0x90808000; 
+					else if (block.Position == psp) color = 0x90800000; //current executable
+					else color = inverse ? 0x900080F0 : 0x902000A0; //used					
 	
 					for (int i = 0 ; i < length ; i++)
 					{
