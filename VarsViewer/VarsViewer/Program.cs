@@ -16,7 +16,7 @@ namespace VarsViewer
 			var form = new MainForm();
 			var width = Tools.GetArgument(args, "-screen-width") ?? 1024;
 			var height = Tools.GetArgument(args, "-screen-height") ?? 576;
-			form.Size = new Size(width, height);
+			form.ClientSize = new Size(width, height);
 
 			Application.Run(form);
 		}
