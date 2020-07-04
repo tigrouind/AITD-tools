@@ -19,38 +19,30 @@ namespace TrackDISA
 				vars.Parse(@"GAMEDATA\vars.txt");
 			}
 
-			if(!Directory.Exists(@"GAMEDATA\LISTTRAK"))
-			{
-				Console.WriteLine("Folder LISTTRAK is required");
+			if(!File.Exists(@"GAMEDATA\LISTTRAK.PAK"))
+			{				
 				return -1;
 			}
 
 			using (TextWriter writer = new StreamWriter("output.txt"))
 			{
 				Regex r = new Regex(@"[0-9a-fA-F]{8}\.[0-9a-zA-Z]{3}", RegexOptions.IgnoreCase);
-				foreach(var file in Directory.GetFiles(@"GAMEDATA\LISTTRAK")
-					.Where(x => r.IsMatch(Path.GetFileName(x)))
-					.Select(x => new
-					{
-						FilePath = x,
-						FileNumber = Convert.ToInt32(Path.GetFileNameWithoutExtension(x), 16)
-					})
-					.OrderBy(x => x.FileNumber))
+				int fileCount = UnPAK.GetFileCount(@"GAMEDATA\LISTTRAK.PAK");
+				for(int i = 0 ; i < fileCount ; i++)
 				{
 					writer.WriteLine("--------------------------------------------------");
-					writer.WriteLine("#{0} {1}", file.FileNumber, vars.GetText("TRACKS", file.FileNumber, string.Empty));
+					writer.WriteLine("#{0} {1}", i, vars.GetText("TRACKS", i, string.Empty));
 					writer.WriteLine("--------------------------------------------------");
-					Dump(file.FilePath, writer);
+					Dump(UnPAK.ReadFile(@"GAMEDATA\LISTTRAK.PAK", i), writer);
 				}
 			}
 
 			return 0;
 		}
 
-		static void Dump(string filename, TextWriter writer)
+		static void Dump(byte[] allbytes, TextWriter writer)
 		{
 			int i = 0;
-			byte[] allbytes = File.ReadAllBytes(filename);
 
 			while(i < allbytes.Length)
 			{

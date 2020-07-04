@@ -54,6 +54,7 @@
   <ItemGroup>
     <Compile Include="DosBox.cs" />
     <Compile Include="DosMCB.cs" />
+    <Compile Include="UnPAK.cs" />
     <Compile Include="ProcessMemoryReader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tools.cs" />

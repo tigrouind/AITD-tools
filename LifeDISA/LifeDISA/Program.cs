@@ -38,13 +38,15 @@ namespace LifeDISA
 			}
 
 			Regex r = new Regex(@"[0-9a-fA-F]{8}\.DAT", RegexOptions.IgnoreCase);
-			var files = Directory.GetFiles(@"GAMEDATA\LISTLIFE")
-				.Where(x => r.IsMatch(Path.GetFileName(x)))
-				.ToList();
+			int fileCount = 0;
+			if (File.Exists(@"GAMEDATA\LISTLIFE.PAK")) 
+			{
+				fileCount = UnPAK.GetFileCount(@"GAMEDATA\LISTLIFE.PAK");
+			}
 
 			table = MacroTable.AITD1;
 			tableEval = MacroTable.AITD1Eval;
-			if (files.Count < 60) //JITD
+			if (fileCount < 60) //JITD
 			{
 				isAITD2 = true;
 				table = MacroTable.AITD2;
@@ -52,22 +54,22 @@ namespace LifeDISA
 			}
 
 			//dump names
-			var validFolderNames = new [] {	"ENGLISH", "FRANCAIS", "DEUTSCH", "ESPAGNOL", "ITALIANO", "USA" };
-			string languageFile = validFolderNames
+			var languagePakFiles = new [] {	"ENGLISH.PAK", "FRANCAIS.PAK", "DEUTSCH.PAK", "ESPAGNOL.PAK", "ITALIANO.PAK", "USA.PAK" };
+			string languageFile = languagePakFiles
 				.Select(x => Path.Combine("GAMEDATA", x))
-				.Where(Directory.Exists)
-				.SelectMany(x => Directory.GetFiles(x))
-				.FirstOrDefault(x => x.Contains("00000000"));
+				.FirstOrDefault(File.Exists);
 
 			if (languageFile != null)
 			{
-				string[] names = File.ReadAllLines(languageFile, Encoding.GetEncoding(850));
+				var buffer = UnPAK.ReadFile(languageFile, 0);
+				var names = ReadAllLines(buffer, Encoding.GetEncoding(850));
+
 				foreach(var item in names
 					.Where(x => x.Contains(":"))
 					.Select(x =>  x.Split(':')))
 				{
 					namesByIndex.Add(int.Parse(item[0].TrimStart('@')), item[1]);
-				}
+				}				
 			}
 
 			if(File.Exists(@"GAMEDATA\OBJETS.ITD"))
@@ -97,18 +99,13 @@ namespace LifeDISA
 			using (TextWriter writer = new StreamWriter("output.txt"))
 			{
 				//dump all
-				foreach(var file in files
-					.Select(x => new
-					{
-						FilePath = x,
-						FileNumber = Convert.ToInt32(Path.GetFileNameWithoutExtension(x), 16)
-					})
-					.OrderBy(x => x.FileNumber))
+				for(int i = 0 ; i < fileCount ; i++)
 				{
 					writer.WriteLine("--------------------------------------------------");
-					writer.WriteLine("#{0} {1}", file.FileNumber, vars.GetText("LIFES", file.FileNumber, string.Empty));
+					writer.WriteLine("#{0} {1}", i, vars.GetText("LIFES", i, string.Empty));
 					writer.WriteLine("--------------------------------------------------");
-					ParseFile(file.FilePath);
+					allBytes = UnPAK.ReadFile(@"GAMEDATA\LISTLIFE.PAK", i);
+					ParseFile();
 					Optimize();
 					Dump(writer);
 				}
@@ -117,9 +114,8 @@ namespace LifeDISA
 			return 0;
 		}
 
-		static void ParseFile(string filename)
+		static void ParseFile()
 		{
-			allBytes = File.ReadAllBytes(filename);
 			pos = 0;
 
 			nodesMap = new Dictionary<int, LinkedListNode<Instruction>>();
@@ -814,6 +810,22 @@ namespace LifeDISA
 
 			result += evalEnum + parameter;
 			return result;
+		}
+		
+		static string[] ReadAllLines(byte[] buffer, Encoding encoding)
+		{
+			List<string> lines = new List<string>();
+			using(var stream = new MemoryStream(buffer))
+			using(var reader = new StreamReader(stream, encoding))
+	      	{
+				string line;					
+				while((line = reader.ReadLine()) != null)
+				{
+			      	lines.Add(line);
+				}					      		
+			}
+			
+			return lines.ToArray();
 		}
 	}
 }
