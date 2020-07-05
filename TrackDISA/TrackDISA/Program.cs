@@ -27,13 +27,15 @@ namespace TrackDISA
 			using (TextWriter writer = new StreamWriter("output.txt"))
 			{
 				Regex r = new Regex(@"[0-9a-fA-F]{8}\.[0-9a-zA-Z]{3}", RegexOptions.IgnoreCase);
-				int fileCount = UnPAK.GetFileCount(@"GAMEDATA\LISTTRAK.PAK");
-				for(int i = 0 ; i < fileCount ; i++)
+				using (var pak = new UnPAK(@"GAMEDATA\LISTTRAK.PAK"))
 				{
-					writer.WriteLine("--------------------------------------------------");
-					writer.WriteLine("#{0} {1}", i, vars.GetText("TRACKS", i, string.Empty));
-					writer.WriteLine("--------------------------------------------------");
-					Dump(UnPAK.ReadFile(@"GAMEDATA\LISTTRAK.PAK", i), writer);
+					for(int i = 0 ; i < pak.EntryCount ; i++)
+					{
+						writer.WriteLine("--------------------------------------------------");
+						writer.WriteLine("#{0} {1}", i, vars.GetText("TRACKS", i, string.Empty));
+						writer.WriteLine("--------------------------------------------------");
+						Dump(pak.GetEntry(i), writer);
+					}
 				}
 			}
 

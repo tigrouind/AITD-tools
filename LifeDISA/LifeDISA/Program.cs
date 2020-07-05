@@ -41,7 +41,10 @@ namespace LifeDISA
 			int fileCount = 0;
 			if (File.Exists(@"GAMEDATA\LISTLIFE.PAK")) 
 			{
-				fileCount = UnPAK.GetFileCount(@"GAMEDATA\LISTLIFE.PAK");
+				using (var pak = new UnPAK(@"GAMEDATA\LISTLIFE.PAK"))
+				{
+					fileCount = pak.EntryCount;	
+				}							
 			}
 
 			table = MacroTable.AITD1;
@@ -61,7 +64,12 @@ namespace LifeDISA
 
 			if (languageFile != null)
 			{
-				var buffer = UnPAK.ReadFile(languageFile, 0);
+				byte[] buffer;
+				using (var pak = new UnPAK(languageFile))
+				{
+					buffer = pak.GetEntry(0);
+				}
+				
 				var names = ReadAllLines(buffer, Encoding.GetEncoding(850));
 
 				foreach(var item in names
@@ -97,14 +105,15 @@ namespace LifeDISA
 			isCDROMVersion = AskForCDROMVersion();
 
 			using (TextWriter writer = new StreamWriter("output.txt"))
+			using (var pak = new UnPAK(@"GAMEDATA\LISTLIFE.PAK"))				
 			{
 				//dump all
-				for(int i = 0 ; i < fileCount ; i++)
+				for(int i = 0 ; i < pak.EntryCount ; i++)
 				{
 					writer.WriteLine("--------------------------------------------------");
 					writer.WriteLine("#{0} {1}", i, vars.GetText("LIFES", i, string.Empty));
-					writer.WriteLine("--------------------------------------------------");
-					allBytes = UnPAK.ReadFile(@"GAMEDATA\LISTLIFE.PAK", i);
+					writer.WriteLine("--------------------------------------------------");					
+					allBytes = pak.GetEntry(i);
 					ParseFile();
 					Optimize();
 					Dump(writer);
