@@ -34,7 +34,7 @@ namespace LifeDISA
 			//parse vars
 			if(File.Exists(@"GAMEDATA\vars.txt"))
 			{
-				vars.Parse(@"GAMEDATA\vars.txt");
+				vars.Load(@"GAMEDATA\vars.txt");
 			}
 
 			Regex r = new Regex(@"[0-9a-fA-F]{8}\.DAT", RegexOptions.IgnoreCase);
@@ -104,7 +104,7 @@ namespace LifeDISA
 
 			isCDROMVersion = AskForCDROMVersion();
 
-			using (TextWriter writer = new StreamWriter("output.txt"))
+			using (var writer = new StreamWriter("output.txt"))
 			using (var pak = new UnPAK(@"GAMEDATA\LISTLIFE.PAK"))				
 			{
 				//dump all

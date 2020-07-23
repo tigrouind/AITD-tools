@@ -16,7 +16,7 @@ namespace TrackDISA
 
 			if(File.Exists(@"GAMEDATA\vars.txt"))
 			{
-				vars.Parse(@"GAMEDATA\vars.txt");
+				vars.Load(@"GAMEDATA\vars.txt");
 			}
 
 			if(!File.Exists(@"GAMEDATA\LISTTRAK.PAK"))
@@ -24,18 +24,15 @@ namespace TrackDISA
 				return -1;
 			}
 
-			using (TextWriter writer = new StreamWriter("output.txt"))
+			using (var writer = new StreamWriter("output.txt"))
+			using (var pak = new UnPAK(@"GAMEDATA\LISTTRAK.PAK"))			
 			{
-				Regex r = new Regex(@"[0-9a-fA-F]{8}\.[0-9a-zA-Z]{3}", RegexOptions.IgnoreCase);
-				using (var pak = new UnPAK(@"GAMEDATA\LISTTRAK.PAK"))
+				for(int i = 0 ; i < pak.EntryCount ; i++)
 				{
-					for(int i = 0 ; i < pak.EntryCount ; i++)
-					{
-						writer.WriteLine("--------------------------------------------------");
-						writer.WriteLine("#{0} {1}", i, vars.GetText("TRACKS", i, string.Empty));
-						writer.WriteLine("--------------------------------------------------");
-						Dump(pak.GetEntry(i), writer);
-					}
+					writer.WriteLine("--------------------------------------------------");
+					writer.WriteLine("#{0} {1}", i, vars.GetText("TRACKS", i, string.Empty));
+					writer.WriteLine("--------------------------------------------------");
+					Dump(pak.GetEntry(i), writer);
 				}
 			}
 

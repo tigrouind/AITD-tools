@@ -38,7 +38,7 @@ namespace VarsViewer
 			const string varPath = @"GAMEDATA\vars.txt";
 			if (File.Exists(varPath))
 			{
-				varParser.Parse(varPath, "VARS", "C_VARS");
+				varParser.Load(varPath, "VARS", "C_VARS");
 			}
 
 			InitVars(varParser, Vars, "VARS");

@@ -36,13 +36,13 @@ namespace Shared
 
 			switch (flag)
 			{
-				case 0:
+				case 0: //uncompressed
 				{
 					stream.Read(dest, 0, (int)compressedSize);
 					break;
 				}
 
-				case 1:
+				case 1: //pak explode
 				{
 					var source = new byte[compressedSize];
 					stream.Read(source, 0, (int)compressedSize);
@@ -50,7 +50,7 @@ namespace Shared
 					break;
 				}
 
-				case 4:
+				case 4: //deflate
 				{
 					using (var deflateStream = new DeflateStream(stream, CompressionMode.Decompress, true))
 					{
