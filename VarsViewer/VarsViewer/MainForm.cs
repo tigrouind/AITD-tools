@@ -30,7 +30,7 @@ namespace VarsViewer
 		public MainForm()
 		{
 			toolTip = new ToolTip(this);
-			worker = new Worker(() => this.Invoke(new Action(NeedRefresh)));
+			worker = new Worker();
 			InitializeComponent();
 		}
 
@@ -68,12 +68,7 @@ namespace VarsViewer
 
 		void MainFormLoad(object sender, EventArgs e)
 		{
-			worker.Start();
-		}
-
-		void MainFormFormClosed(object sender, FormClosedEventArgs e)
-		{
-			worker.Stop();
+			worker.Update();
 		}
 
 		protected override void WndProc(ref Message m)
@@ -102,6 +97,7 @@ namespace VarsViewer
 				case Keys.C:
 					worker.Compare = !worker.Compare;
 					worker.IgnoreDifferences = !worker.Compare;
+					UpdateWorker();
 					break;
 
 				case Keys.F:
@@ -235,6 +231,7 @@ namespace VarsViewer
 				if(short.TryParse(input, out value))
 				{
 					worker.Write(var, value);
+					UpdateWorker();
 				}
 			}
 		}
@@ -258,6 +255,20 @@ namespace VarsViewer
 			using (var region = new Region(rectangle))
 			{
 				Invalidate(region);
+			}
+		}
+		
+		void TimerTick(object sender, EventArgs e)
+		{
+			UpdateWorker();
+			timer.Interval = worker.IsRunning ? 10 : 1000;		
+		}
+		
+		void UpdateWorker()
+		{
+			if(worker.Update())
+			{
+				NeedRefresh();
 			}
 		}
 	}

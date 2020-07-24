@@ -6,6 +6,7 @@
 		/// Designer variable used to keep track of non-visual components.
 		/// </summary>
 		private System.ComponentModel.IContainer components = null;
+		private System.Windows.Forms.Timer timer;
 		
 		/// <summary>
 		/// Disposes resources used by the form.
@@ -28,7 +29,15 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
+			this.components = new System.ComponentModel.Container();
+			this.timer = new System.Windows.Forms.Timer(this.components);
 			this.SuspendLayout();
+			// 
+			// timer
+			// 
+			this.timer.Enabled = true;
+			this.timer.Interval = 1000;
+			this.timer.Tick += new System.EventHandler(this.TimerTick);
 			// 
 			// MainForm
 			// 
@@ -38,7 +47,6 @@
 			this.DoubleBuffered = true;
 			this.Name = "MainForm";
 			this.Text = "AITD vars viewer";
-			this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.MainFormFormClosed);
 			this.Load += new System.EventHandler(this.MainFormLoad);
 			this.ResizeEnd += new System.EventHandler(this.MainFormResizeEnd);
 			this.Paint += new System.Windows.Forms.PaintEventHandler(this.MainFormPaint);

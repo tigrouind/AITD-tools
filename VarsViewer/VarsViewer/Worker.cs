@@ -2,7 +2,6 @@
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using Shared;
 
 namespace VarsViewer
@@ -10,9 +9,6 @@ namespace VarsViewer
 	public class Worker
 	{
 		ProcessMemoryReader processReader;
-		Thread thread;
-		readonly Action refreshCallback;
-		bool running;
 
 		long memoryAddress;
 		long varsMemoryAddress = -1;
@@ -26,10 +22,9 @@ namespace VarsViewer
 		public bool IgnoreDifferences = true;
 		public bool Freeze;
 
-		public Worker(Action refreshCallback)
+		public Worker()
 		{
 			InitVars();
-			this.refreshCallback = refreshCallback;
 		}
 
 		void InitVars()
@@ -55,104 +50,87 @@ namespace VarsViewer
 				data[i] = var;
 			}
 		}
-
-		public void Start()
+		
+		public bool IsRunning
 		{
-			if (!running)
+			get
 			{
-				running = true;
-				thread = new Thread(Run);
-				thread.Start();
+				return processReader != null && varsMemoryAddress != -1 && cvarsMemoryAddress != -1;
 			}
 		}
 
-		public void Run()
+		public bool Update()
 		{
-			while (running)
+			if (processReader == null)
 			{
-				if (processReader == null)
+				int processId = DosBox.SearchProcess();
+				if (processId != -1)
 				{
-					int processId = DosBox.SearchProcess();
-					if (processId != -1)
-					{
-						processReader = new ProcessMemoryReader(processId);
-						memoryAddress = processReader.SearchFor16MRegion();
-						if (memoryAddress == -1)
-						{
-							CloseReader();
-						}
-					}
-				}
-
-				if (processReader != null && (varsMemoryAddress == -1 || cvarsMemoryAddress == -1))
-				{		
-					int entryPoint;
-					if (processReader.Read(memory, memoryAddress, memory.Length) > 0 && 
-					   DosBox.GetExeEntryPoint(memory, out entryPoint))
-					{						
-						int varAddress, cvarAddress;
-						GetMemoryAddresses(out varAddress, out cvarAddress);
-						
-						int varsPointer;
-						if ((varsPointer = memory.ReadFarPointer(entryPoint + varAddress)) != 0)
-						{
-							varsMemoryAddress = memoryAddress + varsPointer;
-							cvarsMemoryAddress = memoryAddress + entryPoint + cvarAddress;
-						}													
-						else
-						{
-							CloseReader();
-						}
-					} 
-					else
+					processReader = new ProcessMemoryReader(processId);
+					memoryAddress = processReader.SearchFor16MRegion();
+					if (memoryAddress == -1)
 					{
 						CloseReader();
 					}
 				}
+			}
 
-				if (processReader != null && varsMemoryAddress != -1 && cvarsMemoryAddress != -1)
-				{
-					if (!Freeze)
+			if (processReader != null && (varsMemoryAddress == -1 || cvarsMemoryAddress == -1))
+			{		
+				int entryPoint;
+				if (processReader.Read(memory, memoryAddress, memory.Length) > 0 && 
+				   DosBox.GetExeEntryPoint(memory, out entryPoint))
+				{						
+					int varAddress, cvarAddress;
+					GetMemoryAddresses(out varAddress, out cvarAddress);
+					
+					int varsPointer;
+					if ((varsPointer = memory.ReadFarPointer(entryPoint + varAddress)) != 0)
 					{
-						bool needRefresh = false;
-						int time = Environment.TickCount;
-
-						bool result;
-						if (result = (processReader.Read(memory, varsMemoryAddress, 207 * 2) > 0))
-						{
-							needRefresh |= CheckDifferences(Vars, varsMemoryAddress, time);
-						}
-
-						if (result = (processReader.Read(memory, cvarsMemoryAddress, 44 * 2) > 0))
-						{
-							needRefresh |= CheckDifferences(Cvars, cvarsMemoryAddress, time);
-						}
-
-						if (!result)
-						{
-							CloseReader();
-						}
-
-						IgnoreDifferences = false;
-
-						if (needRefresh && running)
-						{
-							refreshCallback();
-						}
+						varsMemoryAddress = memoryAddress + varsPointer;
+						cvarsMemoryAddress = memoryAddress + entryPoint + cvarAddress;
+					}													
+					else
+					{
+						CloseReader();
 					}
-
-					Thread.Sleep(16); //60 Hz
-				}
+				} 
 				else
 				{
-					Thread.Sleep(1000);
+					CloseReader();
 				}
 			}
-		}
 
-		public void Stop()
-		{
-			running = false;
+			if (processReader != null && varsMemoryAddress != -1 && cvarsMemoryAddress != -1)
+			{
+				if (!Freeze)
+				{
+					bool needRefresh = false;
+					int time = Environment.TickCount;
+
+					bool result;
+					if (result = (processReader.Read(memory, varsMemoryAddress, 207 * 2) > 0))
+					{
+						needRefresh |= CheckDifferences(Vars, varsMemoryAddress, time);
+					}
+
+					if (result = (processReader.Read(memory, cvarsMemoryAddress, 44 * 2) > 0))
+					{
+						needRefresh |= CheckDifferences(Cvars, cvarsMemoryAddress, time);
+					}
+
+					if (!result)
+					{
+						CloseReader();
+					}
+
+					IgnoreDifferences = false;
+
+					return needRefresh;
+				}
+			}
+			
+			return false;
 		}
 
 		void CloseReader()
