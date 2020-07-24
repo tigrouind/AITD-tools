@@ -20,7 +20,7 @@ namespace VarsViewer
 		readonly byte[] memory = new byte[640 * 1024];
 
 		public readonly Var[] Vars = new Var[207];
-		public readonly Var[] Cvars = new Var[45];
+		public readonly Var[] Cvars = new Var[44];
 
 		public bool Compare;
 		public bool IgnoreDifferences = true;
