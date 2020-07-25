@@ -20,6 +20,7 @@ namespace VarsViewer
 		readonly Brush whiteBrush = new SolidBrush(Color.FromArgb(255, 255, 255, 255));
 		readonly Brush redBrush = new SolidBrush(Color.FromArgb(255, 240, 68, 77));
 		readonly Brush blueBrush = new SolidBrush(Color.FromArgb(64, 0, 162, 232));
+		readonly Brush darkRedBrush = new SolidBrush(Color.FromArgb(255, 128, 42, 47));
 
 		readonly Font font = new Font("Arial", 13.0f);
 		readonly StringFormat format = new StringFormat();
@@ -174,7 +175,12 @@ namespace VarsViewer
 
 		Brush GetBackgroundBrush(Var var)
 		{
-			if(selectedVar == var)
+			bool selected = selectedVar == var;
+			if(selected && var.Difference)
+			{
+				return darkRedBrush;
+			}
+			if(selected)
 			{
 				return darkGrayBrush;
 			}
