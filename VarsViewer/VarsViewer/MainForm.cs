@@ -2,7 +2,6 @@
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using Microsoft.VisualBasic;
 
 namespace VarsViewer
 {
@@ -224,14 +223,19 @@ namespace VarsViewer
 
 			if (e.Button == MouseButtons.Left && TryFindVarAtPosition(e.Location, out var) && var.MemoryAddress >= 0)
 			{
-				string input = Interaction.InputBox(string.Empty, string.Format("#{0} {1}", var.Index, var.Name), var.Value.ToString(),
-										(DesktopLocation.X + Width) / 2, (DesktopLocation.Y + Height) / 2);
-
-				short value;
-				if(short.TryParse(input, out value))
+				var title = string.Format("#{0} {1}", var.Index, var.Name);
+				var	input = var.Value == 0 ? string.Empty : var.Value.ToString();
+				
+				if (DialogBox.Show(title, ref input) == DialogResult.OK)
 				{
-					worker.Write(var, value);
-					UpdateWorker();
+					int value = 0;
+					if ((input == string.Empty || int.TryParse(input, out value)) && value != var.Value)
+					{
+						value = Math.Min(value, short.MaxValue);
+						value = Math.Max(value, short.MinValue);
+						worker.Write(var, (short)value);
+						UpdateWorker();
+					}
 				}
 			}
 		}
