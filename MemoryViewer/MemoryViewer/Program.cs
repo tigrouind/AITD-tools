@@ -12,10 +12,12 @@ namespace MemoryViewer
 		const int RESX = 320;
 		const int RESY = 240;
 		static int winx, winy, zoom;
+		static readonly bool[] needRefresh = new bool[10];
 			
 		public static int Main(string[] args)
 		{
 			bool mcb = false;
+			SetRefreshState(true);
 
 			winx = Tools.GetArgument(args, "-screen-width") ?? 640;
 			winy = Tools.GetArgument(args, "-screen-height") ?? 480;
@@ -36,8 +38,8 @@ namespace MemoryViewer
 			bool quit = false;
 			uint[] pixels = new uint[RESX * RESY * 10];
 			uint[] mcbPixels = new uint[RESX * RESY * 10];			
-			byte[] pixelData = new byte[640 * 1024 + 64000];
-			byte[] oldPixelData = new byte[640 * 1024 + 64000];			
+			byte[] pixelData = new byte[RESX * RESY * 10];
+			byte[] oldPixelData = new byte[RESX * RESY * 10];			
 
 			ProcessMemoryReader processReader = null;
 			long memoryAddress = -1;
@@ -58,6 +60,7 @@ namespace MemoryViewer
 							if(sdlEvent.key.keysym.sym == SDL.SDL_Keycode.SDLK_SPACE)
 							{
 								mcb = !mcb;
+								SetRefreshState(true);
 							}
 							break;
 
@@ -67,6 +70,7 @@ namespace MemoryViewer
 							{
 								winx = sdlEvent.window.data1;
 								winy = sdlEvent.window.data2;
+								SetRefreshState(true);
 							}
 							break;
 					}
@@ -109,8 +113,6 @@ namespace MemoryViewer
 				UpdateMCB(pixelData, oldPixelData, 64000, mcbPixels);
 
 				//render
-				SDL.SDL_RenderClear(renderer);
-
 				int tm = (winx + RESX * zoom - 1) / (RESX * zoom);
 				int tn = (winy + RESY * zoom - 1) / (RESY * zoom);
 				
@@ -122,8 +124,9 @@ namespace MemoryViewer
 					SDL.SDL_SetTextureBlendMode(texture, SDL.SDL_BlendMode.SDL_BLENDMODE_BLEND);
 					Render(renderer, texture, tm, tn, mcbPixels);
 				}
-				
-				SDL.SDL_RenderPresent(renderer);
+
+				SDL.SDL_RenderPresent(renderer);					
+				SetRefreshState(false);
 
 				//swap buffers
 				var tmp = pixelData;
@@ -147,19 +150,29 @@ namespace MemoryViewer
 			{
 				ulong* pixelsPtr = (ulong*)pixelsBytePtr;
 				ulong* oldPixelsPtr = (ulong*)oldPixelsBytePtr;
-
-				for(int i = 0 ; i < pixelData.Length ; i += 8)
+				int start = 0;	
+				
+				for(int k = 0 ; k < 10 ; k++)
 				{
-					if(*pixelsPtr != *oldPixelsPtr)
-					{
-						for(int j = i ; j < i + 8 ; j++)
+					bool refresh = false;
+					for(int i = 0 ; i < RESX * RESY ; i += 8)
+					{					
+						if(*pixelsPtr != *oldPixelsPtr)
 						{
-							pixels[j] = palette[pixelData[j]];
+							for(int j = start ; j < start + 8 ; j++)
+							{
+								pixels[j] = palette[pixelData[j]];
+							}	
+							
+							refresh = true;
 						}
+						
+						start += 8;
+						pixelsPtr++;
+						oldPixelsPtr++;
 					}
-
-					pixelsPtr++;
-					oldPixelsPtr++;
+					
+					needRefresh[k] |= refresh;
 				}
 			}
 		}
@@ -189,6 +202,8 @@ namespace MemoryViewer
 					
 					inverse = !inverse;
 				}
+				
+				SetRefreshState(true);
 			}
 		}
 		
@@ -210,20 +225,24 @@ namespace MemoryViewer
 					int position = skip + n * RESX * RESY;
 					if ((position + RESX * RESY) > pixels.Length) continue;
 
-					fixed (uint* pixelsBuf = &pixels[position])
+					int index = m * tn + n;
+					if (needRefresh[index])
 					{
-						SDL.SDL_UpdateTexture(texture, ref textureRect, (IntPtr)pixelsBuf, RESX * sizeof(uint));
-					}
-
-					SDL.SDL_Rect drawRect = new SDL.SDL_Rect 
-					{
-						x = m * RESX * zoom, 
-						y = n * RESY * zoom, 
-						w = RESX * zoom, 
-						h = RESY * zoom 
-					};
-					
-					SDL.SDL_RenderCopy(renderer, texture, ref textureRect, ref drawRect);
+						fixed (uint* pixelsBuf = &pixels[position])
+						{
+							SDL.SDL_UpdateTexture(texture, ref textureRect, (IntPtr)pixelsBuf, RESX * sizeof(uint));
+						}
+						
+						SDL.SDL_Rect drawRect = new SDL.SDL_Rect 
+						{
+							x = m * RESX * zoom, 
+							y = n * RESY * zoom, 
+							w = RESX * zoom, 
+							h = RESY * zoom 
+						};
+						
+						SDL.SDL_RenderCopy(renderer, texture, ref textureRect, ref drawRect);
+					}					
 				}
 
 				skip += RESX * (winy / zoom);
@@ -248,6 +267,14 @@ namespace MemoryViewer
 			}
 			
 			return palette;
+		}
+		
+		static void SetRefreshState(bool state)
+		{
+			for(int i = 0 ; i < needRefresh.Length ; i++)
+			{
+				needRefresh[i] = state;
+			}
 		}
 	}
 }
