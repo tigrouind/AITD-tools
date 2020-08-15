@@ -21,7 +21,6 @@ namespace VarsViewer
 		readonly Brush blueBrush = new SolidBrush(Color.FromArgb(64, 0, 162, 232));
 		readonly Brush darkRedBrush = new SolidBrush(Color.FromArgb(255, 128, 42, 47));
 
-		readonly Font font = new Font("Arial", 13.0f);
 		readonly StringFormat format = new StringFormat();
 
 		readonly Worker worker;
@@ -67,6 +66,7 @@ namespace VarsViewer
 
 		void MainFormLoad(object sender, EventArgs e)
 		{
+			Font = new Font(Font.Name, Font.Size * 96.0f / AutoScaleDimensions.Width);			
 			worker.Update();
 		}
 
@@ -119,7 +119,7 @@ namespace VarsViewer
 				format.Alignment = alignment;
 
 				e.Graphics.FillRectangle(back, rect);
-				e.Graphics.DrawString(text, font, front, rect, format);
+				e.Graphics.DrawString(text, Font, front, rect, format);
 			}
 
 			return rect;

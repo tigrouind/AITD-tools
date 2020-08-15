@@ -40,11 +40,10 @@
 			this.timer.Tick += new System.EventHandler(this.TimerTick);
 			// 
 			// MainForm
-			// 
-			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(960, 540);
+			// 		
+			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
 			this.DoubleBuffered = true;
+			this.Font = new System.Drawing.Font("Arial", 13F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.Name = "MainForm";
 			this.Text = "AITD vars viewer";
 			this.Load += new System.EventHandler(this.MainFormLoad);
