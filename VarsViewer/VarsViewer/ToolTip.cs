@@ -19,15 +19,14 @@ namespace VarsViewer
 		public ToolTip(Control parent)
 		{
 			this.parent = parent;
+			format.LineAlignment = StringAlignment.Center;
+			format.Alignment = StringAlignment.Center;
 		}
 
 		public void OnPaint(PaintEventArgs e)
 		{
 			if (toolTipText != string.Empty)
 			{
-				format.LineAlignment = StringAlignment.Center;
-				format.Alignment = StringAlignment.Center;
-
 				e.Graphics.FillRectangle(darkGreenBrush, toolTipRect);
 				e.Graphics.DrawString(toolTipText, parent.Font, whiteBrush, toolTipRect, format);
 			}
@@ -35,8 +34,11 @@ namespace VarsViewer
 
 		public void Show(string text, RectangleF rectangle)
 		{
-			var textSize = TextRenderer.MeasureText(text, parent.Font, new Size(250, int.MaxValue),
-							TextFormatFlags.WordBreak | TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+			SizeF textSize;
+			using (var graphics = parent.CreateGraphics())
+			{
+				textSize = graphics.MeasureString(text, parent.Font, new SizeF(250.0f, int.MaxValue), format);
+			}
 
 			var point = new PointF((rectangle.Left + rectangle.Right - textSize.Width) / 2.0f, rectangle.Bottom);
 

@@ -43,7 +43,7 @@
 			// 		
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
 			this.DoubleBuffered = true;
-			this.Font = new System.Drawing.Font("Arial", 13F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.Name = "MainForm";
 			this.Text = "AITD vars viewer";
 			this.Load += new System.EventHandler(this.MainFormLoad);
