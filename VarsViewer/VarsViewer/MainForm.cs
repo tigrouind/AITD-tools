@@ -265,7 +265,7 @@ namespace VarsViewer
 		void TimerTick(object sender, EventArgs e)
 		{
 			UpdateWorker();
-			timer.Interval = worker.IsRunning ? 10 : 1000;		
+			timer.Interval = worker.IsRunning ? 15 : 1000;		
 		}
 		
 		void UpdateWorker()
