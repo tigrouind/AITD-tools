@@ -223,10 +223,13 @@ namespace MemoryViewer
 				for (int n = 0 ; n < tn ; n++)
 				{
 					int position = skip + n * RESX * RESY;
-					if ((position + RESX * RESY) > pixels.Length) continue;
+					int nextPosition = position + RESX * RESY;
+					if (nextPosition > pixels.Length) continue;
 
-					int index = m * tn + n;
-					if (needRefresh[index])
+					int index = position / (RESX * RESY);
+					int nextIndex = (nextPosition - 1) / (RESX * RESY);
+					
+					if (needRefresh[index] || needRefresh[nextIndex])
 					{
 						fixed (uint* pixelsBuf = &pixels[position])
 						{
