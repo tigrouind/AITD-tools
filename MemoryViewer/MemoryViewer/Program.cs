@@ -155,11 +155,11 @@ namespace MemoryViewer
 				for(int k = 0 ; k < 10 ; k++)
 				{
 					bool refresh = false;
-					for(int i = 0 ; i < RESX * RESY ; i += 8)
+					for(int i = 0 ; i < RESX * RESY ; i += 16)
 					{					
-						if(*pixelsPtr != *oldPixelsPtr)
+						if(*pixelsPtr != *oldPixelsPtr || *(pixelsPtr+1) != *(oldPixelsPtr+1))
 						{
-							for(int j = start ; j < start + 8 ; j++)
+							for(int j = start ; j < start + 16 ; j++)
 							{
 								pixels[j] = palette[pixelData[j]];
 							}	
@@ -167,9 +167,9 @@ namespace MemoryViewer
 							refresh = true;
 						}
 						
-						start += 8;
-						pixelsPtr++;
-						oldPixelsPtr++;
+						start += 16;
+						pixelsPtr += 2;
+						oldPixelsPtr += 2;
 					}
 					
 					needRefresh[k] |= refresh;
