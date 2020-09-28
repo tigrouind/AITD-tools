@@ -11,6 +11,7 @@ namespace LifeDISA
 		public List<string> Arguments = new List<string>();
 		public string Separator;
 
+		public bool SpaceAfterInstruction = true;
 		public bool IndentInc;
 		public bool IndentDec;
 

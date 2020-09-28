@@ -324,7 +324,7 @@ namespace LifeDISA
 
 				if(ins.Arguments.Any())
 				{
-					writer.Write(" " + string.Join(ins.Separator ?? " ", ins.Arguments.ToArray()));
+					writer.Write((ins.SpaceAfterInstruction ? " " : string.Empty) + string.Join(ins.Separator ?? " ", ins.Arguments.ToArray()));
 				}
 
 				writer.WriteLine();
@@ -648,6 +648,7 @@ namespace LifeDISA
 				}
 
 				case LifeEnum.C_VAR:
+					ins.SpaceAfterInstruction = false;
 					ins.Add("{0} = {1}", GetParam(), Evalvar());
 					break;
 
