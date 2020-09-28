@@ -47,7 +47,7 @@ namespace Shared
 					{
 						string from = match.Groups["from"].Value;
 						string to = match.Groups["to"].Value;
-						string text = match.Groups["text"].Value;
+						string text = match.Groups["text"].Value.Trim();
 	
 						AddEntry(currentSection, from, to, text);
 					}
