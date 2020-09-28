@@ -250,7 +250,6 @@ namespace LifeDISA
 								{
 									ins.IndentInc = true;
 
-
 									for(int i = 0 ; i < ins.Arguments.Count ; i++)
 									{
 										ins.Arguments[i] = GetConditionName(switchValue, ins.Arguments[i]);
