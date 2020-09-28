@@ -409,8 +409,8 @@ namespace LifeDISA
 					break;
 
 				case LifeEnum.SAMPLE_THEN:
-					ins.Add(Evalvar());
-					ins.Add(Evalvar());
+					ins.Add(vars.GetText("SOUNDS", Evalvar()));
+			        ins.Add(vars.GetText("SOUNDS", Evalvar()));
 					break;
 
 				case LifeEnum.CAMERA_TARGET:
@@ -598,7 +598,7 @@ namespace LifeDISA
 					break;
 
 				case LifeEnum.REP_SAMPLE:
-					ins.Add(Evalvar());
+					ins.Add(vars.GetText("SOUNDS", Evalvar()));
 					ins.Add(GetParam());
 					break;
 
@@ -608,12 +608,11 @@ namespace LifeDISA
 					break;
 
 				case LifeEnum.PUT:
+					ins.Add(GetObject(GetParam()));
 					ins.Add(GetParam());
 					ins.Add(GetParam());
 					ins.Add(GetParam());
-					ins.Add(GetParam());
-					ins.Add(GetParam());
-					ins.Add(GetParam());
+					ins.Add("E{0}R{1}", GetParam(), GetParam());					
 					ins.Add(GetParam());
 					ins.Add(GetParam());
 					ins.Add(GetParam());
@@ -690,6 +689,9 @@ namespace LifeDISA
 
 				case "KEYBOARD_INPUT":
 					return vars.GetText("KEYBOARD INPUT", valueB);
+					
+				case "NUM_TRACK":
+					return vars.GetText("TRACKS", valueB);
 
 				default:
 					return valueB;
