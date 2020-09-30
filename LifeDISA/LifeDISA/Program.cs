@@ -20,7 +20,7 @@ namespace LifeDISA
 		static readonly Dictionary<int, string> objectsByIndex = new Dictionary<int, string>();
 		static readonly Dictionary<int, string> namesByIndex = new Dictionary<int, string>();
 
-		static string[] trackModes = { "NONE", "MANUAL", "FOLLOW", "TRACK"};
+		static string[] trackModes = { "none", "manual", "follow", "track"};
 
 		static LinkedList<Instruction> nodes;
 		static Dictionary<int, LinkedListNode<Instruction>> nodesMap;
@@ -152,9 +152,9 @@ namespace LifeDISA
 					life = (LifeEnum)curr;
 				}
 
-				string lifeString = life.ToString();
-				if(lifeString.StartsWith("IF")) lifeString = "IF";
-				else if(lifeString == "MULTI_CASE") lifeString = "CASE";
+				string lifeString = life.ToString().ToLower();
+				if(lifeString.StartsWith("if")) lifeString = "if";
+				else if(lifeString == "multi_case") lifeString = "case";
 				if(actor != -1) lifeString = GetObject(actor) + "." + lifeString;
 				pos += 2;
 
@@ -191,12 +191,12 @@ namespace LifeDISA
 						var previous = target.Previous;
 						if (previous.Value.Type == LifeEnum.GOTO)
 						{
-							nodes.AddBefore(target, new Instruction { Name = "ELSE", IndentInc = true, IndentDec = true });
-							nodes.AddBefore(nodesMap[previous.Value.Goto], new Instruction { Name = "END", IndentDec = true });
+							nodes.AddBefore(target, new Instruction { Name = "else", IndentInc = true, IndentDec = true });
+							nodes.AddBefore(nodesMap[previous.Value.Goto], new Instruction { Name = "end", IndentDec = true });
 						}
 						else
 						{
-							nodes.AddBefore(target, new Instruction { Name = "END", IndentDec = true });
+							nodes.AddBefore(target, new Instruction { Name = "end", IndentDec = true });
 						}
 
 						//check for consecutive IFs
@@ -212,7 +212,7 @@ namespace LifeDISA
 							target == nodesMap[next.Value.Goto]) //the IFs ends up at same place
 						{
 							var after = next.Next;
-							ins.Separator = " AND ";
+							ins.Separator = " and ";
 							ins.Arguments.Add(next.Value.Arguments[0]);
 							nodes.Remove(next);
 
@@ -264,7 +264,7 @@ namespace LifeDISA
 										}
 									}
 
-									nodes.AddBefore(target, new Instruction { Name = "END", IndentDec = true });
+									nodes.AddBefore(target, new Instruction { Name = "end", IndentDec = true });
 									break;
 								}
 
@@ -278,13 +278,13 @@ namespace LifeDISA
 						//should be equal, otherwise there is a default case
 						if(endOfSwitch != null && target != endOfSwitch)
 						{
-							nodes.AddBefore(endOfSwitch, new Instruction { Name = "END", IndentDec = true });
-							nodes.AddBefore(endOfSwitch, new Instruction { Name = "END", IndentDec = true });
-							nodes.AddBefore(target, new Instruction { Name = "DEFAULT", IndentInc = true });
+							nodes.AddBefore(endOfSwitch, new Instruction { Name = "end", IndentDec = true });
+							nodes.AddBefore(endOfSwitch, new Instruction { Name = "end", IndentDec = true });
+							nodes.AddBefore(target, new Instruction { Name = "default", IndentInc = true });
 						}
 						else
 						{
-							nodes.AddBefore(target, new Instruction { Name = "END", IndentDec = true });
+							nodes.AddBefore(target, new Instruction { Name = "end", IndentDec = true });
 						}
 						break;
 					}
@@ -664,34 +664,34 @@ namespace LifeDISA
 
 		static string GetConditionName(string valueA, string valueB)
 		{
-			if(valueA.StartsWith("POSREL"))
+			if(valueA.StartsWith("posrel"))
 			{
-				return vars.GetText("POSREL", valueB);
+				return vars.GetText("posrel", valueB);
 			}
 
 			switch (valueA)
 			{
-				case "INHAND":
-				case "COL_BY":
-				case "HIT_BY":
-				case "HIT":
-				case "ACTOR_COLLIDER":
+				case "inhand":
+				case "col_by":
+				case "hit_by":
+				case "hit":
+				case "actor_collider":
 					return GetObject(valueB);
 
-				case "ACTION":
+				case "action":
 				case "player_current_action":
 					return vars.GetText("ACTIONS", valueB);
 
-				case "ANIM":
+				case "anim":
 					return vars.GetText("ANIMS", valueB);
 
-				case "BODY":
+				case "body":
 					return vars.GetText("BODYS", valueB);
 
-				case "KEYBOARD_INPUT":
+				case "keyboard_input":
 					return vars.GetText("KEYBOARD INPUT", valueB);
 					
-				case "NUM_TRACK":
+				case "num_track":
 					return vars.GetText("TRACKS", valueB);
 
 				default:
@@ -719,7 +719,7 @@ namespace LifeDISA
 
 			if (index == 1)
 			{
-				return "PLAYER";
+				return "player";
 			}
 
 			string text;
@@ -727,7 +727,7 @@ namespace LifeDISA
 			{
 				return text + "_" + index;
 			}
-			return "OBJ" + index;
+			return "obj" + index;
 		}
 
 		static string GetName(int index)
@@ -737,7 +737,7 @@ namespace LifeDISA
 			{
 				return "\"" + text + "\"";
 			}
-			return "MSG" + index;
+			return "msg" + index;
 		}
 
 		static int GetParam()
@@ -777,7 +777,7 @@ namespace LifeDISA
 			{
 				//CONST
 				curr = GetParam();
-				return vars.GetText("VARS", curr, "VAR" + curr);
+				return vars.GetText("VARS", curr, "var" + curr);
 			}
 
 			string result = string.Empty;
@@ -819,7 +819,7 @@ namespace LifeDISA
 					break;
 			}
 
-			result += evalEnum + parameter;
+			result += evalEnum.ToString().ToLower() + parameter;
 			return result;
 		}
 		
