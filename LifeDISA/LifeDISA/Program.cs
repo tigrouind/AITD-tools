@@ -22,8 +22,8 @@ namespace LifeDISA
 
 		static string[] trackModes = { "none", "manual", "follow", "track"};
 
-		static LinkedList<Instruction> nodes;
-		static Dictionary<int, LinkedListNode<Instruction>> nodesMap;
+		static readonly LinkedList<Instruction> nodes = new LinkedList<Instruction>();
+		static readonly Dictionary<int, LinkedListNode<Instruction>> nodesMap = new Dictionary<int, LinkedListNode<Instruction>>();
 
 		static readonly VarParserExt vars = new VarParserExt();
 
@@ -126,9 +126,9 @@ namespace LifeDISA
 		static void ParseFile()
 		{
 			pos = 0;
+			nodes.Clear();
+			nodesMap.Clear();
 
-			nodesMap = new Dictionary<int, LinkedListNode<Instruction>>();
-			nodes = new LinkedList<Instruction>();
 			while(pos < allBytes.Length)
 			{
 				int position = pos;
@@ -151,18 +151,12 @@ namespace LifeDISA
 				{
 					life = (LifeEnum)curr;
 				}
-
-				string lifeString = life.ToString().ToLower();
-				if(lifeString.StartsWith("if")) lifeString = "if";
-				else if(lifeString == "multi_case") lifeString = "case";
-				if(actor != -1) lifeString = GetObject(actor) + "." + lifeString;
+				
+				Instruction ins = new Instruction();
+				ins.Type = life;
+				
+				if(actor != -1) ins.Actor = GetObject(actor);
 				pos += 2;
-
-				Instruction ins = new Instruction
-				{
-					Type = life,
-					Name = lifeString
-				};
 
 				ParseArguments(life, ins);
 				var node = nodes.AddLast(ins);
@@ -184,19 +178,17 @@ namespace LifeDISA
 					case LifeEnum.IF_INF_EGAL:
 					case LifeEnum.IF_INF:
 					{
-						ins.IndentInc = true;
-
 						//detect if else
 						var target = nodesMap[ins.Goto];
 						var previous = target.Previous;
 						if (previous.Value.Type == LifeEnum.GOTO)
-						{
-							nodes.AddBefore(target, new Instruction { Name = "else", IndentInc = true, IndentDec = true });
-							nodes.AddBefore(nodesMap[previous.Value.Goto], new Instruction { Name = "end", IndentDec = true });
+						{							
+							nodes.AddBefore(target, new Instruction { Type = LifeEnum.ELSE });						
+							nodes.AddBefore(nodesMap[previous.Value.Goto], new Instruction { Type = LifeEnum.END });
 						}
 						else
 						{
-							nodes.AddBefore(target, new Instruction { Name = "end", IndentDec = true });
+							nodes.AddBefore(target, new Instruction { Type = LifeEnum.END });
 						}
 
 						//check for consecutive IFs
@@ -212,7 +204,6 @@ namespace LifeDISA
 							target == nodesMap[next.Value.Goto]) //the IFs ends up at same place
 						{
 							var after = next.Next;
-							ins.Separator = " and ";
 							ins.Arguments.Add(next.Value.Arguments[0]);
 							nodes.Remove(next);
 
@@ -223,8 +214,6 @@ namespace LifeDISA
 
 					case LifeEnum.SWITCH:
 					{
-						ins.IndentInc = true;
-
 						//instruction after switch should be CASE or MULTICASE
 						//but if could be instructions (eg: DEFAULT after switch)
 						var target = node.Next;
@@ -248,8 +237,6 @@ namespace LifeDISA
 								case LifeEnum.CASE:
 								case LifeEnum.MULTI_CASE:
 								{
-									ins.IndentInc = true;
-
 									for(int i = 0 ; i < ins.Arguments.Count ; i++)
 									{
 										ins.Arguments[i] = GetConditionName(switchValue, ins.Arguments[i]);
@@ -264,7 +251,7 @@ namespace LifeDISA
 										}
 									}
 
-									nodes.AddBefore(target, new Instruction { Name = "end", IndentDec = true });
+									nodes.AddBefore(target, new Instruction { Type = LifeEnum.END });
 									break;
 								}
 
@@ -278,13 +265,13 @@ namespace LifeDISA
 						//should be equal, otherwise there is a default case
 						if(endOfSwitch != null && target != endOfSwitch)
 						{
-							nodes.AddBefore(endOfSwitch, new Instruction { Name = "end", IndentDec = true });
-							nodes.AddBefore(endOfSwitch, new Instruction { Name = "end", IndentDec = true });
-							nodes.AddBefore(target, new Instruction { Name = "default", IndentInc = true });
+							nodes.AddBefore(endOfSwitch, new Instruction { Type = LifeEnum.END });
+							nodes.AddBefore(endOfSwitch, new Instruction { Type = LifeEnum.END });
+							nodes.AddBefore(target, new Instruction { Type = LifeEnum.DEFAULT });
 						}
 						else
 						{
-							nodes.AddBefore(target, new Instruction { Name = "end", IndentDec = true });
+							nodes.AddBefore(target, new Instruction { Type = LifeEnum.END });
 						}
 						break;
 					}
@@ -320,11 +307,11 @@ namespace LifeDISA
 				}
 
 				writer.Write(new String('\t', indent));
-				writer.Write(ins.Name);
-
-				if(ins.Arguments.Any())
+				
+				writer.Write(ins.Name);	
+				if (ins.Arguments.Any())
 				{
-					writer.Write((ins.SpaceAfterInstruction ? " " : string.Empty) + string.Join(ins.Separator ?? " ", ins.Arguments.ToArray()));
+					writer.Write(" " + string.Join(ins.Separator, ins.Arguments.ToArray()));	
 				}
 
 				writer.WriteLine();
@@ -635,7 +622,8 @@ namespace LifeDISA
 				case LifeEnum.SUB:
 				{
 					int curr = GetParam();
-					ins.Add("{0} {1}", vars.GetText("VARS", curr, "VAR" + curr), Evalvar());
+					ins.Add(vars.GetText("VARS", curr, "VAR" + curr));
+					ins.Add(Evalvar());
 					break;
 				}
 
@@ -648,8 +636,7 @@ namespace LifeDISA
 				}
 
 				case LifeEnum.C_VAR:
-					ins.SpaceAfterInstruction = false;
-					ins.Add("{0} = {1}", GetParam(), Evalvar());
+					ins.Add("c_var{0} = {1}", GetParam(), Evalvar());
 					break;
 
 				case LifeEnum.BODY_RESET:
@@ -666,7 +653,7 @@ namespace LifeDISA
 		{
 			if(valueA.StartsWith("posrel"))
 			{
-				return vars.GetText("posrel", valueB);
+				return vars.GetText("POSREL", valueB);
 			}
 
 			switch (valueA)
