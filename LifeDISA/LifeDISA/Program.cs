@@ -116,6 +116,7 @@ namespace LifeDISA
 					allBytes = pak.GetEntry(i);
 					ParseFile();
 					Optimize();
+					Cleanup();
 					Dump(writer);
 				}
 			}
@@ -177,107 +178,118 @@ namespace LifeDISA
 					case LifeEnum.IF_SUP:
 					case LifeEnum.IF_INF_EGAL:
 					case LifeEnum.IF_INF:
-					{
-						//detect if else
-						var target = nodesMap[ins.Goto];
-						var previous = target.Previous;
-						if (previous.Value.Type == LifeEnum.GOTO)
-						{							
-							nodes.AddBefore(target, new Instruction { Type = LifeEnum.ELSE });						
-							nodes.AddBefore(nodesMap[previous.Value.Goto], new Instruction { Type = LifeEnum.END });
-						}
-						else
-						{
-							nodes.AddBefore(target, new Instruction { Type = LifeEnum.END });
-						}
-
-						//check for consecutive IFs
-						var next = node.Next;
-						while(next != null &&
-							(
-							next.Value.Type == LifeEnum.IF_EGAL ||
-							next.Value.Type == LifeEnum.IF_DIFFERENT ||
-							next.Value.Type == LifeEnum.IF_INF ||
-							next.Value.Type == LifeEnum.IF_INF_EGAL ||
-							next.Value.Type == LifeEnum.IF_SUP ||
-							next.Value.Type == LifeEnum.IF_SUP_EGAL) &&
-							target == nodesMap[next.Value.Goto]) //the IFs ends up at same place
-						{
-							var after = next.Next;
-							ins.Arguments.Add(next.Value.Arguments[0]);
-							nodes.Remove(next);
-
-							next = after;
-						}
+						OptimizeIf(node);
 						break;
-					}
 
 					case LifeEnum.SWITCH:
-					{
-						//instruction after switch should be CASE or MULTICASE
-						//but if could be instructions (eg: DEFAULT after switch)
-						var target = node.Next;
-						while(target != null &&
-							  target.Value.Type != LifeEnum.CASE &&
-							  target.Value.Type != LifeEnum.MULTI_CASE)
-						{
-							target = target.Next;
-						}
-
-						//detect end of switch
-						string switchValue = node.Value.Arguments.First().Split('.').Last();
-						LinkedListNode<Instruction> endOfSwitch = null;
-						bool lastInstruction = false;
-
-						do
-						{
-							ins = target.Value;
-							switch(ins.Type)
-							{
-								case LifeEnum.CASE:
-								case LifeEnum.MULTI_CASE:
-								{
-									for(int i = 0 ; i < ins.Arguments.Count ; i++)
-									{
-										ins.Arguments[i] = GetConditionName(switchValue, ins.Arguments[i]);
-									}
-
-									target = nodesMap[ins.Goto];
-									if (target.Previous.Value.Type == LifeEnum.GOTO)
-									{
-										if(endOfSwitch == null)
-										{
-											endOfSwitch = nodesMap[target.Previous.Value.Goto];
-										}
-									}
-
-									nodes.AddBefore(target, new Instruction { Type = LifeEnum.END });
-									break;
-								}
-
-								default:
-									lastInstruction = true;
-									break;
-							}
-						}
-						while (!lastInstruction);
-
-						//should be equal, otherwise there is a default case
-						if(endOfSwitch != null && target != endOfSwitch)
-						{
-							nodes.AddBefore(endOfSwitch, new Instruction { Type = LifeEnum.END });
-							nodes.AddBefore(endOfSwitch, new Instruction { Type = LifeEnum.END });
-							nodes.AddBefore(target, new Instruction { Type = LifeEnum.DEFAULT });
-						}
-						else
-						{
-							nodes.AddBefore(target, new Instruction { Type = LifeEnum.END });
-						}
+						OptimizeSwitch(node);
 						break;
-					}
 				}
 			}
+		}
+		
+		static void OptimizeIf(LinkedListNode<Instruction> node)
+		{
+			var ins = node.Value;
+			var target = nodesMap[ins.Goto];
+			var previous = target.Previous;
+			if (previous.Value.Type == LifeEnum.GOTO)
+			{							
+				nodes.AddBefore(target, new Instruction { Type = LifeEnum.ELSE });						
+				nodes.AddBefore(nodesMap[previous.Value.Goto], new Instruction { Type = LifeEnum.END });
+			}
+			else
+			{
+				nodes.AddBefore(target, new Instruction { Type = LifeEnum.END });
+			}
 
+			//check for consecutive IFs
+			var next = node.Next;
+			while(next != null &&
+				(
+				next.Value.Type == LifeEnum.IF_EGAL ||
+				next.Value.Type == LifeEnum.IF_DIFFERENT ||
+				next.Value.Type == LifeEnum.IF_INF ||
+				next.Value.Type == LifeEnum.IF_INF_EGAL ||
+				next.Value.Type == LifeEnum.IF_SUP ||
+				next.Value.Type == LifeEnum.IF_SUP_EGAL) &&
+				target == nodesMap[next.Value.Goto]) //the IFs ends up at same place
+			{
+				var after = next.Next;
+				ins.Arguments.Add(next.Value.Arguments[0]);
+				nodes.Remove(next);
+
+				next = after;
+			}
+		}
+		
+		static void OptimizeSwitch(LinkedListNode<Instruction> node)
+		{
+			var ins = node.Value;			
+			//instruction after switch should be CASE or MULTICASE
+			//but if could be instructions (eg: DEFAULT after switch)
+			var target = node.Next;
+			while(target != null &&
+				  target.Value.Type != LifeEnum.CASE &&
+				  target.Value.Type != LifeEnum.MULTI_CASE)
+			{
+				target = target.Next;
+			}
+	
+			//detect end of switch
+			string switchValue = node.Value.Arguments.First().Split('.').Last();
+			LinkedListNode<Instruction> endOfSwitch = null;
+			bool lastInstruction = false;
+	
+			do
+			{
+				ins = target.Value;
+				switch(ins.Type)
+				{
+					case LifeEnum.CASE:
+					case LifeEnum.MULTI_CASE:
+					{
+						for(int i = 0 ; i < ins.Arguments.Count ; i++)
+						{
+							ins.Arguments[i] = GetConditionName(switchValue, ins.Arguments[i]);
+						}
+	
+						target = nodesMap[ins.Goto];
+						if (target.Previous.Value.Type == LifeEnum.GOTO)
+						{
+							if(endOfSwitch == null)
+							{
+								endOfSwitch = nodesMap[target.Previous.Value.Goto];
+							}
+						}
+	
+						nodes.AddBefore(target, new Instruction { Type = LifeEnum.END });
+						break;
+					}
+	
+					default:
+						lastInstruction = true;
+						break;
+				}
+			}
+			while (!lastInstruction);
+	
+			//should be equal, otherwise there is a default case
+			if(endOfSwitch != null && target != endOfSwitch)
+			{
+				nodes.AddBefore(endOfSwitch, new Instruction { Type = LifeEnum.END });
+				nodes.AddBefore(endOfSwitch, new Instruction { Type = LifeEnum.END });
+				nodes.AddBefore(target, new Instruction { Type = LifeEnum.DEFAULT });
+			}
+			else
+			{
+				nodes.AddBefore(target, new Instruction { Type = LifeEnum.END });
+			}
+		}
+		
+		static void Cleanup()
+		{
+			//remove GOTO and ENDLIFE
 			var currentNode = nodes.First;
 			while(currentNode != null)
 			{
