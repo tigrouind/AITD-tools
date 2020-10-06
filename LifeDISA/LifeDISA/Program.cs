@@ -195,6 +195,7 @@ namespace LifeDISA
 			var previous = target.Previous;
 			if (previous.Value.Type == LifeEnum.GOTO)
 			{							
+				previous.Value.ToRemove = true;
 				nodes.AddBefore(target, new Instruction { Type = LifeEnum.ELSE });						
 				nodes.AddBefore(nodesMap[previous.Value.Goto], new Instruction { Type = LifeEnum.END });
 			}
@@ -257,6 +258,7 @@ namespace LifeDISA
 						target = nodesMap[ins.Goto];
 						if (target.Previous.Value.Type == LifeEnum.GOTO)
 						{
+							target.Previous.Value.ToRemove = true;
 							if(endOfSwitch == null)
 							{
 								endOfSwitch = nodesMap[target.Previous.Value.Goto];
@@ -294,12 +296,9 @@ namespace LifeDISA
 			while(currentNode != null)
 			{
 				var nextNode = currentNode.Next;
-				switch(currentNode.Value.Type)
+				if(currentNode.Value.ToRemove)
 				{
-					case LifeEnum.GOTO:
-					case LifeEnum.ENDLIFE:
-						nodes.Remove(currentNode);
-						break;
+					nodes.Remove(currentNode);
 				}
 
 				currentNode = nextNode;
@@ -516,9 +515,12 @@ namespace LifeDISA
 					ins.Add(GetParam());
 					ins.Add(GetParam());
 					break;
-
-				case LifeEnum.RESET_MOVE_MANUAL:
+					
 				case LifeEnum.ENDLIFE:
+					ins.ToRemove = true;
+					break;
+
+				case LifeEnum.RESET_MOVE_MANUAL:				
 				case LifeEnum.RETURN:
 				case LifeEnum.END_SEQUENCE:
 				case LifeEnum.DO_MAX_ZV:
