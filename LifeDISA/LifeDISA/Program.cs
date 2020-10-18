@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -332,6 +333,9 @@ namespace LifeDISA
 					indent++;
 				}
 			}
+			
+			Debug.Assert(indent == 0);
+			Debug.Assert(nodes.All(x => x.Type != LifeEnum.GOTO));
 		}
 
 		static void ParseArguments(LifeEnum life, Instruction ins)
