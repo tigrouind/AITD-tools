@@ -15,11 +15,10 @@ namespace VarsViewer
 		readonly Brush greenBrush = new SolidBrush(Color.FromArgb(255, 43, 193, 118));
 		readonly Brush grayBrush = new SolidBrush(Color.FromArgb(255, 28, 28, 38));
 		readonly Brush lightGrayBrush = new SolidBrush(Color.FromArgb(255, 47, 47, 57));
-		readonly Brush darkGrayBrush = new SolidBrush(Color.FromArgb(255, 17, 17, 17));
 		readonly Brush whiteBrush = new SolidBrush(Color.FromArgb(255, 255, 255, 255));
 		readonly Brush redBrush = new SolidBrush(Color.FromArgb(255, 240, 68, 77));
 		readonly Brush blueBrush = new SolidBrush(Color.FromArgb(64, 0, 162, 232));
-		readonly Brush darkRedBrush = new SolidBrush(Color.FromArgb(255, 128, 42, 47));
+		readonly Brush transparentBrush = new SolidBrush(Color.FromArgb(96, 0, 0, 0));
 
 		readonly StringFormat format = new StringFormat();
 
@@ -109,8 +108,13 @@ namespace VarsViewer
 					break;
 			}
 		}
-
+		
 		RectangleF DrawCell(PaintEventArgs e, int x, int y, string text, Brush back, Brush front, StringAlignment alignment)
+		{
+			return DrawCell(e, x, y, text, back, front, alignment, false);
+		}
+
+		RectangleF DrawCell(PaintEventArgs e, int x, int y, string text, Brush back, Brush front, StringAlignment alignment, bool selected)
 		{
 			var rect = new RectangleF(x * cellWidth, y * cellHeight, cellWidth, cellHeight);
 			if (rect.IntersectsWith(e.ClipRectangle))
@@ -119,12 +123,13 @@ namespace VarsViewer
 				format.Alignment = alignment;
 
 				e.Graphics.FillRectangle(back, rect);
+				if (selected) e.Graphics.FillRectangle(transparentBrush, rect);
 				e.Graphics.DrawString(text, Font, front, rect, format);
 			}
 
 			return rect;
 		}
-
+		
 		void DrawTab(PaintEventArgs e, Var[] vars, int position)
 		{
 			DrawHeader(e, vars, position);
@@ -158,7 +163,8 @@ namespace VarsViewer
 					if(index < vars.Length)
 					{
 						Var var = vars[index];
-						var.Rectangle = DrawCell(e, i + 1, j + position + 1, var.Text, GetBackgroundBrush(var), whiteBrush, StringAlignment.Center);
+						bool selected = var == selectedVar;
+						var.Rectangle = DrawCell(e, i + 1, j + position + 1, var.Text, GetBackgroundBrush(var), whiteBrush, StringAlignment.Center, selected);				
 					}
 					else
 					{
@@ -170,20 +176,11 @@ namespace VarsViewer
 
 		Brush GetBackgroundBrush(Var var)
 		{
-			bool selected = selectedVar == var;
-			if(selected && var.Difference)
-			{
-				return darkRedBrush;
-			}
-			if(selected)
-			{
-				return darkGrayBrush;
-			}
 			if(var.Difference)
 			{
 				return redBrush;
 			}
-
+			
 			return grayBrush;
 		}
 
