@@ -93,9 +93,12 @@ namespace VarsViewer
 			switch(e.KeyCode)
 			{
 				case Keys.C:
-					worker.Compare = !worker.Compare;
-					worker.IgnoreDifferences = !worker.Compare;
-					UpdateWorker();
+					if (worker.Compare || worker.Vars.Any(x => x.SaveState != x.Value) || worker.Cvars.Any(x => x.SaveState != x.Value))
+					{
+						worker.Compare = !worker.Compare;
+						worker.IgnoreDifferences = !worker.Compare;
+						UpdateWorker();
+					}
 					break;
 
 				case Keys.F:
