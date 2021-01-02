@@ -116,8 +116,10 @@ namespace LifeDISA
 					writer.WriteLine("--------------------------------------------------");					
 					allBytes = pak.GetEntry(i);
 					ParseFile();
+					#if !NO_DECOMPILE
 					Optimize();
 					Cleanup();
+					#endif
 					Dump(writer);
 				}
 			}
@@ -156,6 +158,7 @@ namespace LifeDISA
 				
 				Instruction ins = new Instruction();
 				ins.Type = life;
+				ins.Line = pos;
 				
 				if(actor != -1) ins.Actor = GetObject(actor);
 				pos += 2;
@@ -166,6 +169,7 @@ namespace LifeDISA
 			}
 		}
 
+		#if !NO_DECOMPILE
 		static void Optimize()
 		{
 			for(var node = nodes.First; node != null; node = node.Next)
@@ -305,6 +309,7 @@ namespace LifeDISA
 				currentNode = nextNode;
 			}
 		}
+		#endif
 
 		static void Dump(TextWriter writer)
 		{
@@ -320,6 +325,10 @@ namespace LifeDISA
 
 				writer.Write(new String('\t', indent));
 				
+				#if NO_DECOMPILE
+				writer.Write(ins.Line.ToString().PadLeft(4) + " ");
+				#endif
+				
 				writer.Write(ins.Name);	
 				if (ins.Arguments.Any())
 				{
@@ -334,8 +343,10 @@ namespace LifeDISA
 				}
 			}
 			
+			#if !NO_DECOMPILE
 			Debug.Assert(indent == 0);
 			Debug.Assert(nodes.All(x => x.Type != LifeEnum.GOTO));
+			#endif
 		}
 
 		static void ParseArguments(LifeEnum life, Instruction ins)
@@ -377,10 +388,16 @@ namespace LifeDISA
 					}
 
 					ins.Goto = GetParam() * 2 + pos;
+					#if NO_DECOMPILE
+					ins.Add("goto {0}", ins.Goto);
+					#endif
 					break;
 
 				case LifeEnum.GOTO: //should never be called
 					ins.Goto = GetParam() * 2 + pos;
+					#if NO_DECOMPILE
+					ins.Add("{0}", ins.Goto);
+					#endif
 					break;
 
 				case LifeEnum.SWITCH:
@@ -390,6 +407,9 @@ namespace LifeDISA
 				case LifeEnum.CASE:
 					ins.Add(GetParam());
 					ins.Goto = GetParam() * 2 + pos;
+					#if NO_DECOMPILE
+					ins.Add("goto {0}", ins.Goto);
+					#endif
 					break;
 
 				case LifeEnum.MULTI_CASE:

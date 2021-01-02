@@ -11,6 +11,7 @@ namespace LifeDISA
 		public string Actor;
 		public int Goto = -1;
 		public bool ToRemove;
+		public int Line;
 
 		public void Add(string format, params object[] args)
 		{
@@ -33,6 +34,7 @@ namespace LifeDISA
 			{
 				switch(Type)
 				{
+					#if !NO_DECOMPILE
 					case LifeEnum.IF_EGAL:
 					case LifeEnum.IF_DIFFERENT:
 					case LifeEnum.IF_SUP_EGAL:
@@ -45,7 +47,7 @@ namespace LifeDISA
 					case LifeEnum.MULTI_CASE:										
 					case LifeEnum.DEFAULT:								
 						return true;
-						
+					#endif	
 					default:
 						return false;
 				}
@@ -58,10 +60,11 @@ namespace LifeDISA
 			{
 				switch(Type)
 				{
+					#if !NO_DECOMPILE
 					case LifeEnum.ELSE:						
 					case LifeEnum.END:					
 						return true;
-						
+					#endif		
 					default:
 						return false;
 				}
@@ -74,6 +77,7 @@ namespace LifeDISA
 			{
 				switch (Type)
 				{
+					#if !NO_DECOMPILE
 					case LifeEnum.IF_EGAL:
 					case LifeEnum.IF_DIFFERENT:
 					case LifeEnum.IF_SUP_EGAL:
@@ -81,7 +85,7 @@ namespace LifeDISA
 					case LifeEnum.IF_INF_EGAL:
 					case LifeEnum.IF_INF:
 						return " and ";
-						
+					#endif			
 					default:
 						return " ";
 				}
@@ -92,8 +96,10 @@ namespace LifeDISA
 		{
 			get
 			{
+				#if !NO_DECOMPILE
 				switch (Type)
 				{
+					
 					case LifeEnum.IF_EGAL:
 					case LifeEnum.IF_DIFFERENT:
 					case LifeEnum.IF_SUP_EGAL:
@@ -108,7 +114,7 @@ namespace LifeDISA
 					case LifeEnum.C_VAR:
 						return "set";						
 				}
-				
+				#endif	
 				string name = Type.ToString().ToLowerInvariant();
 				if (Actor != null) 
 				{
