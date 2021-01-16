@@ -8,5 +8,8 @@ namespace Shared
 		public int Position;
 		public int Owner;
 		public int Size;
+		#if DEBUG
+		public string Name;
+		#endif
 	}
 }

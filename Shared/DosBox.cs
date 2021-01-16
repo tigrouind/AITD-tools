@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 
 namespace Shared
 {
@@ -43,6 +44,9 @@ namespace Shared
 				var blockTag = memory[pos];
 				var blockOwner = memory.ReadUnsignedShort(pos + 1);
 				var blockSize = memory.ReadUnsignedShort(pos + 3);
+				#if DEBUG
+				var blockName = Encoding.ASCII.GetString(memory, pos + 8, 8).Replace("\0", string.Empty);
+				#endif
 
 				if (blockTag != 0x4D && blockTag != 0x5A)
 				{
@@ -53,7 +57,10 @@ namespace Shared
 				{
 					Position = pos + 16 - offset,
 					Size = blockSize * 16,
-					Owner = blockOwner * 16
+					Owner = blockOwner * 16,
+					#if DEBUG
+					Name = blockName
+					#endif
 				};
 
 				if(blockTag == 0x5A) //last tag should be 0x5A
