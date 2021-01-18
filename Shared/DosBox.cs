@@ -36,9 +36,11 @@ namespace Shared
 		}
 
 		public static IEnumerable<DosMCB> GetMCBs(byte[] memory, int offset)
-		{
+		{			
+			int firstMCB = memory.ReadUnsignedShort(0x0824 + offset) * 16; //sysvars (list of lists) (0x80) + firstMCB (0x24) (see DOSBox/dos_inc.h)
+			
 			//scan DOS memory control block (MCB) chain
-			int pos = memory.ReadUnsignedShort(0x0824 + offset) * 16 + offset;
+			int pos = firstMCB + offset;
 			while (pos <= (memory.Length - 16))
 			{
 				var blockTag = memory[pos];
@@ -74,7 +76,7 @@ namespace Shared
 		
 		public static bool GetExeEntryPoint(byte[] memory, out int entryPoint)
 		{
-			int psp = memory.ReadUnsignedShort(0x0B30) * 16; 
+			int psp = memory.ReadUnsignedShort(0x0B30) * 16; // 0xB2 (dos swappable area) + 0x10 (current PSP) (see DOSBox/dos_inc.h)
 			if (psp > 0)
 			{
 				int exeSize = memory.ReadUnsignedShort(psp - 16 + 3) * 16;
