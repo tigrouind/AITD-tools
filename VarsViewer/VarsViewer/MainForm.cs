@@ -10,6 +10,8 @@ namespace VarsViewer
 		float cellWidth, cellHeight;
 
 		Var selectedVar;
+		bool editActive;		
+		string inputText;
 
 		readonly ToolTip toolTip;
 		readonly Brush greenBrush = new SolidBrush(Color.FromArgb(255, 43, 193, 118));
@@ -109,15 +111,81 @@ namespace VarsViewer
 				case Keys.S:
 					worker.SaveState();
 					break;
+					
+				case Keys.Delete:
+					EnableEdit();	
+					Invalidate(selectedVar.Rectangle);
+					break;
 			}
 		}
 		
+		void MainFormKeyPress(object sender, KeyPressEventArgs e)
+		{
+			if (selectedVar != null && worker.IsRunning)
+			{				
+				if (e.KeyChar >= '0' && e.KeyChar <= '9')
+				{					
+					EnableEdit();					
+					if(inputText.Length < (inputText.Contains("-") ? 6 : 5))
+					{						
+						inputText += e.KeyChar;
+					}
+					Invalidate(selectedVar.Rectangle);
+				}
+				else if (e.KeyChar == '-')
+				{
+					EnableEdit();
+					if (inputText.Length == 0)
+					{
+						inputText = "-";	
+					}
+					Invalidate(selectedVar.Rectangle);
+				}							
+				else if (e.KeyChar == (char)Keys.Back)
+				{
+					EnableEdit();
+					if (inputText.Length > 0)
+					{
+						inputText = inputText.Remove(inputText.Length - 1);						
+					}
+					
+					Invalidate(selectedVar.Rectangle);
+				}
+				else if (e.KeyChar == (char)Keys.Enter)
+				{
+					if (editActive)
+					{
+						ValidateInput();
+						editActive = false;												
+						Invalidate(selectedVar.Rectangle);
+					}
+				}			
+				else if (e.KeyChar == (char)Keys.Escape)
+				{
+					if (editActive)
+					{
+						editActive = false;
+						Invalidate(selectedVar.Rectangle);
+					}
+				}
+			}
+		}
+		
+		void EnableEdit()
+		{
+			if (!editActive)
+			{
+				editActive = true;
+				inputText = string.Empty;
+			}
+		}
+				
 		RectangleF DrawCell(PaintEventArgs e, int x, int y, string text, Brush back, Brush front, StringAlignment alignment)
 		{
-			return DrawCell(e, x, y, text, back, front, alignment, false);
+			return DrawCell(e, x, y, text, back, front, alignment, false, false);
 		}
 
-		RectangleF DrawCell(PaintEventArgs e, int x, int y, string text, Brush back, Brush front, StringAlignment alignment, bool selected)
+		RectangleF DrawCell(PaintEventArgs e, int x, int y, string text, Brush back, Brush front, StringAlignment alignment, bool selected, bool highlight)
 		{
 			var rect = new RectangleF(x * cellWidth, y * cellHeight, cellWidth, cellHeight);
 			if (rect.IntersectsWith(e.ClipRectangle))
@@ -126,7 +194,17 @@ namespace VarsViewer
 				format.Alignment = alignment;
 
 				e.Graphics.FillRectangle(back, rect);
-				if (selected) e.Graphics.FillRectangle(transparentBrush, rect);
+				if (selected)
+				{
+					e.Graphics.FillRectangle(transparentBrush, rect);
+				}
+				if (highlight && text != string.Empty)
+				{
+					var textSize = e.Graphics.MeasureString(text, Font, rect.Size);
+					var center = new PointF((rect.Left + rect.Right) / 2, (rect.Top + rect.Bottom) / 2);
+					e.Graphics.FillRectangle(Brushes.Blue, new RectangleF(center.X - textSize.Width / 2, center.Y - textSize.Height / 2, textSize.Width, textSize.Height));
+				}
+				
 				e.Graphics.DrawString(text, Font, front, rect, format);
 			}
 
@@ -167,7 +245,9 @@ namespace VarsViewer
 					{
 						Var var = vars[index];
 						bool selected = var == selectedVar;
-						var.Rectangle = DrawCell(e, i + 1, j + position + 1, var.Text, GetBackgroundBrush(var), whiteBrush, StringAlignment.Center, selected);				
+						bool edit = var == selectedVar && editActive;
+						string text = edit ? inputText : var.Text;
+						var.Rectangle = DrawCell(e, i + 1, j + position + 1, text, GetBackgroundBrush(var), whiteBrush, StringAlignment.Center, selected, edit);
 					}
 					else
 					{
@@ -190,10 +270,16 @@ namespace VarsViewer
 		void MainFormMouseMove(object sender, MouseEventArgs e)
 		{
 			Var var;
-			TryFindVarAtPosition(e.Location, out var);
-
-			if(selectedVar != var)
+			TryFindVarAtPosition(e.Location, out var);	
+			
+			if (selectedVar != var)
 			{
+				if(editActive)
+				{
+					editActive = false;
+					ValidateInput();		
+				}
+				
 				if(var != null)
 				{
 					toolTip.Show(string.Format("#{0}\n{1}", var.Index, var.Name), var.Rectangle);
@@ -216,27 +302,16 @@ namespace VarsViewer
 
 			return result != null;
 		}
-
-		void MainFormMouseClick(object sender, MouseEventArgs e)
+							
+		void ValidateInput()
 		{
-			Var var;
-
-			if (e.Button == MouseButtons.Left && TryFindVarAtPosition(e.Location, out var) && var.MemoryAddress >= 0)
+			int value = 0;
+			if ((inputText == string.Empty || int.TryParse(inputText, out value)) && value != selectedVar.Value)
 			{
-				var title = string.Format("#{0} {1}", var.Index, var.Name);
-				var	input = var.Value == 0 ? string.Empty : var.Value.ToString();
-				
-				if (DialogBox.Show(title, ref input) == DialogResult.OK)
-				{
-					int value = 0;
-					if ((input == string.Empty || int.TryParse(input, out value)) && value != var.Value)
-					{
-						value = Math.Min(value, short.MaxValue);
-						value = Math.Max(value, short.MinValue);
-						worker.Write(var, (short)value);
-						UpdateWorker();
-					}
-				}
+				value = Math.Min(value, short.MaxValue);
+				value = Math.Max(value, short.MinValue);
+				worker.Write(selectedVar, (short)value);
+				UpdateWorker();				
 			}
 		}
 
@@ -246,6 +321,12 @@ namespace VarsViewer
 			{
 				if(selectedVar != null)
 				{
+					if(editActive)
+					{
+						editActive = false;
+						ValidateInput();		
+					}
+					
 					Invalidate(selectedVar.Rectangle);
 					selectedVar = null;
 				}
