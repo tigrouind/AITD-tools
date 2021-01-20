@@ -121,7 +121,8 @@ namespace VarsViewer
 		
 		void MainFormKeyPress(object sender, KeyPressEventArgs e)
 		{
-			if (selectedVar != null && worker.IsRunning)
+			if (selectedVar != null && selectedVar.MemoryAddress != -1
+			    && worker.IsRunning && !worker.Freeze && !worker.Compare)
 			{				
 				if (e.KeyChar >= '0' && e.KeyChar <= '9')
 				{					

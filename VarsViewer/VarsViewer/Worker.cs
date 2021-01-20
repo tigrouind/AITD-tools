@@ -84,16 +84,8 @@ namespace VarsViewer
 					int varAddress, cvarAddress;
 					GetMemoryAddresses(out varAddress, out cvarAddress);
 					
-					int varsPointer;
-					if ((varsPointer = memory.ReadFarPointer(entryPoint + varAddress)) != 0)
-					{
-						varsMemoryAddress = memoryAddress + varsPointer;
-						cvarsMemoryAddress = memoryAddress + entryPoint + cvarAddress;
-					}													
-					else
-					{
-						CloseReader();
-					}
+					varsMemoryAddress = memoryAddress + entryPoint + varAddress;
+					cvarsMemoryAddress = memoryAddress + entryPoint + cvarAddress;
 				} 
 				else
 				{
@@ -108,13 +100,22 @@ namespace VarsViewer
 					bool needRefresh = false;
 					int time = Environment.TickCount;
 
-					bool result;
-					if (result = (processReader.Read(memory, varsMemoryAddress, 207 * 2) > 0))
+					bool result = true;
+					if (result &= (processReader.Read(memory, varsMemoryAddress, 4) > 0))
 					{
-						needRefresh |= CheckDifferences(Vars, varsMemoryAddress, time);
+						int varsPointer = memory.ReadFarPointer(0);
+						if(varsPointer == 0)
+						{
+							Array.Clear(memory, 0, 207 * 2);
+							needRefresh |= CheckDifferences(Vars, -1, time);
+						}
+						else if (result &= (processReader.Read(memory, memoryAddress + varsPointer, 207 * 2) > 0))
+						{
+							needRefresh |= CheckDifferences(Vars, memoryAddress + varsPointer, time);
+						}
 					}
 
-					if (result = (processReader.Read(memory, cvarsMemoryAddress, 44 * 2) > 0))
+					if (result &= (processReader.Read(memory, cvarsMemoryAddress, 44 * 2) > 0))
 					{
 						needRefresh |= CheckDifferences(Cvars, cvarsMemoryAddress, time);
 					}
@@ -193,7 +194,7 @@ namespace VarsViewer
 					}
 				}
 
-				var.MemoryAddress = offset + i * 2;
+				var.MemoryAddress = offset;
 
 				//check differences
 				bool difference = (time - var.Time) < 5000;
@@ -237,10 +238,10 @@ namespace VarsViewer
 
 		public void Write(Var var, short value)
 		{
-			if(processReader != null)
+			if(processReader != null && var.MemoryAddress != -1)
 			{
 				memory.Write(value, 0);
-				processReader.Write(memory, var.MemoryAddress, 2);
+				processReader.Write(memory, var.MemoryAddress + var.Index * 2, 2);
 			}
 		}
 	}
