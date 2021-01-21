@@ -46,6 +46,7 @@ namespace VarsViewer
 			{
 				var var = new Var();
 				var.Index = i;
+				var.Text = string.Empty;
 				var.Name = varParser.GetText(sectionName, var.Index);
 				data[i] = var;
 			}

@@ -191,22 +191,26 @@ namespace VarsViewer
 			var rect = new RectangleF(x * cellWidth, y * cellHeight, cellWidth, cellHeight);
 			if (rect.IntersectsWith(e.ClipRectangle))
 			{
-				format.LineAlignment = StringAlignment.Center;
-				format.Alignment = alignment;
-
 				e.Graphics.FillRectangle(back, rect);
 				if (selected)
 				{
 					e.Graphics.FillRectangle(transparentBrush, rect);
 				}
-				if (highlight && text != string.Empty)
-				{
-					var textSize = e.Graphics.MeasureString(text, Font, rect.Size);
-					var center = new PointF((rect.Left + rect.Right) / 2, (rect.Top + rect.Bottom) / 2);
-					e.Graphics.FillRectangle(Brushes.Blue, new RectangleF(center.X - textSize.Width / 2, center.Y - textSize.Height / 2, textSize.Width, textSize.Height));
-				}
 				
-				e.Graphics.DrawString(text, Font, front, rect, format);
+				if (text != string.Empty)
+				{
+					format.LineAlignment = StringAlignment.Center;
+					format.Alignment = alignment;
+					
+					if (highlight)
+					{
+						var textSize = e.Graphics.MeasureString(text, Font, rect.Size, format);
+						var center = new PointF((rect.Left + rect.Right) / 2, (rect.Top + rect.Bottom) / 2);
+						e.Graphics.FillRectangle(Brushes.Blue, new RectangleF(center.X - textSize.Width / 2, center.Y - textSize.Height / 2, textSize.Width, textSize.Height));
+					}
+				
+					e.Graphics.DrawString(text, Font, front, rect, format);
+				}
 			}
 
 			return rect;
