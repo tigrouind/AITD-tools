@@ -25,7 +25,7 @@ namespace VarsViewer
 
 		public void OnPaint(PaintEventArgs e)
 		{
-			if (toolTipText != string.Empty)
+			if (toolTipText != string.Empty && toolTipRect.IntersectsWith(e.ClipRectangle))
 			{
 				e.Graphics.FillRectangle(darkGreenBrush, toolTipRect);
 				e.Graphics.DrawString(toolTipText, parent.Font, whiteBrush, toolTipRect, format);

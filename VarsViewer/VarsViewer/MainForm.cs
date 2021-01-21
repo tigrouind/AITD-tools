@@ -114,7 +114,6 @@ namespace VarsViewer
 					
 				case Keys.Delete:
 					EnableEdit();	
-					Invalidate(selectedVar.Rectangle);
 					break;
 			}
 		}
@@ -124,50 +123,60 @@ namespace VarsViewer
 			if (selectedVar != null && selectedVar.MemoryAddress != -1
 			    && worker.IsRunning && !worker.Freeze && !worker.Compare)
 			{				
-				if (e.KeyChar >= '0' && e.KeyChar <= '9')
-				{					
-					EnableEdit();					
-					if(inputText.Length < (inputText.Contains("-") ? 6 : 5))
-					{						
-						inputText += e.KeyChar;
-					}
-					Invalidate(selectedVar.Rectangle);
-				}
-				else if (e.KeyChar == '-')
+				switch((Keys)e.KeyChar)
 				{
-					EnableEdit();
-					if (inputText.Length == 0)
-					{
-						inputText = "-";	
-					}
-					Invalidate(selectedVar.Rectangle);
-				}							
-				else if (e.KeyChar == (char)Keys.Back)
-				{
-					EnableEdit();
-					if (inputText.Length > 0)
-					{
-						inputText = inputText.Remove(inputText.Length - 1);						
-					}
+					case Keys.D0:
+					case Keys.D1:
+					case Keys.D2:
+					case Keys.D3:
+					case Keys.D4:
+					case Keys.D5:
+					case Keys.D6:
+					case Keys.D7:
+					case Keys.D8:
+					case Keys.D9:
+						EnableEdit();					
+						if(inputText.Length < (inputText.Contains("-") ? 6 : 5))
+						{						
+							inputText += e.KeyChar;
+							Invalidate(selectedVar.Rectangle);
+						}	
+						break;
 					
-					Invalidate(selectedVar.Rectangle);
-				}
-				else if (e.KeyChar == (char)Keys.Enter)
-				{
-					if (editActive)
-					{
-						ValidateInput();
-						editActive = false;												
-						Invalidate(selectedVar.Rectangle);
-					}
-				}			
-				else if (e.KeyChar == (char)Keys.Escape)
-				{
-					if (editActive)
-					{
-						editActive = false;
-						Invalidate(selectedVar.Rectangle);
-					}
+					case Keys.Insert:
+						EnableEdit();
+						if (inputText.Length == 0)
+						{
+							inputText = "-";	
+							Invalidate(selectedVar.Rectangle);
+						}
+						break;
+						
+					case Keys.Back:
+						EnableEdit();
+						if (inputText.Length > 0)
+						{
+							inputText = inputText.Remove(inputText.Length - 1);	
+							Invalidate(selectedVar.Rectangle);						
+						}
+						break;
+						
+					case Keys.Enter:
+						if (editActive)
+						{
+							ValidateInput();
+							editActive = false;												
+							Invalidate(selectedVar.Rectangle);
+						}
+						break;
+												
+					case Keys.Escape:
+						if (editActive)
+						{
+							editActive = false;
+							Invalidate(selectedVar.Rectangle);
+						}
+						break;
 				}
 			}
 		}
@@ -178,15 +187,21 @@ namespace VarsViewer
 			{
 				editActive = true;
 				inputText = string.Empty;
+				Invalidate(selectedVar.Rectangle);
 			}
 		}
-				
-		RectangleF DrawCell(PaintEventArgs e, int x, int y, string text, Brush back, Brush front, StringAlignment alignment)
+		
+		RectangleF DrawCell(PaintEventArgs e, int x, int y, Brush back)
 		{
-			return DrawCell(e, x, y, text, back, front, alignment, false, false);
+			return DrawCell(e, x, y, back, string.Empty, null, default(StringAlignment), false, false);
+		}
+				
+		RectangleF DrawCell(PaintEventArgs e, int x, int y, Brush back, string text, Brush front, StringAlignment alignment)
+		{
+			return DrawCell(e, x, y, back, text, front, alignment, false, false);
 		}
 
-		RectangleF DrawCell(PaintEventArgs e, int x, int y, string text, Brush back, Brush front, StringAlignment alignment, bool selected, bool highlight)
+		RectangleF DrawCell(PaintEventArgs e, int x, int y, Brush back, string text, Brush front, StringAlignment alignment, bool selected, bool highlight)
 		{
 			var rect = new RectangleF(x * cellWidth, y * cellHeight, cellWidth, cellHeight);
 			if (rect.IntersectsWith(e.ClipRectangle))
@@ -224,17 +239,17 @@ namespace VarsViewer
 
 		void DrawHeader(PaintEventArgs e, Var[] vars, int position)
 		{
-			DrawCell(e, 0, position,  string.Empty, greenBrush, grayBrush, StringAlignment.Center);
+			DrawCell(e, 0, position,  greenBrush);
 
 			for(int i = 0 ; i < 20 ; i++)
 			{
-				DrawCell(e, i + 1, position, i.ToString(), greenBrush, grayBrush, StringAlignment.Center);
+				DrawCell(e, i + 1, position, greenBrush, i.ToString(), grayBrush, StringAlignment.Center);
 			}
 
 			int rows = (vars.Length + 19) / 20;
 			for(int i = 0 ; i < rows ; i++)
 			{
-				DrawCell(e, 0, i + 1 + position, (i * 20).ToString(), greenBrush, grayBrush, StringAlignment.Far);
+				DrawCell(e, 0, i + 1 + position, greenBrush, (i * 20).ToString(), grayBrush, StringAlignment.Far);
 			}
 		}
 
@@ -252,11 +267,11 @@ namespace VarsViewer
 						bool selected = var == selectedVar;
 						bool edit = var == selectedVar && editActive;
 						string text = edit ? inputText : var.Text;
-						var.Rectangle = DrawCell(e, i + 1, j + position + 1, text, GetBackgroundBrush(var), whiteBrush, StringAlignment.Center, selected, edit);
+						var.Rectangle = DrawCell(e, i + 1, j + position + 1, GetBackgroundBrush(var), text, whiteBrush, StringAlignment.Center, selected, edit);
 					}
 					else
 					{
-						DrawCell(e, i + 1, j + position + 1, string.Empty, lightGrayBrush, grayBrush, StringAlignment.Center);
+						DrawCell(e, i + 1, j + position + 1, lightGrayBrush);
 					}
 				}
 			}
