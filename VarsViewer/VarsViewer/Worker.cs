@@ -166,7 +166,7 @@ namespace VarsViewer
 			{
 				Var var = data[i];
 				int oldValue = var.Value;
-				short value;
+				int value;
 
 				if (Compare)
 				{
