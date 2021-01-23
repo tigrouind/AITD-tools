@@ -11,9 +11,12 @@ namespace VarsViewer
 		ProcessMemoryReader processReader;
 
 		long memoryAddress;
-		long varsMemoryAddress = -1;
-		long cvarsMemoryAddress = -1;
+		int entryPoint = -1;
+		int gameVersion;
 		readonly byte[] memory = new byte[640 * 1024];
+		
+		int[] varAddress = { 0x2184B, 0x2048E };
+		int[] cvarAddress = { 0x22074, 0x204B8 };
 
 		public readonly Var[] Vars = new Var[207];
 		public readonly Var[] Cvars = new Var[44];
@@ -56,7 +59,7 @@ namespace VarsViewer
 		{
 			get
 			{
-				return processReader != null && varsMemoryAddress != -1 && cvarsMemoryAddress != -1;
+				return processReader != null && entryPoint != -1;
 			}
 		}
 
@@ -76,17 +79,14 @@ namespace VarsViewer
 				}
 			}
 
-			if (processReader != null && (varsMemoryAddress == -1 || cvarsMemoryAddress == -1))
+			if (processReader != null && entryPoint == -1)
 			{		
-				int entryPoint;
 				if (processReader.Read(memory, memoryAddress, memory.Length) > 0 && 
-				   DosBox.GetExeEntryPoint(memory, out entryPoint))
+				      DosBox.GetExeEntryPoint(memory, out entryPoint))
 				{						
-					int varAddress, cvarAddress;
-					GetMemoryAddresses(out varAddress, out cvarAddress);
-					
-					varsMemoryAddress = memoryAddress + entryPoint + varAddress;
-					cvarsMemoryAddress = memoryAddress + entryPoint + cvarAddress;
+					//check if CDROM/floppy version
+					byte[] cdPattern = Encoding.ASCII.GetBytes("CD Not Found");
+					gameVersion = Tools.IndexOf(memory, cdPattern) != -1 ? 0 : 1;
 				} 
 				else
 				{
@@ -94,12 +94,15 @@ namespace VarsViewer
 				}
 			}
 
-			if (processReader != null && varsMemoryAddress != -1 && cvarsMemoryAddress != -1)
+			if (processReader != null)
 			{
 				if (!Freeze)
 				{
 					bool needRefresh = false;
 					int time = Environment.TickCount;
+										
+					long varsMemoryAddress = memoryAddress + entryPoint + varAddress[gameVersion];
+					long cvarsMemoryAddress = memoryAddress + entryPoint + cvarAddress[gameVersion];
 
 					bool result = true;
 					if (result &= (processReader.Read(memory, varsMemoryAddress, 4) > 0))
@@ -137,28 +140,11 @@ namespace VarsViewer
 
 		void CloseReader()
 		{
-			varsMemoryAddress = cvarsMemoryAddress = -1;
+			entryPoint = -1;
 			processReader.Close();
 			processReader = null;
 		}
 		
-		void GetMemoryAddresses(out int varAddress, out int cvarAddress)
-		{
-			//check if CDROM/floppy version
-			byte[] cdPattern = Encoding.ASCII.GetBytes("CD Not Found");
-			bool isCDROMVersion = Tools.IndexOf(memory, cdPattern) != -1;
-			if (isCDROMVersion)
-			{
-				varAddress = 0x2184B;
-				cvarAddress = 0x22074;
-			}
-			else
-			{
-				varAddress = 0x2048E;
-				cvarAddress = 0x204B8;
-			}
-		}
-
 		bool CheckDifferences(Var[] data, long offset, int time)
 		{
 			bool needRefresh = false;
