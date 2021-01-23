@@ -6,8 +6,7 @@ namespace CacheViewer
 	{
 		public string Name;
 		public List<CacheEntry> Entries = new List<CacheEntry>();
-		public long Address = -1;
-		public byte[] Pattern;
+		public int[] Address;
 
 		public int MaxFreeData;
 		public int SizeFreeData;

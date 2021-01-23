@@ -26,13 +26,6 @@ MemoryViewer [-screen-width width] [-screen-height height] [-zoom zoom]
 ```
 Press `space` to display memory allocation blocks
 
-# CacheViewer
-## Command-line arguments : 
-```
-CacheViewer [ListSamp] [ListBody] [ListBod2] [ListAnim] [ListAni2] [ListLife] [ListTrak] [_MEMORY_]
-```
-A maximum of 6 columns is supported
-
 # VarsViewer
 
 ## Command-line arguments : 

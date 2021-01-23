@@ -9,29 +9,25 @@ namespace CacheViewer
 	class Program
 	{
 		static ProcessMemoryReader processReader;
-		static byte[] buffer = new byte[640 * 1024];
+		static byte[] memory = new byte[640 * 1024];
 		static Cache[] cache;
-		static long address;
+		static long memoryAddress;
+		static int entryPoint = -1;
+		static int gameVersion;
 
-		public static void Main(string[] args)
+		public static void Main()
 		{
 			System.Console.Title = "AITD cache viewer";
 
-			if (args.Length == 0)
+			cache = new []
 			{
-				args = new [] { "ListSamp", "ListBod2", "ListAni2", "ListLife", "ListTrak", "_MEMORY_" };
-			}
-
-			if (args.Length > 6)
-			{
-				args = args.Take(6).ToArray();
-			}
-
-			cache = args.Select(x => new Cache
-			{
-				Name = x,
-				Pattern = Encoding.ASCII.GetBytes(x)
-			}).ToArray();
+				new Cache { Address = new [] { 0x218CB, 0x2053E } },
+				new Cache { Address = new [] { 0x218D7, 0x20494 } },
+				new Cache { Address = new [] { 0x218D3, 0x20498 } },
+				new Cache { Address = new [] { 0x218CF, 0x2049C } },
+				new Cache { Address = new [] { 0x218C7, 0x204AA } },
+				new Cache { Address = new [] { 0x218BF, 0x20538 } }
+			};
 
 			while (true)
 			{
@@ -40,9 +36,9 @@ namespace CacheViewer
 					SearchDosBox();
 				}
 
-				if (processReader != null && cache.Any(x => x.Address == -1))
+				if (processReader != null && entryPoint == -1)
 				{
-					SearchPatterns();
+					SearchEntryPoint();
 				}
 
 				if (processReader != null)
@@ -68,32 +64,23 @@ namespace CacheViewer
 			if (processId != -1)
 			{
 				processReader = new ProcessMemoryReader(processId);
-				address = processReader.SearchFor16MRegion();
-				if (address == -1)
+				memoryAddress = processReader.SearchFor16MRegion();
+				if (memoryAddress == -1)
 				{
 					CloseReader();
 				}
 			}
 		}
 
-		static void SearchPatterns()
+		static void SearchEntryPoint()
 		{
-			if (processReader.Read(buffer, address, buffer.Length) > 0) //640K
-			{
-				foreach(var block in DosBox.GetMCBs(buffer, 0)
-						.Where(x => x.Owner != 0 && x.Owner != 8)) //free or owned by DOS
-				{
-					int position = block.Position;
-					foreach(var ch in cache)
-					{
-						var pattern = ch.Pattern;
-						if (buffer.IsMatch(pattern, position))
-						{
-							ch.Address = address + position;
-						}
-					}
-				}
-			}
+			if (processReader.Read(memory, memoryAddress, memory.Length) > 0 && 
+			     DosBox.GetExeEntryPoint(memory, out entryPoint))
+			{						
+				//check if CDROM/floppy version
+				byte[] cdPattern = Encoding.ASCII.GetBytes("CD Not Found");
+				gameVersion = Tools.IndexOf(memory, cdPattern) != -1 ? 0 : 1;
+			} 
 			else
 			{
 				CloseReader();
@@ -105,62 +92,66 @@ namespace CacheViewer
 			bool readSuccess = true;
 
 			int ticks = Environment.TickCount;
-			foreach (var ch in cache.Where(x => x.Address != -1))
+			foreach (var ch in cache)
 			{
-				if ((readSuccess = processReader.Read(buffer, ch.Address - 16, 4096) > 0) &&
-					buffer.ReadUnsignedShort(1) != 0 && //block is still allocated
-					buffer.IsMatch(ch.Pattern, 16)) //pattern is still matching
+				if (readSuccess &= (processReader.Read(memory, memoryAddress + entryPoint + ch.Address[gameVersion], 4) > 0))
 				{
-					const int offset = 16;
-					ch.MaxFreeData = buffer.ReadUnsignedShort(offset + 10);
-					ch.SizeFreeData = buffer.ReadUnsignedShort(offset + 12);
-					ch.NumMaxEntry = buffer.ReadUnsignedShort(offset + 14);
-					ch.NumUsedEntry = Math.Min((int)buffer.ReadUnsignedShort(offset + 16), 100);
-
-					for (int i = 0 ; i < ch.NumUsedEntry ; i++)
+					int cachePointer = memory.ReadFarPointer(0);	
+					if(cachePointer != 0 && (readSuccess &= (processReader.Read(memory, memoryAddress + cachePointer - 16, 4096) > 0)) 
+					   && memory.ReadUnsignedShort(1) != 0) //block is still allocated
 					{
-						int addr = 22 + i * 10 + offset;
-						int id = buffer.ReadUnsignedShort(addr);
+						const int offset = 16;
+						ch.Name = Encoding.ASCII.GetString(memory, offset, 8);
+						ch.MaxFreeData = memory.ReadUnsignedShort(offset + 10);
+						ch.SizeFreeData = memory.ReadUnsignedShort(offset + 12);
+						ch.NumMaxEntry = memory.ReadUnsignedShort(offset + 14);
+						ch.NumUsedEntry = Math.Min((int)memory.ReadUnsignedShort(offset + 16), 100);
 
-						CacheEntry entry = ch.Entries.Find(x => x.Id == id);
-						if (entry == null)
+						for (int i = 0 ; i < ch.NumUsedEntry ; i++)
 						{
-							entry = new CacheEntry();
-							entry.Id = id;
-							entry.StartTicks = ticks;
-							ch.Entries.Add(entry);
-						}
-						else if (entry.Removed)
-						{
-							entry.StartTicks = ticks;
-						}
-						
-						entry.Size = buffer.ReadUnsignedShort(addr+4);
-						entry.Ticks = ticks;
-
-						if (ch.Name != "_MEMORY_")
-						{
-							entry.Time = buffer.ReadUnsignedInt(addr+6);
-
-							if (entry.Time != entry.LastTime)
+							int addr = 22 + i * 10 + offset;
+							int id = memory.ReadUnsignedShort(addr);
+	
+							CacheEntry entry = ch.Entries.Find(x => x.Id == id);
+							if (entry == null)
 							{
-								entry.TouchedTicks = ticks;
-								entry.LastTime = entry.Time;
+								entry = new CacheEntry();
+								entry.Id = id;
+								entry.StartTicks = ticks;
+								ch.Entries.Add(entry);
+							}
+							else if (entry.Removed)
+							{
+								entry.StartTicks = ticks;
+							}
+							
+							entry.Size = memory.ReadUnsignedShort(addr+4);
+							entry.Ticks = ticks;
+	
+							if (ch.Name != "_MEMORY_")
+							{
+								entry.Time = memory.ReadUnsignedInt(addr+6);
+	
+								if (entry.Time != entry.LastTime)
+								{
+									entry.TouchedTicks = ticks;
+									entry.LastTime = entry.Time;
+								}
 							}
 						}
+	
+						ch.Entries.RemoveAll(x => (ticks - x.Ticks) > 3000);
+						foreach (var entry in ch.Entries)
+						{
+							entry.Touched = (ticks - entry.TouchedTicks) < 2000;
+							entry.Added = (ticks - entry.StartTicks) < 3000;
+							entry.Removed = (ticks - entry.Ticks) > 0;
+						}
 					}
-
-					ch.Entries.RemoveAll(x => (ticks - x.Ticks) > 3000);
-					foreach (var entry in ch.Entries)
+					else
 					{
-						entry.Touched = (ticks - entry.TouchedTicks) < 2000;
-						entry.Added = (ticks - entry.StartTicks) < 3000;
-						entry.Removed = (ticks - entry.Ticks) > 0;
+						ch.Name = null;
 					}
-				}
-				else if (readSuccess)
-				{
-					ch.Address = -1;
 				}
 			}
 
@@ -172,11 +163,7 @@ namespace CacheViewer
 
 		static void CloseReader()
 		{
-			foreach (var ch in cache)
-			{
-				ch.Address = -1;
-			}
-
+			entryPoint = -1;
 			processReader.Close();
 			processReader = null;
 		}
@@ -188,7 +175,7 @@ namespace CacheViewer
 			int column = 0;
 			foreach (var ch in cache)
 			{
-				if (ch.Address != -1)
+				if (ch.Name != null && ch.Entries.All(x => x.Time < 1024*1024))
 				{
 					Console.Write(column * 20 + 6, 0, ConsoleColor.Gray, ch.Name);
 					Console.Write(column * 20 + 0, 1, ConsoleColor.Gray, "{0,5:D}/{1,5:D} {2,3:D}/{3,3:D}",
