@@ -53,7 +53,7 @@ namespace CacheViewer
 				if (processReader != null)
 				{
 					Render();
-					Thread.Sleep(250);
+					Thread.Sleep(15);
 				}
 				else
 				{
@@ -126,11 +126,15 @@ namespace CacheViewer
 						if (entry == null)
 						{
 							entry = new CacheEntry();
+							entry.Id = id;
 							entry.StartTicks = ticks;
 							ch.Entries.Add(entry);
 						}
-
-						entry.Id = id;
+						else if (entry.Removed)
+						{
+							entry.StartTicks = ticks;
+						}
+						
 						entry.Size = buffer.ReadUnsignedShort(addr+4);
 						entry.Ticks = ticks;
 
