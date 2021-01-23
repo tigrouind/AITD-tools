@@ -12,7 +12,6 @@ namespace CacheViewer
 		static byte[] buffer = new byte[640 * 1024];
 		static Cache[] cache;
 		static long address;
-		static CacheEntryComparer comparer = new CacheEntryComparer();
 
 		public static void Main(string[] args)
 		{
@@ -128,7 +127,7 @@ namespace CacheViewer
 						{
 							entry = new CacheEntry();
 							entry.StartTicks = ticks;
-							ch.Entries.Insert(0, entry);
+							ch.Entries.Add(entry);
 						}
 
 						entry.Id = id;
@@ -138,7 +137,6 @@ namespace CacheViewer
 						if (ch.Name != "_MEMORY_")
 						{
 							entry.Time = buffer.ReadUnsignedInt(addr+6);
-							entry.TimePerSecond = entry.Time / 60;
 
 							if (entry.Time != entry.LastTime)
 							{
@@ -151,12 +149,10 @@ namespace CacheViewer
 					ch.Entries.RemoveAll(x => (ticks - x.Ticks) > 3000);
 					foreach (var entry in ch.Entries)
 					{
-						entry.Touched = (ticks - entry.TouchedTicks) < 1000;
+						entry.Touched = (ticks - entry.TouchedTicks) < 2000;
 						entry.Added = (ticks - entry.StartTicks) < 3000;
 						entry.Removed = (ticks - entry.Ticks) > 0;
 					}
-
-					ch.Entries.InsertionSort(comparer);
 				}
 				else if (readSuccess)
 				{
@@ -197,7 +193,7 @@ namespace CacheViewer
 					int row = 0;
 					foreach (var entry in ch.Entries)
 					{
-						var color = ConsoleColor.Gray;
+						var color = ConsoleColor.DarkGray;
 
 						if (entry.Touched)
 						{
