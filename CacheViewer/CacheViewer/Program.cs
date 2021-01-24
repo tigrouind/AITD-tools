@@ -103,16 +103,16 @@ namespace CacheViewer
 				{
 					int cachePointer = memory.ReadFarPointer(0);	
 					if(cachePointer != 0 && (readSuccess &= (processReader.Read(memory, memoryAddress + cachePointer - 16, 4096) > 0)) 
-					   && memory.ReadUnsignedShort(1) != 0) //block is still allocated
+					   && (memory[0] == 0x4D || memory[0] == 0x5A) && memory.ReadUnsignedShort(1) != 0) //block is still allocated
 					{
 						const int offset = 16;
 						ch.Name = Encoding.ASCII.GetString(memory, offset, 8);
 						ch.MaxFreeData = memory.ReadUnsignedShort(offset + 10);
 						ch.SizeFreeData = memory.ReadUnsignedShort(offset + 12);
 						ch.NumMaxEntry = memory.ReadUnsignedShort(offset + 14);
-						ch.NumUsedEntry = Math.Min((int)memory.ReadUnsignedShort(offset + 16), 100);
+						ch.NumUsedEntry = memory.ReadUnsignedShort(offset + 16);
 
-						for (int i = 0 ; i < ch.NumUsedEntry ; i++)
+						for (int i = 0 ; i < Math.Min(ch.NumUsedEntry, 100) ; i++)
 						{
 							int addr = 22 + i * 10 + offset;
 							int id = memory.ReadUnsignedShort(addr);
@@ -180,7 +180,7 @@ namespace CacheViewer
 			int column = 0;
 			foreach (var ch in cache)
 			{
-				if (ch.Name != null && ch.Entries.All(x => x.Time < 1024*1024))
+				if (ch.Name != null)
 				{
 					Console.Write(column * 20 + 6, 0, ConsoleColor.Gray, ch.Name);
 					Console.Write(column * 20 + 0, 1, ConsoleColor.Gray, "{0,5:D}/{1,5:D} {2,3:D}/{3,3:D}",
