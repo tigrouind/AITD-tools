@@ -70,6 +70,29 @@ namespace Shared
 	
 			return true;
 		}	
+		
+		public static bool IsEqual(this byte[] a, byte[] b)
+		{
+			if (a == null && b == null)
+			{
+				return true;	
+			}
+            
+        	if (a == null || b == null)
+        	{
+        		return false;
+        	}
+			
+			for(int i = 0 ; i < a.Length ; i++)
+			{
+				if(a[i] != b[i])
+				{
+					return false;
+				}
+			}
+			
+			return true;
+		}
 
 		public static int? GetArgument(string[] args, string name)
 		{

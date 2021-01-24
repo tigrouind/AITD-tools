@@ -10,6 +10,7 @@ namespace CacheViewer
 	{
 		static ProcessMemoryReader processReader;
 		static byte[] memory = new byte[640 * 1024];
+		static CacheComparer cacheComparer = new CacheComparer();
 		static Cache[] cache;
 		static long memoryAddress;
 		static int entryPoint = -1;
@@ -48,7 +49,11 @@ namespace CacheViewer
 
 				if (processReader != null)
 				{
-					Render();
+					if (cacheComparer.NeedRefresh(cache))
+					{
+						Render();
+					}
+					
 					Thread.Sleep(15);
 				}
 				else
