@@ -10,7 +10,7 @@ namespace VarsViewer
 		float cellWidth, cellHeight;
 
 		Var selectedVar;
-		bool editActive;		
+		Var focusVar;	
 		string inputText;
 
 		readonly ToolTip toolTip;
@@ -20,7 +20,8 @@ namespace VarsViewer
 		readonly Brush whiteBrush = new SolidBrush(Color.FromArgb(255, 255, 255, 255));
 		readonly Brush redBrush = new SolidBrush(Color.FromArgb(255, 240, 68, 77));
 		readonly Brush blueBrush = new SolidBrush(Color.FromArgb(64, 0, 162, 232));
-		readonly Brush transparentBrush = new SolidBrush(Color.FromArgb(96, 0, 0, 0));
+		readonly Brush transparentBrush = new SolidBrush(Color.FromArgb(64, 255, 255, 255));
+		readonly Brush highlightBrush = new SolidBrush(Color.FromArgb(255, 0, 93, 204));
 
 		readonly StringFormat format = new StringFormat();
 
@@ -99,12 +100,14 @@ namespace VarsViewer
 					{
 						worker.Compare = !worker.Compare;
 						worker.IgnoreDifferences = !worker.Compare;
+						CancelEdit();
 						UpdateWorker();
 					}
 					break;
 
 				case Keys.F:
 					worker.Freeze = !worker.Freeze;
+					CancelEdit();
 					Invalidate();
 					break;
 
@@ -113,15 +116,14 @@ namespace VarsViewer
 					break;
 					
 				case Keys.Delete:
-					EnableEdit();	
+					StartEdit();	
 					break;
 			}
 		}
 		
 		void MainFormKeyPress(object sender, KeyPressEventArgs e)
 		{
-			if (selectedVar != null && selectedVar.MemoryAddress != -1
-			    && worker.IsRunning && !worker.Freeze && !worker.Compare)
+			if (focusVar != null)
 			{				
 				switch((Keys)e.KeyChar)
 				{
@@ -135,59 +137,63 @@ namespace VarsViewer
 					case Keys.D7:
 					case Keys.D8:
 					case Keys.D9:
-						EnableEdit();					
+						StartEdit();					
 						if(inputText.Length < (inputText.Contains("-") ? 6 : 5))
 						{						
 							inputText += e.KeyChar;
-							Invalidate(selectedVar.Rectangle);
+							Invalidate(focusVar.Rectangle);
 						}	
 						break;
 					
 					case Keys.Insert:
-						EnableEdit();
+						StartEdit();
 						if (inputText.Length == 0)
 						{
 							inputText = "-";	
-							Invalidate(selectedVar.Rectangle);
+							Invalidate(focusVar.Rectangle);
 						}
 						break;
 						
 					case Keys.Back:
-						EnableEdit();
-						if (inputText.Length > 0)
+						StartEdit();
+						if(focusVar != null && inputText.Length > 0)
 						{
 							inputText = inputText.Remove(inputText.Length - 1);	
-							Invalidate(selectedVar.Rectangle);						
+							Invalidate(focusVar.Rectangle);						
 						}
 						break;
 						
 					case Keys.Enter:
-						if (editActive)
+						if(focusVar != null)
 						{
-							ValidateInput();
-							editActive = false;												
-							Invalidate(selectedVar.Rectangle);
+							ValidateInput();											
+							Invalidate(focusVar.Rectangle);
+							focusVar = null;
 						}
 						break;
 												
 					case Keys.Escape:
-						if (editActive)
-						{
-							editActive = false;
-							Invalidate(selectedVar.Rectangle);
-						}
+						CancelEdit();
 						break;
 				}
 			}
 		}
 		
-		void EnableEdit()
+		void StartEdit()
 		{
-			if (!editActive)
+			if (inputText == null)
 			{
-				editActive = true;
 				inputText = string.Empty;
-				Invalidate(selectedVar.Rectangle);
+				Invalidate(focusVar.Rectangle);
+			}
+		}
+				
+		void CancelEdit()
+		{
+			if(focusVar != null)
+			{							
+				Invalidate(focusVar.Rectangle);
+				focusVar = null;
 			}
 		}
 		
@@ -221,7 +227,7 @@ namespace VarsViewer
 					{
 						var textSize = e.Graphics.MeasureString(text, Font, rect.Size, format);
 						var center = new PointF((rect.Left + rect.Right) / 2, (rect.Top + rect.Bottom) / 2);
-						e.Graphics.FillRectangle(Brushes.Blue, new RectangleF(center.X - textSize.Width / 2, center.Y - textSize.Height / 2, textSize.Width, textSize.Height));
+						e.Graphics.FillRectangle(highlightBrush, new RectangleF(center.X - textSize.Width / 2, center.Y - textSize.Height / 2, textSize.Width, textSize.Height));
 					}
 				
 					e.Graphics.DrawString(text, Font, front, rect, format);
@@ -264,10 +270,10 @@ namespace VarsViewer
 					if(index < vars.Length)
 					{
 						Var var = vars[index];
-						bool selected = var == selectedVar;
-						bool edit = var == selectedVar && editActive;
-						string text = edit ? inputText : var.Text;
-						var.Rectangle = DrawCell(e, i + 1, j + position + 1, GetBackgroundBrush(var), text, whiteBrush, StringAlignment.Center, selected, edit);
+						bool selected = var == selectedVar || var == focusVar;
+						bool highlight = var == focusVar && inputText == null;
+						string text = var == focusVar && inputText != null ? inputText : var.Text;
+						var.Rectangle = DrawCell(e, i + 1, j + position + 1, GetBackgroundBrush(var), text, whiteBrush, StringAlignment.Center, selected, highlight);
 					}
 					else
 					{
@@ -293,13 +299,7 @@ namespace VarsViewer
 			TryFindVarAtPosition(e.Location, out var);	
 			
 			if (selectedVar != var)
-			{
-				if(editActive)
-				{
-					editActive = false;
-					ValidateInput();		
-				}
-				
+			{		
 				if(var != null)
 				{
 					toolTip.Show(string.Format("#{0}\n{1}", var.Index, var.Name), var.Rectangle);
@@ -315,6 +315,34 @@ namespace VarsViewer
 			}
 		}
 
+		void MainFormMouseClick(object sender, MouseEventArgs e)
+		{
+			Var var;
+			TryFindVarAtPosition(e.Location, out var);	
+			
+			if((var != null && var.MemoryAddress == -1) || !worker.IsRunning || worker.Freeze || worker.Compare)
+			{
+				var = null;
+			}
+		
+			if (focusVar != var)
+			{
+				if(focusVar != null)
+				{
+					ValidateInput();		
+				}
+				
+				if(var != null)
+				{
+					inputText = null;
+				}
+														
+				if(var != null) Invalidate(var.Rectangle);
+				if(focusVar != null) Invalidate(focusVar.Rectangle);
+				focusVar = var;
+			}
+		}
+
 		bool TryFindVarAtPosition(Point position, out Var result)
 		{
 			result = worker.Vars.Concat(worker.Cvars)
@@ -326,11 +354,11 @@ namespace VarsViewer
 		void ValidateInput()
 		{
 			int value = 0;
-			if ((inputText == string.Empty || int.TryParse(inputText, out value)) && value != selectedVar.Value)
+			if ((inputText == string.Empty || int.TryParse(inputText, out value)) && value != focusVar.Value)
 			{
 				value = Math.Min(value, short.MaxValue);
 				value = Math.Max(value, short.MinValue);
-				worker.Write(selectedVar, (short)value);
+				worker.Write(focusVar, (short)value);
 				UpdateWorker();				
 			}
 		}
@@ -338,15 +366,9 @@ namespace VarsViewer
 		void MainFormMouseLeave(object sender, EventArgs e)
 		{
 			if (!ClientRectangle.Contains(PointToClient(Cursor.Position)))
-			{
+			{					
 				if(selectedVar != null)
-				{
-					if(editActive)
-					{
-						editActive = false;
-						ValidateInput();		
-					}
-					
+				{					
 					Invalidate(selectedVar.Rectangle);
 					selectedVar = null;
 				}
