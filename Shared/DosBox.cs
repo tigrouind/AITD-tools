@@ -34,6 +34,20 @@ namespace Shared
 				return string.Empty;
 			}
 		}
+		
+		public static DosMCB ReadMCB(byte[] memory, int offset)
+		{
+			return new DosMCB
+			{
+				Position = offset + 16,
+				Tag = memory[offset],				
+				Owner = memory.ReadUnsignedShort(offset + 1) * 16,
+				Size = memory.ReadUnsignedShort(offset + 3) * 16,
+				#if DEBUG
+				Name = Encoding.ASCII.GetString(memory, offset + 8, 8).Replace("\0", string.Empty)
+				#endif
+			};
+		}
 
 		public static IEnumerable<DosMCB> GetMCBs(byte[] memory, int offset)
 		{			
@@ -43,34 +57,20 @@ namespace Shared
 			int pos = firstMCB + offset;
 			while (pos <= (memory.Length - 16))
 			{
-				var blockTag = memory[pos];
-				var blockOwner = memory.ReadUnsignedShort(pos + 1);
-				var blockSize = memory.ReadUnsignedShort(pos + 3);
-				#if DEBUG
-				var blockName = Encoding.ASCII.GetString(memory, pos + 8, 8).Replace("\0", string.Empty);
-				#endif
-
-				if (blockTag != 0x4D && blockTag != 0x5A)
+				DosMCB block = ReadMCB(memory, pos);
+				if (block.Tag != 0x4D && block.Tag != 0x5A)
 				{
 					break;
 				}
 
-				yield return new DosMCB
-				{
-					Position = pos + 16 - offset,
-					Size = blockSize * 16,
-					Owner = blockOwner * 16,
-					#if DEBUG
-					Name = blockName
-					#endif
-				};
+				yield return block;
 
-				if(blockTag == 0x5A) //last tag should be 0x5A
+				if (block.Tag == 0x5A) //last tag should be 0x5A
 				{
 					break;
 				}
 
-				pos += blockSize * 16 + 16;
+				pos += block.Size + 16;
 			}
 		}
 		

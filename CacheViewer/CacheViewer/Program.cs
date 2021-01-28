@@ -102,55 +102,16 @@ namespace CacheViewer
 				if (readSuccess &= (processReader.Read(memory, memoryAddress + entryPoint + ch.Address[gameVersion], 4) > 0))
 				{
 					int cachePointer = memory.ReadFarPointer(0);	
-					if(cachePointer != 0 && (readSuccess &= (processReader.Read(memory, memoryAddress + cachePointer - 16, 4096) > 0)) 
-					   && (memory[0] == 0x4D || memory[0] == 0x5A) && memory.ReadUnsignedShort(1) != 0) //block is still allocated
+					if(cachePointer != 0 && (readSuccess &= (processReader.Read(memory, memoryAddress + cachePointer - 16, 4096) > 0))) 
 					{
-						const int offset = 16;
-						ch.Name = Encoding.ASCII.GetString(memory, offset, 8);
-						ch.MaxFreeData = memory.ReadUnsignedShort(offset + 10);
-						ch.SizeFreeData = memory.ReadUnsignedShort(offset + 12);
-						ch.NumMaxEntry = memory.ReadUnsignedShort(offset + 14);
-						ch.NumUsedEntry = memory.ReadUnsignedShort(offset + 16);
-
-						for (int i = 0 ; i < Math.Min(ch.NumUsedEntry, 100) ; i++)
+						DosMCB block = DosBox.ReadMCB(memory, 0);
+						if((block.Tag == 0x4D || block.Tag == 0x5A) && block.Owner != 0 && block.Size < 4096) //block is still allocated
 						{
-							int addr = 22 + i * 10 + offset;
-							int id = memory.ReadUnsignedShort(addr);
-	
-							CacheEntry entry = ch.Entries.Find(x => x.Id == id);
-							if (entry == null)
-							{
-								entry = new CacheEntry();
-								entry.Id = id;
-								entry.StartTicks = ticks;
-								ch.Entries.Add(entry);
-							}
-							else if (entry.Removed)
-							{
-								entry.StartTicks = ticks;
-							}
-							
-							entry.Size = memory.ReadUnsignedShort(addr+4);
-							entry.Ticks = ticks;
-	
-							if (ch.Name != "_MEMORY_")
-							{
-								entry.Time = memory.ReadUnsignedInt(addr+6);
-	
-								if (entry.Time != entry.LastTime)
-								{
-									entry.TouchedTicks = ticks;
-									entry.LastTime = entry.Time;
-								}
-							}
+							UpdateCache(ch, ticks, 16);
 						}
-	
-						ch.Entries.RemoveAll(x => (ticks - x.Ticks) > 3000);
-						foreach (var entry in ch.Entries)
+						else
 						{
-							entry.Touched = (ticks - entry.TouchedTicks) < 2000;
-							entry.Added = (ticks - entry.StartTicks) < 3000;
-							entry.Removed = (ticks - entry.Ticks) > 0;
+							ch.Name = null;
 						}
 					}
 					else
@@ -163,6 +124,56 @@ namespace CacheViewer
 			if (!readSuccess)
 			{
 				CloseReader();
+			}
+		}
+		
+		static void UpdateCache(Cache ch, int ticks, int offset)
+		{
+			ch.Name = Encoding.ASCII.GetString(memory, offset, 8);
+			ch.MaxFreeData = memory.ReadUnsignedShort(offset + 10);
+			ch.SizeFreeData = memory.ReadUnsignedShort(offset + 12);
+			ch.NumMaxEntry = memory.ReadUnsignedShort(offset + 14);
+			ch.NumUsedEntry = memory.ReadUnsignedShort(offset + 16);
+
+			for (int i = 0 ; i < Math.Min(ch.NumUsedEntry, 100) ; i++)
+			{
+				int addr = 22 + i * 10 + offset;
+				int id = memory.ReadUnsignedShort(addr);
+
+				CacheEntry entry = ch.Entries.Find(x => x.Id == id);
+				if (entry == null)
+				{
+					entry = new CacheEntry();
+					entry.Id = id;
+					entry.StartTicks = ticks;
+					ch.Entries.Add(entry);
+				}
+				else if (entry.Removed)
+				{
+					entry.StartTicks = ticks;
+				}
+				
+				entry.Size = memory.ReadUnsignedShort(addr+4);
+				entry.Ticks = ticks;
+
+				if (ch.Name != "_MEMORY_")
+				{
+					entry.Time = memory.ReadUnsignedInt(addr+6);
+
+					if (entry.Time != entry.LastTime)
+					{
+						entry.TouchedTicks = ticks;
+						entry.LastTime = entry.Time;
+					}
+				}
+			}
+		
+			ch.Entries.RemoveAll(x => (ticks - x.Ticks) > 3000);
+			foreach (var entry in ch.Entries)
+			{
+				entry.Touched = (ticks - entry.TouchedTicks) < 2000;
+				entry.Added = (ticks - entry.StartTicks) < 3000;
+				entry.Removed = (ticks - entry.Ticks) > 0;
 			}
 		}
 
