@@ -71,21 +71,26 @@ namespace Shared
 			return true;
 		}	
 		
-		public static bool IsEqual(this byte[] a, byte[] b)
+		public static bool IsEqual(this byte[] first, byte[] second, int index, long length)
 		{
-			if (a == null && b == null)
+			if (first == second)
 			{
 				return true;	
 			}
             
-        	if (a == null || b == null)
+        	if (first == null || second == null)
+        	{
+        		return false;
+        	}
+        	
+        	if (first.Length != second.Length)
         	{
         		return false;
         	}
 			
-			for(int i = 0 ; i < a.Length ; i++)
+			for(int i = index ; i < length ; i++)
 			{
-				if(a[i] != b[i])
+				if(first[i] != second[i])
 				{
 					return false;
 				}

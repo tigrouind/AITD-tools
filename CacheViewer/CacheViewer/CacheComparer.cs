@@ -1,16 +1,14 @@
 ﻿using System;
 using System.IO;
-using System.Security.Cryptography;
 using Shared;
 
 namespace CacheViewer
 {
 	public class CacheComparer
 	{			
-		readonly MD5CryptoServiceProvider md5 = new MD5CryptoServiceProvider();
 		readonly MemoryStream memoryStream = new MemoryStream();		
 		readonly BinaryWriter binaryWriter;	
-		byte[] previousHash;
+		byte[] previousData = new byte[0];
 
 		public CacheComparer()
 		{	
@@ -19,13 +17,23 @@ namespace CacheViewer
 		
 		public bool NeedRefresh(Cache[] cache)
 		{
-			byte[] hash = ComputeHash(cache);
-			bool result = !hash.IsEqual(previousHash);
-			previousHash = hash;
-			return result;
+			long length;
+			byte[] data = DumpData(cache, out length);
+						
+			bool isEqual = data.IsEqual(previousData, 0, length);			
+			if(!isEqual)
+			{		
+				if (previousData.Length != data.Length)
+				{
+					Array.Resize(ref previousData, data.Length);
+				}				
+				Array.Copy(data, previousData, length);
+			}			
+			
+			return !isEqual;
 		}
 		
-		byte[] ComputeHash(Cache[] cache)
+		byte[] DumpData(Cache[] cache, out long length)
 		{
 			memoryStream.Position = 0;
 			foreach (var ch in cache)
@@ -51,7 +59,8 @@ namespace CacheViewer
 				}
 			}	
 			
-			return md5.ComputeHash(memoryStream.GetBuffer());
+			length = memoryStream.Position;
+			return memoryStream.GetBuffer();
 		}			
 	}
 }
