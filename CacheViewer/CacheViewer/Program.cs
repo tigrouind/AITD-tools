@@ -22,12 +22,12 @@ namespace CacheViewer
 
 			cache = new []
 			{
-				new Cache { Address = new [] { 0x218CB, 0x2053E } },
-				new Cache { Address = new [] { 0x218D7, 0x20494 } },
-				new Cache { Address = new [] { 0x218D3, 0x20498 } },
-				new Cache { Address = new [] { 0x218CF, 0x2049C } },
-				new Cache { Address = new [] { 0x218C7, 0x204AA } },
-				new Cache { Address = new [] { 0x218BF, 0x20538 } }
+				new Cache { Address = new [] { 0x218CB, 0x2053E } }, // ListSamp
+				new Cache { Address = new [] { 0x218CF, 0x2049C } }, // ListLife
+				new Cache { Address = new [] { 0x218D7, 0x20494 } }, // ListBody/ListBod2
+				new Cache { Address = new [] { 0x218D3, 0x20498 } }, // ListAnim/ListAni2
+				new Cache { Address = new [] { 0x218C7, 0x204AA } }, // ListTrak
+				new Cache { Address = new [] { 0x218BF, 0x20538 } }  // _MEMORY_
 			};
 
 			while (true)
