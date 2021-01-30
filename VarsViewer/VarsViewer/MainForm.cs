@@ -197,17 +197,7 @@ namespace VarsViewer
 			}
 		}
 		
-		RectangleF DrawCell(PaintEventArgs e, int x, int y, Brush back)
-		{
-			return DrawCell(e, x, y, back, string.Empty, null, default(StringAlignment), false, false);
-		}
-				
-		RectangleF DrawCell(PaintEventArgs e, int x, int y, Brush back, string text, Brush front, StringAlignment alignment)
-		{
-			return DrawCell(e, x, y, back, text, front, alignment, false, false);
-		}
-
-		RectangleF DrawCell(PaintEventArgs e, int x, int y, Brush back, string text, Brush front, StringAlignment alignment, bool selected, bool highlight)
+		RectangleF DrawCell(PaintEventArgs e, int x, int y, Brush back, string text = "", Brush front = null, StringAlignment alignment = default(StringAlignment), bool selected = false, bool highlight = false)
 		{
 			var rect = new RectangleF(x * cellWidth, y * cellHeight, cellWidth, cellHeight);
 			if (rect.IntersectsWith(e.ClipRectangle))

@@ -5,11 +5,6 @@ namespace Shared
 {
 	public class VarParserExt : VarParser
 	{
-		public override string GetText(string sectionName, int value)
-		{
-			return GetText(sectionName, value, null);
-		}
-
 		public string GetText(string sectionName, string value)
 		{
 			int parsedNumber;
@@ -21,7 +16,7 @@ namespace Shared
 			return value;
 		}
 
-		public string GetText(string sectionName, int value, string defaultText)
+		public string GetText(string sectionName, int value, string defaultText = null)
 		{
 			string text = base.GetText(sectionName, value);
 

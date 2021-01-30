@@ -10,7 +10,7 @@ namespace Shared
 		readonly Dictionary<string, Dictionary<int, string>> sections
 			= new Dictionary<string, Dictionary<int, string>>();
 
-		public virtual string GetText(string sectionName, int value)
+		public string GetText(string sectionName, int value)
 		{
 			Dictionary<int, string> section;
 			if (sections.TryGetValue(sectionName, out section))
