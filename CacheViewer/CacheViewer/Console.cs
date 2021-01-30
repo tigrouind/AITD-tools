@@ -87,23 +87,141 @@ namespace CacheViewer
 			Array.Clear(buf, 0, buf.Length);
 		}
 
-		public static void Write(int x, int y, ConsoleColor color, string text)
+		static void Write(int x, int y, ConsoleColor color, char value)
 		{
-			foreach (char ch in text)
+			if (x < SIZEX && y < SIZEY)
 			{
-				if (x < SIZEX && y < SIZEY)
-				{
-					buf[y * SIZEX + x] = new CharInfo { Char = new CharUnion { UnicodeChar = (char)ch }, Attributes = (short)color };
-				}
-
-				x++;
+				buf[y * SIZEX + x] = new CharInfo { Char = new CharUnion { UnicodeChar = (char)value }, Attributes = (short)color };
 			}
 		}
-
-		public static void Write(int x, int y, ConsoleColor color, string format, params object[] value)
+		
+		public static void Write(int x, int y, ConsoleColor color, string value)
 		{
-			Write(x, y, color, string.Format(format, value));
+			for (int i = 0 ; i < value.Length ; i++)
+			{
+				Write(x++, y, color, value[i]);
+			}
 		}
+		
+		#region String format 
+						
+		public static void Write(int x, int y, ConsoleColor color, string format, int arg0, int arg1 = 0, int arg2 = 0, int arg3 = 0)
+		{
+			//GC friendly (unlike string.Format())
+			int pos = 0;
+			while (pos < format.Length)
+			{
+				char ch = format[pos++];
+				if (ch == '{')
+				{					
+					ch = format[pos++];
+					if (ch < '0' || ch > '9') throw new FormatException();
+					
+					int value;
+					int arg = ch - '0';
+					switch (arg)
+					{
+						case 0:
+							value = arg0;
+							break;							
+						case 1:
+							value = arg1;
+							break;						
+						case 2:
+							value = arg2;
+							break;							
+						case 3:
+							value = arg3;
+							break;							
+						default:
+							throw new FormatException();
+					}
+					
+					ch = format[pos++]; // ','
+					if (ch != ',') throw new FormatException();
+					
+					ch = format[pos++]; // width
+					if (ch < '0' || ch > '9') throw new FormatException();
+					int width = ch - '0';					
+															
+					ch = format[pos++]; // ':'
+					if (ch != ':') throw new FormatException();
+					
+					int length;
+					ch = format[pos++]; 				
+					switch (ch) 
+					{
+						case 'D': //decimal
+							Write(x + width - 1, y, color, value, out length);													
+							Pad(x, y, color, width - length);
+							break;
+							
+						case 'S': //size
+							string suffix = " B";
+							if (value >= 1024)
+							{
+								value /= 1024;
+								suffix = " K";
+							}
+							
+							Write(x + width - 2, y, color, suffix);
+							Write(x + width - 3, y, color, value, out length);							
+							Pad(x, y, color, width - 2 - length);
+							break;
+							
+						default: 
+							throw new FormatException();
+					}
+					x += width;
+					
+					ch = format[pos++]; // '}'
+					if (ch != '}') throw new FormatException();
+				}
+				else
+				{
+					Write(x, y, color, ch);
+					x++;	
+				}
+			}
+		}
+		
+		static void Pad(int x, int y, ConsoleColor color, int width)
+		{
+			for(int i = 0 ; i < width ; i++)
+			{
+				Write(x++, y, color, ' ');
+			}
+		}
+		
+		static int Write(int x, int y, ConsoleColor color, int value, out int length)
+		{
+			length = 0;
+			bool negative = false;
+			if (value < 0)
+			{
+				value = -value;
+				negative = true;
+			}
+			
+			do
+			{	
+				var reminder = value % 10;
+				Write(x--, y, color, (char)(reminder + '0'));
+				value /= 10;
+				length++;
+			}
+			while(value > 0);
+			
+			if(negative) 
+			{
+				Write(x--, y, color, '-');
+				length++;
+			}
+			
+			return length;
+		}		
+		
+		#endregion
 
 		static bool CompareBuffers(out SmallRect rect)
 		{

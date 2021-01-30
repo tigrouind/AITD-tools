@@ -10,7 +10,6 @@ namespace CacheViewer
 	{
 		static ProcessMemoryReader processReader;
 		static byte[] memory = new byte[640 * 1024];
-		static CacheComparer cacheComparer = new CacheComparer();
 		static Cache[] cache;
 		static long memoryAddress;
 		static int entryPoint = -1;
@@ -49,11 +48,7 @@ namespace CacheViewer
 
 				if (processReader != null)
 				{
-					if (cacheComparer.NeedRefresh(cache))
-					{
-						Render();
-					}
-					
+					Render();
 					Thread.Sleep(15);
 				}
 				else
@@ -129,18 +124,28 @@ namespace CacheViewer
 		
 		static void UpdateCache(Cache ch, int ticks, int offset)
 		{
-			ch.Name = Encoding.ASCII.GetString(memory, offset, 8);
+			if(ch.Name == null) ch.Name = Encoding.ASCII.GetString(memory, offset, 8);
 			ch.MaxFreeData = memory.ReadUnsignedShort(offset + 10);
 			ch.SizeFreeData = memory.ReadUnsignedShort(offset + 12);
 			ch.NumMaxEntry = memory.ReadUnsignedShort(offset + 14);
 			ch.NumUsedEntry = memory.ReadUnsignedShort(offset + 16);
-
+			
 			for (int i = 0 ; i < Math.Min(ch.NumUsedEntry, 100) ; i++)
 			{
 				int addr = 22 + i * 10 + offset;
 				int id = memory.ReadUnsignedShort(addr);
 
-				CacheEntry entry = ch.Entries.Find(x => x.Id == id);
+				//find entry
+				CacheEntry entry = null;
+				for(int j = 0 ; j < ch.Entries.Count ; j++)
+				{
+					if (ch.Entries[j].Id == id)
+					{
+						entry = ch.Entries[j];
+						break;
+					}
+				}
+				
 				if (entry == null)
 				{
 					entry = new CacheEntry();
@@ -155,7 +160,7 @@ namespace CacheViewer
 				
 				entry.Size = memory.ReadUnsignedShort(addr+4);
 				entry.Ticks = ticks;
-
+								
 				if (ch.Name != "_MEMORY_")
 				{
 					entry.Time = memory.ReadUnsignedInt(addr+6);
@@ -167,14 +172,26 @@ namespace CacheViewer
 					}
 				}
 			}
-		
-			ch.Entries.RemoveAll(x => (ticks - x.Ticks) > 3000);
-			foreach (var entry in ch.Entries)
+			
+			bool needRemove = false;
+			for(int i = 0 ; i < ch.Entries.Count ; i++)
 			{
+				var entry = ch.Entries[i];
 				entry.Touched = (ticks - entry.TouchedTicks) < 2000;
 				entry.Added = (ticks - entry.StartTicks) < 3000;
-				entry.Removed = (ticks - entry.Ticks) > 0;
+				entry.Removed = (ticks - entry.Ticks) > 0;				
+				needRemove |= (ticks - entry.Ticks) > 3000;
 			}
+		
+			if (needRemove)
+			{
+				RemoveEntries(ch, ticks);
+			}
+		}
+		
+		static void RemoveEntries(Cache ch, int ticks)
+		{
+			ch.Entries.RemoveAll(x => (ticks - x.Ticks) > 3000);
 		}
 
 		static void CloseReader()
@@ -189,8 +206,9 @@ namespace CacheViewer
 			Console.Clear();
 
 			int column = 0;
-			foreach (var ch in cache)
+			for(int i = 0 ; i < cache.Length ; i++)
 			{
+				var ch = cache[i];
 				if (ch.Name != null)
 				{
 					Console.Write(column * 20 + 6, 0, ConsoleColor.Gray, ch.Name);
@@ -198,8 +216,9 @@ namespace CacheViewer
 									ch.MaxFreeData - ch.SizeFreeData, ch.MaxFreeData, ch.NumUsedEntry, ch.NumMaxEntry);
 
 					int row = 0;
-					foreach (var entry in ch.Entries)
+					for(int j = 0 ; j < ch.Entries.Count ; j++)
 					{
+						var entry = ch.Entries[j];
 						var color = ConsoleColor.DarkGray;
 
 						if (entry.Touched)
@@ -217,7 +236,7 @@ namespace CacheViewer
 							color = ConsoleColor.Black | ConsoleColor.BackgroundDarkGray;
 						}
 
-						Console.Write(column * 20, row + 3, color, "{0,6:D} {1,6} {2,5:D}", entry.Id, FormatSize(entry.Size), entry.Time / 60);
+						Console.Write(column * 20, row + 3, color, "{0,6:D} {1,6:S} {2,5:D}", entry.Id, entry.Size, (int)(entry.Time / 60));
 						row++;
 					}
 				}
@@ -226,16 +245,6 @@ namespace CacheViewer
 			}
 
 			Console.Flush();
-		}
-
-		static string FormatSize(int length)
-		{
-			if (length > 1024)
-			{
-				return length/1024 + " K";
-			}
-
-			return length + " B";
 		}
 	}
 }

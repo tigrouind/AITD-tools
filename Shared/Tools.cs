@@ -71,34 +71,6 @@ namespace Shared
 			return true;
 		}	
 		
-		public static bool IsEqual(this byte[] first, byte[] second, int index, long length)
-		{
-			if (first == second)
-			{
-				return true;	
-			}
-            
-        	if (first == null || second == null)
-        	{
-        		return false;
-        	}
-        	
-        	if (first.Length != second.Length)
-        	{
-        		return false;
-        	}
-			
-			for(int i = index ; i < length ; i++)
-			{
-				if(first[i] != second[i])
-				{
-					return false;
-				}
-			}
-			
-			return true;
-		}
-
 		public static int? GetArgument(string[] args, string name)
 		{
 			int index = Array.IndexOf(args, name);
