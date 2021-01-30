@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -103,6 +104,7 @@ namespace CacheViewer
 						if((block.Tag == 0x4D || block.Tag == 0x5A) && block.Owner != 0 && block.Size < 4096) //block is still allocated
 						{
 							UpdateCache(ch, ticks, 16);
+							UpdateEntries(ch, ticks);
 						}
 						else
 						{
@@ -135,13 +137,13 @@ namespace CacheViewer
 				int addr = 22 + i * 10 + offset;
 				int id = memory.ReadUnsignedShort(addr);
 
-				//find entry
+				//search entry
 				CacheEntry entry = null;
-				for(int j = 0 ; j < ch.Entries.Count ; j++)
+				for (var node = ch.Entries.First; node != null; node = node.Next)
 				{
-					if (ch.Entries[j].Id == id)
+					if (node.Value.Id == id)
 					{
-						entry = ch.Entries[j];
+						entry = node.Value;
 						break;
 					}
 				}
@@ -151,7 +153,7 @@ namespace CacheViewer
 					entry = new CacheEntry();
 					entry.Id = id;
 					entry.StartTicks = ticks;
-					ch.Entries.Add(entry);
+					ch.Entries.AddLast(entry);
 				}
 				else if (entry.Removed)
 				{
@@ -172,27 +174,29 @@ namespace CacheViewer
 					}
 				}
 			}
-			
-			bool needRemove = false;
-			for(int i = 0 ; i < ch.Entries.Count ; i++)
-			{
-				var entry = ch.Entries[i];
-				entry.Touched = (ticks - entry.TouchedTicks) < 2000;
-				entry.Added = (ticks - entry.StartTicks) < 3000;
-				entry.Removed = (ticks - entry.Ticks) > 0;				
-				needRemove |= (ticks - entry.Ticks) > 3000;
-			}
-		
-			if (needRemove)
-			{
-				RemoveEntries(ch, ticks);
-			}
 		}
 		
-		static void RemoveEntries(Cache ch, int ticks)
+		static void UpdateEntries(Cache ch, int ticks)
 		{
-			ch.Entries.RemoveAll(x => (ticks - x.Ticks) > 3000);
+			var node = ch.Entries.First;
+			while (node != null)
+			{
+				var next = node.Next;
+				var entry = node.Value;
+				if ((ticks - entry.Ticks) > 3000)
+				{
+					ch.Entries.Remove(node);
+				}
+				else
+				{
+					entry.Touched = (ticks - entry.TouchedTicks) < 2000;
+					entry.Added = (ticks - entry.StartTicks) < 3000;
+					entry.Removed = (ticks - entry.Ticks) > 0;				
+				}				
+				node = next;
+			}
 		}
+		
 
 		static void CloseReader()
 		{
@@ -216,9 +220,9 @@ namespace CacheViewer
 									ch.MaxFreeData - ch.SizeFreeData, ch.MaxFreeData, ch.NumUsedEntry, ch.NumMaxEntry);
 
 					int row = 0;
-					for(int j = 0 ; j < ch.Entries.Count ; j++)
+					for (var node = ch.Entries.First; node != null; node = node.Next)
 					{
-						var entry = ch.Entries[j];
+						var entry = node.Value;
 						var color = ConsoleColor.DarkGray;
 
 						if (entry.Touched)

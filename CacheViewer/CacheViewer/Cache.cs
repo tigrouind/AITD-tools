@@ -5,7 +5,7 @@ namespace CacheViewer
 	public class Cache
 	{
 		public string Name;
-		public List<CacheEntry> Entries = new List<CacheEntry>();
+		public LinkedList<CacheEntry> Entries = new LinkedList<CacheEntry>();
 		public int[] Address;
 
 		public int MaxFreeData;
