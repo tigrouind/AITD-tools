@@ -81,7 +81,7 @@ namespace CacheViewer
 			Array.Clear(buf, 0, buf.Length);
 		}
 
-		static void Write(int x, int y, ConsoleColor color, char value)
+		public static void Write(int x, int y, ConsoleColor color, char value)
 		{
 			if (x < SIZEX && y < SIZEY)
 			{
@@ -97,126 +97,36 @@ namespace CacheViewer
 			}
 		}
 		
-		#region String format 
-						
-		public static void Write(int x, int y, ConsoleColor color, string format, int arg0, int arg1 = 0, int arg2 = 0, int arg3 = 0)
+		public static void Write(int x, int y, ConsoleColor color, string format, 
+		                         FormatArgument arg0,
+		                         FormatArgument arg1 = default(FormatArgument), 
+		                         FormatArgument arg2 = default(FormatArgument), 
+		                         FormatArgument arg3 = default(FormatArgument))
 		{
-			//GC friendly (unlike string.Format())
-			int pos = 0;
-			while (pos < format.Length)
+			StringFormat.Format(format, arg0, arg1, arg2, arg3);
+			for(int i = 0 ; i < StringFormat.BufferLength ; i++)
 			{
-				char ch = format[pos++];
-				if (ch == '{')
-				{					
-					ch = format[pos++];
-					if (ch < '0' || ch > '9') throw new FormatException();
-					
-					int value;
-					int arg = ch - '0';
-					switch (arg)
-					{
-						case 0:
-							value = arg0;
-							break;							
-						case 1:
-							value = arg1;
-							break;						
-						case 2:
-							value = arg2;
-							break;							
-						case 3:
-							value = arg3;
-							break;							
-						default:
-							throw new FormatException();
-					}
-					
-					ch = format[pos++]; // ','
-					if (ch != ',') throw new FormatException();
-					
-					ch = format[pos++]; // width
-					if (ch < '0' || ch > '9') throw new FormatException();
-					int width = ch - '0';					
-															
-					ch = format[pos++]; // ':'
-					if (ch != ':') throw new FormatException();
-					
-					int length;
-					ch = format[pos++]; 				
-					switch (ch) 
-					{
-						case 'D': //decimal
-							Write(x + width - 1, y, color, value, out length);													
-							Pad(x, y, color, width - length);
-							break;
-							
-						case 'S': //size
-							string suffix = " B";
-							if (value >= 1024)
-							{
-								value /= 1024;
-								suffix = " K";
-							}
-							
-							Write(x + width - 2, y, color, suffix);
-							Write(x + width - 3, y, color, value, out length);							
-							Pad(x, y, color, width - 2 - length);
-							break;
-							
-						default: 
-							throw new FormatException();
-					}
-					x += width;
-					
-					ch = format[pos++]; // '}'
-					if (ch != '}') throw new FormatException();
-				}
-				else
-				{
-					Write(x, y, color, ch);
-					x++;	
-				}
+				Write(x++, y, color, StringFormat.Buffer[i]);
 			}
 		}
-		
-		static void Pad(int x, int y, ConsoleColor color, int width)
+				
+		public static void Flush()
 		{
-			for(int i = 0 ; i < width ; i++)
+			SmallRect rect;
+			if (CompareBuffers(out rect))
 			{
-				Write(x++, y, color, ' ');
+				WriteConsoleOutput(handle, buf,
+					new Coord { X = SIZEX, Y = SIZEY },
+					new Coord { X = rect.Left, Y = rect.Top },
+					ref rect);
 			}
-		}
-		
-		static int Write(int x, int y, ConsoleColor color, int value, out int length)
-		{
-			length = 0;
-			bool negative = false;
-			if (value < 0)
-			{
-				value = -value;
-				negative = true;
-			}
-			
-			do
-			{	
-				var reminder = value % 10;
-				Write(x--, y, color, (char)(reminder + '0'));
-				value /= 10;
-				length++;
-			}
-			while(value > 0);
-			
-			if(negative) 
-			{
-				Write(x--, y, color, '-');
-				length++;
-			}
-			
-			return length;
-		}		
-		
-		#endregion
 
+			//swap
+			var tmp = buf;
+			buf = previousBuf;
+			previousBuf = tmp;
+		}
+		
 		static bool CompareBuffers(out SmallRect rect)
 		{
 			bool refresh = false;
@@ -239,23 +149,6 @@ namespace CacheViewer
 			}
 
 			return refresh;
-		}
-
-		public static void Flush()
-		{
-			SmallRect rect;
-			if (CompareBuffers(out rect))
-			{
-				WriteConsoleOutput(handle, buf,
-					new Coord { X = SIZEX, Y = SIZEY },
-					new Coord { X = rect.Left, Y = rect.Top },
-					ref rect);
-			}
-
-			//swap
-			var tmp = buf;
-			buf = previousBuf;
-			previousBuf = tmp;
 		}
 	}
 }

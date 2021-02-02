@@ -216,7 +216,7 @@ namespace CacheViewer
 				if (ch.Name != null)
 				{
 					Console.Write(column * 20 + 6, 0, ConsoleColor.Gray, ch.Name);
-					Console.Write(column * 20 + 0, 1, ConsoleColor.Gray, "{0,5:D}/{1,5:D} {2,3:D}/{3,3:D}",
+					Console.Write(column * 20 + 0, 1, ConsoleColor.Gray, "{0,5}/{1,5} {2,3}/{3,3}",
 									ch.MaxFreeData - ch.SizeFreeData, ch.MaxFreeData, ch.NumUsedEntry, ch.NumMaxEntry);
 
 					int row = 0;
@@ -240,7 +240,11 @@ namespace CacheViewer
 							color = ConsoleColor.Black | ConsoleColor.BackgroundDarkGray;
 						}
 
-						Console.Write(column * 20, row + 3, color, "{0,6:D} {1,6:S} {2,5:D}", entry.Id, entry.Size, (int)(entry.Time / 60));
+						bool kilobyte = entry.Size > 1024;
+						Console.Write(column * 20, row + 3, color, "{0,6} {1,4} {2} {3,5}", 
+						              	entry.Id,
+						              	kilobyte ? entry.Size / 1024 : entry.Size, kilobyte ? 'K' : 'B', 
+						              	entry.Time / 60);
 						row++;
 					}
 				}
