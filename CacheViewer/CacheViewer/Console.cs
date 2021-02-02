@@ -7,7 +7,7 @@ namespace CacheViewer
 {
 	public static class Console
 	{
-		[DllImport("Kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+		[DllImport("Kernel32.dll")]
 		static extern SafeFileHandle CreateFile(
 			string fileName,
 			[MarshalAs(UnmanagedType.U4)] uint fileAccess,
@@ -17,7 +17,7 @@ namespace CacheViewer
 			[MarshalAs(UnmanagedType.U4)] int flags,
 			IntPtr template);
 
-		[DllImport("kernel32.dll", SetLastError = true)]
+		[DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
 		static extern bool WriteConsoleOutput(
 		  SafeFileHandle hConsoleOutput,
 		  CharInfo[] lpBuffer,
@@ -30,16 +30,10 @@ namespace CacheViewer
 		{
 			public short X;
 			public short Y;
-
-			public Coord(short X, short Y)
-			{
-				this.X = X;
-				this.Y = Y;
-			}
 		};
 
-		[StructLayout(LayoutKind.Explicit)]
-		public struct CharUnion
+		[StructLayout(LayoutKind.Explicit, CharSet = CharSet.Unicode)]
+		public struct CharUnion : IEquatable<CharUnion>
 		{
 			[FieldOffset(0)] public char UnicodeChar;
 			[FieldOffset(0)] public byte AsciiChar;
@@ -91,7 +85,7 @@ namespace CacheViewer
 		{
 			if (x < SIZEX && y < SIZEY)
 			{
-				buf[y * SIZEX + x] = new CharInfo { Char = new CharUnion { UnicodeChar = (char)value }, Attributes = (short)color };
+				buf[y * SIZEX + x] = new CharInfo { Char = new CharUnion { UnicodeChar = value }, Attributes = (short)color };
 			}
 		}
 		
