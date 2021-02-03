@@ -11,14 +11,12 @@ namespace MemoryViewer
 	{
 		const int RESX = 320;
 		const int RESY = 240;
+		const int SCREENS = 10;
 		static int winx, winy, zoom;
-		static readonly bool[] needRefresh = new bool[10];
+		static readonly bool[] needRefresh = new bool[SCREENS];
 			
 		public static int Main(string[] args)
 		{
-			bool mcb = false;
-			SetRefreshState(true);
-
 			winx = Tools.GetArgument(args, "-screen-width") ?? 640;
 			winy = Tools.GetArgument(args, "-screen-height") ?? 480;
 			zoom = Tools.GetArgument(args, "-zoom") ?? 2;
@@ -34,12 +32,13 @@ namespace MemoryViewer
 			IntPtr texture = SDL.SDL_CreateTexture(renderer, SDL.SDL_PIXELFORMAT_ARGB8888, (int)SDL.SDL_TextureAccess.SDL_TEXTUREACCESS_STREAMING, RESX, RESY);
 			
 			uint[] palette = LoadPalette();
+			SetRefreshState(true);
 
-			bool quit = false;
-			uint[] pixels = new uint[RESX * RESY * 10];
-			uint[] mcbPixels = new uint[RESX * RESY * 10];			
-			byte[] pixelData = new byte[RESX * RESY * 10];
-			byte[] oldPixelData = new byte[RESX * RESY * 10];			
+			bool quit = false, mcb = false;
+			uint[] pixels = new uint[RESX * RESY * SCREENS];
+			uint[] mcbPixels = new uint[RESX * RESY * SCREENS];			
+			byte[] pixelData = new byte[RESX * RESY * SCREENS];
+			byte[] oldPixelData = new byte[RESX * RESY * SCREENS];			
 
 			ProcessMemoryReader processReader = null;
 			long memoryAddress = -1;
@@ -152,7 +151,7 @@ namespace MemoryViewer
 				ulong* oldPixelsPtr = (ulong*)oldPixelsBytePtr;
 				int start = 0;	
 				
-				for(int k = 0 ; k < 10 ; k++)
+				for(int k = 0 ; k < needRefresh.Length ; k++)
 				{
 					bool refresh = false;
 					for(int i = 0 ; i < RESX * RESY ; i += 16)
