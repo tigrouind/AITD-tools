@@ -100,14 +100,14 @@ namespace VarsViewer
 					{
 						worker.Compare = !worker.Compare;
 						worker.IgnoreDifferences = !worker.Compare;
-						CancelEdit();
+						AbortEdit();
 						UpdateWorker();
 					}
 					break;
 
 				case Keys.F:
 					worker.Freeze = !worker.Freeze;
-					CancelEdit();
+					AbortEdit();
 					Invalidate();
 					break;
 
@@ -116,7 +116,7 @@ namespace VarsViewer
 					break;
 					
 				case Keys.Delete:
-					StartEdit();	
+					BeginEdit();	
 					break;
 			}
 		}
@@ -137,7 +137,7 @@ namespace VarsViewer
 					case Keys.D7:
 					case Keys.D8:
 					case Keys.D9:
-						StartEdit();					
+						BeginEdit();					
 						if(inputText.Length < (inputText.Contains("-") ? 6 : 5))
 						{						
 							inputText += e.KeyChar;
@@ -146,7 +146,7 @@ namespace VarsViewer
 						break;
 					
 					case Keys.Insert:
-						StartEdit();
+						BeginEdit();
 						if (inputText.Length == 0)
 						{
 							inputText = "-";	
@@ -155,7 +155,7 @@ namespace VarsViewer
 						break;
 						
 					case Keys.Back:
-						StartEdit();
+						BeginEdit();
 						if(focusVar != null && inputText.Length > 0)
 						{
 							inputText = inputText.Remove(inputText.Length - 1);	
@@ -166,34 +166,16 @@ namespace VarsViewer
 					case Keys.Enter:
 						if(focusVar != null)
 						{
-							ValidateInput();											
+							CommitEdit();											
 							Invalidate(focusVar.Rectangle);
 							focusVar = null;
 						}
 						break;
 												
 					case Keys.Escape:
-						CancelEdit();
+						AbortEdit();
 						break;
 				}
-			}
-		}
-		
-		void StartEdit()
-		{
-			if (inputText == null)
-			{
-				inputText = string.Empty;
-				Invalidate(focusVar.Rectangle);
-			}
-		}
-				
-		void CancelEdit()
-		{
-			if(focusVar != null)
-			{							
-				Invalidate(focusVar.Rectangle);
-				focusVar = null;
 			}
 		}
 		
@@ -319,7 +301,7 @@ namespace VarsViewer
 			{
 				if(focusVar != null)
 				{
-					ValidateInput();		
+					CommitEdit();		
 				}
 				
 				if(var != null)
@@ -340,8 +322,26 @@ namespace VarsViewer
 
 			return result != null;
 		}
+					
+		void BeginEdit()
+		{
+			if (inputText == null)
+			{
+				inputText = string.Empty;
+				Invalidate(focusVar.Rectangle);
+			}
+		}
+				
+		void AbortEdit()
+		{
+			if(focusVar != null)
+			{							
+				Invalidate(focusVar.Rectangle);
+				focusVar = null;
+			}
+		}
 							
-		void ValidateInput()
+		void CommitEdit()
 		{
 			int value = 0;
 			if ((inputText == string.Empty || int.TryParse(inputText, out value)) && value != focusVar.Value)
