@@ -98,10 +98,10 @@ namespace MemoryViewer
 
 				if (processReader != null)
 				{
-					//EMS memory (64000B) (skip 64KB (HMA) + 128KB (VCPI))
 					//DOS conventional memory (640KB)
-					if(!(processReader.Read(pixelData, memoryAddress+(1024+192)*1024, 64000) > 0 &&
-						(processReader.Read(pixelData, memoryAddress, 640 * 1024, 64000) > 0)))
+					//EMS memory (64000B) (skip 64KB (HMA) + 128KB (VCPI))					
+					if(!(processReader.Read(pixelData, memoryAddress, 640 * 1024) > 0 &&
+						 processReader.Read(pixelData, memoryAddress+(1024+192)*1024, 64000, 640 * 1024) > 0))
 					{
 						processReader.Close();
 						processReader = null;
@@ -109,7 +109,7 @@ namespace MemoryViewer
 				}
 
 				Update(pixelData, oldPixelData, pixels, palette);
-				UpdateMCB(pixelData, oldPixelData, 64000, mcbPixels);
+				UpdateMCB(pixelData, oldPixelData, mcbPixels);
 
 				//render
 				int tm = (winx + RESX * zoom - 1) / (RESX * zoom);
@@ -151,7 +151,7 @@ namespace MemoryViewer
 				ulong* oldPixelsPtr = (ulong*)oldPixelsBytePtr;
 				int start = 0;	
 				
-				for(int k = 0 ; k < needRefresh.Length ; k++)
+				for(int k = 0 ; k < SCREENS ; k++)
 				{
 					bool refresh = false;
 					for(int i = 0 ; i < RESX * RESY ; i += 16)
@@ -176,14 +176,14 @@ namespace MemoryViewer
 			}
 		}
 		
-		static void UpdateMCB(byte[] pixelData, byte[] oldPixelData, int offset, uint[] pixels)
+		static void UpdateMCB(byte[] pixelData, byte[] oldPixelData, uint[] pixels)
 		{		
-			if (!DosBox.GetMCBs(pixelData, offset).SequenceEqual(DosBox.GetMCBs(oldPixelData, offset)))
+			if (!DosBox.GetMCBs(pixelData).SequenceEqual(DosBox.GetMCBs(oldPixelData)))
 			{	
-				int psp = pixelData.ReadUnsignedShort(0x0B30 + offset) * 16;
+				int psp = pixelData.ReadUnsignedShort(0x0B30) * 16;
 				
 				bool inverse = true;
-				foreach (var block in DosBox.GetMCBs(pixelData, offset))
+				foreach (var block in DosBox.GetMCBs(pixelData))
 				{
 					int dest = block.Position - 16;
 					int length = Math.Min(block.Size + 16, pixels.Length - dest);
@@ -191,7 +191,7 @@ namespace MemoryViewer
 					uint color;					
 					if (block.Owner == 0) color = 0x90008000; //free
 					else if (block.Owner != psp) color = 0x90808000; 
-					else if (block.Position == (psp + offset)) color = 0x90800000; //current executable
+					else if (block.Position == psp) color = 0x90800000; //current executable
 					else color = inverse ? 0x900080F0 : 0x902000A0; //used					
 	
 					for (int i = 0 ; i < length ; i++)
@@ -273,7 +273,7 @@ namespace MemoryViewer
 		
 		static void SetRefreshState(bool state)
 		{
-			for(int i = 0 ; i < needRefresh.Length ; i++)
+			for(int i = 0 ; i < SCREENS ; i++)
 			{
 				needRefresh[i] = state;
 			}

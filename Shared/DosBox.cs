@@ -49,12 +49,12 @@ namespace Shared
 			};
 		}
 
-		public static IEnumerable<DosMCB> GetMCBs(byte[] memory, int offset)
+		public static IEnumerable<DosMCB> GetMCBs(byte[] memory)
 		{			
-			int firstMCB = memory.ReadUnsignedShort(0x0824 + offset) * 16; //sysvars (list of lists) (0x80) + firstMCB (0x24) (see DOSBox/dos_inc.h)
+			int firstMCB = memory.ReadUnsignedShort(0x0824) * 16; //sysvars (list of lists) (0x80) + firstMCB (0x24) (see DOSBox/dos_inc.h)
 			
 			//scan DOS memory control block (MCB) chain
-			int pos = firstMCB + offset;
+			int pos = firstMCB;
 			while (pos <= (memory.Length - 16))
 			{
 				DosMCB block = ReadMCB(memory, pos);

@@ -54,13 +54,8 @@ namespace Shared
 		{
 			Close();
 		}
-	
-		public long Read(byte[] buffer, long address, int count)
-		{
-			return Read(buffer, address, count, 0);
-		}
 		
-		public unsafe long Read(byte[] buffer, long address, int count, int offset)
+		public unsafe long Read(byte[] buffer, long address, int count, int offset = 0)
 		{
 			if((offset + count) > buffer.Length)
 			{
