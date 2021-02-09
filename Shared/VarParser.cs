@@ -27,7 +27,7 @@ namespace Shared
 	
 		public void Load(string filePath, params string[] sectionsToParse)
 		{
-			var allLines = ReadLines(filePath);
+			var allLines = File.ReadLines(filePath);
 	
 			Dictionary<int, string> currentSection = null;
 			Regex regex = new Regex("^(?<from>[0-9]+)(-(?<to>[0-9]+))? (?<text>.*)");
@@ -81,18 +81,6 @@ namespace Shared
 				for(int i = from; i <= to ; i++)
 				{
 					section[i] = text;
-				}
-			}
-		}
-	
-		IEnumerable<string> ReadLines(string filePath)
-		{
-			using (StreamReader reader = new StreamReader(filePath))
-			{
-				string line;
-				while ((line = reader.ReadLine()) != null)
-				{
-					yield return line;
 				}
 			}
 		}
