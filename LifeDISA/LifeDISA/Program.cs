@@ -95,6 +95,18 @@ namespace LifeDISA
 						name = string.Join("_", name.Split(' ').Where(x => x != "an" && x != "a").ToArray());
 						objectsByIndex.Add(i, name);
 					}
+					else
+					{
+						int body = allBytes.ReadShort(n + 2);
+						if(body != -1)
+						{
+							string name = vars.GetText("BODYS", body, string.Empty);
+							if (!string.IsNullOrEmpty(name))
+							{
+								objectsByIndex.Add(i, name.ToLowerInvariant());
+							}
+						}
+					}
 				}
 			}
 
