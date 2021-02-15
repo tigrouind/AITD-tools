@@ -70,36 +70,31 @@ namespace LifeDISA
 				{
 					buffer = pak.GetEntry(0);
 				}
-				
-				var names = ReadAllLines(buffer, Encoding.GetEncoding(850));
 
-				foreach(var item in names
+				foreach(var item in ReadLines(buffer, Encoding.GetEncoding(850))
 					.Where(x => x.Contains(":"))
 					.Select(x =>  x.Split(':')))
 				{
 					namesByIndex.Add(int.Parse(item[0].TrimStart('@')), item[1]);
 				}				
 			}
-
+			
 			if(File.Exists(@"GAMEDATA\OBJETS.ITD"))
 			{
 				allBytes = File.ReadAllBytes(@"GAMEDATA\OBJETS.ITD");
 				int count = allBytes.ReadShort(0);
 
 				int offset = isAITD2 ? 54 : 52;
-				int i = 0;
-				for(int s = 0 ; s < count ; s++)
+				for(int i = 0 ; i < count ; i++)
 				{
-					int n = s * offset + 2;
-					int index = allBytes.ReadShort(n+10);
+					int n = i * offset + 2;
+					int index = allBytes.ReadShort(n + 10);
 					if(index != -1 && index != 0)
 					{
 						string name = namesByIndex[index].ToLowerInvariant();
 						name = string.Join("_", name.Split(' ').Where(x => x != "an" && x != "a").ToArray());
 						objectsByIndex.Add(i, name);
 					}
-
-					i++;
 				}
 			}
 
@@ -848,20 +843,17 @@ namespace LifeDISA
 			return result;
 		}
 		
-		static string[] ReadAllLines(byte[] buffer, Encoding encoding)
+		static IEnumerable<string> ReadLines(byte[] buffer, Encoding encoding)
 		{
-			List<string> lines = new List<string>();
 			using(var stream = new MemoryStream(buffer))
 			using(var reader = new StreamReader(stream, encoding))
 	      	{
 				string line;					
 				while((line = reader.ReadLine()) != null)
 				{
-			      	lines.Add(line);
+					yield return line;
 				}					      		
 			}
-			
-			return lines.ToArray();
 		}
 	}
 }
