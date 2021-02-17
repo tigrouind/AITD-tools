@@ -108,20 +108,20 @@ namespace LifeDISA
 				}
 			}
 
-			using (var writer = new StreamWriter("output.txt"))
+			using (var writer = new StreamWriter("scripts.life"))
 			using (var pak = new UnPAK(@"GAMEDATA\LISTLIFE.PAK"))				
 			{
 				//dump all
 				for(int i = 0 ; i < pak.EntryCount ; i++)
 				{
-					#if AITD2 && !AITD3
-					if(i == 670) continue; //invalid "set c_var" instruction at the end of the script			
-					#endif
-					
 					writer.WriteLine("--------------------------------------------------");
 					writer.WriteLine("#{0} {1}", i, vars.GetText(VarEnum.LIFES, i, string.Empty));
 					writer.WriteLine("--------------------------------------------------");					
 					allBytes = pak.GetEntry(i);
+					#if AITD2 && !AITD3
+					if(i == 670) Fix670();
+					#endif
+					
 					ParseFile();
 					#if !NO_OPTIMIZE
 					Optimize();
@@ -321,6 +321,17 @@ namespace LifeDISA
 			}
 		}
 		#endif
+		
+		static void Fix670()
+		{
+			var list = allBytes.ToList();
+			list.RemoveRange(172, 8); //remove GOTO (4) + invalid instruction (4)
+			allBytes = list.ToArray();
+			foreach(var j in new [] { 28, 108, 132, 146, 160, 166 }) //fix GOTOs
+			{
+				allBytes[j] -= 4;
+			}
+		}
 
 		static void Dump(TextWriter writer)
 		{
@@ -355,8 +366,8 @@ namespace LifeDISA
 			}
 			
 			#if !NO_OPTIMIZE
-			Debug.Assert(indent == 0);
-			Debug.Assert(nodes.All(x => x.Type != LifeEnum.GOTO));
+			Debug.Assert(indent == 0, "Indentation should be equal to zero");
+			Debug.Assert(nodes.All(x => x.Type != LifeEnum.GOTO), "Unexpected goto");
 			#endif
 		}
 
