@@ -5,20 +5,20 @@ namespace Shared
 {
 	public class VarParserExt : VarParser
 	{
-		public string GetText(string sectionName, string value)
+		public string GetText(VarEnum section, string value)
 		{
 			int parsedNumber;
 			if(int.TryParse(value, out parsedNumber))
 			{
-				return GetText(sectionName, parsedNumber);
+				return GetText(section, parsedNumber);
 			}
 
 			return value;
 		}
 
-		public string GetText(string sectionName, int value, string defaultText = null)
+		public string GetText(VarEnum varsEnum, int value, string defaultText = null)
 		{
-			string text = base.GetText(sectionName, value);
+			string text = base.GetText(varsEnum, value);
 
 			if (!string.IsNullOrEmpty(text))
 			{

@@ -29,7 +29,7 @@ namespace TrackDISA
 				for(int i = 0 ; i < pak.EntryCount ; i++)
 				{
 					writer.WriteLine("--------------------------------------------------");
-					writer.WriteLine("#{0} {1}", i, vars.GetText("TRACKS", i, string.Empty));
+					writer.WriteLine("#{0} {1}", i, vars.GetText(VarEnum.TRACKS, i, string.Empty));
 					writer.WriteLine("--------------------------------------------------");
 					Dump(pak.GetEntry(i), writer);
 				}

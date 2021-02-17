@@ -1,22 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace Shared
 {
 	public class VarParser
 	{
-		readonly Dictionary<string, Dictionary<int, string>> sections
-			= new Dictionary<string, Dictionary<int, string>>();
+		readonly Dictionary<VarEnum, Dictionary<int, string>> sections
+			= new Dictionary<VarEnum, Dictionary<int, string>>();
 
-		public string GetText(string sectionName, int value)
+		public string GetText(VarEnum section, int value)
 		{
-			Dictionary<int, string> section;
-			if (sections.TryGetValue(sectionName, out section))
+			Dictionary<int, string> sectionDict;
+			if (sections.TryGetValue(section, out sectionDict))
 			{
 				string text;
-				if(section.TryGetValue(value, out text))
+				if(sectionDict.TryGetValue(value, out text))
 				{
 					return text;
 				}
@@ -25,8 +25,9 @@ namespace Shared
 			return string.Empty;
 		}
 	
-		public void Load(string filePath, params string[] sectionsToParse)
+		public void Load(string filePath, params VarEnum[] sectionsToParse)
 		{
+			var allowedSections = sectionsToParse.ToDictionary(x => x.ToString(), x => x);
 			var allLines = File.ReadLines(filePath);
 	
 			Dictionary<int, string> currentSection = null;
@@ -37,9 +38,10 @@ namespace Shared
 				//check if new section
 				if (line.Length > 0 && line[0] >= 'A' && line[0] <= 'Z')
 				{
-					if (sectionsToParse.Length == 0 || Array.IndexOf(sectionsToParse, line) >= 0)
+					VarEnum section;
+					if (allowedSections.TryGetValue(line, out section))
 					{
-						currentSection = CreateNewSection(line);
+						currentSection = CreateNewSection(section);
 					}
 					else
 					{
@@ -62,11 +64,11 @@ namespace Shared
 			}
 		}
 	
-		Dictionary<int, string> CreateNewSection(string name)
+		Dictionary<int, string> CreateNewSection(VarEnum section)
 		{
-			Dictionary<int, string> section = new Dictionary<int, string>();
-			sections.Add(name.Trim(), section);
-			return section;
+			Dictionary<int, string> sectionDict = new Dictionary<int, string>();
+			sections.Add(section, sectionDict);
+			return sectionDict;
 		}
 	
 		void AddEntry(Dictionary<int, string> section, string fromString, string toString, string text)

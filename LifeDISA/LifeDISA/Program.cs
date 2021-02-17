@@ -35,7 +35,8 @@ namespace LifeDISA
 			//parse vars
 			if(File.Exists(@"GAMEDATA\vars.txt"))
 			{
-				vars.Load(@"GAMEDATA\vars.txt", "LIFES", "BODYS", "MUSIC", "ANIMS", "SPECIAL", "TRACKS", "POSREL", "VARS", "C_VARS", "SOUNDS", "ACTIONS", "KEYBOARD INPUT");
+				vars.Load(@"GAMEDATA\vars.txt", VarEnum.LIFES, VarEnum.BODYS, VarEnum.MUSIC, VarEnum.ANIMS, VarEnum.SPECIAL, VarEnum.TRACKS,
+				          VarEnum.POSREL, VarEnum.VARS, VarEnum.C_VARS, VarEnum.SOUNDS, VarEnum.ACTIONS, VarEnum.KEYBOARD_INPUT);
 			}
 
 			Regex r = new Regex(@"[0-9a-fA-F]{8}\.DAT", RegexOptions.IgnoreCase);
@@ -100,7 +101,7 @@ namespace LifeDISA
 						int body = allBytes.ReadShort(n + 2);
 						if(body != -1)
 						{
-							string name = vars.GetText("BODYS", body, string.Empty);
+							string name = vars.GetText(VarEnum.BODYS, body, string.Empty);
 							if (!string.IsNullOrEmpty(name))
 							{
 								objectsByIndex.Add(i, name.ToLowerInvariant());
@@ -119,7 +120,7 @@ namespace LifeDISA
 				for(int i = 0 ; i < pak.EntryCount ; i++)
 				{
 					writer.WriteLine("--------------------------------------------------");
-					writer.WriteLine("#{0} {1}", i, vars.GetText("LIFES", i, string.Empty));
+					writer.WriteLine("#{0} {1}", i, vars.GetText(VarEnum.LIFES, i, string.Empty));
 					writer.WriteLine("--------------------------------------------------");					
 					allBytes = pak.GetEntry(i);
 					ParseFile();
@@ -430,16 +431,16 @@ namespace LifeDISA
 					break;
 
 				case LifeEnum.SOUND:
-					ins.Add(vars.GetText("SOUNDS", Evalvar()));
+					ins.Add(vars.GetText(VarEnum.SOUNDS, Evalvar()));
 					break;
 
 				case LifeEnum.BODY:
-					ins.Add(vars.GetText("BODYS", Evalvar()));
+					ins.Add(vars.GetText(VarEnum.BODYS, Evalvar()));
 					break;
 
 				case LifeEnum.SAMPLE_THEN:
-					ins.Add(vars.GetText("SOUNDS", Evalvar()));
-			        ins.Add(vars.GetText("SOUNDS", Evalvar()));
+					ins.Add(vars.GetText(VarEnum.SOUNDS, Evalvar()));
+			        ins.Add(vars.GetText(VarEnum.SOUNDS, Evalvar()));
 					break;
 
 				case LifeEnum.CAMERA_TARGET:
@@ -461,24 +462,24 @@ namespace LifeDISA
 					break;
 
 				case LifeEnum.LIFE:
-					ins.Add(vars.GetText("LIFES", GetParam()));
+					ins.Add(vars.GetText(VarEnum.LIFES, GetParam()));
 					break;
 
 				case LifeEnum.FOUND_BODY:
-					ins.Add(vars.GetText("BODYS", GetParam()));
+					ins.Add(vars.GetText(VarEnum.BODYS, GetParam()));
 					break;
 
 				case LifeEnum.NEXT_MUSIC:
 				case LifeEnum.MUSIC:
-					ins.Add(vars.GetText("MUSIC", GetParam()));
+					ins.Add(vars.GetText(VarEnum.MUSIC, GetParam()));
 					break;
 
 				case LifeEnum.ANIM_REPEAT:
-					ins.Add(vars.GetText("ANIMS", GetParam()));
+					ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
 					break;
 
 				case LifeEnum.SPECIAL:
-					ins.Add(vars.GetText("SPECIAL", GetParam()));
+					ins.Add(vars.GetText(VarEnum.SPECIAL, GetParam()));
 					break;
 
 				case LifeEnum.SET_INVENTORY:
@@ -527,7 +528,7 @@ namespace LifeDISA
 							break;
 
 						case 3: //track
-							ins.Add(vars.GetText("TRACKS", GetParam()));
+							ins.Add(vars.GetText(VarEnum.TRACKS, GetParam()));
 							break;
 					}
 					break;
@@ -535,8 +536,8 @@ namespace LifeDISA
 
 				case LifeEnum.ANIM_ONCE:
 				case LifeEnum.ANIM_ALL_ONCE:
-					ins.Add(vars.GetText("ANIMS", GetParam()));
-					ins.Add(vars.GetText("ANIMS", GetParam()));
+					ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
+					ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
 					break;
 
 				case LifeEnum.ANIM_HYBRIDE_ONCE:
@@ -569,12 +570,12 @@ namespace LifeDISA
 					break;
 
 				case LifeEnum.HIT:
-					ins.Add(vars.GetText("ANIMS", GetParam()));
+					ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
 					ins.Add(GetParam());
 					ins.Add(GetParam());
 					ins.Add(GetParam());
 					ins.Add(Evalvar());
-					ins.Add(vars.GetText("ANIMS", GetParam()));
+					ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
 					break;
 
 				case LifeEnum.DEF_ZV:
@@ -587,32 +588,32 @@ namespace LifeDISA
 					break;
 
 				case LifeEnum.FIRE:
-					ins.Add(vars.GetText("ANIMS", GetParam()));
+					ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
 					ins.Add(GetParam());//shoot frame
 					ins.Add(GetParam()); //hotpoint
 					ins.Add(GetParam()); //range
 					ins.Add(GetParam());//hitforce
-					ins.Add(vars.GetText("ANIMS", GetParam()));
+					ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
 					break;
 
 				case LifeEnum.ANIM_MOVE:
-					ins.Add(vars.GetText("ANIMS", GetParam()));
-					ins.Add(vars.GetText("ANIMS", GetParam()));
-					ins.Add(vars.GetText("ANIMS", GetParam()));
-					ins.Add(vars.GetText("ANIMS", GetParam()));
-					ins.Add(vars.GetText("ANIMS", GetParam()));
-					ins.Add(vars.GetText("ANIMS", GetParam()));
-					ins.Add(vars.GetText("ANIMS", GetParam()));
+					ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
+					ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
+					ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
+					ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
+					ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
+					ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
+					ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
 					break;
 
 				case LifeEnum.THROW:
-					ins.Add(vars.GetText("ANIMS", GetParam()));
+					ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
 					ins.Add(GetParam());
 					ins.Add(GetParam());
 					ins.Add(GetObject(GetParam()));
 					ins.Add(GetParam());
 					ins.Add(GetParam());
-					ins.Add(vars.GetText("ANIMS", GetParam()));
+					ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
 					break;
 
 				case LifeEnum.PICTURE:
@@ -630,7 +631,7 @@ namespace LifeDISA
 					break;
 
 				case LifeEnum.REP_SAMPLE:
-					ins.Add(vars.GetText("SOUNDS", Evalvar()));
+					ins.Add(vars.GetText(VarEnum.SOUNDS, Evalvar()));
 					ins.Add(GetParam());
 					break;
 
@@ -651,15 +652,15 @@ namespace LifeDISA
 					break;
 
 				case LifeEnum.ANIM_SAMPLE:
-					ins.Add(vars.GetText("SOUNDS", Evalvar()));
-					ins.Add(vars.GetText("ANIMS", GetParam()));
+					ins.Add(vars.GetText(VarEnum.SOUNDS, Evalvar()));
+					ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
 					ins.Add(GetParam());
 					break;
 
 				case LifeEnum.SET:
 				{
 					int curr = GetParam();
-					ins.Add("{0} = {1}", vars.GetText("VARS", curr, "var" + curr), Evalvar());
+					ins.Add("{0} = {1}", vars.GetText(VarEnum.VARS, curr, "var" + curr), Evalvar());
 					break;
 				}
 
@@ -667,7 +668,7 @@ namespace LifeDISA
 				case LifeEnum.SUB:
 				{
 					int curr = GetParam();
-					ins.Add(vars.GetText("VARS", curr, "var" + curr));
+					ins.Add(vars.GetText(VarEnum.VARS, curr, "var" + curr));
 					ins.Add(Evalvar());
 					break;
 				}
@@ -676,14 +677,14 @@ namespace LifeDISA
 				case LifeEnum.DEC:
 				{
 					int curr = GetParam();
-					ins.Add(vars.GetText("VARS", curr, "var" + curr));
+					ins.Add(vars.GetText(VarEnum.VARS, curr, "var" + curr));
 					break;
 				}
 
 				case LifeEnum.C_VAR:
 				{
 					int curr = GetParam();
-					ins.Add("{0} = {1}", vars.GetText("C_VARS", curr, "c_var" + curr), Evalvar());
+					ins.Add("{0} = {1}", vars.GetText(VarEnum.C_VARS, curr, "c_var" + curr), Evalvar());
 					break;
 				}
 
@@ -701,7 +702,7 @@ namespace LifeDISA
 		{
 			if(valueA.StartsWith("posrel"))
 			{
-				return vars.GetText("POSREL", valueB);
+				return vars.GetText(VarEnum.POSREL, valueB);
 			}
 
 			switch (valueA)
@@ -715,19 +716,19 @@ namespace LifeDISA
 
 				case "action":
 				case "player_current_action":
-					return vars.GetText("ACTIONS", valueB);
+					return vars.GetText(VarEnum.ACTIONS, valueB);
 
 				case "anim":
-					return vars.GetText("ANIMS", valueB);
+					return vars.GetText(VarEnum.ANIMS, valueB);
 
 				case "body":
-					return vars.GetText("BODYS", valueB);
+					return vars.GetText(VarEnum.BODYS, valueB);
 
 				case "keyboard_input":
-					return vars.GetText("KEYBOARD INPUT", valueB);
+					return vars.GetText(VarEnum.KEYBOARD_INPUT, valueB);
 					
 				case "num_track":
-					return vars.GetText("TRACKS", valueB);
+					return vars.GetText(VarEnum.TRACKS, valueB);
 
 				default:
 					return valueB;
@@ -812,7 +813,7 @@ namespace LifeDISA
 			{
 				//CONST
 				curr = GetParam();
-				return vars.GetText("VARS", curr, "var" + curr);
+				return vars.GetText(VarEnum.VARS, curr, "var" + curr);
 			}
 
 			string result = string.Empty;
@@ -845,7 +846,7 @@ namespace LifeDISA
 					break;
 
 				case EvalEnum.C_VAR:
-					parameter = vars.GetText("C_VARS", GetParam(), "c_var" + curr);
+					parameter = vars.GetText(VarEnum.C_VARS, GetParam(), "c_var" + curr);
 					break;
 
 				case EvalEnum.TEST_ZV_END_ANIM:

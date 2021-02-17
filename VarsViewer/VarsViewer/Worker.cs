@@ -36,21 +36,21 @@ namespace VarsViewer
 			const string varPath = @"GAMEDATA\vars.txt";
 			if (File.Exists(varPath))
 			{
-				varParser.Load(varPath, "VARS", "C_VARS");
+				varParser.Load(varPath, VarEnum.VARS, VarEnum.C_VARS);
 			}
 
-			InitVars(varParser, Vars, "VARS");
-			InitVars(varParser, Cvars, "C_VARS");
+			InitVars(varParser, Vars, VarEnum.VARS);
+			InitVars(varParser, Cvars, VarEnum.C_VARS);
 		}
-
-		void InitVars(VarParser varParser, Var[] data, string sectionName)
+		
+		void InitVars(VarParser varParser, Var[] data, VarEnum section)
 		{
 			for(int i = 0 ; i < data.Length ; i++)
 			{
 				var var = new Var();
 				var.Index = i;
 				var.Text = string.Empty;
-				var.Name = varParser.GetText(sectionName, var.Index);
+				var.Name = varParser.GetText(section, var.Index);
 				data[i] = var;
 			}
 		}

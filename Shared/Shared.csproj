@@ -57,6 +57,7 @@
     <Compile Include="Tools.cs" />
     <Compile Include="VarParser.cs" />
     <Compile Include="VarParserExt.cs" />
+    <Compile Include="VarEnum.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
