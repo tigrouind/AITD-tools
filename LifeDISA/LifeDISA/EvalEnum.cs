@@ -1,12 +1,15 @@
 ﻿
 using System;
+using System.ComponentModel;
 
 namespace LifeDISA
 {
 	public enum EvalEnum
 	{
+		NONE = -1,
 		ACTOR_COLLIDER,
-		TRIGGER_COLLIDER,
+		[Description("TRIGGER_COLLIDER")]
+		TRIGGER_COLLIDER_1,
 		HARD_COLLIDER,
 		HIT,
 		HIT_BY,
@@ -20,12 +23,15 @@ namespace LifeDISA
 		CHRONO,
 		ROOM_CHRONO,
 		DIST,
-		COL_BY,
+		[Description("COL_BY")]
+		COL_BY_1,
 		ISFOUND,
 		ACTION,
 		POSREL,
 		KEYBOARD_INPUT,
 		SPACE,
+		[Description("COL_BY")]
+		COL_BY_2,
 		ALPHA,
 		BETA,
 		GAMMA,
@@ -37,12 +43,24 @@ namespace LifeDISA
 		ROOM,
 		LIFE,
 		OBJECT,
-		ROOMY,
+		#if !JITD
+		ROOMY,	
+		TEST_ZV_END_ANIM,	
+		MUSIC,		
+		#else
+		MUSIC,	
 		TEST_ZV_END_ANIM,
-		MUSIC,
+		UNKNOWN,
+		#endif
 		C_VAR,
+		#if !JITD
 		STAGE,
-		THROW,
-		MATRIX
+		THROW
+		#endif
+		#if JITD
+		MATRIX,
+		[Description("TRIGGER_COLLIDER")]
+		TRIGGER_COLLIDER_2
+		#endif
 	}
 }

@@ -7,6 +7,7 @@ namespace LifeDISA
 	public class Instruction
 	{
 		public LifeEnum Type;
+		public EvalEnum EvalEnum; //first argument of switch
 		public List<string> Arguments = new List<string>();
 		public string Actor;
 		public int Goto = -1;
@@ -34,7 +35,7 @@ namespace LifeDISA
 			{
 				switch(Type)
 				{
-					#if !NO_DECOMPILE
+					#if !NO_OPTIMIZE
 					case LifeEnum.IF_EGAL:
 					case LifeEnum.IF_DIFFERENT:
 					case LifeEnum.IF_SUP_EGAL:
@@ -60,7 +61,7 @@ namespace LifeDISA
 			{
 				switch(Type)
 				{
-					#if !NO_DECOMPILE
+					#if !NO_OPTIMIZE
 					case LifeEnum.ELSE:						
 					case LifeEnum.END:					
 						return true;
@@ -77,7 +78,7 @@ namespace LifeDISA
 			{
 				switch (Type)
 				{
-					#if !NO_DECOMPILE
+					#if !NO_OPTIMIZE
 					case LifeEnum.IF_EGAL:
 					case LifeEnum.IF_DIFFERENT:
 					case LifeEnum.IF_SUP_EGAL:
@@ -96,7 +97,7 @@ namespace LifeDISA
 		{
 			get
 			{
-				#if !NO_DECOMPILE
+				#if !NO_OPTIMIZE
 				switch (Type)
 				{
 					

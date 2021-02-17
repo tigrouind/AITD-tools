@@ -22,7 +22,9 @@ namespace LifeDISA
 		TRACKMODE,
 		HIT,
 		MESSAGE,
+		#if !JITD
 		MESSAGE_VALUE,
+		#endif
 		SET,
 		INC,
 		DEC,
@@ -31,7 +33,9 @@ namespace LifeDISA
 		LIFE_MODE,
 		SWITCH,
 		CASE,
+		#if !JITD
 		CAMERA,
+		#endif
 		START_CHRONO,
 		MULTI_CASE,
 		FOUND,
@@ -61,10 +65,14 @@ namespace LifeDISA
 		TEST_COL,
 		FOUND_BODY,
 		SET_ALPHA,
+		#if !JITD
 		STOP_BETA,
+		#endif
 		DO_MAX_ZV,
 		PUT,
+		#if !JITD
 		C_VAR,
+		#endif
 		DO_NORMAL_ZV,
 		DO_CARRE_ZV,
 		SAMPLE_THEN,
@@ -72,12 +80,16 @@ namespace LifeDISA
 		SHAKING,
 		ALLOW_INVENTORY,
 		FOUND_WEIGHT,
+		#if !JITD
 		UP_COOR_Y,
 		SPEED,
+		#endif
 		PUT_AT,
 		DEF_ZV,
 		HIT_OBJECT,
+		#if !JITD
 		GET_HARD_CLIP,
+		#endif
 		ANGLE,
 		REP_SAMPLE,
 		THROW,
@@ -88,7 +100,9 @@ namespace LifeDISA
 		FADE_MUSIC,
 		STOP_HIT_OBJECT,
 		COPY_ANGLE,
+		#if !JITD
 		END_SEQUENCE,
+		#endif
 		SAMPLE_THEN_REPEAT,
 		WAIT_GAME_OVER,
 		GET_MATRICE,
@@ -99,8 +113,10 @@ namespace LifeDISA
 		PLUIE,
 		ANIM_HYBRIDE_ONCE,
 		ANIM_HYBRIDE_REPEAT,
-		MODIF_C_VAR,
-		CALL_INVENTORY, // 0x60
+		#if JITD
+		C_VAR,
+		#endif
+		CALL_INVENTORY,
 		BODY_RESET,
 		DEL_INVENTORY,
 		SET_INVENTORY,
@@ -111,6 +127,9 @@ namespace LifeDISA
 		DEF_ABS_ZV,
 		DEF_SEQUENCE_SAMPLE,
 		READ_ON_PICTURE,
+		FIRE_UP_DOWN,
+		UNKNOWN1,
+		UNKNOWN2,
 		END = 0x10000,
 		DEFAULT,
 		ELSE

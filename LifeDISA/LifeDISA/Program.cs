@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using Shared;
@@ -14,19 +16,16 @@ namespace LifeDISA
 		static int pos;
 		static byte[] allBytes;
 
-		static LifeEnum[] table;
-		static EvalEnum[] tableEval;
-		static bool isCDROMVersion;
-		static bool isAITD2;
 		static readonly Dictionary<int, string> objectsByIndex = new Dictionary<int, string>();
 		static readonly Dictionary<int, string> namesByIndex = new Dictionary<int, string>();
 
-		static string[] trackModes = { "none", "manual", "follow", "track"};
+		static string[] trackModes = { "none", "manual", "follow", "track" };
 
 		static readonly LinkedList<Instruction> nodes = new LinkedList<Instruction>();
 		static readonly Dictionary<int, LinkedListNode<Instruction>> nodesMap = new Dictionary<int, LinkedListNode<Instruction>>();
 
 		static readonly VarParserExt vars = new VarParserExt();
+		static readonly Dictionary<EvalEnum, string> evalToString = CreateEvalToStringDictionary();
 
 		public static int Main()
 		{
@@ -49,15 +48,6 @@ namespace LifeDISA
 				}							
 			}
 
-			table = MacroTable.AITD1;
-			tableEval = MacroTable.AITD1Eval;
-			if (fileCount < 60) //JITD
-			{
-				isAITD2 = true;
-				table = MacroTable.AITD2;
-				tableEval = MacroTable.AITD2Eval;
-			}
-
 			//dump names
 			var languagePakFiles = new [] {	"ENGLISH.PAK", "FRANCAIS.PAK", "DEUTSCH.PAK", "ESPAGNOL.PAK", "ITALIANO.PAK", "USA.PAK" };
 			string languageFile = languagePakFiles
@@ -74,9 +64,10 @@ namespace LifeDISA
 
 				foreach(var item in ReadLines(buffer, Encoding.GetEncoding(850))
 					.Where(x => x.Contains(":"))
-					.Select(x =>  x.Split(':')))
+					.Select(x => x.Split(':'))
+					.Where(x => x[1] != string.Empty))
 				{
-					namesByIndex.Add(int.Parse(item[0].TrimStart('@')), item[1]);
+					namesByIndex[int.Parse(item[0].TrimStart('@'))] = item[1];
 				}				
 			}
 			
@@ -84,8 +75,14 @@ namespace LifeDISA
 			{
 				allBytes = File.ReadAllBytes(@"GAMEDATA\OBJETS.ITD");
 				int count = allBytes.ReadShort(0);
-
-				int offset = isAITD2 ? 54 : 52;
+				int offset;
+				
+				#if JITD
+				offset = 54;
+				#else
+				offset = 52;
+				#endif
+				
 				for(int i = 0 ; i < count ; i++)
 				{
 					int n = i * offset + 2;
@@ -111,20 +108,22 @@ namespace LifeDISA
 				}
 			}
 
-			isCDROMVersion = AskForCDROMVersion();
-
 			using (var writer = new StreamWriter("output.txt"))
 			using (var pak = new UnPAK(@"GAMEDATA\LISTLIFE.PAK"))				
 			{
 				//dump all
 				for(int i = 0 ; i < pak.EntryCount ; i++)
 				{
+					#if AITD2 && !AITD3
+					if(i == 670) continue; //invalid "set c_var" instruction at the end of the script			
+					#endif
+					
 					writer.WriteLine("--------------------------------------------------");
 					writer.WriteLine("#{0} {1}", i, vars.GetText(VarEnum.LIFES, i, string.Empty));
 					writer.WriteLine("--------------------------------------------------");					
 					allBytes = pak.GetEntry(i);
 					ParseFile();
-					#if !NO_DECOMPILE
+					#if !NO_OPTIMIZE
 					Optimize();
 					Cleanup();
 					#endif
@@ -154,15 +153,7 @@ namespace LifeDISA
 					actor = allBytes.ReadShort(pos);
 				}
 
-				LifeEnum life;
-				if(curr >= 0 && curr < table.Length)
-				{
-					life = table[curr];
-				}
-				else
-				{
-					life = (LifeEnum)curr;
-				}
+				LifeEnum life = (LifeEnum)curr;
 				
 				Instruction ins = new Instruction();
 				ins.Type = life;
@@ -177,7 +168,7 @@ namespace LifeDISA
 			}
 		}
 
-		#if !NO_DECOMPILE
+		#if !NO_OPTIMIZE
 		static void Optimize()
 		{
 			for(var node = nodes.First; node != null; node = node.Next)
@@ -243,15 +234,27 @@ namespace LifeDISA
 			//instruction after switch should be CASE or MULTICASE
 			//but if could be instructions (eg: DEFAULT after switch)
 			var target = node.Next;
-			while(target != null &&
+			bool defaultCase = false;
+			while(target != null && target.Next != null &&
 				  target.Value.Type != LifeEnum.CASE &&
 				  target.Value.Type != LifeEnum.MULTI_CASE)
 			{
+				defaultCase = true;
 				target = target.Next;
+			}
+			
+			if (defaultCase) //default statement right after switch
+			{
+				if (target.Previous.Value.Type == LifeEnum.GOTO)
+				{
+					target.Previous.Value.ToRemove = true;
+				}
+				
+				nodes.AddBefore(node.Next, new Instruction { Type = LifeEnum.DEFAULT });
+				nodes.AddBefore(target, new Instruction { Type = LifeEnum.END });	
 			}
 	
 			//detect end of switch
-			string switchValue = node.Value.Arguments.First().Split('.').Last();
 			LinkedListNode<Instruction> endOfSwitch = null;
 			bool lastInstruction = false;
 	
@@ -265,7 +268,7 @@ namespace LifeDISA
 					{
 						for(int i = 0 ; i < ins.Arguments.Count ; i++)
 						{
-							ins.Arguments[i] = GetConditionName(switchValue, ins.Arguments[i]);
+							ins.Arguments[i] = GetConditionName(node.Value.EvalEnum, ins.Arguments[i]);
 						}
 	
 						target = nodesMap[ins.Goto];
@@ -333,7 +336,7 @@ namespace LifeDISA
 
 				writer.Write(new String('\t', indent));
 				
-				#if NO_DECOMPILE
+				#if NO_OPTIMIZE
 				writer.Write(ins.Line.ToString().PadLeft(4) + " ");
 				#endif
 				
@@ -351,7 +354,7 @@ namespace LifeDISA
 				}
 			}
 			
-			#if !NO_DECOMPILE
+			#if !NO_OPTIMIZE
 			Debug.Assert(indent == 0);
 			Debug.Assert(nodes.All(x => x.Type != LifeEnum.GOTO));
 			#endif
@@ -367,11 +370,11 @@ namespace LifeDISA
 				case LifeEnum.IF_SUP:
 				case LifeEnum.IF_INF_EGAL:
 				case LifeEnum.IF_INF:
-					string paramA = Evalvar();
+					EvalEnum evalEnum;
+					string paramA = Evalvar(out evalEnum);
 					string paramB = Evalvar();
 
-					string paramAShort = paramA.Split('.').Last();
-					paramB = GetConditionName(paramAShort, paramB);
+					paramB = GetConditionName(evalEnum, paramB);
 
 					switch(life)
 					{
@@ -396,26 +399,26 @@ namespace LifeDISA
 					}
 
 					ins.Goto = GetParam() * 2 + pos;
-					#if NO_DECOMPILE
+					#if NO_OPTIMIZE
 					ins.Add("goto {0}", ins.Goto);
 					#endif
 					break;
 
 				case LifeEnum.GOTO: //should never be called
 					ins.Goto = GetParam() * 2 + pos;
-					#if NO_DECOMPILE
+					#if NO_OPTIMIZE
 					ins.Add("{0}", ins.Goto);
 					#endif
 					break;
 
-				case LifeEnum.SWITCH:
-					ins.Add(Evalvar());
+				case LifeEnum.SWITCH:		
+					ins.Add(Evalvar(out ins.EvalEnum));
 					break;
 
 				case LifeEnum.CASE:
 					ins.Add(GetParam());
 					ins.Goto = GetParam() * 2 + pos;
-					#if NO_DECOMPILE
+					#if NO_OPTIMIZE
 					ins.Add("goto {0}", ins.Goto);
 					#endif
 					break;
@@ -428,10 +431,17 @@ namespace LifeDISA
 					}
 
 					ins.Goto = GetParam() * 2 + pos;
+					#if NO_OPTIMIZE
+					ins.Add("goto {0}", ins.Goto);
+					#endif
 					break;
 
 				case LifeEnum.SOUND:
-					ins.Add(vars.GetText(VarEnum.SOUNDS, Evalvar()));
+					#if AITD2
+						ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
+					#else
+						ins.Add(vars.GetText(VarEnum.SOUNDS, Evalvar()));
+					#endif
 					break;
 
 				case LifeEnum.BODY:
@@ -439,14 +449,26 @@ namespace LifeDISA
 					break;
 
 				case LifeEnum.SAMPLE_THEN:
-					ins.Add(vars.GetText(VarEnum.SOUNDS, Evalvar()));
-			        ins.Add(vars.GetText(VarEnum.SOUNDS, Evalvar()));
+					#if AITD2
+						ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
+			        	ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
+					#else
+						ins.Add(vars.GetText(VarEnum.SOUNDS, Evalvar()));
+			        	ins.Add(vars.GetText(VarEnum.SOUNDS, Evalvar()));
+					#endif										
 					break;
+					
+				case LifeEnum.DELETE:
+				case LifeEnum.IN_HAND:
+					#if AITD2 
+						ins.Add(GetObject(Evalvar()));
+					#else
+						ins.Add(GetObject(GetParam()));
+					#endif
+					break;					
 
 				case LifeEnum.CAMERA_TARGET:
 				case LifeEnum.TAKE:
-				case LifeEnum.IN_HAND:
-				case LifeEnum.DELETE:
 				case LifeEnum.FOUND:
 					ins.Add(GetObject(GetParam()));
 					break;
@@ -481,9 +503,71 @@ namespace LifeDISA
 				case LifeEnum.SPECIAL:
 					ins.Add(vars.GetText(VarEnum.SPECIAL, GetParam()));
 					break;
+					
+				case LifeEnum.STOP_SAMPLE:
+					break;
+					
+				case LifeEnum.READ_ON_PICTURE:
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					break;
+					
+				case LifeEnum.ANIM_RESET:
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					break;
+				
+				case LifeEnum.UNKNOWN1:
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					break;	
 
-				case LifeEnum.SET_INVENTORY:
+				case LifeEnum.UNKNOWN2:
+					ins.Add(Evalvar());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					break;								
+					
 				case LifeEnum.PLAY_SEQUENCE:
+					#if AITD2 
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					#else
+					ins.Add(GetParam());
+					#endif
+					break;
+					
+				case LifeEnum.FIRE_UP_DOWN:
+					ins.Add(Evalvar());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(Evalvar());
+					break;
+					
+				case LifeEnum.DEF_ABS_ZV:
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					break;				
+	
+				case LifeEnum.STAGE_LIFE:
+				case LifeEnum.SET_GROUND:
+				case LifeEnum.SET_INVENTORY:
 				case LifeEnum.COPY_ANGLE:
 				case LifeEnum.TEST_COL:
 				case LifeEnum.LIFE_MODE:
@@ -500,10 +584,9 @@ namespace LifeDISA
 				case LifeEnum.READ:
 					ins.Add(GetParam());
 					ins.Add(GetParam());
-					if (isCDROMVersion)
-					{
-						ins.Add(GetParam());
-					}
+					#if !JITD && !AITD1_FLOPPY
+					ins.Add(GetParam());
+					#endif
 					break;
 
 				case LifeEnum.PUT_AT:
@@ -540,6 +623,7 @@ namespace LifeDISA
 					ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
 					break;
 
+				case LifeEnum.ANIM_HYBRIDE_REPEAT:
 				case LifeEnum.ANIM_HYBRIDE_ONCE:
 				case LifeEnum.SET_BETA:
 				case LifeEnum.SET_ALPHA:
@@ -551,22 +635,29 @@ namespace LifeDISA
 				case LifeEnum.ENDLIFE:
 					ins.ToRemove = true;
 					break;
-
+				
+				case LifeEnum.PLUIE:
+				case LifeEnum.DEL_INVENTORY:	
+				case LifeEnum.CONTINUE_TRACK:
 				case LifeEnum.RESET_MOVE_MANUAL:				
-				case LifeEnum.RETURN:
+				#if !JITD
 				case LifeEnum.END_SEQUENCE:
+				case LifeEnum.UP_COOR_Y:
+				case LifeEnum.GET_HARD_CLIP:
+				#endif
+				case LifeEnum.RETURN:
 				case LifeEnum.DO_MAX_ZV:
 				case LifeEnum.GAME_OVER:
 				case LifeEnum.WAIT_GAME_OVER:
 				case LifeEnum.STOP_HIT_OBJECT:
 				case LifeEnum.START_CHRONO:
-				case LifeEnum.UP_COOR_Y:
 				case LifeEnum.DO_MOVE:
-				case LifeEnum.MANUAL_ROT:
-				case LifeEnum.GET_HARD_CLIP:
+				case LifeEnum.MANUAL_ROT:				
 				case LifeEnum.DO_ROT_ZV:
 				case LifeEnum.DO_REAL_ZV:
 				case LifeEnum.DO_CARRE_ZV:
+				case LifeEnum.DO_NORMAL_ZV:
+				case LifeEnum.CALL_INVENTORY:
 					break;
 
 				case LifeEnum.HIT:
@@ -588,12 +679,21 @@ namespace LifeDISA
 					break;
 
 				case LifeEnum.FIRE:
-					ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
-					ins.Add(GetParam());//shoot frame
+					#if AITD2
+						ins.Add(vars.GetText(VarEnum.ANIMS, Evalvar()));
+					#else
+						ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
+					#endif					
+					ins.Add(GetParam()); //shoot frame
 					ins.Add(GetParam()); //hotpoint
 					ins.Add(GetParam()); //range
-					ins.Add(GetParam());//hitforce
-					ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
+					ins.Add(GetParam()); //hitforce					
+					#if AITD2
+						ins.Add(GetParam());
+						ins.Add(vars.GetText(VarEnum.ANIMS, Evalvar()));
+					#else
+						ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
+					#endif
 					break;
 
 				case LifeEnum.ANIM_MOVE:
@@ -631,8 +731,16 @@ namespace LifeDISA
 					break;
 
 				case LifeEnum.REP_SAMPLE:
+					#if AITD2
+					ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
+					#else
 					ins.Add(vars.GetText(VarEnum.SOUNDS, Evalvar()));
+					#endif
 					ins.Add(GetParam());
+					break;
+					
+				case LifeEnum.DEF_SEQUENCE_SAMPLE:
+					pos = GetParam() * 4 + pos;
 					break;
 
 				case LifeEnum.DROP:
@@ -698,41 +806,45 @@ namespace LifeDISA
 			}
 		}
 
-		static string GetConditionName(string valueA, string valueB)
+		static string GetConditionName(EvalEnum evalEnum, string value)
 		{
-			if(valueA.StartsWith("posrel"))
+			switch (evalEnum)
 			{
-				return vars.GetText(VarEnum.POSREL, valueB);
-			}
-
-			switch (valueA)
-			{
-				case "inhand":
-				case "col_by":
-				case "hit_by":
-				case "hit":
-				case "actor_collider":
-					return GetObject(valueB);
-
-				case "action":
-				case "player_current_action":
-					return vars.GetText(VarEnum.ACTIONS, valueB);
-
-				case "anim":
-					return vars.GetText(VarEnum.ANIMS, valueB);
-
-				case "body":
-					return vars.GetText(VarEnum.BODYS, valueB);
-
-				case "keyboard_input":
-					return vars.GetText(VarEnum.KEYBOARD_INPUT, valueB);
+				case EvalEnum.INHAND:
+				case EvalEnum.COL_BY_1:
+				case EvalEnum.COL_BY_2:
+				case EvalEnum.HIT_BY:
+				case EvalEnum.HIT:
+				case EvalEnum.ACTOR_COLLIDER:
+					return GetObject(value);
 					
-				case "num_track":
-					return vars.GetText(VarEnum.TRACKS, valueB);
+				case EvalEnum.POSREL:
+					return vars.GetText(VarEnum.POSREL, value);
 
+				case EvalEnum.ACTION:
+					return vars.GetText(VarEnum.ACTIONS, value);
+					
+				case EvalEnum.ANIM:
+					return vars.GetText(VarEnum.ANIMS, value);
+
+				case EvalEnum.BODY:
+					return vars.GetText(VarEnum.BODYS, value);
+
+				case EvalEnum.KEYBOARD_INPUT:
+					return vars.GetText(VarEnum.KEYBOARD_INPUT, value);
+					
+				case EvalEnum.NUM_TRACK:
+					return vars.GetText(VarEnum.TRACKS, value);	
+
+				case EvalEnum.MUSIC:
+					return vars.GetText(VarEnum.MUSIC, value);	
+					
+				case EvalEnum.LIFE:
+					return vars.GetText(VarEnum.LIFES, value);						
+						
 				default:
-					return valueB;
-			}
+					return value;
+			}	
 		}
 
 		static string GetObject(string index)
@@ -787,21 +899,16 @@ namespace LifeDISA
 		{
 			return trackModes[index];
 		}
-
-		static bool AskForCDROMVersion()
-		{
-			string line;
-			do
-			{
-				Console.Write("CD-ROM version [y/n] ? ");
-				line = Console.ReadLine().ToLower();
-			}
-			while (line != "y" && line != "n");
-			return line == "y";
-		}
-
+		
 		static string Evalvar()
 		{
+			EvalEnum evalEnum;
+			return Evalvar(out evalEnum);
+		}
+
+		static string Evalvar(out EvalEnum evalEnum)
+		{
+			evalEnum = EvalEnum.NONE;
 			int curr = GetParam();
 			if(curr == -1)
 			{
@@ -813,7 +920,13 @@ namespace LifeDISA
 			{
 				//CONST
 				curr = GetParam();
-				return vars.GetText(VarEnum.VARS, curr, "var" + curr);
+				string name =  vars.GetText(VarEnum.VARS, curr, "var" + curr);				
+				if(name == "player_current_action")
+				{
+					evalEnum = EvalEnum.ACTION;
+				}
+				
+				return name;
 			}
 
 			string result = string.Empty;
@@ -825,18 +938,20 @@ namespace LifeDISA
 
 			curr &= 0x7FFF;
 			curr--;
-			var evalEnum = tableEval[curr];
+			evalEnum = (EvalEnum)curr;
 
-			string parameter = evalEnum.ToString().ToLower();
+			string parameter = evalToString[evalEnum].ToLower();			
 			switch (evalEnum)
 			{
 				case EvalEnum.DIST:
 				case EvalEnum.POSREL:
 				case EvalEnum.OBJECT:
+				#if !JITD
 				case EvalEnum.THROW:
+				#endif
 					parameter += string.Format("({0})", GetObject(GetParam()));
 					break;
-
+				
 				case EvalEnum.ISFOUND:
 					parameter += string.Format("({0})", GetObject(Evalvar()));
 					break;
@@ -848,9 +963,11 @@ namespace LifeDISA
 				case EvalEnum.C_VAR:
 					parameter = vars.GetText(VarEnum.C_VARS, GetParam(), "c_var" + curr);
 					break;
-
+					
 				case EvalEnum.TEST_ZV_END_ANIM:
+				#if JITD
 				case EvalEnum.MATRIX:
+				#endif
 					parameter += string.Format("({0} {1})", GetParam(), GetParam());
 					break;
 			}
@@ -870,6 +987,25 @@ namespace LifeDISA
 					yield return line;
 				}					      		
 			}
+		}
+		
+		static Dictionary<EvalEnum, string> CreateEvalToStringDictionary()
+		{
+			var result = new Dictionary<EvalEnum, string>();
+			foreach(var field in typeof(EvalEnum).GetFields(BindingFlags.Public | BindingFlags.Static))
+			{
+				var type = (EvalEnum)field.GetValue(null);
+				var name = field.Name;
+				
+				var attribute = (DescriptionAttribute)field.GetCustomAttribute(typeof(DescriptionAttribute));
+				if (attribute != null)
+				{
+					name = attribute.Description;
+				}
+				result.Add(type, name);
+			}
+			
+			return result;
 		}
 	}
 }
