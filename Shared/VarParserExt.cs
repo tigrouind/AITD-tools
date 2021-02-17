@@ -27,7 +27,7 @@ namespace Shared
 				text = Regex.Replace(text, @"[^A-Za-z0-9 ]", string.Empty);
 				text = Regex.Replace(text, @"\s+", "_");
 
-				return text;
+				return text.ToLowerInvariant();
 			}
 
 			if (defaultText != null)

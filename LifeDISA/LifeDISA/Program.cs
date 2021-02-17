@@ -35,7 +35,7 @@ namespace LifeDISA
 			//parse vars
 			if(File.Exists(@"GAMEDATA\vars.txt"))
 			{
-				vars.Load(@"GAMEDATA\vars.txt");
+				vars.Load(@"GAMEDATA\vars.txt", "LIFES", "BODYS", "MUSIC", "ANIMS", "SPECIAL", "TRACKS", "POSREL", "VARS", "C_VARS", "SOUNDS", "ACTIONS", "KEYBOARD INPUT");
 			}
 
 			Regex r = new Regex(@"[0-9a-fA-F]{8}\.DAT", RegexOptions.IgnoreCase);
@@ -659,7 +659,7 @@ namespace LifeDISA
 				case LifeEnum.SET:
 				{
 					int curr = GetParam();
-					ins.Add("{0} = {1}", vars.GetText("VARS", curr, "VAR" + curr), Evalvar());
+					ins.Add("{0} = {1}", vars.GetText("VARS", curr, "var" + curr), Evalvar());
 					break;
 				}
 
@@ -667,7 +667,7 @@ namespace LifeDISA
 				case LifeEnum.SUB:
 				{
 					int curr = GetParam();
-					ins.Add(vars.GetText("VARS", curr, "VAR" + curr));
+					ins.Add(vars.GetText("VARS", curr, "var" + curr));
 					ins.Add(Evalvar());
 					break;
 				}
@@ -676,13 +676,16 @@ namespace LifeDISA
 				case LifeEnum.DEC:
 				{
 					int curr = GetParam();
-					ins.Add(vars.GetText("VARS", curr, "VAR" + curr));
+					ins.Add(vars.GetText("VARS", curr, "var" + curr));
 					break;
 				}
 
 				case LifeEnum.C_VAR:
-					ins.Add("c_var{0} = {1}", GetParam(), Evalvar());
+				{
+					int curr = GetParam();
+					ins.Add("{0} = {1}", vars.GetText("C_VARS", curr, "c_var" + curr), Evalvar());
 					break;
+				}
 
 				case LifeEnum.BODY_RESET:
 					ins.Add(Evalvar());
@@ -823,35 +826,35 @@ namespace LifeDISA
 			curr--;
 			var evalEnum = tableEval[curr];
 
-			string parameter = string.Empty;
+			string parameter = evalEnum.ToString().ToLower();
 			switch (evalEnum)
 			{
 				case EvalEnum.DIST:
 				case EvalEnum.POSREL:
 				case EvalEnum.OBJECT:
 				case EvalEnum.THROW:
-					parameter = string.Format("({0})", GetObject(GetParam()));
+					parameter += string.Format("({0})", GetObject(GetParam()));
 					break;
 
 				case EvalEnum.ISFOUND:
-					parameter = string.Format("({0})", GetObject(Evalvar()));
+					parameter += string.Format("({0})", GetObject(Evalvar()));
 					break;
 
 				case EvalEnum.RAND:
-					parameter = string.Format("({0})", GetParam());
+					parameter += string.Format("({0})", GetParam());
 					break;
 
 				case EvalEnum.C_VAR:
-					parameter = GetParam().ToString();
+					parameter = vars.GetText("C_VARS", GetParam(), "c_var" + curr);
 					break;
 
 				case EvalEnum.TEST_ZV_END_ANIM:
 				case EvalEnum.MATRIX:
-					parameter = string.Format("({0} {1})", GetParam(), GetParam());
+					parameter += string.Format("({0} {1})", GetParam(), GetParam());
 					break;
 			}
 
-			result += evalEnum.ToString().ToLower() + parameter;
+			result += parameter;
 			return result;
 		}
 		
