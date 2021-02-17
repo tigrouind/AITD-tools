@@ -47,13 +47,13 @@
 			this.Name = "MainForm";
 			this.Text = "AITD vars viewer";
 			this.Load += new System.EventHandler(this.MainFormLoad);
-			this.ResizeEnd += new System.EventHandler(this.MainFormResizeEnd);
 			this.Paint += new System.Windows.Forms.PaintEventHandler(this.MainFormPaint);
 			this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.MainFormKeyDown);
 			this.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.MainFormKeyPress);
 			this.MouseClick += new System.Windows.Forms.MouseEventHandler(this.MainFormMouseClick);
 			this.MouseLeave += new System.EventHandler(this.MainFormMouseLeave);
 			this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.MainFormMouseMove);
+			this.Resize += new System.EventHandler(this.MainFormResize);
 			this.ResumeLayout(false);
 
 		}

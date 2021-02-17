@@ -86,7 +86,7 @@ namespace VarsViewer
 			base.WndProc(ref m);
 		}
 
-		void MainFormResizeEnd(object sender, EventArgs e)
+		void MainFormResize(object sender, EventArgs e)
 		{
 			Invalidate();
 		}
