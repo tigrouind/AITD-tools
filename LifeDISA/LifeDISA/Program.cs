@@ -85,26 +85,37 @@ namespace LifeDISA
 				
 				for(int i = 0 ; i < count ; i++)
 				{
+					string name = null;
 					int n = i * offset + 2;
-					int index = allBytes.ReadShort(n + 10);
-					if(index != -1 && index != 0)
+					int body = allBytes.ReadShort(n + 2);
+					if(body != -1)
 					{
-						string name = namesByIndex[index].ToLowerInvariant();
-						name = string.Join("_", name.Split(' ').Where(x => x != "an" && x != "a").ToArray());
-						objectsByIndex.Add(i, name);
+						name = vars.GetText(VarEnum.BODYS, body, string.Empty);
 					}
-					else
+					
+					if(string.IsNullOrEmpty(name))
 					{
-						int body = allBytes.ReadShort(n + 2);
-						if(body != -1)
+						int index = allBytes.ReadShort(n + 10);
+						if(index != -1 && index != 0)
 						{
-							string name = vars.GetText(VarEnum.BODYS, body, string.Empty);
-							if (!string.IsNullOrEmpty(name))
-							{
-								objectsByIndex.Add(i, name.ToLowerInvariant());
-							}
+							name = namesByIndex[index].ToLowerInvariant();
+							name = string.Join("_", name.Split(' ').Where(x => x != "an" && x != "a").ToArray());
 						}
 					}
+					
+					if(string.IsNullOrEmpty(name))
+					{
+						int life = allBytes.ReadShort(n + 34);
+						if(life != -1)
+						{
+							name = vars.GetText(VarEnum.LIFES, life, string.Empty);
+						}
+					}
+															
+					if(!string.IsNullOrEmpty(name))
+					{
+						objectsByIndex.Add(i, name.ToLowerInvariant());
+					}					
 				}
 			}
 
@@ -886,7 +897,7 @@ namespace LifeDISA
 			{
 				return text + "_" + index;
 			}
-			return "obj" + index;
+			return "obj_" + index;
 		}
 
 		static string GetName(int index)
@@ -896,7 +907,7 @@ namespace LifeDISA
 			{
 				return "\"" + text + "\"";
 			}
-			return "msg" + index;
+			return "msg_" + index;
 		}
 
 		static int GetParam()
