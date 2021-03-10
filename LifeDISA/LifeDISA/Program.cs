@@ -170,7 +170,7 @@ namespace LifeDISA
 				ins.Type = life;
 				ins.Line = pos;
 				
-				if(actor != -1) ins.Actor = GetObject(actor);
+				if(actor != -1) ins.Actor = GetObjectName(actor);
 				pos += 2;
 
 				ParseArguments(life, ins);
@@ -485,19 +485,19 @@ namespace LifeDISA
 					#if AITD2 
 						ins.Add(GetObject(Evalvar()));
 					#else
-						ins.Add(GetObject(GetParam()));
+						ins.Add(GetObjectName(GetParam()));
 					#endif
 					break;					
 
 				case LifeEnum.CAMERA_TARGET:
 				case LifeEnum.TAKE:
 				case LifeEnum.FOUND:
-					ins.Add(GetObject(GetParam()));
+					ins.Add(GetObjectName(GetParam()));
 					break;
 
 				case LifeEnum.FOUND_NAME:
 				case LifeEnum.MESSAGE:
-					ins.Add(GetName(GetParam()));
+					ins.Add(GetMessage(GetParam()));
 					break;
 
 				case LifeEnum.FOUND_FLAG:
@@ -612,8 +612,8 @@ namespace LifeDISA
 					break;
 
 				case LifeEnum.PUT_AT:
-					ins.Add(GetObject(GetParam()));
-					ins.Add(GetObject(GetParam()));
+					ins.Add(GetObjectName(GetParam()));
+					ins.Add(GetObjectName(GetParam()));
 					break;
 
 				case LifeEnum.TRACKMODE:
@@ -629,7 +629,7 @@ namespace LifeDISA
 							break;
 
 						case 2: //follow
-							ins.Add(GetObject(GetParam()));
+							ins.Add(GetObjectName(GetParam()));
 							break;
 
 						case 3: //track
@@ -732,7 +732,7 @@ namespace LifeDISA
 					ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
 					ins.Add(GetParam());
 					ins.Add(GetParam());
-					ins.Add(GetObject(GetParam()));
+					ins.Add(GetObjectName(GetParam()));
 					ins.Add(GetParam());
 					ins.Add(GetParam());
 					ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
@@ -766,12 +766,12 @@ namespace LifeDISA
 					break;
 
 				case LifeEnum.DROP:
-					ins.Add(GetObject(Evalvar()));
-					ins.Add(GetObject(GetParam()));
+					ins.Add(GetObjectName(Evalvar()));
+					ins.Add(GetObjectName(GetParam()));
 					break;
 
 				case LifeEnum.PUT:
-					ins.Add(GetObject(GetParam()));
+					ins.Add(GetObjectName(GetParam()));
 					ins.Add(GetParam());
 					ins.Add(GetParam());
 					ins.Add(GetParam());
@@ -838,7 +838,7 @@ namespace LifeDISA
 				case EvalEnum.HIT_BY:
 				case EvalEnum.HIT:
 				case EvalEnum.ACTOR_COLLIDER:
-					return GetObject(value);
+					return GetObjectName(value);
 					
 				case EvalEnum.POSREL:
 					return vars.GetText(VarEnum.POSREL, value);
@@ -869,18 +869,18 @@ namespace LifeDISA
 			}	
 		}
 
-		static string GetObject(string index)
+		static string GetObjectName(string index)
 		{
 			int value;
 			if(int.TryParse(index, out value))
 			{
-				index = GetObject(value);
+				index = GetObjectName(value);
 			}
 
 			return index;
 		}
 
-		static string GetObject(int index)
+		static string GetObjectName(int index)
 		{
 			if (index == -1)
 			{
@@ -900,7 +900,7 @@ namespace LifeDISA
 			return "obj_" + index;
 		}
 
-		static string GetName(int index)
+		static string GetMessage(int index)
 		{
 			string text;
 			if (namesByIndex.TryGetValue(index, out text))
@@ -955,7 +955,7 @@ namespace LifeDISA
 			if((curr & 0x8000) == 0x8000)
 			{
 				//change actor
-				result = GetObject(GetParam()) + ".";
+				result = GetObjectName(GetParam()) + ".";
 			}
 
 			curr &= 0x7FFF;
@@ -971,11 +971,11 @@ namespace LifeDISA
 				#if !JITD
 				case EvalEnum.THROW:
 				#endif
-					parameter += string.Format("({0})", GetObject(GetParam()));
+					parameter += string.Format("({0})", GetObjectName(GetParam()));
 					break;
 				
 				case EvalEnum.ISFOUND:
-					parameter += string.Format("({0})", GetObject(Evalvar()));
+					parameter += string.Format("({0})", GetObjectName(Evalvar()));
 					break;
 
 				case EvalEnum.RAND:
