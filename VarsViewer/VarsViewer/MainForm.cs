@@ -16,7 +16,6 @@ namespace VarsViewer
 		readonly ToolTip toolTip;
 		readonly Brush greenBrush = new SolidBrush(Color.FromArgb(255, 43, 193, 118));
 		readonly Brush grayBrush = new SolidBrush(Color.FromArgb(255, 28, 28, 38));
-		readonly Brush lightGrayBrush = new SolidBrush(Color.FromArgb(255, 47, 47, 57));
 		readonly Brush whiteBrush = new SolidBrush(Color.FromArgb(255, 255, 255, 255));
 		readonly Brush redBrush = new SolidBrush(Color.FromArgb(255, 240, 68, 77));
 		readonly Brush blueBrush = new SolidBrush(Color.FromArgb(64, 0, 162, 232));
@@ -51,8 +50,8 @@ namespace VarsViewer
 			cellWidth = ClientSize.Width / 21.0f;
 			cellHeight = ClientSize.Height / 16.0f;
 
-			DrawTab(e, worker.Vars, 0);
-			DrawTab(e, worker.Cvars, 12);
+			DrawTab(e, worker.Vars, 0, 11);
+			DrawTab(e, worker.Cvars, 12, 3);
 
 			toolTip.OnPaint(e);
 
@@ -60,10 +59,6 @@ namespace VarsViewer
 			{
 				e.Graphics.FillRectangle(blueBrush, e.ClipRectangle);
 			}
-		}
-
-		protected override void OnPaintBackground(PaintEventArgs e)
-		{
 		}
 
 		void MainFormLoad(object sender, EventArgs e)
@@ -209,22 +204,21 @@ namespace VarsViewer
 			return rect;
 		}
 		
-		void DrawTab(PaintEventArgs e, Var[] vars, int position)
+		void DrawTab(PaintEventArgs e, Var[] vars, int position, int rows)
 		{
-			DrawHeader(e, vars, position);
+			DrawHeader(e, position, rows);
 			DrawCells(e, vars, position);
 		}
 
-		void DrawHeader(PaintEventArgs e, Var[] vars, int position)
+		void DrawHeader(PaintEventArgs e, int position, int rows)
 		{
-			DrawCell(e, 0, position,  greenBrush);
+			DrawCell(e, 0, position, greenBrush);
 
 			for(int i = 0 ; i < 20 ; i++)
 			{
-				DrawCell(e, i + 1, position, greenBrush, i.ToString(), grayBrush, StringAlignment.Center);
+				DrawCell(e, i + 1, position, greenBrush, i.ToString(), grayBrush, StringAlignment.Center);				
 			}
-
-			int rows = (vars.Length + 19) / 20;
+			
 			for(int i = 0 ; i < rows ; i++)
 			{
 				DrawCell(e, 0, i + 1 + position, greenBrush, (i * 20).ToString(), grayBrush, StringAlignment.Far);
@@ -233,25 +227,15 @@ namespace VarsViewer
 
 		void DrawCells(PaintEventArgs e, Var[] vars, int position)
 		{
-			int rows = (vars.Length + 19) / 20;
-			for(int j = 0 ; j < rows ; j++)
+			foreach(var var in vars)
 			{
-				for(int i = 0 ; i < 20 ; i++)
-				{
-					int index = j * 20 + i;
-					if(index < vars.Length)
-					{
-						Var var = vars[index];
-						bool selected = var == selectedVar || var == focusVar;
-						bool highlight = var == focusVar && inputText == null;
-						string text = var == focusVar && inputText != null ? inputText : var.Text;
-						var.Rectangle = DrawCell(e, i + 1, j + position + 1, GetBackgroundBrush(var), text, whiteBrush, StringAlignment.Center, selected, highlight);
-					}
-					else
-					{
-						DrawCell(e, i + 1, j + position + 1, lightGrayBrush);
-					}
-				}
+				int index = var.Index;
+				int row = index / 20;
+				int column = index % 20;
+				bool selected = var == selectedVar || var == focusVar;
+				bool highlight = var == focusVar && inputText == null;
+				string text = var == focusVar && inputText != null ? inputText : var.Text;
+				var.Rectangle = DrawCell(e, column + 1, row + position + 1, GetBackgroundBrush(var), text, whiteBrush, StringAlignment.Center, selected, highlight);
 			}
 		}
 
