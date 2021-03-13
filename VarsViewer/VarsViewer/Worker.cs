@@ -110,16 +110,16 @@ namespace VarsViewer
 						int varsPointer = memory.ReadFarPointer(0);
 						if(varsPointer == 0)
 						{
-							Array.Clear(memory, 0, 207 * 2);
+							Array.Clear(memory, 0, Vars.Length * 2);
 							needRefresh |= CheckDifferences(Vars, -1, time);
 						}
-						else if (result &= (processReader.Read(memory, memoryAddress + varsPointer, 207 * 2) > 0))
+						else if (result &= (processReader.Read(memory, memoryAddress + varsPointer, Vars.Length * 2) > 0))
 						{
 							needRefresh |= CheckDifferences(Vars, memoryAddress + varsPointer, time);
 						}
 					}
 
-					if (result &= (processReader.Read(memory, cvarsMemoryAddress, 44 * 2) > 0))
+					if (result &= (processReader.Read(memory, cvarsMemoryAddress, Cvars.Length * 2) > 0))
 					{
 						needRefresh |= CheckDifferences(Cvars, cvarsMemoryAddress, time);
 					}
