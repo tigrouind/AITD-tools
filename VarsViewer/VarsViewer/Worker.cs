@@ -16,8 +16,8 @@ namespace VarsViewer
 		readonly byte[] memory = new byte[640 * 1024];
 		readonly VarParser varParser = new VarParser();
 		
-		int[] varAddress = { 0x2184B, 0x2048E };
-		int[] cvarAddress = { 0x22074, 0x204B8 };
+		int[] varAddress = { 0x2184B, 0x2048E, 0x20456 };
+		int[] cvarAddress = { 0x22074, 0x204B8, 0x20480 };
 
 		public Var[] Vars = new Var[0];
 		public Var[] Cvars = new Var[0];
@@ -83,6 +83,13 @@ namespace VarsViewer
 					//check if CDROM/floppy version
 					byte[] cdPattern = Encoding.ASCII.GetBytes("CD Not Found");
 					gameVersion = Tools.IndexOf(memory, cdPattern) != -1 ? 0 : 1;
+					if (gameVersion == 1)
+					{
+						if (Tools.IndexOf(memory, Encoding.ASCII.GetBytes("USA.PAK")) != -1)
+						{
+							gameVersion = 2; //demo
+						}
+					}
 				} 
 				else
 				{
@@ -110,7 +117,7 @@ namespace VarsViewer
 						}
 						else 
 						{
-							InitVars(ref Vars, 207, VarEnum.VARS);
+							InitVars(ref Vars, gameVersion == 2 ? 22 : 207, VarEnum.VARS);
 							if (result &= (processReader.Read(memory, memoryAddress + varsPointer, Vars.Length * 2) > 0))
 							{								
 								needRefresh |= CheckDifferences(Vars, memoryAddress + varsPointer, time);
