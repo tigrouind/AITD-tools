@@ -9,10 +9,9 @@ namespace CacheViewer
 {
 	class Program
 	{
-		static ProcessMemoryReader processReader;
+		static ProcessMemoryReader reader;
 		static byte[] memory = new byte[640 * 1024];
 		static Cache[] cache;
-		static long memoryAddress;
 		static int entryPoint = -1;
 		static int gameVersion;
 
@@ -32,22 +31,22 @@ namespace CacheViewer
 
 			while (true)
 			{
-				if (processReader == null)
+				if (reader == null)
 				{
 					SearchDosBox();
 				}
 
-				if (processReader != null && entryPoint == -1)
+				if (reader != null && entryPoint == -1)
 				{
 					SearchEntryPoint();
 				}
 
-				if (processReader != null)
+				if (reader != null)
 				{
 					ReadMemory();
 				}
 
-				if (processReader != null)
+				if (reader != null)
 				{
 					Render();
 					Thread.Sleep(15);
@@ -64,9 +63,9 @@ namespace CacheViewer
 			int processId = DosBox.SearchProcess();
 			if (processId != -1)
 			{
-				processReader = new ProcessMemoryReader(processId);
-				memoryAddress = processReader.SearchFor16MRegion();
-				if (memoryAddress == -1)
+				reader = new ProcessMemoryReader(processId);
+				reader.BaseAddress = reader.SearchFor16MRegion();
+				if (reader.BaseAddress == -1)
 				{
 					CloseReader();
 				}
@@ -75,7 +74,7 @@ namespace CacheViewer
 
 		static void SearchEntryPoint()
 		{
-			if (processReader.Read(memory, memoryAddress, memory.Length) > 0 && 
+			if (reader.Read(memory, 0, memory.Length) > 0 && 
 			     DosBox.GetExeEntryPoint(memory, out entryPoint))
 			{						
 				//check if CDROM/floppy version
@@ -95,10 +94,10 @@ namespace CacheViewer
 			int ticks = Environment.TickCount;
 			foreach (var ch in cache)
 			{
-				if (readSuccess &= (processReader.Read(memory, memoryAddress + entryPoint + ch.Address[gameVersion], 4) > 0))
+				if (readSuccess &= (reader.Read(memory, entryPoint + ch.Address[gameVersion], 4) > 0))
 				{
 					int cachePointer = memory.ReadFarPointer(0);	
-					if(cachePointer != 0 && (readSuccess &= (processReader.Read(memory, memoryAddress + cachePointer - 16, 4096) > 0))) 
+					if(cachePointer != 0 && (readSuccess &= (reader.Read(memory, cachePointer - 16, 4096) > 0))) 
 					{
 						DosMCB block = DosBox.ReadMCB(memory, 0);
 						if((block.Tag == 0x4D || block.Tag == 0x5A) && block.Owner != 0 && block.Size < 4096) //block is still allocated
@@ -201,8 +200,8 @@ namespace CacheViewer
 		static void CloseReader()
 		{
 			entryPoint = -1;
-			processReader.Close();
-			processReader = null;
+			reader.Close();
+			reader = null;
 		}
 
 		static void Render()

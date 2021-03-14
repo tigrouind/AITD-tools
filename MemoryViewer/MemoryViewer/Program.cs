@@ -40,8 +40,7 @@ namespace MemoryViewer
 			byte[] pixelData = new byte[RESX * RESY * SCREENS];
 			byte[] oldPixelData = new byte[RESX * RESY * SCREENS];			
 
-			ProcessMemoryReader processReader = null;
-			long memoryAddress = -1;
+			ProcessMemoryReader reader = null;
 			uint lastCheck = 0;
 
 			while(!quit)
@@ -75,7 +74,7 @@ namespace MemoryViewer
 					}
 				}
 
-				if (processReader == null)
+				if (reader == null)
 				{
 					uint time = SDL.SDL_GetTicks();
 					if ((time - lastCheck) > 1000 || lastCheck == 0)
@@ -85,26 +84,26 @@ namespace MemoryViewer
 						int processId = DosBox.SearchProcess();
 						if (processId != -1)
 						{
-							processReader = new ProcessMemoryReader(processId);
-							memoryAddress = processReader.SearchFor16MRegion();
-							if(memoryAddress == -1)
+							reader = new ProcessMemoryReader(processId);
+							reader.BaseAddress = reader.SearchFor16MRegion();
+							if(reader.BaseAddress == -1)
 							{
-								processReader.Close();
-								processReader = null;
+								reader.Close();
+								reader = null;
 							}
 						}
 					}
 				}
 
-				if (processReader != null)
+				if (reader != null)
 				{
 					//DOS conventional memory (640KB)
 					//EMS memory (64000B) (skip 64KB (HMA) + 128KB (VCPI))					
-					if(!(processReader.Read(pixelData, memoryAddress, 640 * 1024) > 0 &&
-						 processReader.Read(pixelData, memoryAddress+(1024+192)*1024, 64000, 640 * 1024) > 0))
+					if(!(reader.Read(pixelData, 0, 640 * 1024) > 0 &&
+						 reader.Read(pixelData, (1024+192)*1024, 64000, 640 * 1024) > 0))
 					{
-						processReader.Close();
-						processReader = null;
+						reader.Close();
+						reader = null;
 					}
 				}
 

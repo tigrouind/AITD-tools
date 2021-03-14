@@ -43,6 +43,8 @@ namespace Shared
 		static extern int VirtualQueryEx(IntPtr hProcess, IntPtr lpAddress, out MEMORY_BASIC_INFORMATION lpBuffer, uint dwLength);
 
 		IntPtr processHandle;
+		
+		public long BaseAddress;
 
 		public ProcessMemoryReader(int processId)
 		{
@@ -64,7 +66,7 @@ namespace Shared
 			IntPtr bytesRead;
 			fixed (byte* ptr = buffer)
 			{				
-				if (ReadProcessMemory(processHandle, new IntPtr(address), new IntPtr((void*)(ptr + offset)), count, out bytesRead))
+				if (ReadProcessMemory(processHandle, new IntPtr(BaseAddress + address), new IntPtr((void*)(ptr + offset)), count, out bytesRead))
 				{
 					return (long)bytesRead;
 				}
@@ -75,7 +77,7 @@ namespace Shared
 		public long Write(byte[] buffer, long offset, int count)
 		{
 			IntPtr bytesWritten;
-			if (WriteProcessMemory(processHandle, new IntPtr(offset), buffer, count, out bytesWritten))
+			if (WriteProcessMemory(processHandle, new IntPtr(BaseAddress + offset), buffer, count, out bytesWritten))
 			{
 				return (long)bytesWritten;
 			}

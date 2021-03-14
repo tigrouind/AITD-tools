@@ -8,9 +8,8 @@ namespace VarsViewer
 {
 	public class Worker
 	{
-		ProcessMemoryReader processReader;
+		ProcessMemoryReader reader;
 
-		long memoryAddress;
 		int entryPoint = -1;
 		int gameVersion;
 		readonly byte[] memory = new byte[640 * 1024];
@@ -56,29 +55,29 @@ namespace VarsViewer
 		{
 			get
 			{
-				return processReader != null && entryPoint != -1;
+				return reader != null && entryPoint != -1;
 			}
 		}
 
 		public bool Update()
 		{
-			if (processReader == null)
+			if (reader == null)
 			{
 				int processId = DosBox.SearchProcess();
 				if (processId != -1)
 				{
-					processReader = new ProcessMemoryReader(processId);
-					memoryAddress = processReader.SearchFor16MRegion();
-					if (memoryAddress == -1)
+					reader = new ProcessMemoryReader(processId);
+					reader.BaseAddress = reader.SearchFor16MRegion();
+					if (reader.BaseAddress == -1)
 					{
 						CloseReader();
 					}
 				}
 			}
 
-			if (processReader != null && entryPoint == -1)
+			if (reader != null && entryPoint == -1)
 			{		
-				if (processReader.Read(memory, memoryAddress, memory.Length) > 0 && 
+				if (reader.Read(memory, 0, memory.Length) > 0 && 
 				      DosBox.GetExeEntryPoint(memory, out entryPoint))
 				{						
 					//check if CDROM/floppy version
@@ -92,8 +91,8 @@ namespace VarsViewer
 						}
 					}
 					
-					varsMemoryAddress = memoryAddress + entryPoint + varAddress[gameVersion];
-					cvarsMemoryAddress = memoryAddress + entryPoint + cvarAddress[gameVersion];
+					varsMemoryAddress = entryPoint + varAddress[gameVersion];
+					cvarsMemoryAddress = entryPoint + cvarAddress[gameVersion];
 				} 
 				else
 				{
@@ -101,13 +100,13 @@ namespace VarsViewer
 				}
 			}
 
-			if (processReader != null && !Freeze)
+			if (reader != null && !Freeze)
 			{
 				bool needRefresh = false;
 				int time = Environment.TickCount;
 
 				bool result = true;
-				if (result &= (processReader.Read(memory, varsMemoryAddress, 4) > 0))
+				if (result &= (reader.Read(memory, varsMemoryAddress, 4) > 0))
 				{
 					int varsPointer = memory.ReadFarPointer(0);
 					if(varsPointer == 0)
@@ -117,15 +116,15 @@ namespace VarsViewer
 					else 
 					{
 						InitVars(ref Vars, gameVersion == 2 ? 22 : 207, VarEnum.VARS);
-						if (result &= (processReader.Read(memory, memoryAddress + varsPointer, Vars.Length * 2) > 0))
+						if (result &= (reader.Read(memory, varsPointer, Vars.Length * 2) > 0))
 						{								
-							needRefresh |= CheckDifferences(Vars, memoryAddress + varsPointer, time);
+							needRefresh |= CheckDifferences(Vars, varsPointer, time);
 						}
 					}
 				}
 
 				InitVars(ref Cvars, 44, VarEnum.C_VARS);
-				if (result &= (processReader.Read(memory, cvarsMemoryAddress, Cvars.Length * 2) > 0))
+				if (result &= (reader.Read(memory, cvarsMemoryAddress, Cvars.Length * 2) > 0))
 				{
 					needRefresh |= CheckDifferences(Cvars, cvarsMemoryAddress, time);
 				}
@@ -146,8 +145,8 @@ namespace VarsViewer
 		void CloseReader()
 		{
 			entryPoint = -1;
-			processReader.Close();
-			processReader = null;
+			reader.Close();
+			reader = null;
 		}
 		
 		bool CheckDifferences(Var[] data, long offset, int time)
@@ -230,10 +229,10 @@ namespace VarsViewer
 
 		public void Write(Var var, short value)
 		{
-			if(processReader != null && var.MemoryAddress != -1)
+			if(reader != null && var.MemoryAddress != -1)
 			{
 				memory.Write(value, 0);
-				processReader.Write(memory, var.MemoryAddress + var.Index * 2, 2);
+				reader.Write(memory, var.MemoryAddress + var.Index * 2, 2);
 			}
 		}
 	}
