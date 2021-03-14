@@ -167,8 +167,6 @@ namespace VarsViewer
 					value = memory.ReadShort(i * 2 + 0);
 				}
 
-				var.Value = value;
-
 				if (IgnoreDifferences)
 				{
 					var.Time = 0;
@@ -189,22 +187,17 @@ namespace VarsViewer
 
 				//check differences
 				bool difference = (time - var.Time) < 5000;
-				string newText = string.Empty;
-				if (value != 0 || difference)
+				if (var.Value != value || var.Difference != difference)
 				{
-					newText = value.ToString();
-				}
-
-				if(var.Difference != difference)
-				{
-					var.Difference = difference;
-					var.Refresh = true;
-					needRefresh = true;
-				}
-
-				if(var.Text != newText)
-				{
+					string newText = string.Empty;
+					if (value != 0 || difference)
+					{
+						newText = value.ToString();
+					}
+					
 					var.Text = newText;
+					var.Value = value;
+					var.Difference = difference;
 					var.Refresh = true;
 					needRefresh = true;
 				}
