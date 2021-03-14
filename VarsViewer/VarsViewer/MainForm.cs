@@ -25,6 +25,7 @@ namespace VarsViewer
 		readonly StringFormat format = new StringFormat();
 
 		readonly Worker worker;
+		int varsLength, cvarsLength;
 
 		public MainForm()
 		{
@@ -363,6 +364,12 @@ namespace VarsViewer
 		{
 			UpdateWorker();
 			timer.Interval = worker.IsRunning ? 15 : 1000;		
+			if(varsLength != worker.Vars.Length || cvarsLength != worker.Cvars.Length)
+			{
+				varsLength = worker.Vars.Length;
+				cvarsLength = worker.Cvars.Length;
+				Invalidate();
+			}			
 		}
 		
 		void UpdateWorker()

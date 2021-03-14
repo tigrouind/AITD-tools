@@ -14,12 +14,13 @@ namespace VarsViewer
 		int entryPoint = -1;
 		int gameVersion;
 		readonly byte[] memory = new byte[640 * 1024];
+		readonly VarParser varParser = new VarParser();
 		
 		int[] varAddress = { 0x2184B, 0x2048E };
 		int[] cvarAddress = { 0x22074, 0x204B8 };
 
-		public readonly Var[] Vars = new Var[207];
-		public readonly Var[] Cvars = new Var[44];
+		public Var[] Vars = new Var[0];
+		public Var[] Cvars = new Var[0];
 
 		public bool Compare;
 		public bool IgnoreDifferences = true;
@@ -27,31 +28,26 @@ namespace VarsViewer
 
 		public Worker()
 		{
-			InitVars();
-		}
-
-		void InitVars()
-		{
-			var varParser = new VarParser();
 			const string varPath = @"GAMEDATA\vars.txt";
 			if (File.Exists(varPath))
 			{
 				varParser.Load(varPath, VarEnum.VARS, VarEnum.C_VARS);
 			}
-
-			InitVars(varParser, Vars, VarEnum.VARS);
-			InitVars(varParser, Cvars, VarEnum.C_VARS);
 		}
 		
-		void InitVars(VarParser varParser, Var[] data, VarEnum section)
+		void InitVars(ref Var[] data, int length, VarEnum section)
 		{
-			for(int i = 0 ; i < data.Length ; i++)
+			if(data.Length != length)
 			{
-				var var = new Var();
-				var.Index = i;
-				var.Text = string.Empty;
-				var.Name = varParser.GetText(section, var.Index);
-				data[i] = var;
+				Array.Resize(ref data, length);
+				for(int i = 0 ; i < length ; i++)
+				{
+					var var = new Var();
+					var.Index = i;
+					var.Text = string.Empty;
+					var.Name = varParser.GetText(section, var.Index);
+					data[i] = var;
+				}
 			}
 		}
 		
@@ -109,16 +105,20 @@ namespace VarsViewer
 					{
 						int varsPointer = memory.ReadFarPointer(0);
 						if(varsPointer == 0)
-						{
-							Array.Clear(memory, 0, Vars.Length * 2);
-							needRefresh |= CheckDifferences(Vars, -1, time);
+						{							
+							InitVars(ref Vars, 0, VarEnum.VARS);
 						}
-						else if (result &= (processReader.Read(memory, memoryAddress + varsPointer, Vars.Length * 2) > 0))
+						else 
 						{
-							needRefresh |= CheckDifferences(Vars, memoryAddress + varsPointer, time);
+							InitVars(ref Vars, 207, VarEnum.VARS);
+							if (result &= (processReader.Read(memory, memoryAddress + varsPointer, Vars.Length * 2) > 0))
+							{								
+								needRefresh |= CheckDifferences(Vars, memoryAddress + varsPointer, time);
+							}
 						}
 					}
 
+					InitVars(ref Cvars, 44, VarEnum.C_VARS);
 					if (result &= (processReader.Read(memory, cvarsMemoryAddress, Cvars.Length * 2) > 0))
 					{
 						needRefresh |= CheckDifferences(Cvars, cvarsMemoryAddress, time);
