@@ -49,10 +49,10 @@ namespace VarsViewer
 		void MainFormPaint(object sender, PaintEventArgs e)
 		{
 			cellWidth = ClientSize.Width / 21.0f;
-			cellHeight = ClientSize.Height / 16.0f;
+			cellHeight = ClientSize.Height / 14.0f;
 
 			DrawTab(e, worker.Vars, 0, 11);
-			DrawTab(e, worker.Cvars, 12, 3);
+			DrawTab(e, worker.Cvars, 12, 1);
 
 			toolTip.OnPaint(e);
 

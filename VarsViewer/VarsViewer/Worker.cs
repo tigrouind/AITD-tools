@@ -123,7 +123,7 @@ namespace VarsViewer
 					}
 				}
 
-				InitVars(ref Cvars, 44, VarEnum.C_VARS);
+				InitVars(ref Cvars, 16, VarEnum.C_VARS);
 				if (result &= (reader.Read(memory, cvarsMemoryAddress, Cvars.Length * 2) > 0))
 				{
 					needRefresh |= CheckDifferences(Cvars, cvarsMemoryAddress, time);
