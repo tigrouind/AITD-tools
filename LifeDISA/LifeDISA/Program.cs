@@ -790,7 +790,7 @@ namespace LifeDISA
 				case LifeEnum.SET:
 				{
 					int curr = GetParam();
-					ins.Add("{0} = {1}", vars.GetText(VarEnum.VARS, curr, "var" + curr), Evalvar());
+					ins.Add("{0} = {1}", vars.GetText(VarEnum.VARS, curr, "var_" + curr), Evalvar());
 					break;
 				}
 
@@ -798,7 +798,7 @@ namespace LifeDISA
 				case LifeEnum.SUB:
 				{
 					int curr = GetParam();
-					ins.Add(vars.GetText(VarEnum.VARS, curr, "var" + curr));
+					ins.Add(vars.GetText(VarEnum.VARS, curr, "var_" + curr));
 					ins.Add(Evalvar());
 					break;
 				}
@@ -807,14 +807,14 @@ namespace LifeDISA
 				case LifeEnum.DEC:
 				{
 					int curr = GetParam();
-					ins.Add(vars.GetText(VarEnum.VARS, curr, "var" + curr));
+					ins.Add(vars.GetText(VarEnum.VARS, curr, "var_" + curr));
 					break;
 				}
 
 				case LifeEnum.C_VAR:
 				{
 					int curr = GetParam();
-					ins.Add("{0} = {1}", vars.GetText(VarEnum.C_VARS, curr, "c_var" + curr), Evalvar());
+					ins.Add("{0} = {1}", vars.GetText(VarEnum.C_VARS, curr, "cvar_" + curr), Evalvar());
 					break;
 				}
 
@@ -942,7 +942,7 @@ namespace LifeDISA
 			{
 				//CONST
 				curr = GetParam();
-				string name =  vars.GetText(VarEnum.VARS, curr, "var" + curr);				
+				string name =  vars.GetText(VarEnum.VARS, curr, "var_" + curr);				
 				if(name == "player_current_action")
 				{
 					evalEnum = EvalEnum.ACTION;
@@ -983,7 +983,7 @@ namespace LifeDISA
 					break;
 
 				case EvalEnum.C_VAR:
-					parameter = vars.GetText(VarEnum.C_VARS, GetParam(), "c_var" + curr);
+					parameter = vars.GetText(VarEnum.C_VARS, GetParam(), "cvar_" + curr);
 					break;
 					
 				case EvalEnum.TEST_ZV_END_ANIM:
