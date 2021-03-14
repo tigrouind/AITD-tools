@@ -15,25 +15,36 @@ namespace Shared
 
 			return value;
 		}
-
-		public string GetText(VarEnum varsEnum, int value, string defaultText = null)
+		
+		public override string GetText(VarEnum section, int value)
 		{
-			string text = base.GetText(varsEnum, value);
+			return GetText(section, value, null);
+		}
 
+		public string GetText(VarEnum section, int value, string defaultText)
+		{
+			string text = base.GetText(section, value);
 			if (!string.IsNullOrEmpty(text))
 			{
-				text = Regex.Replace(text, @"-", " ");
-				text = Regex.Replace(text, @"/", " or ");
-				text = Regex.Replace(text, @"[^A-Za-z0-9 ]", string.Empty);
-				text = Regex.Replace(text, @"\s+", "_");
-
-				return text.ToLowerInvariant();
+				return text;
+			}
+			
+			if (defaultText != null)
+			{
+				return defaultText;
 			}
 
-			if (defaultText != null)
-				return defaultText;
-
 			return value.ToString();
+		}
+		
+		protected override string FormatText(string text)
+		{
+			text = Regex.Replace(text, @"-", " ");
+			text = Regex.Replace(text, @"/", " or ");
+			text = Regex.Replace(text, @"[^A-Za-z0-9 ]", string.Empty);
+			text = Regex.Replace(text, @"\s+", "_");
+
+			return text.ToLowerInvariant();
 		}
 	}
 }

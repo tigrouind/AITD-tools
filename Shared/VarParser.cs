@@ -10,7 +10,7 @@ namespace Shared
 		readonly Dictionary<VarEnum, Dictionary<int, string>> sections
 			= new Dictionary<VarEnum, Dictionary<int, string>>();
 
-		public string GetText(VarEnum section, int value)
+		public virtual string GetText(VarEnum section, int value)
 		{
 			Dictionary<int, string> sectionDict;
 			if (sections.TryGetValue(section, out sectionDict))
@@ -58,7 +58,7 @@ namespace Shared
 						string to = match.Groups["to"].Value;
 						string text = match.Groups["text"].Value.Trim();
 	
-						AddEntry(currentSection, from, to, text);
+						AddEntry(currentSection, from, to, FormatText(text));
 					}
 				}
 			}
@@ -83,6 +83,11 @@ namespace Shared
 					section[i] = text;
 				}
 			}
+		}
+		
+		protected virtual string FormatText(string text)
+		{
+			return text;
 		}
 	}
 }
