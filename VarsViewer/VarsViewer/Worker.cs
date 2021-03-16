@@ -35,7 +35,7 @@ namespace VarsViewer
 			}
 		}
 		
-		void InitVars(ref Var[] data, int length, VarEnum section)
+		void InitVars(ref Var[] data, int length, VarEnum type)
 		{
 			if(data.Length != length)
 			{
@@ -44,8 +44,9 @@ namespace VarsViewer
 				{
 					var var = new Var();
 					var.Index = i;
+					var.Type = type;
 					var.Text = string.Empty;
-					var.Name = varParser.GetText(section, var.Index);
+					var.Name = varParser.GetText(type, var.Index);
 					data[i] = var;
 				}
 			}

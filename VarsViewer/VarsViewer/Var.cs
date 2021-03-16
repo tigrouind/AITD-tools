@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Drawing;
+using Shared;
 
 namespace VarsViewer
 {
@@ -8,10 +8,10 @@ namespace VarsViewer
 		public string Text;
 		public bool Difference;
 
-		public RectangleF Rectangle;
 		public bool Refresh;
 
 		public int Index;
+		public VarEnum Type;
 		public string Name;
 		public int Value;
 		public int SaveState; //value set there when using SaveState button

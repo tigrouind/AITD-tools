@@ -2,13 +2,12 @@
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using Shared;
 
 namespace VarsViewer
 {
 	public partial class MainForm : Form
 	{
-		float cellWidth, cellHeight;
-
 		Var selectedVar;
 		Var focusVar;	
 		string inputText;
@@ -48,9 +47,6 @@ namespace VarsViewer
 
 		void MainFormPaint(object sender, PaintEventArgs e)
 		{
-			cellWidth = ClientSize.Width / 21.0f;
-			cellHeight = ClientSize.Height / 14.0f;
-
 			DrawTab(e, worker.Vars, 0, 11);
 			DrawTab(e, worker.Cvars, 12, 1);
 
@@ -175,9 +171,14 @@ namespace VarsViewer
 			}
 		}
 		
-		RectangleF DrawCell(PaintEventArgs e, int x, int y, Brush back, string text = "", Brush front = null, StringAlignment alignment = default(StringAlignment), bool selected = false, bool highlight = false)
+		void DrawCell(PaintEventArgs e, int x, int y, Brush back, string text = "", Brush front = null, StringAlignment alignment = default(StringAlignment))
 		{
-			var rect = new RectangleF(x * cellWidth, y * cellHeight, cellWidth, cellHeight);
+			var rect = new RectangleF(x * CellWidth, y * CellHeight, CellWidth, CellHeight);
+			DrawCell(e, rect, back, text, front, alignment);
+		}
+		
+		void DrawCell(PaintEventArgs e, RectangleF rect, Brush back, string text = "", Brush front = null, StringAlignment alignment = default(StringAlignment), bool selected = false, bool highlight = false)
+		{
 			if (rect.IntersectsWith(e.ClipRectangle))
 			{
 				e.Graphics.FillRectangle(back, rect);
@@ -201,14 +202,12 @@ namespace VarsViewer
 					e.Graphics.DrawString(text, Font, front, rect, format);
 				}
 			}
-
-			return rect;
 		}
 		
 		void DrawTab(PaintEventArgs e, Var[] vars, int position, int rows)
 		{
 			DrawHeader(e, position, rows);
-			DrawCells(e, vars, position);
+			DrawCells(e, vars);
 		}
 
 		void DrawHeader(PaintEventArgs e, int position, int rows)
@@ -226,17 +225,14 @@ namespace VarsViewer
 			}
 		}
 
-		void DrawCells(PaintEventArgs e, Var[] vars, int position)
+		void DrawCells(PaintEventArgs e, Var[] vars)
 		{
 			foreach(var var in vars)
 			{
-				int index = var.Index;
-				int row = index / 20;
-				int column = index % 20;
 				bool selected = var == selectedVar || var == focusVar;
 				bool highlight = var == focusVar && inputText == null;
 				string text = var == focusVar && inputText != null ? inputText : var.Text;
-				var.Rectangle = DrawCell(e, column + 1, row + position + 1, GetBackgroundBrush(var), text, whiteBrush, StringAlignment.Center, selected, highlight);
+				DrawCell(e, GetRectangle(var), GetBackgroundBrush(var), text, whiteBrush, StringAlignment.Center, selected, highlight);
 			}
 		}
 
@@ -259,7 +255,7 @@ namespace VarsViewer
 			{		
 				if(var != null)
 				{
-					toolTip.Show(string.Format("#{0}\n{1}", var.Index, var.Name), var.Rectangle);
+					toolTip.Show(string.Format("#{0}\n{1}", var.Index, var.Name), GetRectangle(var));
 				}
 				else
 				{
@@ -303,7 +299,7 @@ namespace VarsViewer
 		bool TryFindVarAtPosition(Point position, out Var result)
 		{
 			result = worker.Vars.Concat(worker.Cvars)
-				.FirstOrDefault(x => x.Rectangle.Contains(position));
+				.FirstOrDefault(x => GetRectangle(x).Contains(position));
 
 			return result != null;
 		}
@@ -354,9 +350,33 @@ namespace VarsViewer
 
 		void Invalidate(Var var)
 		{
-			using (var region = new Region(var.Rectangle))
+			using (var region = new Region(GetRectangle(var)))
 			{
 				Invalidate(region);
+			}
+		}
+		
+		RectangleF GetRectangle(Var var)
+		{			
+			int x = var.Index % 20;
+			int y = var.Index / 20;
+			int rowIndex = (var.Type == VarEnum.VARS ? 1 : 13);
+			return new RectangleF((x + 1) * CellWidth, (y + rowIndex) * CellHeight, CellWidth, CellHeight);
+		}
+		
+		float CellWidth 
+		{
+			get
+			{
+				return ClientSize.Width / 21.0f;
+			}
+		}
+		
+		float CellHeight 
+		{
+			get
+			{
+				return ClientSize.Height / 14.0f;
 			}
 		}
 		
