@@ -175,13 +175,13 @@ namespace VarsViewer
 			}
 		}
 		
-		void DrawCell(PaintEventArgs e, int x, int y, Brush back, string text = "", Brush front = null, StringAlignment alignment = default(StringAlignment))
+		void DrawCell(PaintEventArgs e, int x, int y, Brush back, string text = "", Brush front = null, StringAlignment alignment = StringAlignment.Center, StringAlignment lineAlignment = StringAlignment.Center)
 		{
 			var rect = new RectangleF(x * CellWidth, y * CellHeight, CellWidth, CellHeight);
-			DrawCell(e, rect, back, text, front, alignment);
+			DrawCell(e, rect, back, text, front, alignment, lineAlignment);
 		}
 		
-		void DrawCell(PaintEventArgs e, RectangleF rect, Brush back, string text = "", Brush front = null, StringAlignment alignment = default(StringAlignment), bool selected = false, bool highlight = false)
+		void DrawCell(PaintEventArgs e, RectangleF rect, Brush back, string text = "", Brush front = null, StringAlignment alignment = StringAlignment.Center, StringAlignment lineAlignment = StringAlignment.Center, bool selected = false, bool highlight = false)
 		{
 			if (rect.IntersectsWith(e.ClipRectangle))
 			{
@@ -193,7 +193,7 @@ namespace VarsViewer
 				
 				if (text != string.Empty)
 				{
-					format.LineAlignment = StringAlignment.Center;
+					format.LineAlignment = lineAlignment;
 					format.Alignment = alignment;
 					
 					if (highlight && inputText == null)
@@ -225,7 +225,7 @@ namespace VarsViewer
 
 			for(int i = 0 ; i < 20 ; i++)
 			{
-				DrawCell(e, i + 1, position, greenBrush, i.ToString(), grayBrush, StringAlignment.Center);				
+				DrawCell(e, i + 1, position, greenBrush, i.ToString(), grayBrush, StringAlignment.Center, StringAlignment.Far);				
 			}
 			
 			for(int i = 0 ; i < rows ; i++)
@@ -241,7 +241,7 @@ namespace VarsViewer
 				bool selected = var == selectedVar;
 				bool highlight = var == focusVar;
 				string text = var == focusVar && inputText != null ? inputText : var.Text;
-				DrawCell(e, GetRectangle(var), GetBackgroundBrush(var), text, whiteBrush, StringAlignment.Center, selected, highlight);
+				DrawCell(e, GetRectangle(var), GetBackgroundBrush(var), text, whiteBrush, StringAlignment.Center, StringAlignment.Center, selected, highlight);
 			}
 		}
 
