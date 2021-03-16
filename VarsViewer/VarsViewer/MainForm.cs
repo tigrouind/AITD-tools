@@ -41,7 +41,7 @@ namespace VarsViewer
 				if (var.Refresh)
 				{
 					var.Refresh = false;
-					Invalidate(var.Rectangle);
+					Invalidate(var);
 				}
 			}
 		}
@@ -137,7 +137,7 @@ namespace VarsViewer
 						if(inputText.Length < (inputText.Contains("-") ? 6 : 5))
 						{						
 							inputText += e.KeyChar;
-							Invalidate(focusVar.Rectangle);
+							Invalidate(focusVar);
 						}	
 						break;
 					
@@ -146,7 +146,7 @@ namespace VarsViewer
 						if (inputText.Length == 0)
 						{
 							inputText = "-";	
-							Invalidate(focusVar.Rectangle);
+							Invalidate(focusVar);
 						}
 						break;
 						
@@ -155,7 +155,7 @@ namespace VarsViewer
 						if(focusVar != null && inputText.Length > 0)
 						{
 							inputText = inputText.Remove(inputText.Length - 1);	
-							Invalidate(focusVar.Rectangle);						
+							Invalidate(focusVar);						
 						}
 						break;
 						
@@ -163,7 +163,7 @@ namespace VarsViewer
 						if(focusVar != null)
 						{
 							CommitEdit();											
-							Invalidate(focusVar.Rectangle);
+							Invalidate(focusVar);
 							focusVar = null;
 						}
 						break;
@@ -266,8 +266,8 @@ namespace VarsViewer
 					toolTip.Hide();
 				}
 
-				if(var != null) Invalidate(var.Rectangle);
-				if(selectedVar != null) Invalidate(selectedVar.Rectangle);
+				if(var != null) Invalidate(var);
+				if(selectedVar != null) Invalidate(selectedVar);
 				selectedVar = var;
 			}
 		}
@@ -294,8 +294,8 @@ namespace VarsViewer
 					inputText = null;
 				}
 														
-				if(var != null) Invalidate(var.Rectangle);
-				if(focusVar != null) Invalidate(focusVar.Rectangle);
+				if(var != null) Invalidate(var);
+				if(focusVar != null) Invalidate(focusVar);
 				focusVar = var;
 			}
 		}
@@ -313,7 +313,7 @@ namespace VarsViewer
 			if (inputText == null)
 			{
 				inputText = string.Empty;
-				Invalidate(focusVar.Rectangle);
+				Invalidate(focusVar);
 			}
 		}
 				
@@ -321,7 +321,7 @@ namespace VarsViewer
 		{
 			if(focusVar != null)
 			{							
-				Invalidate(focusVar.Rectangle);
+				Invalidate(focusVar);
 				focusVar = null;
 			}
 		}
@@ -344,7 +344,7 @@ namespace VarsViewer
 			{					
 				if(selectedVar != null)
 				{					
-					Invalidate(selectedVar.Rectangle);
+					Invalidate(selectedVar);
 					selectedVar = null;
 				}
 
@@ -352,9 +352,9 @@ namespace VarsViewer
 			}
 		}
 
-		void Invalidate(RectangleF rectangle)
+		void Invalidate(Var var)
 		{
-			using (var region = new Region(rectangle))
+			using (var region = new Region(var.Rectangle))
 			{
 				Invalidate(region);
 			}
