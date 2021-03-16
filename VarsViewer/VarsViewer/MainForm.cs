@@ -11,6 +11,8 @@ namespace VarsViewer
 		Var selectedVar;
 		Var focusVar;	
 		string inputText;
+		bool carretState;
+		int carretTime;
 
 		readonly ToolTip toolTip;
 		readonly Brush greenBrush = new SolidBrush(Color.FromArgb(255, 43, 193, 118));
@@ -109,6 +111,7 @@ namespace VarsViewer
 					
 				case Keys.Delete:
 					BeginEdit();	
+					ResetCarret();
 					break;
 			}
 		}
@@ -148,6 +151,7 @@ namespace VarsViewer
 						
 					case Keys.Back:
 						BeginEdit();
+						ResetCarret();
 						if(focusVar != null && inputText.Length > 0)
 						{
 							inputText = inputText.Remove(inputText.Length - 1);	
@@ -182,7 +186,7 @@ namespace VarsViewer
 			if (rect.IntersectsWith(e.ClipRectangle))
 			{
 				e.Graphics.FillRectangle(back, rect);
-				if (selected)
+				if (selected || highlight)
 				{
 					e.Graphics.FillRectangle(transparentBrush, rect);
 				}
@@ -192,7 +196,7 @@ namespace VarsViewer
 					format.LineAlignment = StringAlignment.Center;
 					format.Alignment = alignment;
 					
-					if (highlight)
+					if (highlight && inputText == null)
 					{
 						var textSize = e.Graphics.MeasureString(text, Font, rect.Size, format);
 						var center = new PointF((rect.Left + rect.Right) / 2, (rect.Top + rect.Bottom) / 2);
@@ -200,6 +204,11 @@ namespace VarsViewer
 					}
 				
 					e.Graphics.DrawString(text, Font, front, rect, format);
+				}
+				else if(highlight && carretState)
+				{
+					var center = new PointF((rect.Left + rect.Right) / 2, (rect.Top + rect.Bottom) / 2);					
+					e.Graphics.DrawLine(Pens.White, center.X, center.Y - 8, center.X, center.Y + 7);
 				}
 			}
 		}
@@ -229,8 +238,8 @@ namespace VarsViewer
 		{
 			foreach(var var in vars)
 			{
-				bool selected = var == selectedVar || var == focusVar;
-				bool highlight = var == focusVar && inputText == null;
+				bool selected = var == selectedVar;
+				bool highlight = var == focusVar;
 				string text = var == focusVar && inputText != null ? inputText : var.Text;
 				DrawCell(e, GetRectangle(var), GetBackgroundBrush(var), text, whiteBrush, StringAlignment.Center, selected, highlight);
 			}
@@ -287,12 +296,14 @@ namespace VarsViewer
 				
 				if(var != null)
 				{
-					inputText = null;
+					inputText = null;					
 				}
 														
 				if(var != null) Invalidate(var);
 				if(focusVar != null) Invalidate(focusVar);
 				focusVar = var;
+				
+				ResetCarret();
 			}
 		}
 
@@ -380,6 +391,25 @@ namespace VarsViewer
 			}
 		}
 		
+		void ResetCarret()
+		{
+			carretTime = Environment.TickCount;						
+			if(focusVar != null && !carretState)
+			{
+				carretState = true;
+				Invalidate(focusVar);
+			}
+		}
+		
+		void BlinkCarret()
+		{			
+			if(focusVar != null)
+			{
+				carretState = !carretState;
+				Invalidate(focusVar);
+			}
+		}
+		
 		void TimerTick(object sender, EventArgs e)
 		{
 			UpdateWorker();
@@ -390,6 +420,18 @@ namespace VarsViewer
 				cvarsLength = worker.Cvars.Length;
 				Invalidate();
 			}			
+			
+			if(!worker.IsRunning)
+			{
+				AbortEdit();
+			}
+			
+			int time = Environment.TickCount;
+			if((time - carretTime) > 530)
+			{
+			   carretTime = time;
+			   BlinkCarret();
+			}
 		}
 		
 		void UpdateWorker()
