@@ -51,7 +51,7 @@
 			this.Paint += new System.Windows.Forms.PaintEventHandler(this.MainFormPaint);
 			this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.MainFormKeyDown);
 			this.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.MainFormKeyPress);
-			this.MouseClick += new System.Windows.Forms.MouseEventHandler(this.MainFormMouseClick);
+			this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.MainFormMouseDown);
 			this.MouseLeave += new System.EventHandler(this.MainFormMouseLeave);
 			this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.MainFormMouseMove);
 			this.Resize += new System.EventHandler(this.MainFormResize);

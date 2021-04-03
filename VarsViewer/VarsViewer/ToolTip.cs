@@ -23,7 +23,7 @@ namespace VarsViewer
 			format.Alignment = StringAlignment.Center;
 		}
 
-		public void OnPaint(PaintEventArgs e)
+		public void Paint(PaintEventArgs e)
 		{
 			if (toolTipText != string.Empty && toolTipRect.IntersectsWith(e.ClipRectangle))
 			{
