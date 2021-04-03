@@ -55,21 +55,7 @@ namespace VarsViewer
 		{
 			Font = new Font(Font.Name, Font.Size * 96.0f / AutoScaleDimensions.Width);			
 			worker.Update();
-			grid.AllowEdit = worker.IsRunning;
-		}
-
-		protected override void WndProc(ref Message m)
-		{
-			if (m.Msg == 0x0112) // WM_SYSCOMMAND
-			{
-				int wParam = (m.WParam.ToInt32() & 0xFFF0);
-				if (wParam == 0xF030 || wParam == 0xF020 || wParam == 0xF120) //SC_MAXIMIZE / SC_MINIMIZE / SC_RESTORE
-				{
-					 Invalidate();
-				}
-			}
-
-			base.WndProc(ref m);
+			grid.Editable = worker.IsRunning;
 		}
 
 		void MainFormResize(object sender, EventArgs e)
@@ -162,7 +148,7 @@ namespace VarsViewer
 				grid.AbortEdit();
 			}			
 			
-			grid.AllowEdit = worker.IsRunning && !worker.Freeze && !worker.Compare;
+			grid.Editable = worker.IsRunning && !worker.Freeze && !worker.Compare;
 		}
 		
 		void UpdateWorker()

@@ -31,7 +31,7 @@ namespace VarsViewer
 		public EventHandler<CellEventArgs> CellEnter;
 		public EventHandler<CellEventArgs> CellLeave;
 		public EventHandler<CellEventArgs> CellCommit;
-		public bool AllowEdit;
+		public bool Editable;
 		
 		public Grid(Control parent, List<Var> vars, List<Var> cvars)
 		{
@@ -238,7 +238,7 @@ namespace VarsViewer
 			Var var;
 			TryFindVarAtPosition(e.Location, out var);	
 			
-			if(!AllowEdit)
+			if(!Editable)
 			{
 				var = null;
 			}
