@@ -775,7 +775,7 @@ namespace LifeDISA
 					ins.Add(GetParam());
 					ins.Add(GetParam());
 					ins.Add(GetParam());
-					ins.Add("E{0}R{1}", GetParam(), GetParam());					
+					ins.Add("E{1}R{0}", GetParam(), GetParam());					
 					ins.Add(GetParam());
 					ins.Add(GetParam());
 					ins.Add(GetParam());
