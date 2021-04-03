@@ -15,6 +15,5 @@ namespace VarsViewer
 		public int Value;
 		public int SaveState; //value set there when using SaveState button
 		public int Time;	//time since last difference
-		public long MemoryAddress = -1;
 	}
 }

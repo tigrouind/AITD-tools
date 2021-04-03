@@ -238,7 +238,7 @@ namespace VarsViewer
 			Var var;
 			TryFindVarAtPosition(e.Location, out var);	
 			
-			if((var != null && var.MemoryAddress == -1) || !AllowEdit)
+			if(!AllowEdit)
 			{
 				var = null;
 			}

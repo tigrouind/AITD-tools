@@ -14,7 +14,8 @@ namespace VarsViewer
 		int gameVersion;
 		readonly byte[] memory = new byte[640 * 1024];
 		
-		long varsMemoryAddress, cvarsMemoryAddress;	
+		int varsMemoryAddress, cvarsMemoryAddress;
+		int varsPointer;
 		int[] varAddress = { 0x2184B, 0x2048E, 0x20456 };
 		int[] cvarAddress = { 0x22074, 0x204B8, 0x20480 };
 
@@ -104,7 +105,7 @@ namespace VarsViewer
 				bool result = true;
 				if (result &= (reader.Read(memory, varsMemoryAddress, 4) > 0))
 				{
-					int varsPointer = memory.ReadFarPointer(0);
+					varsPointer = memory.ReadFarPointer(0);
 					if(varsPointer == 0)
 					{							
 						InitVars(vars, 0, VarEnum.VARS);
@@ -114,7 +115,7 @@ namespace VarsViewer
 						InitVars(vars, gameVersion == 2 ? 22 : 207, VarEnum.VARS);
 						if (result &= (reader.Read(memory, varsPointer, vars.Count * 2) > 0))
 						{								
-							needRefresh |= CheckDifferences(vars, varsPointer, time);
+							needRefresh |= CheckDifferences(vars, time);
 						}
 					}
 				}
@@ -122,7 +123,7 @@ namespace VarsViewer
 				InitVars(cvars, 16, VarEnum.C_VARS);
 				if (result &= (reader.Read(memory, cvarsMemoryAddress, cvars.Count * 2) > 0))
 				{
-					needRefresh |= CheckDifferences(cvars, cvarsMemoryAddress, time);
+					needRefresh |= CheckDifferences(cvars, time);
 				}
 
 				if (!result)
@@ -145,7 +146,7 @@ namespace VarsViewer
 			reader = null;
 		}
 		
-		bool CheckDifferences(List<Var> data, long offset, int time)
+		bool CheckDifferences(List<Var> data, int time)
 		{
 			bool needRefresh = false;
 			for (int i = 0; i < data.Count; i++)
@@ -178,8 +179,6 @@ namespace VarsViewer
 						var.Time = time;
 					}
 				}
-
-				var.MemoryAddress = offset;
 
 				//check differences
 				bool difference = (time - var.Time) < 5000;
@@ -218,10 +217,11 @@ namespace VarsViewer
 
 		public void Write(Var var, short value)
 		{
-			if(reader != null && var.MemoryAddress != -1)
+			if(reader != null)
 			{
+				int memoryAddress = var.Type == VarEnum.VARS ? varsPointer : cvarsMemoryAddress;
 				memory.Write(value, 0);
-				reader.Write(memory, var.MemoryAddress + var.Index * 2, 2);
+				reader.Write(memory, memoryAddress + var.Index * 2, 2);
 			}
 		}
 	}
