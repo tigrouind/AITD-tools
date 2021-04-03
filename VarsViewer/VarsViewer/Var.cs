@@ -12,7 +12,6 @@ namespace VarsViewer
 
 		public int Index;
 		public VarEnum Type;
-		public string Name;
 		public int Value;
 		public int SaveState; //value set there when using SaveState button
 		public int Time;	//time since last difference

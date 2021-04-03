@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
 using Shared;
@@ -14,9 +13,8 @@ namespace VarsViewer
 		int entryPoint = -1;
 		int gameVersion;
 		readonly byte[] memory = new byte[640 * 1024];
-		readonly VarParser varParser = new VarParser();
-		long varsMemoryAddress, cvarsMemoryAddress;
 		
+		long varsMemoryAddress, cvarsMemoryAddress;	
 		int[] varAddress = { 0x2184B, 0x2048E, 0x20456 };
 		int[] cvarAddress = { 0x22074, 0x204B8, 0x20480 };
 
@@ -31,12 +29,6 @@ namespace VarsViewer
 		{
 			this.vars = vars;
 			this.cvars = cvars;
-			
-			const string varPath = @"GAMEDATA\vars.txt";
-			if (File.Exists(varPath))
-			{
-				varParser.Load(varPath, VarEnum.VARS, VarEnum.C_VARS);
-			}
 		}
 		
 		void InitVars(List<Var> data, int length, VarEnum type)
@@ -50,7 +42,6 @@ namespace VarsViewer
 					var.Index = i;
 					var.Type = type;
 					var.Text = string.Empty;
-					var.Name = varParser.GetText(type, var.Index);
 					data.Add(var);
 				}
 			}

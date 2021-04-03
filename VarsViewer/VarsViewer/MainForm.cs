@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using Shared;
 
 namespace VarsViewer
 {
@@ -14,7 +16,8 @@ namespace VarsViewer
 		
 		readonly List<Var> vars = new List<Var>();
 		readonly List<Var> cvars = new List<Var>();
-
+		readonly VarParser varParser = new VarParser();
+		
 		readonly Worker worker;
 		int varsLength, cvarsLength;
 
@@ -27,6 +30,12 @@ namespace VarsViewer
 			grid.CellEnter += GridCellEnter;
 			grid.CellLeave += GridCellLeave;
 			grid.CellCommit += GridCellCommit;
+			
+			const string varPath = @"GAMEDATA\vars.txt";
+			if (File.Exists(varPath))
+			{
+				varParser.Load(varPath, VarEnum.VARS, VarEnum.C_VARS);
+			}
 			
 			InitializeComponent();
 		}
@@ -122,7 +131,8 @@ namespace VarsViewer
 		
 		void GridCellEnter(object sender, CellEventArgs e)
 		{
-			toolTip.Show(string.Format("#{0}\n{1}", e.Var.Index, e.Var.Name), e.Rectangle);
+			string text = varParser.GetText(e.Var.Type, e.Var.Index);
+			toolTip.Show(string.Format("#{0}\n{1}", e.Var.Index, text), e.Rectangle);
 		}
 		
 		void GridCellLeave(object sender, CellEventArgs e)
