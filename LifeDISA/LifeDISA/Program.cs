@@ -34,8 +34,19 @@ namespace LifeDISA
 			//parse vars
 			if(File.Exists(@"GAMEDATA\vars.txt"))
 			{
-				vars.Load(@"GAMEDATA\vars.txt", VarEnum.LIFES, VarEnum.BODYS, VarEnum.MUSIC, VarEnum.ANIMS, VarEnum.SPECIAL, VarEnum.TRACKS,
-				          VarEnum.POSREL, VarEnum.VARS, VarEnum.C_VARS, VarEnum.SOUNDS, VarEnum.ACTIONS, VarEnum.KEYBOARD_INPUT);
+				vars.Load(@"GAMEDATA\vars.txt", 
+				          VarEnum.LIFES, 
+				          VarEnum.BODYS, 
+				          VarEnum.MUSIC, 
+				          VarEnum.ANIMS, 
+				          VarEnum.SPECIAL, 
+				          VarEnum.TRACKS,
+				          VarEnum.POSREL, 
+				          VarEnum.VARS, 
+				          VarEnum.C_VARS, 
+				          VarEnum.SOUNDS, 
+				          VarEnum.ACTIONS, 
+				          VarEnum.KEYBOARD_INPUT);
 			}
 
 			Regex r = new Regex(@"[0-9a-fA-F]{8}\.DAT", RegexOptions.IgnoreCase);
@@ -130,7 +141,7 @@ namespace LifeDISA
 					writer.WriteLine("--------------------------------------------------");					
 					allBytes = pak.GetEntry(i);
 					#if AITD2 && !AITD3
-					if(i == 670) Fix670();
+					if(i == 670 && allBytes.Length == 182) Fix670();
 					#endif
 					
 					ParseFile();
@@ -333,6 +344,7 @@ namespace LifeDISA
 		}
 		#endif
 		
+		#if AITD2 && !AITD3
 		static void Fix670()
 		{
 			var list = allBytes.ToList();
@@ -343,6 +355,7 @@ namespace LifeDISA
 				allBytes[j] -= 4;
 			}
 		}
+		#endif
 
 		static void Dump(TextWriter writer)
 		{
@@ -483,7 +496,7 @@ namespace LifeDISA
 				case LifeEnum.DELETE:
 				case LifeEnum.IN_HAND:
 					#if AITD2 
-						ins.Add(GetObject(Evalvar()));
+						ins.Add(GetObjectName(Evalvar()));
 					#else
 						ins.Add(GetObjectName(GetParam()));
 					#endif
@@ -913,7 +926,7 @@ namespace LifeDISA
 		static int GetParam()
 		{
 			int curr = allBytes.ReadShort(pos);
-			pos +=2;
+			pos += 2;
 			return curr;
 		}
 
