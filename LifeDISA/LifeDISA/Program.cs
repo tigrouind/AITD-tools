@@ -146,14 +146,40 @@ namespace LifeDISA
 					
 					ParseFile();
 					#if !NO_OPTIMIZE
-					Optimize();
-					Cleanup();
-					#endif
+					var optimizer = new Optimizer(nodes, nodesMap);
+					optimizer.Run();
+					Debug.Assert(nodes.Count(x => x.IndentDec) == nodes.Count(x => x.IndentInc), "Indentation should be equal to zero");
+					Debug.Assert(nodes.All(x => x.Type != LifeEnum.GOTO), "Unexpected goto");
+					
+					ProcessCaseStatements();
+					#endif					
 					Dump(writer);
 				}
 			}
 
 			return 0;
+		}
+		
+		static void ProcessCaseStatements()
+		{
+			foreach(var ins in nodes)
+			{
+				switch(ins.Type)
+				{
+					case LifeEnum.CASE:
+					case LifeEnum.MULTI_CASE:
+					{						
+						if (ins.Parent != null)
+						{
+							for(int i = 0 ; i < ins.Arguments.Count ; i++)
+							{
+								ins.Arguments[i] = GetConditionName(ins.Parent.EvalEnum, ins.Arguments[i]);
+							}
+						}
+					}
+					break;
+				}
+			}
 		}
 
 		static void ParseFile()
@@ -189,160 +215,6 @@ namespace LifeDISA
 				nodesMap.Add(position, node);
 			}
 		}
-
-		#if !NO_OPTIMIZE
-		static void Optimize()
-		{
-			for(var node = nodes.First; node != null; node = node.Next)
-			{
-				var ins = node.Value;
-				switch(ins.Type)
-				{
-					case LifeEnum.IF_EGAL:
-					case LifeEnum.IF_DIFFERENT:
-					case LifeEnum.IF_SUP_EGAL:
-					case LifeEnum.IF_SUP:
-					case LifeEnum.IF_INF_EGAL:
-					case LifeEnum.IF_INF:
-						OptimizeIf(node);
-						break;
-
-					case LifeEnum.SWITCH:
-						OptimizeSwitch(node);
-						break;
-				}
-			}
-		}
-		
-		static void OptimizeIf(LinkedListNode<Instruction> node)
-		{
-			var ins = node.Value;
-			var target = nodesMap[ins.Goto];
-			var previous = target.Previous;
-			if (previous.Value.Type == LifeEnum.GOTO)
-			{							
-				previous.Value.ToRemove = true;
-				nodes.AddBefore(target, new Instruction { Type = LifeEnum.ELSE });						
-				nodes.AddBefore(nodesMap[previous.Value.Goto], new Instruction { Type = LifeEnum.END });
-			}
-			else
-			{
-				nodes.AddBefore(target, new Instruction { Type = LifeEnum.END });
-			}
-
-			//check for consecutive IFs
-			var next = node.Next;
-			while(next != null &&
-				(
-				next.Value.Type == LifeEnum.IF_EGAL ||
-				next.Value.Type == LifeEnum.IF_DIFFERENT ||
-				next.Value.Type == LifeEnum.IF_INF ||
-				next.Value.Type == LifeEnum.IF_INF_EGAL ||
-				next.Value.Type == LifeEnum.IF_SUP ||
-				next.Value.Type == LifeEnum.IF_SUP_EGAL) &&
-				target == nodesMap[next.Value.Goto]) //the IFs ends up at same place
-			{
-				var after = next.Next;
-				ins.Arguments.Add(next.Value.Arguments[0]);
-				nodes.Remove(next);
-
-				next = after;
-			}
-		}
-		
-		static void OptimizeSwitch(LinkedListNode<Instruction> node)
-		{
-			var ins = node.Value;			
-			//instruction after switch should be CASE or MULTICASE
-			//but if could be instructions (eg: DEFAULT after switch)
-			var target = node.Next;
-			bool defaultCase = false;
-			while(target != null && target.Next != null &&
-				  target.Value.Type != LifeEnum.CASE &&
-				  target.Value.Type != LifeEnum.MULTI_CASE)
-			{
-				defaultCase = true;
-				target = target.Next;
-			}
-			
-			if (defaultCase) //default statement right after switch
-			{
-				if (target.Previous.Value.Type == LifeEnum.GOTO)
-				{
-					target.Previous.Value.ToRemove = true;
-				}
-				
-				nodes.AddBefore(node.Next, new Instruction { Type = LifeEnum.DEFAULT });
-				nodes.AddBefore(target, new Instruction { Type = LifeEnum.END });	
-			}
-	
-			//detect end of switch
-			LinkedListNode<Instruction> endOfSwitch = null;
-			bool lastInstruction = false;
-	
-			do
-			{
-				ins = target.Value;
-				switch(ins.Type)
-				{
-					case LifeEnum.CASE:
-					case LifeEnum.MULTI_CASE:
-					{
-						for(int i = 0 ; i < ins.Arguments.Count ; i++)
-						{
-							ins.Arguments[i] = GetConditionName(node.Value.EvalEnum, ins.Arguments[i]);
-						}
-	
-						target = nodesMap[ins.Goto];
-						if (target.Previous.Value.Type == LifeEnum.GOTO)
-						{
-							target.Previous.Value.ToRemove = true;
-							if(endOfSwitch == null)
-							{
-								endOfSwitch = nodesMap[target.Previous.Value.Goto];
-							}
-						}
-	
-						nodes.AddBefore(target, new Instruction { Type = LifeEnum.END });
-						break;
-					}
-	
-					default:
-						lastInstruction = true;
-						break;
-				}
-			}
-			while (!lastInstruction);
-	
-			//should be equal, otherwise there is a default case
-			if(endOfSwitch != null && target != endOfSwitch)
-			{
-				nodes.AddBefore(endOfSwitch, new Instruction { Type = LifeEnum.END });
-				nodes.AddBefore(endOfSwitch, new Instruction { Type = LifeEnum.END });
-				nodes.AddBefore(target, new Instruction { Type = LifeEnum.DEFAULT });
-			}
-			else
-			{
-				nodes.AddBefore(target, new Instruction { Type = LifeEnum.END });
-			}
-		}
-		
-		static void Cleanup()
-		{
-			//remove GOTO and ENDLIFE
-			var currentNode = nodes.First;
-			while(currentNode != null)
-			{
-				var nextNode = currentNode.Next;
-				if(currentNode.Value.ToRemove)
-				{
-					nodes.Remove(currentNode);
-				}
-
-				currentNode = nextNode;
-			}
-		}
-		#endif
 		
 		#if AITD2 && !AITD3
 		static void Fix670()
@@ -388,11 +260,6 @@ namespace LifeDISA
 					indent++;
 				}
 			}
-			
-			#if !NO_OPTIMIZE
-			Debug.Assert(indent == 0, "Indentation should be equal to zero");
-			Debug.Assert(nodes.All(x => x.Type != LifeEnum.GOTO), "Unexpected goto");
-			#endif
 		}
 
 		static void ParseArguments(LifeEnum life, Instruction ins)

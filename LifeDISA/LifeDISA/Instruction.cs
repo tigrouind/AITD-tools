@@ -8,6 +8,7 @@ namespace LifeDISA
 	{
 		public LifeEnum Type;
 		public EvalEnum EvalEnum; //first argument of switch
+		public Instruction Parent;
 		public List<string> Arguments = new List<string>();
 		public string Actor;
 		public int Goto = -1;

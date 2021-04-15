@@ -41,6 +41,7 @@
     <Compile Include="EvalEnum.cs" />
     <Compile Include="Instruction.cs" />
     <Compile Include="LifeEnum.cs" />
+    <Compile Include="Optimizer.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
