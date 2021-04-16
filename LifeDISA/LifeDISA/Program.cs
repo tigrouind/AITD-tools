@@ -19,8 +19,6 @@ namespace LifeDISA
 		static readonly Dictionary<int, string> objectsByIndex = new Dictionary<int, string>();
 		static readonly Dictionary<int, string> namesByIndex = new Dictionary<int, string>();
 
-		static string[] trackModes = { "none", "manual", "follow", "track" };
-
 		static readonly LinkedList<Instruction> nodes = new LinkedList<Instruction>();
 		static readonly Dictionary<int, LinkedListNode<Instruction>> nodesMap = new Dictionary<int, LinkedListNode<Instruction>>();
 
@@ -48,7 +46,8 @@ namespace LifeDISA
 				          VarEnum.C_VARS, 
 				          VarEnum.SOUNDS, 
 				          VarEnum.ACTIONS, 
-				          VarEnum.KEYBOARD_INPUT);
+				          VarEnum.KEYBOARD_INPUT,
+				          VarEnum.TRACKMODE);
 			}
 
 			Regex r = new Regex(@"[0-9a-fA-F]{8}\.DAT", RegexOptions.IgnoreCase);
@@ -499,7 +498,7 @@ namespace LifeDISA
 				case LifeEnum.TRACKMODE:
 				{
 					int curr = GetParam();
-					ins.Add(GetTrackMode(curr));
+					ins.Add(vars.GetText(VarEnum.TRACKMODE, curr));
 
 					switch(curr)
 					{
@@ -797,11 +796,6 @@ namespace LifeDISA
 			int curr = allBytes.ReadShort(pos);
 			pos += 2;
 			return curr;
-		}
-
-		static string GetTrackMode(int index)
-		{
-			return trackModes[index];
 		}
 		
 		#endregion
