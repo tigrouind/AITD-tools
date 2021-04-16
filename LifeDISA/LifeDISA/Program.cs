@@ -25,7 +25,9 @@ namespace LifeDISA
 		static readonly Dictionary<int, LinkedListNode<Instruction>> nodesMap = new Dictionary<int, LinkedListNode<Instruction>>();
 
 		static readonly VarParserExt vars = new VarParserExt();
-		static readonly Dictionary<EvalEnum, string> evalToString = CreateEvalToStringDictionary();
+		static readonly Dictionary<EvalEnum, string> evalToString = 
+			GetAttributesFromEnum<EvalEnum, DescriptionAttribute>()
+				.ToDictionary(x => x.Key, x => x.Value.Description.ToLowerInvariant());
 
 		public static int Main()
 		{
@@ -232,10 +234,8 @@ namespace LifeDISA
 		static void Dump(TextWriter writer)
 		{
 			int indent = 0;
-			for(var node = nodes.First; node != null; node = node.Next)
+			foreach(var ins in nodes)
 			{
-				var ins = node.Value;
-
 				if(ins.IndentDec)
 				{
 					indent--;
@@ -708,6 +708,8 @@ namespace LifeDISA
 			}
 		}
 
+		#region Get
+		
 		static string GetConditionName(EvalEnum evalEnum, string value)
 		{
 			switch (evalEnum)
@@ -802,6 +804,10 @@ namespace LifeDISA
 			return trackModes[index];
 		}
 		
+		#endregion
+		
+		#region Eval
+		
 		static string Evalvar()
 		{
 			EvalEnum evalEnum;
@@ -842,7 +848,12 @@ namespace LifeDISA
 			curr--;
 			evalEnum = (EvalEnum)curr;
 
-			string parameter = evalToString[evalEnum].ToLower();			
+			string parameter;
+			if (!evalToString.TryGetValue(evalEnum, out parameter))
+			{
+				parameter = evalEnum.ToString().ToLowerInvariant();
+		    }
+			
 			switch (evalEnum)
 			{
 				case EvalEnum.DIST:
@@ -878,6 +889,10 @@ namespace LifeDISA
 			return result;
 		}
 		
+		#endregion
+		
+		#region Helpers
+		
 		static IEnumerable<string> ReadLines(byte[] buffer, Encoding encoding)
 		{
 			using(var stream = new MemoryStream(buffer))
@@ -891,23 +906,21 @@ namespace LifeDISA
 			}
 		}
 		
-		static Dictionary<EvalEnum, string> CreateEvalToStringDictionary()
+		static IEnumerable<KeyValuePair<TEnum, TAttribute>> GetAttributesFromEnum<TEnum, TAttribute>()
+			where TEnum: struct
+			where TAttribute : Attribute
 		{
-			var result = new Dictionary<EvalEnum, string>();
-			foreach(var field in typeof(EvalEnum).GetFields(BindingFlags.Public | BindingFlags.Static))
-			{
-				var type = (EvalEnum)field.GetValue(null);
-				var name = field.Name;
-				
-				var attribute = (DescriptionAttribute)field.GetCustomAttribute(typeof(DescriptionAttribute));
+			foreach(var field in typeof(TEnum).GetFields(BindingFlags.Public | BindingFlags.Static))
+			{								
+				var attribute = (TAttribute)field.GetCustomAttribute(typeof(TAttribute));
 				if (attribute != null)
 				{
-					name = attribute.Description;
+					var type = (TEnum)field.GetValue(null);
+					yield return new KeyValuePair<TEnum, TAttribute>(type, attribute);
 				}
-				result.Add(type, name);
 			}
-			
-			return result;
 		}
+		
+		#endregion
 	}
 }
