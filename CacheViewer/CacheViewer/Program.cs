@@ -125,7 +125,11 @@ namespace CacheViewer
 		
 		static void UpdateCache(Cache ch, int ticks, int offset)
 		{
-			if(ch.Name == null) ch.Name = Encoding.ASCII.GetString(memory, offset, 8);
+			if (!Tools.StringEquals(memory, offset, 8, ch.Name))
+			{
+				ch.Name = Encoding.ASCII.GetString(memory, offset, 8);
+			}
+			
 			ch.MaxFreeData = memory.ReadUnsignedShort(offset + 10);
 			ch.SizeFreeData = memory.ReadUnsignedShort(offset + 12);
 			ch.NumMaxEntry = memory.ReadUnsignedShort(offset + 14);
