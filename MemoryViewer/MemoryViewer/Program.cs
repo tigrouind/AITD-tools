@@ -179,6 +179,14 @@ namespace MemoryViewer
 		{		
 			if (!DosBox.GetMCBs(pixelData).SequenceEqual(DosBox.GetMCBs(oldPixelData)))
 			{	
+				//clear old MCB
+				foreach (var block in DosBox.GetMCBs(oldPixelData))
+				{
+					int dest = block.Position - 16;
+					int length = Math.Min(block.Size + 16, pixels.Length - dest);
+					Array.Clear(pixels, dest, length);
+				}
+				
 				int psp = pixelData.ReadUnsignedShort(0x0B30) * 16;
 				
 				bool inverse = true;
