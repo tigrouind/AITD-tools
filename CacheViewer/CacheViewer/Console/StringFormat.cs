@@ -41,6 +41,7 @@ namespace CacheViewer
 							throw new FormatException();
 					}
 
+					bool neg = false;
 					int width = 0;
 					ch = format[pos++];
 					
@@ -48,6 +49,12 @@ namespace CacheViewer
 					if (ch == ',') 
 					{		
 						ch = format[pos++];
+						if (ch == '-')
+						{
+							neg = true;
+							ch = format[pos++];
+						}
+						
 						if (ch < '0' || ch > '9') throw new FormatException();
 						do
 						{
@@ -56,6 +63,11 @@ namespace CacheViewer
 		                    ch = format[pos++];
 		                } 
 						while (ch >= '0' && ch <= '9');
+
+						if(neg)
+						{
+							width = -width;
+						}
 					}
 					
 					if (value.Type == typeof(int))
@@ -70,12 +82,20 @@ namespace CacheViewer
 					{
 						ToString(value.Char);	
 					}
+					else if (value.Type == typeof(string))
+					{
+						ToString(value.String);	
+					}
+					else if (value.Type == null)
+					{
+						throw new IndexOutOfRangeException();
+					}
 					else
 					{
 						throw new NotSupportedException();
 					}
 					
-					//padding
+					//padding left
 					if (width > 0)
 					{
 						for(int i = 0 ; i < width - charLength ; i++)
@@ -87,6 +107,16 @@ namespace CacheViewer
 					for(int i = 0 ; i < charLength ; i++)
 					{
 						Buffer[BufferLength++] = Buffer[i + charStart];
+					}
+	
+					//padding right					
+					if (width < 0)
+					{
+						width = -width;
+						for(int i = 0 ; i < width - charLength ; i++)
+						{
+							Buffer[BufferLength++] = ' ';
+						}
 					}
 																																		
 					if (ch != '}') throw new FormatException();
@@ -135,6 +165,16 @@ namespace CacheViewer
 			charLength = 1;
 			charStart = Buffer.Length;
 			Buffer[--charStart] = value;
+		}	
+
+		static void ToString(string value)
+		{
+			charLength = value.Length;
+			charStart = Buffer.Length;
+			for(int i = value.Length - 1 ; i >= 0 ; i--)
+			{
+				Buffer[--charStart] = value[i];
+			}			
 		}		
 	}
 }

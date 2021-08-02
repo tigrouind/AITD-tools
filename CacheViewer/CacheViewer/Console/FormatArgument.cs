@@ -14,8 +14,11 @@ namespace CacheViewer
 		
 		[FieldOffset(0)] 
 		public uint UInt;
+				
+		[FieldOffset(4)] 
+		public string String;
 		
-		[FieldOffset(4)]
+		[FieldOffset(8)]
 		public Type Type;
 		
 		public static implicit operator FormatArgument(int value)
@@ -33,6 +36,11 @@ namespace CacheViewer
 			return new FormatArgument { Char = value, Type = typeof(char) };
 		}
 		
+		public static implicit operator FormatArgument(string value)
+		{
+			return new FormatArgument { String = value, Type = typeof(string) };
+		}
+		
 		public override string ToString()
 		{
 			if (Type == typeof(int))
@@ -48,6 +56,11 @@ namespace CacheViewer
 			if (Type == typeof(char))
 			{
 				return Char.ToString();
+			}
+			
+			if (Type == typeof(string))
+			{
+				return String;
 			}
 			
 			if(Type == null)

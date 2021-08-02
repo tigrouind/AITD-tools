@@ -207,7 +207,21 @@ namespace CacheViewer
 			reader.Close();
 			reader = null;
 		}
-
+		
+		static void WriteStats(int done, int total)
+		{				
+			Console.ForegroundColor = ConsoleColor.Gray;
+			Console.Write("{0,5}/{1,5}", done, total);		
+		
+			Console.CursorLeft++;
+			Console.ForegroundColor = ConsoleColor.DarkGray;			
+			int value = (done * 6 + (total / 2)) / total; //round to nearest
+			for(int i = 0 ; i < 6 ; i++) 
+			{
+				Console.Write(i < value ? '▓' : '░');
+			}
+		}
+		
 		static void Render()
 		{
 			Console.Clear();
@@ -221,11 +235,14 @@ namespace CacheViewer
 					Console.ForegroundColor = ConsoleColor.Gray;
 					Console.BackgroundColor = ConsoleColor.Black;
 					
-					Console.SetCursorPosition(column * 20 + 6, 0);						
+					Console.SetCursorPosition(column * 19 + 5, 0);						
 					Console.Write(ch.Name);
-					
-					Console.SetCursorPosition(column * 20, 1);
-					Console.Write("{0,5}/{1,5} {2,3}/{3,3}", ch.MaxFreeData - ch.SizeFreeData, ch.MaxFreeData, ch.NumUsedEntry, ch.NumMaxEntry);
+										
+					Console.SetCursorPosition(column * 19, 1);					
+					WriteStats(ch.MaxFreeData - ch.SizeFreeData, ch.MaxFreeData);
+															
+					Console.SetCursorPosition(column * 19, 2);
+					WriteStats(ch.NumUsedEntry, ch.NumMaxEntry);
 
 					int row = 0;
 					for (var node = ch.Entries.First; node != null; node = node.Next)
@@ -254,8 +271,8 @@ namespace CacheViewer
 						}					
 
 						bool kilobyte = entry.Size > 1024;
-						Console.SetCursorPosition(column * 20, row + 3);
-						Console.Write("{0,6} {1,4} {2} {3,5}", entry.Id, kilobyte ? entry.Size / 1024 : entry.Size, kilobyte ? 'K' : 'B', entry.Time / 60);
+						Console.SetCursorPosition(column * 19, row + 4);
+						Console.Write("{0,5} {1,4} {2} {3,5}", entry.Id, kilobyte ? entry.Size / 1024 : entry.Size, kilobyte ? 'K' : 'B', entry.Time / 60);
 						row++;
 					}
 				}
