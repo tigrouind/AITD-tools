@@ -104,11 +104,11 @@ namespace VarsViewer
 					e.Graphics.FillRectangle(transparentBrush, rect);
 				}
 				
+				format.LineAlignment = lineAlignment;
+				format.Alignment = alignment;
+				
 				if (text != string.Empty)
-				{
-					format.LineAlignment = lineAlignment;
-					format.Alignment = alignment;
-					
+				{									
 					if (highlight && inputText == null)
 					{
 						var textSize = e.Graphics.MeasureString(text, parent.Font, rect.Size, format);
@@ -118,11 +118,26 @@ namespace VarsViewer
 				
 					e.Graphics.DrawString(text, parent.Font, front, rect, format);
 				}
-				else if(highlight && carretState)
+				
+				if (highlight && (inputText != null || text == string.Empty) && carretState)
 				{
-					var center = new PointF((rect.Left + rect.Right) / 2, (rect.Top + rect.Bottom) / 2);					
-					e.Graphics.DrawLine(Pens.White, center.X, center.Y - 8, center.X, center.Y + 7);
+					DrawCarret(e, rect, text);
 				}
+			}
+		}
+		
+		void DrawCarret(PaintEventArgs e, RectangleF rect, string text)
+		{
+			if (text == string.Empty)
+			{
+				var bounds = GetCaretBounds(e.Graphics, rect, ".");
+				var center = (bounds.Left + bounds.Right) / 2;
+				e.Graphics.DrawLine(Pens.White, center, bounds.Top, center, bounds.Bottom);						
+			}
+			else
+			{
+				var bounds = GetCaretBounds(e.Graphics, rect, text);
+				e.Graphics.DrawLine(Pens.White, bounds.Right, bounds.Top, bounds.Right, bounds.Bottom);	
 			}
 		}
 		
@@ -136,6 +151,16 @@ namespace VarsViewer
 					Invalidate(var);
 				}
 			}
+		}
+		
+		RectangleF GetCaretBounds(Graphics graphics, RectangleF rect, string text)
+		{
+			CharacterRange[] characterRanges = { new CharacterRange(text.Length - 1, 1) };
+			format.SetMeasurableCharacterRanges(characterRanges);
+			var region = graphics.MeasureCharacterRanges(text, parent.Font, rect, format).First();			
+			format.SetMeasurableCharacterRanges(new CharacterRange[0]); //restore to previous state
+			var bounds = region.GetBounds(graphics);			
+			return bounds;
 		}
 		
 		#endregion
@@ -178,7 +203,8 @@ namespace VarsViewer
 					case Keys.D7:
 					case Keys.D8:
 					case Keys.D9:
-						BeginEdit();					
+						BeginEdit();
+						ResetCarret();
 						if(inputText.Length < (inputText.Contains("-") ? 6 : 5))
 						{						
 							inputText += e.KeyChar;
@@ -188,6 +214,7 @@ namespace VarsViewer
 					
 					case Keys.Insert:
 						BeginEdit();
+						ResetCarret();
 						if (inputText.Length == 0)
 						{
 							inputText = "-";	
