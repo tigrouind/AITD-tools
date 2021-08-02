@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Media;
 using System.Windows.Forms;
 using Shared;
 
@@ -212,6 +213,10 @@ namespace VarsViewer
 												
 					case Keys.Escape:
 						AbortEdit();
+						break;
+						
+					default:
+						SystemSounds.Beep.Play();
 						break;
 				}
 			}
