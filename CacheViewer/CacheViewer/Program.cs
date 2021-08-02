@@ -218,36 +218,44 @@ namespace CacheViewer
 				var ch = cache[i];
 				if (ch.Name != null)
 				{
-					Console.Write(column * 20 + 6, 0, ConsoleColor.Gray, ch.Name);
-					Console.Write(column * 20 + 0, 1, ConsoleColor.Gray, "{0,5}/{1,5} {2,3}/{3,3}",
-									ch.MaxFreeData - ch.SizeFreeData, ch.MaxFreeData, ch.NumUsedEntry, ch.NumMaxEntry);
+					Console.ForegroundColor = ConsoleColor.Gray;
+					Console.BackgroundColor = ConsoleColor.Black;
+					
+					Console.SetCursorPosition(column * 20 + 6, 0);						
+					Console.Write(ch.Name);
+					
+					Console.SetCursorPosition(column * 20, 1);
+					Console.Write("{0,5}/{1,5} {2,3}/{3,3}", ch.MaxFreeData - ch.SizeFreeData, ch.MaxFreeData, ch.NumUsedEntry, ch.NumMaxEntry);
 
 					int row = 0;
 					for (var node = ch.Entries.First; node != null; node = node.Next)
 					{
 						var entry = node.Value;
-						var color = ConsoleColor.DarkGray;
-
-						if (entry.Touched)
-						{
-							color = ConsoleColor.DarkYellow;
-						}
-
-						if (entry.Added)
-						{
-							color = ConsoleColor.Black | ConsoleColor.BackgroundDarkGreen;
-						}
 
 						if (entry.Removed)
 						{
-							color = ConsoleColor.Black | ConsoleColor.BackgroundDarkGray;
+							Console.ForegroundColor = ConsoleColor.Black;
+							Console.BackgroundColor = ConsoleColor.DarkGray;
 						}
+						else if (entry.Added)
+						{
+							Console.ForegroundColor = ConsoleColor.Black;
+							Console.BackgroundColor = ConsoleColor.DarkGreen;
+						}
+						else if (entry.Touched)
+						{
+							Console.ForegroundColor = ConsoleColor.DarkYellow;
+							Console.BackgroundColor = ConsoleColor.Black;
+						}
+						else
+						{
+							Console.ForegroundColor = ConsoleColor.DarkGray;
+							Console.BackgroundColor = ConsoleColor.Black;
+						}					
 
 						bool kilobyte = entry.Size > 1024;
-						Console.Write(column * 20, row + 3, color, "{0,6} {1,4} {2} {3,5}", 
-						              	entry.Id,
-						              	kilobyte ? entry.Size / 1024 : entry.Size, kilobyte ? 'K' : 'B', 
-						              	entry.Time / 60);
+						Console.SetCursorPosition(column * 20, row + 3);
+						Console.Write("{0,6} {1,4} {2} {3,5}", entry.Id, kilobyte ? entry.Size / 1024 : entry.Size, kilobyte ? 'K' : 'B', entry.Time / 60);
 						row++;
 					}
 				}

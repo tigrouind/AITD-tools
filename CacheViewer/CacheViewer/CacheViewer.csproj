@@ -55,7 +55,6 @@
     <Compile Include="Cache.cs" />
     <Compile Include="CacheEntry.cs" />
     <Compile Include="Console\Console.cs" />
-    <Compile Include="Console\ConsoleColor.cs" />
     <Compile Include="Console\FormatArgument.cs" />
     <Compile Include="Console\StringFormat.cs" />
     <Compile Include="Program.cs" />

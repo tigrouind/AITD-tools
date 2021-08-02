@@ -70,7 +70,12 @@ namespace CacheViewer
 		static readonly SafeFileHandle handle;
 		static CharInfo[] buf = new CharInfo[SIZEX * SIZEY];
 		static CharInfo[] previousBuf = new CharInfo[SIZEX * SIZEY];
-
+		
+		public static ConsoleColor BackgroundColor;
+		public static ConsoleColor ForegroundColor;
+		public static int CursorLeft;
+		public static int CursorTop;
+		
 		static Console()
 		{
 			handle = CreateFile("CONOUT$", 0x40000000, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
@@ -80,24 +85,26 @@ namespace CacheViewer
 		{
 			Array.Clear(buf, 0, buf.Length);
 		}
-
-		public static void Write(int x, int y, ConsoleColor color, char value)
+		
+		public static void Write(char value)
 		{
-			if (x < SIZEX && y < SIZEY)
+			if (CursorLeft < SIZEX && CursorTop < SIZEY)
 			{
-				buf[y * SIZEX + x] = new CharInfo { Char = new CharUnion { UnicodeChar = value }, Attributes = (short)color };
+				short color = (short)((int)ForegroundColor | (int)BackgroundColor << 4);
+				buf[CursorTop * SIZEX + CursorLeft] = new CharInfo { Char = new CharUnion { UnicodeChar = value }, Attributes = color };
+				CursorLeft++;
 			}
 		}
 		
-		public static void Write(int x, int y, ConsoleColor color, string value)
+		public static void Write(string value)
 		{
 			for (int i = 0 ; i < value.Length ; i++)
 			{
-				Write(x++, y, color, value[i]);
+				Write(value[i]);
 			}
 		}
 		
-		public static void Write(int x, int y, ConsoleColor color, string format, 
+		public static void Write(string format, 
 		                         FormatArgument arg0,
 		                         FormatArgument arg1 = default(FormatArgument), 
 		                         FormatArgument arg2 = default(FormatArgument), 
@@ -106,10 +113,16 @@ namespace CacheViewer
 			StringFormat.Format(format, arg0, arg1, arg2, arg3);
 			for(int i = 0 ; i < StringFormat.BufferLength ; i++)
 			{
-				Write(x++, y, color, StringFormat.Buffer[i]);
+				Write(StringFormat.Buffer[i]);				
 			}
 		}
-				
+		
+		public static void SetCursorPosition(int left, int top)
+		{
+			CursorLeft = left;
+			CursorTop = top;
+		}
+		
 		public static void Flush()
 		{
 			SmallRect rect;
