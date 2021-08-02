@@ -10,7 +10,7 @@
 		TRACKS, 
 		POSREL, 
 		VARS, 
-		C_VARS, 
+		CVARS, 
 		SOUNDS, 
 		ACTIONS,
 		KEYBOARD_INPUT,

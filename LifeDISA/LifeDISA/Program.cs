@@ -43,7 +43,7 @@ namespace LifeDISA
 				          VarEnum.TRACKS,
 				          VarEnum.POSREL, 
 				          VarEnum.VARS, 
-				          VarEnum.C_VARS, 
+				          VarEnum.CVARS, 
 				          VarEnum.SOUNDS, 
 				          VarEnum.ACTIONS, 
 				          VarEnum.KEYBOARD_INPUT,
@@ -693,7 +693,7 @@ namespace LifeDISA
 				case LifeEnum.C_VAR:
 				{
 					int curr = GetParam();
-					ins.Add("{0} = {1}", vars.GetText(VarEnum.C_VARS, curr, "cvar_" + curr), Evalvar());
+					ins.Add("{0} = {1}", vars.GetText(VarEnum.CVARS, curr, "cvar_" + curr), Evalvar());
 					break;
 				}
 
@@ -868,7 +868,7 @@ namespace LifeDISA
 					break;
 
 				case EvalEnum.C_VAR:
-					parameter = vars.GetText(VarEnum.C_VARS, GetParam(), "cvar_" + curr);
+					parameter = vars.GetText(VarEnum.CVARS, GetParam(), "cvar_" + curr);
 					break;
 					
 				case EvalEnum.TEST_ZV_END_ANIM:
