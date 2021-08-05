@@ -79,7 +79,7 @@ namespace CacheViewer
 			{						
 				//check if CDROM/floppy version
 				byte[] cdPattern = Encoding.ASCII.GetBytes("CD Not Found");
-				gameVersion = Tools.IndexOf(memory, cdPattern) != -1 ? 0 : 1;
+				gameVersion = Shared.Tools.IndexOf(memory, cdPattern) != -1 ? 0 : 1;
 			} 
 			else
 			{
@@ -186,21 +186,20 @@ namespace CacheViewer
 			{
 				var next = node.Next;
 				var entry = node.Value;
-				if ((ticks - entry.Ticks) > 3000)
+				if (Tools.GetTimeSpan(ticks, entry.Ticks) > TimeSpan.FromSeconds(3))
 				{
 					ch.Entries.Remove(node);
 				}
 				else
 				{
-					entry.Touched = (ticks - entry.TouchedTicks) < 2000;
-					entry.Added = (ticks - entry.StartTicks) < 3000;
-					entry.Removed = (ticks - entry.Ticks) > 0;				
+					entry.Touched = Tools.GetTimeSpan(ticks, entry.TouchedTicks) < TimeSpan.FromSeconds(2);
+					entry.Added = Tools.GetTimeSpan(ticks, entry.StartTicks) < TimeSpan.FromSeconds(3);
+					entry.Removed = Tools.GetTimeSpan(ticks, entry.Ticks) > TimeSpan.Zero;				
 				}				
 				node = next;
 			}
 		}
 		
-
 		static void CloseReader()
 		{
 			entryPoint = -1;
@@ -215,7 +214,7 @@ namespace CacheViewer
 		
 			Console.CursorLeft++;
 			Console.ForegroundColor = ConsoleColor.DarkGray;			
-			int value = (done * 6 + (total / 2)) / total; //round to nearest
+			int value = Tools.RoundToNearest(done * 6, total);
 			for(int i = 0 ; i < 6 ; i++) 
 			{
 				Console.Write(i < value ? '▓' : '░');
