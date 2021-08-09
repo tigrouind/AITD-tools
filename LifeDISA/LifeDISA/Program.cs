@@ -23,9 +23,6 @@ namespace LifeDISA
 		static readonly Dictionary<int, LinkedListNode<Instruction>> nodesMap = new Dictionary<int, LinkedListNode<Instruction>>();
 
 		static readonly VarParserExt vars = new VarParserExt();
-		static readonly Dictionary<EvalEnum, string> evalToString = 
-			GetAttributesFromEnum<EvalEnum, DescriptionAttribute>()
-				.ToDictionary(x => x.Key, x => x.Value.Description.ToLowerInvariant());
 
 		public static int Main()
 		{
@@ -74,7 +71,7 @@ namespace LifeDISA
 					buffer = pak.GetEntry(0);
 				}
 
-				foreach(var item in ReadLines(buffer, Encoding.GetEncoding(850))
+				foreach(var item in Tools.ReadLines(buffer, Encoding.GetEncoding(850))
 					.Where(x => x.Contains(":"))
 					.Select(x => x.Split(':'))
 					.Where(x => x[1] != string.Empty))
@@ -714,8 +711,8 @@ namespace LifeDISA
 			switch (evalEnum)
 			{
 				case EvalEnum.INHAND:
-				case EvalEnum.COL_BY_1:
-				case EvalEnum.COL_BY_2:
+				case EvalEnum.COL_BY:
+				case EvalEnum.CONTACT:
 				case EvalEnum.HIT_BY:
 				case EvalEnum.HIT:
 				case EvalEnum.ACTOR_COLLIDER:
@@ -842,11 +839,7 @@ namespace LifeDISA
 			curr--;
 			evalEnum = (EvalEnum)curr;
 
-			string parameter;
-			if (!evalToString.TryGetValue(evalEnum, out parameter))
-			{
-				parameter = evalEnum.ToString().ToLowerInvariant();
-		    }
+			string parameter = evalEnum.ToString().ToLowerInvariant();
 			
 			switch (evalEnum)
 			{
@@ -881,38 +874,6 @@ namespace LifeDISA
 
 			result += parameter;
 			return result;
-		}
-		
-		#endregion
-		
-		#region Helpers
-		
-		static IEnumerable<string> ReadLines(byte[] buffer, Encoding encoding)
-		{
-			using(var stream = new MemoryStream(buffer))
-			using(var reader = new StreamReader(stream, encoding))
-	      	{
-				string line;					
-				while((line = reader.ReadLine()) != null)
-				{
-					yield return line;
-				}					      		
-			}
-		}
-		
-		static IEnumerable<KeyValuePair<TEnum, TAttribute>> GetAttributesFromEnum<TEnum, TAttribute>()
-			where TEnum: struct
-			where TAttribute : Attribute
-		{
-			foreach(var field in typeof(TEnum).GetFields(BindingFlags.Public | BindingFlags.Static))
-			{								
-				var attribute = (TAttribute)field.GetCustomAttribute(typeof(TAttribute));
-				if (attribute != null)
-				{
-					var type = (TEnum)field.GetValue(null);
-					yield return new KeyValuePair<TEnum, TAttribute>(type, attribute);
-				}
-			}
 		}
 		
 		#endregion

@@ -1,6 +1,5 @@
 ﻿
 using System;
-using System.ComponentModel;
 
 namespace LifeDISA
 {
@@ -8,8 +7,7 @@ namespace LifeDISA
 	{
 		NONE = -1,
 		ACTOR_COLLIDER,
-		[Description("TRIGGER_COLLIDER")]
-		TRIGGER_COLLIDER_1,
+		TRIGGER_COLLIDER,
 		HARD_COLLIDER,
 		HIT,
 		HIT_BY,
@@ -23,15 +21,13 @@ namespace LifeDISA
 		CHRONO,
 		ROOM_CHRONO,
 		DIST,
-		[Description("COL_BY")]
-		COL_BY_1,
+		COL_BY,
 		ISFOUND,
 		ACTION,
 		POSREL,
 		KEYBOARD_INPUT,
 		SPACE,
-		[Description("COL_BY")]
-		COL_BY_2,
+		CONTACT,
 		ALPHA,
 		BETA,
 		GAMMA,
@@ -59,8 +55,7 @@ namespace LifeDISA
 		#endif
 		#if JITD
 		MATRIX,
-		[Description("TRIGGER_COLLIDER")]
-		TRIGGER_COLLIDER_2
+		HARD_MAT
 		#endif
 	}
 }
