@@ -34,7 +34,7 @@ namespace MemoryViewer
 			uint[] palette = LoadPalette();
 			SetRefreshState(true);
 
-			bool quit = false, mcb = false;
+			bool quit = false, mcb = false, minimized = false;
 			uint[] pixels = new uint[RESX * RESY * SCREENS];
 			uint[] mcbPixels = new uint[RESX * RESY * SCREENS];			
 			byte[] pixelData = new byte[RESX * RESY * SCREENS];
@@ -63,12 +63,21 @@ namespace MemoryViewer
 							break;
 
 						case SDL.SDL_EventType.SDL_WINDOWEVENT:
-
-							if(sdlEvent.window.windowEvent == SDL.SDL_WindowEventID.SDL_WINDOWEVENT_RESIZED)
+							switch(sdlEvent.window.windowEvent)
 							{
-								winx = sdlEvent.window.data1;
-								winy = sdlEvent.window.data2;
-								SetRefreshState(true);
+								case SDL.SDL_WindowEventID.SDL_WINDOWEVENT_RESIZED:
+									winx = sdlEvent.window.data1;
+									winy = sdlEvent.window.data2;
+									SetRefreshState(true);
+									break;
+									
+								case SDL.SDL_WindowEventID.SDL_WINDOWEVENT_MINIMIZED:
+									minimized = true;
+									break;
+									
+								case SDL.SDL_WindowEventID.SDL_WINDOWEVENT_RESTORED:
+									minimized = false;
+									break;									
 							}
 							break;
 					}
@@ -125,6 +134,11 @@ namespace MemoryViewer
 
 				SDL.SDL_RenderPresent(renderer);					
 				SetRefreshState(false);
+				
+				if (minimized)
+				{
+					SDL.SDL_Delay(1);
+				}
 
 				//swap buffers
 				var tmp = pixelData;
