@@ -10,8 +10,8 @@ namespace MemoryViewer
 	class Program
 	{
 		const int RESX = 320;
-		const int RESY = 240;
-		const int SCREENS = 10;
+		const int RESY = 60;
+		const int SCREENS = 40;
 		static int winx, winy, zoom;
 		static readonly bool[] needRefresh = new bool[SCREENS];
 			
