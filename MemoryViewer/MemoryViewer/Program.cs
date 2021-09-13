@@ -14,6 +14,7 @@ namespace MemoryViewer
 		const int SCREENS = 40;
 		static int winx, winy, zoom;
 		static readonly bool[] needRefresh = new bool[SCREENS];
+		static bool mustClearScreen;
 			
 		public static int Main(string[] args)
 		{
@@ -53,12 +54,49 @@ namespace MemoryViewer
 						case SDL.SDL_EventType.SDL_QUIT:
 							quit = true;
 							break;
+							
+						case SDL.SDL_EventType.SDL_MOUSEWHEEL:
+							if ((SDL.SDL_GetModState() & SDL.SDL_Keymod.KMOD_CTRL) != 0)
+							{
+								if (sdlEvent.wheel.y > 0)
+					        	{
+					             	SetZoom(zoom + 1);
+					        	}
+					        	else if (sdlEvent.wheel.y < 0) 
+					        	{
+					             	SetZoom(zoom - 1);
+						        }
+							}
+							break;
 
 						case SDL.SDL_EventType.SDL_KEYDOWN:
-							if(sdlEvent.key.keysym.sym == SDL.SDL_Keycode.SDLK_SPACE)
+							switch (sdlEvent.key.keysym.sym)
 							{
-								mcb = !mcb;
-								SetRefreshState(true);
+								case SDL.SDL_Keycode.SDLK_SPACE:
+									mcb = !mcb;
+									SetRefreshState(true);
+									break;
+							}
+							
+							if ((sdlEvent.key.keysym.mod & SDL.SDL_Keymod.KMOD_CTRL) != 0)
+							{
+								switch (sdlEvent.key.keysym.sym)
+								{
+									case SDL.SDL_Keycode.SDLK_EQUALS:
+									case SDL.SDL_Keycode.SDLK_KP_PLUS:										
+										SetZoom(zoom + 1);
+										break;
+										
+									case SDL.SDL_Keycode.SDLK_MINUS:										
+									case SDL.SDL_Keycode.SDLK_KP_MINUS:										
+										SetZoom(zoom - 1);
+										break; 
+									
+									case SDL.SDL_Keycode.SDLK_0:										
+									case SDL.SDL_Keycode.SDLK_KP_0:
+										SetZoom(2);
+										break; 
+								}
 							}
 							break;
 
@@ -134,6 +172,7 @@ namespace MemoryViewer
 
 				SDL.SDL_RenderPresent(renderer);					
 				SetRefreshState(false);
+				mustClearScreen = false;
 				
 				if (minimized)
 				{
@@ -249,7 +288,24 @@ namespace MemoryViewer
 				{
 					int position = skip + n * RESX * RESY;
 					int nextPosition = position + RESX * RESY;
-					if (nextPosition > pixels.Length) continue;
+					
+					SDL.SDL_Rect drawRect = new SDL.SDL_Rect 
+					{
+						x = m * RESX * zoom, 
+						y = n * RESY * zoom, 
+						w = RESX * zoom, 
+						h = RESY * zoom 
+					};
+					
+					if (nextPosition > pixels.Length)
+					{
+						if (mustClearScreen)
+						{
+							SDL.SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+							SDL.SDL_RenderFillRect(renderer, ref drawRect);
+						}
+						continue;
+					}
 
 					int index = position / (RESX * RESY);
 					int nextIndex = (nextPosition - 1) / (RESX * RESY);
@@ -260,15 +316,7 @@ namespace MemoryViewer
 						{
 							SDL.SDL_UpdateTexture(texture, ref textureRect, (IntPtr)pixelsBuf, RESX * sizeof(uint));
 						}
-						
-						SDL.SDL_Rect drawRect = new SDL.SDL_Rect 
-						{
-							x = m * RESX * zoom, 
-							y = n * RESY * zoom, 
-							w = RESX * zoom, 
-							h = RESY * zoom 
-						};
-						
+																	
 						SDL.SDL_RenderCopy(renderer, texture, ref textureRect, ref drawRect);
 					}					
 				}
@@ -302,6 +350,16 @@ namespace MemoryViewer
 			for(int i = 0 ; i < SCREENS ; i++)
 			{
 				needRefresh[i] = state;
+			}
+		}
+		
+		static void SetZoom(int newZoom)
+		{
+			if (newZoom != zoom && newZoom >= 1 && newZoom <= 8)
+			{
+				zoom = newZoom;
+				mustClearScreen = true;
+				SetRefreshState(true);
 			}
 		}
 	}
