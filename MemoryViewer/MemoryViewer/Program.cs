@@ -326,13 +326,22 @@ namespace MemoryViewer
 		}
 		
 		static uint[] LoadPalette()
+		{			
+			const string filename = "ITD_RESS.PAK";
+			if (File.Exists(filename))
+			{
+				return LoadPalette(filename);
+			}
+			
+			return LoadDefaultPalette();
+		}
+		
+		static uint[] LoadPalette(string filename)
 		{
 			var palette = new uint[256];
-			using (var stream = Assembly.GetExecutingAssembly()
-				   .GetManifestResourceStream("MemoryViewer.palette.dat"))
-			using (BinaryReader br = new BinaryReader(stream))
+			using (var pak = new UnPAK(filename))
 			{
-				var buffer = br.ReadBytes(768);
+				var buffer = pak.GetEntry(3);				
 				for(int i = 0; i < palette.Length; i++)
 				{
 					byte r = buffer[i * 3 + 0];
@@ -340,6 +349,17 @@ namespace MemoryViewer
 					byte b = buffer[i * 3 + 2];
 					palette[i] = (uint)(r << 16 | g << 8 | b);
 				}
+			}
+			
+			return palette;
+		}
+		
+		static uint[] LoadDefaultPalette()
+		{
+			var palette = new uint[256];
+			for (int i = 0 ; i < 256 ; i++)
+			{
+				palette[i] = (uint)(i << 16 | i << 8 | i);
 			}
 			
 			return palette;

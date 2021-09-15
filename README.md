@@ -26,6 +26,8 @@ MemoryViewer [-screen-width width] [-screen-height height] [-zoom zoom]
 ```
 Press `space` to display memory allocation blocks
 
+ITD_RESS.PAK file need to be extracted to same folder as executable to get palette to work.
+
 # VarsViewer
 
 ## Command-line arguments : 
