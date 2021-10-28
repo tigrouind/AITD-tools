@@ -38,6 +38,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CellEventArgs.cs" />
+    <Compile Include="GameConfig.cs" />
+    <Compile Include="GameVersion.cs" />
     <Compile Include="Grid.cs" />
     <Compile Include="MainForm.cs" />
     <Compile Include="MainForm.Designer.cs">

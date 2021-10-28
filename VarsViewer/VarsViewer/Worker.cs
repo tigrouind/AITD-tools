@@ -11,13 +11,17 @@ namespace VarsViewer
 		ProcessMemoryReader reader;
 
 		int entryPoint = -1;
-		int gameVersion;
+		GameVersion gameVersion;
 		readonly byte[] memory = new byte[640 * 1024];
 		
-		int varsMemoryAddress, cvarsMemoryAddress;
 		int varsPointer;
-		int[] varAddress = { 0x2184B, 0x2048E, 0x20456 };
-		int[] cvarAddress = { 0x22074, 0x204B8, 0x20480 };
+		GameConfig gameConfig;
+		Dictionary<GameVersion, GameConfig> gameConfigs = new Dictionary<GameVersion, GameConfig>
+		{
+			{ GameVersion.CD_ROM, new GameConfig(0x2184B, 0x22074) },
+			{ GameVersion.FLOPPY, new GameConfig(0x2048E, 0x204B8) },
+			{ GameVersion.DEMO  , new GameConfig(0x20456, 0x20480) }
+		};
 
 		public readonly List<Var> vars;
 		public readonly List<Var> cvars;
@@ -79,17 +83,18 @@ namespace VarsViewer
 				{						
 					//check if CDROM/floppy version
 					byte[] cdPattern = Encoding.ASCII.GetBytes("CD Not Found");
-					gameVersion = Tools.IndexOf(memory, cdPattern) != -1 ? 0 : 1;
-					if (gameVersion == 1) //floppy
+					gameVersion = Tools.IndexOf(memory, cdPattern) != -1 ? GameVersion.CD_ROM : GameVersion.FLOPPY;
+					if (gameVersion == GameVersion.FLOPPY) 
 					{
 						if (Tools.IndexOf(memory, Encoding.ASCII.GetBytes("USA.PAK")) != -1)
 						{
-							gameVersion = 2; //demo
+							gameVersion = GameVersion.DEMO;
 						}
 					}
 					
-					varsMemoryAddress = entryPoint + varAddress[gameVersion];
-					cvarsMemoryAddress = entryPoint + cvarAddress[gameVersion];
+					gameConfig = gameConfigs[gameVersion];
+					gameConfig.VarsAddress += entryPoint;
+					gameConfig.CvarAddress += entryPoint;
 				} 
 				else
 				{
@@ -103,7 +108,7 @@ namespace VarsViewer
 				int time = Environment.TickCount;
 
 				bool result = true;
-				if (result &= (reader.Read(memory, varsMemoryAddress, 4) > 0))
+				if (result &= (reader.Read(memory, gameConfig.VarsAddress, 4) > 0))
 				{
 					varsPointer = memory.ReadFarPointer(0);
 					if(varsPointer == 0)
@@ -112,7 +117,7 @@ namespace VarsViewer
 					}
 					else 
 					{
-						InitVars(vars, gameVersion == 2 ? 22 : 207, VarEnum.VARS);
+						InitVars(vars, gameVersion == GameVersion.DEMO ? 22 : 207, VarEnum.VARS);
 						if (result &= (reader.Read(memory, varsPointer, vars.Count * 2) > 0))
 						{								
 							needRefresh |= CheckDifferences(vars, time);
@@ -121,7 +126,7 @@ namespace VarsViewer
 				}
 
 				InitVars(cvars, 16, VarEnum.CVARS);
-				if (result &= (reader.Read(memory, cvarsMemoryAddress, cvars.Count * 2) > 0))
+				if (result &= (reader.Read(memory, gameConfig.CvarAddress, cvars.Count * 2) > 0))
 				{
 					needRefresh |= CheckDifferences(cvars, time);
 				}
@@ -219,7 +224,7 @@ namespace VarsViewer
 		{
 			if(reader != null)
 			{
-				int memoryAddress = var.Type == VarEnum.VARS ? varsPointer : cvarsMemoryAddress;
+				int memoryAddress = var.Type == VarEnum.VARS ? varsPointer : gameConfig.CvarAddress;
 				memory.Write(value, 0);
 				reader.Write(memory, memoryAddress + var.Index * 2, 2);
 			}
