@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using Shared;
@@ -21,6 +19,8 @@ namespace LifeDISA
 
 		static readonly LinkedList<Instruction> nodes = new LinkedList<Instruction>();
 		static readonly Dictionary<int, LinkedListNode<Instruction>> nodesMap = new Dictionary<int, LinkedListNode<Instruction>>();
+		static readonly string[] flagsNames = { "anim", string.Empty, string.Empty, "back", "push", "coll", "trig", "pick", "grav" };
+		static readonly string[] foundFlagsNames = { "use", "eat_or_drink", "read", "reload", "fight", "jump", "open_or_search", "close", "push", "throw", "drop_or_put" };
 
 		static readonly VarParserExt vars = new VarParserExt();
 
@@ -377,8 +377,11 @@ namespace LifeDISA
 					break;
 
 				case LifeEnum.FOUND_FLAG:
+					ins.Add(GetFlags(GetParam(), foundFlagsNames));
+					break;
+					
 				case LifeEnum.FLAGS:
-					ins.Add("0x{0:X4}", GetParam());
+					ins.Add(GetFlags(GetParam(), flagsNames));
 					break;
 
 				case LifeEnum.LIFE:
@@ -666,7 +669,16 @@ namespace LifeDISA
 				case LifeEnum.SET:
 				{
 					int curr = GetParam();
-					ins.Add("{0} = {1}", vars.GetText(VarEnum.VARS, curr, "var_" + curr), Evalvar());
+					string name = vars.GetText(VarEnum.VARS, curr, "var_" + curr);
+					string value = Evalvar();
+					
+					int result;
+					if (name == "player_current_action" && int.TryParse(value, out result))
+					{
+						value = GetFlags(result, foundFlagsNames);
+					}
+					
+					ins.Add("{0} = {1}", name, value);
 					break;
 				}
 
@@ -793,6 +805,31 @@ namespace LifeDISA
 			int curr = allBytes.ReadShort(pos);
 			pos += 2;
 			return curr;
+		}
+		
+		static string GetFlags(int flags, string[] names)
+		{
+			if (flags == 0)
+			{
+				return "none";
+			}
+			
+			StringBuilder result = new StringBuilder();
+			int flag = 1;
+			for (int i = 0 ; i < names.Length ; i++)
+			{
+				if ((flags & flag) != 0 && !string.IsNullOrEmpty(names[i]))
+				{					
+					if (result.Length > 0) 
+					{
+						result.Append(" ");
+					}
+					result.Append(names[i]);
+				}
+				flag <<= 1;
+			}
+			
+			return result.ToString();			
 		}
 		
 		#endregion
