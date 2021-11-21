@@ -6,7 +6,6 @@ namespace CacheViewer
 	{
 		public string Name;
 		public LinkedList<CacheEntry> Entries = new LinkedList<CacheEntry>();
-		public int[] Address;
 
 		public int MaxFreeData;
 		public int SizeFreeData;

@@ -10,25 +10,22 @@ namespace CacheViewer
 	class Program
 	{
 		static ProcessMemoryReader reader;
-		static byte[] memory = new byte[640 * 1024];
-		static Cache[] cache;
+		static readonly byte[] memory = new byte[640 * 1024];
+		static readonly Dictionary<GameVersion, int[]> gameConfigs = new Dictionary<GameVersion, int[]>
+		{
+			// ListSamp / ListLife / ListBody / ListAnim / ListTrak / _MEMORY_ 
+			{ GameVersion.CD_ROM, new [] { 0x218CB, 0x218CF, 0x218D7, 0x218D3, 0x218C7, 0x218BF } },
+			{ GameVersion.FLOPPY, new [] { 0x2053E, 0x2049C, 0x20494, 0x20498, 0x204AA, 0x20538 } },
+			{ GameVersion.DEMO,   new [] { 0x20506, 0x20464, 0x2045C, 0x20460, 0x20472, 0x20500 } },
+		};
 		static int entryPoint = -1;
-		static int gameVersion;
+		static readonly Cache[] cache = { new Cache(), new Cache(), new Cache(), new Cache(), new Cache(), new Cache() };
+		static int[] gameConfig;
 
 		public static void Main()
 		{
 			System.Console.Title = "AITD cache viewer";
-
-			cache = new []
-			{
-				new Cache { Address = new [] { 0x218CB, 0x2053E } }, // ListSamp
-				new Cache { Address = new [] { 0x218CF, 0x2049C } }, // ListLife
-				new Cache { Address = new [] { 0x218D7, 0x20494 } }, // ListBody/ListBod2
-				new Cache { Address = new [] { 0x218D3, 0x20498 } }, // ListAnim/ListAni2
-				new Cache { Address = new [] { 0x218C7, 0x204AA } }, // ListTrak
-				new Cache { Address = new [] { 0x218BF, 0x20538 } }  // _MEMORY_
-			};
-
+			
 			while (true)
 			{
 				if (reader == null)
@@ -79,7 +76,16 @@ namespace CacheViewer
 			{						
 				//check if CDROM/floppy version
 				byte[] cdPattern = Encoding.ASCII.GetBytes("CD Not Found");
-				gameVersion = Shared.Tools.IndexOf(memory, cdPattern) != -1 ? 0 : 1;
+				var gameVersion = Shared.Tools.IndexOf(memory, cdPattern) != -1 ? GameVersion.CD_ROM : GameVersion.FLOPPY;				
+				if (gameVersion == GameVersion.FLOPPY) 
+				{
+					if (Shared.Tools.IndexOf(memory, Encoding.ASCII.GetBytes("USA.PAK")) != -1)
+					{
+						gameVersion = GameVersion.DEMO;
+					}
+				}	
+
+				gameConfig = gameConfigs[gameVersion];	
 			} 
 			else
 			{
@@ -92,9 +98,10 @@ namespace CacheViewer
 			bool readSuccess = true;
 
 			int ticks = Environment.TickCount;
-			foreach (var ch in cache)
+			for(int i = 0 ; i < cache.Length ; i++)
 			{
-				if (readSuccess &= (reader.Read(memory, entryPoint + ch.Address[gameVersion], 4) > 0))
+				var ch = cache[i];
+				if (readSuccess &= (reader.Read(memory, entryPoint + gameConfig[i], 4) > 0))
 				{
 					int cachePointer = memory.ReadFarPointer(0);	
 					if(cachePointer != 0 && (readSuccess &= (reader.Read(memory, cachePointer - 16, 4096) > 0))) 
