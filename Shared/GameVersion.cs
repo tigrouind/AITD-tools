@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace CacheViewer
+namespace Shared
 {
 	public enum GameVersion
 	{
