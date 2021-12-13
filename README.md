@@ -17,7 +17,7 @@ Both floppy version and CD-ROM version are supported. AITD2 and 3 are not suppor
 
 # TrackDISA
 
-Extract all files located in *LISTTRAK.PAK* into a folder named GAMEDATA
+Copy file *LISTTRAK.PAK* into a folder named GAMEDATA
 
 # MemoryViewer
 ## Command-line arguments : 
@@ -26,7 +26,7 @@ MemoryViewer [-screen-width width] [-screen-height height] [-zoom zoom]
 ```
 Press `space` to display memory allocation blocks
 
-ITD_RESS.PAK file need to be extracted to same folder as executable to get palette to work.
+Copy file *ITD_RESS.PAK* to same folder as executable to get palette to work.
 
 # VarsViewer
 
