@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
@@ -13,6 +14,7 @@ namespace VarsViewer
 		readonly Grid grid;
 		readonly ToolTip toolTip;
 		readonly Brush blueBrush = new SolidBrush(Color.FromArgb(64, 0, 162, 232));
+		readonly HatchBrush hatchBrush = new HatchBrush(HatchStyle.WideUpwardDiagonal, Color.FromArgb(255, 67, 67, 77), Color.FromArgb(255, 28, 28, 38));
 		
 		readonly List<Var> vars = new List<Var>();
 		readonly List<Var> cvars = new List<Var>();
@@ -39,9 +41,14 @@ namespace VarsViewer
 			
 			InitializeComponent();
 		}
+		
+		protected override void OnPaintBackground(PaintEventArgs e)
+		{
+		}
 
 		void MainFormPaint(object sender, PaintEventArgs e)
 		{
+			e.Graphics.FillRectangle(hatchBrush, e.ClipRectangle);
 			grid.Paint(e);
 			toolTip.Paint(e);
 

@@ -42,7 +42,6 @@
 			// MainForm
 			// 		
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
-			this.BackColor = System.Drawing.Color.FromArgb(255, 47, 47, 57);
 			this.DoubleBuffered = true;
 			this.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.Name = "MainForm";

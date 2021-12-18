@@ -22,9 +22,9 @@ namespace VarsViewer
 		readonly Timer timer;
 		
 		readonly StringFormat format = new StringFormat();
-		readonly Brush greenBrush = new SolidBrush(Color.FromArgb(255, 43, 193, 118));
 		readonly Brush grayBrush = new SolidBrush(Color.FromArgb(255, 28, 28, 38));
 		readonly Brush whiteBrush = new SolidBrush(Color.FromArgb(255, 255, 255, 255));
+		readonly Brush lightGrayBrush = new SolidBrush(Color.FromArgb(255, 67, 67, 77));
 		readonly Brush redBrush = new SolidBrush(Color.FromArgb(255, 240, 68, 77));		
 		readonly Brush transparentBrush = new SolidBrush(Color.FromArgb(64, 255, 255, 255));
 		readonly Brush highlightBrush = new SolidBrush(Color.FromArgb(255, 0, 93, 204));
@@ -54,16 +54,16 @@ namespace VarsViewer
 
 		void DrawHeader(PaintEventArgs e, int position, int rows)
 		{
-			DrawCell(e, 0, position, greenBrush);
+			DrawCell(e, 0, position, lightGrayBrush);
 
 			for(int i = 0 ; i < 20 ; i++)
 			{
-				DrawCell(e, i + 1, position, greenBrush, i.ToString(), grayBrush, StringAlignment.Center, StringAlignment.Far);				
+				DrawCell(e, i + 1, position, lightGrayBrush, i.ToString(), Brushes.Black, StringAlignment.Center, StringAlignment.Far);				
 			}
 			
 			for(int i = 0 ; i < rows ; i++)
 			{
-				DrawCell(e, 0, i + 1 + position, greenBrush, (i * 20).ToString(), grayBrush, StringAlignment.Far);
+				DrawCell(e, 0, i + 1 + position, lightGrayBrush, (i * 20).ToString(), Brushes.Black, StringAlignment.Far);
 			}
 		}
 
