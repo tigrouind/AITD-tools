@@ -4,8 +4,8 @@ namespace VarsViewer
 {
 	public class GameConfig
 	{
-		public int VarsAddress;
-		public int CvarAddress;
+		public readonly int VarsAddress;
+		public readonly int CvarAddress;
 		
 		public GameConfig(int varsAddress, int cvarAddress)
 		{

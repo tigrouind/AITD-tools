@@ -93,8 +93,6 @@ namespace VarsViewer
 					}
 					
 					gameConfig = gameConfigs[gameVersion];
-					gameConfig.VarsAddress += entryPoint;
-					gameConfig.CvarAddress += entryPoint;
 				} 
 				else
 				{
@@ -108,7 +106,7 @@ namespace VarsViewer
 				int time = Environment.TickCount;
 
 				bool result = true;
-				if (result &= (reader.Read(memory, gameConfig.VarsAddress, 4) > 0))
+				if (result &= (reader.Read(memory, gameConfig.VarsAddress + entryPoint, 4) > 0))
 				{
 					varsPointer = memory.ReadFarPointer(0);
 					if(varsPointer == 0)
@@ -126,7 +124,7 @@ namespace VarsViewer
 				}
 
 				InitVars(cvars, 16, VarEnum.CVARS);
-				if (result &= (reader.Read(memory, gameConfig.CvarAddress, cvars.Count * 2) > 0))
+				if (result &= (reader.Read(memory, gameConfig.CvarAddress + entryPoint, cvars.Count * 2) > 0))
 				{
 					needRefresh |= CheckDifferences(cvars, time);
 				}
@@ -224,7 +222,7 @@ namespace VarsViewer
 		{
 			if(reader != null)
 			{
-				int memoryAddress = var.Type == VarEnum.VARS ? varsPointer : gameConfig.CvarAddress;
+				int memoryAddress = (var.Type == VarEnum.VARS ? varsPointer : gameConfig.CvarAddress + entryPoint);
 				memory.Write(value, 0);
 				reader.Write(memory, memoryAddress + var.Index * 2, 2);
 			}
