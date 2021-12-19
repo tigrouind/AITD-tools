@@ -165,5 +165,10 @@ namespace VarsViewer
 				grid.Refresh();
 			}
 		}
+		
+		void MainFormDeactivate(object sender, EventArgs e)
+		{
+			grid.CommitEdit();
+		}
 	}
 }

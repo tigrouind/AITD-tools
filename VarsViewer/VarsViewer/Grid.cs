@@ -233,9 +233,7 @@ namespace VarsViewer
 						break;
 						
 					case Keys.Enter:
-						CommitEdit();											
-						Invalidate(focusVar);
-						focusVar = null;
+						CommitEdit();		
 						break;
 												
 					case Keys.Escape:
@@ -277,20 +275,15 @@ namespace VarsViewer
 		
 			if (focusVar != var)
 			{
-				if(focusVar != null)
-				{
-					CommitEdit();		
-				}
+				CommitEdit();	
 				
 				if(var != null)
 				{
-					inputText = null;					
+					inputText = null;	
+					Invalidate(var);					
 				}
-														
-				if(var != null) Invalidate(var);
-				if(focusVar != null) Invalidate(focusVar);
-				focusVar = var;
-				
+								 
+				focusVar = var;				
 				ResetCarret();
 			}
 		}
@@ -366,14 +359,20 @@ namespace VarsViewer
 			}
 		}
 								
-		void CommitEdit()
+		public void CommitEdit()
 		{
-			int value = 0;
-			if ((inputText == string.Empty || int.TryParse(inputText, out value)) && value != focusVar.Value)
+			if(focusVar != null)
 			{
-				value = Math.Min(value, short.MaxValue);
-				value = Math.Max(value, short.MinValue);
-				CellCommit.Invoke(this, new CellEventArgs { Var = focusVar, Rectangle = GetRectangle(focusVar), Value = (short)value });
+				int value = 0;
+				if ((inputText == string.Empty || int.TryParse(inputText, out value)) && value != focusVar.Value)
+				{
+					value = Math.Min(value, short.MaxValue);
+					value = Math.Max(value, short.MinValue);
+					CellCommit.Invoke(this, new CellEventArgs { Var = focusVar, Rectangle = GetRectangle(focusVar), Value = (short)value });
+				}
+				
+				Invalidate(focusVar);
+				focusVar = null;
 			}
 		}
 	
