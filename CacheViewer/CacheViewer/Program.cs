@@ -96,7 +96,8 @@ namespace CacheViewer
 		static void ReadMemory()
 		{
 			bool readSuccess = true;
-
+			bool clearCache = ReadKey().Key == ConsoleKey.F5;
+						
 			int ticks = Environment.TickCount;
 			for(int i = 0 ; i < cache.Length ; i++)
 			{
@@ -111,6 +112,11 @@ namespace CacheViewer
 						{
 							UpdateCache(ch, ticks, 16);
 							UpdateEntries(ch, ticks);
+							
+							if(clearCache) 
+							{		
+								ClearCache(ch, cachePointer);
+							}
 						}
 						else
 						{
@@ -128,6 +134,16 @@ namespace CacheViewer
 			{
 				CloseReader();
 			}
+		}
+		
+		static ConsoleKeyInfo ReadKey()
+		{
+			if (System.Console.KeyAvailable)
+			{
+				return System.Console.ReadKey(true);
+			}
+			
+			return default(ConsoleKeyInfo);
 		}
 		
 		static void UpdateCache(Cache ch, int ticks, int offset)
@@ -207,6 +223,19 @@ namespace CacheViewer
 			}
 		}
 		
+		static void ClearCache(Cache ch, int cachePointer)
+		{
+			memory.Write((ushort)ch.MaxFreeData, 0);
+			reader.Write(memory, cachePointer + 12, 2); //size free data 
+			
+			memory.Write(0, 0); 
+			reader.Write(memory, cachePointer + 16, 2); //num used entries
+			
+			ch.SizeFreeData = ch.MaxFreeData;
+			ch.NumUsedEntry = 0;			
+			ch.Entries.Clear();
+		}
+				
 		static void CloseReader()
 		{
 			entryPoint = -1;

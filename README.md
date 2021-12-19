@@ -1,5 +1,3 @@
-
-
 # LifeDISA
 
 This is a disassembler for LIFE scripts in Alone In The Dark (1992).
@@ -38,3 +36,11 @@ VarsViewer [-screen-width width] [-screen-height height]
 Press `f` to freeze capture<br/>
 Press `s` to save state<br/>
 Press `c` to compare states
+
+# CacheViewer
+## Command-line arguments : 
+```
+CacheViewer [ListSamp] [ListLife] [ListBody|ListBod2] [ListAnim|ListAni2] [ListTrak] [_MEMORY_]
+```
+
+Press `F5` to clear cache (ideally, the game should be paused before (eg: by pressing `p`))

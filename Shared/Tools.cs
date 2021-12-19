@@ -44,6 +44,15 @@ namespace Shared
 				data[offset + 1] = (byte)(value >> 8);
 			}
 		}
+		
+		public static void Write(this byte[] data, ushort value, int offset)
+		{
+			unchecked
+			{
+				data[offset + 0] = (byte)(value & 0xFF);
+				data[offset + 1] = (byte)(value >> 8);
+			}
+		}
 
 		public static int IndexOf(byte[] buffer, byte[] pattern)
 		{
