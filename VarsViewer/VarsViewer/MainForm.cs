@@ -114,12 +114,9 @@ namespace VarsViewer
 		}
 
 		void MainFormMouseLeave(object sender, EventArgs e)
-		{
-			if (!ClientRectangle.Contains(PointToClient(Cursor.Position)))
-			{					
-				grid.MouseLeave();
-				toolTip.Hide();
-			}
+		{		
+			grid.MouseLeave();
+			toolTip.Hide();
 		}
 		
 		void GridCellEnter(object sender, CellEventArgs e)
