@@ -356,6 +356,7 @@ namespace VarsViewer
 			{							
 				Invalidate(focusVar);
 				focusVar = null;
+				timer.Stop();
 			}
 		}
 								
@@ -373,6 +374,7 @@ namespace VarsViewer
 				
 				Invalidate(focusVar);
 				focusVar = null;
+				timer.Stop();
 			}
 		}
 	
@@ -386,14 +388,17 @@ namespace VarsViewer
 		}	
 
 		void ResetCarret()
-		{		
-			timer.Stop();
-			timer.Start();
-			
-			if(focusVar != null && !carretState)
+		{							
+			if(focusVar != null)
 			{
-				carretState = true;
-				Invalidate(focusVar);
+				timer.Stop();
+				timer.Start();
+			
+				if(!carretState)
+				{
+					carretState = true;
+					Invalidate(focusVar);
+				}
 			}
 		}
 				
