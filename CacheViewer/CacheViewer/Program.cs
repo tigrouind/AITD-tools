@@ -209,15 +209,15 @@ namespace CacheViewer
 			{
 				var next = node.Next;
 				var entry = node.Value;
-				if (Tools.GetTimeSpan(ticks, entry.Ticks) > TimeSpan.FromSeconds(3))
+				if (Shared.Tools.GetTimeSpan(ticks, entry.Ticks) > TimeSpan.FromSeconds(3))
 				{
 					ch.Entries.Remove(node);
 				}
 				else
 				{
-					entry.Touched = Tools.GetTimeSpan(ticks, entry.TouchedTicks) < TimeSpan.FromSeconds(2);
-					entry.Added = Tools.GetTimeSpan(ticks, entry.StartTicks) < TimeSpan.FromSeconds(3);
-					entry.Removed = Tools.GetTimeSpan(ticks, entry.Ticks) > TimeSpan.Zero;				
+					entry.Touched = Shared.Tools.GetTimeSpan(ticks, entry.TouchedTicks) < TimeSpan.FromSeconds(2);
+					entry.Added = Shared.Tools.GetTimeSpan(ticks, entry.StartTicks) < TimeSpan.FromSeconds(3);
+					entry.Removed = Shared.Tools.GetTimeSpan(ticks, entry.Ticks) > TimeSpan.Zero;				
 				}				
 				node = next;
 			}

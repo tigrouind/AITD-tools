@@ -4,11 +4,6 @@ namespace CacheViewer
 {
 	public static class Tools
 	{
-		public static TimeSpan GetTimeSpan(int start, int end)
-		{
-			return TimeSpan.FromMilliseconds(start - end);
-		}	
-
 		public static int RoundToNearest(int dividend, int divisor)
         {
         	return (dividend + (divisor / 2)) / divisor;

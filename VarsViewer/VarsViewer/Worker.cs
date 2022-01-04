@@ -155,7 +155,6 @@ namespace VarsViewer
 			for (int i = 0; i < data.Count; i++)
 			{
 				Var var = data[i];
-				int oldValue = var.Value;
 				int value;
 
 				if (Compare)
@@ -171,7 +170,7 @@ namespace VarsViewer
 				{
 					var.Time = 0;
 				}
-				else if (value != oldValue)
+				else if (value != var.Value)
 				{
 					if (Compare)
 					{
@@ -184,7 +183,7 @@ namespace VarsViewer
 				}
 
 				//check differences
-				bool difference = (time - var.Time) < 5000;
+				bool difference = Tools.GetTimeSpan(time, var.Time) < TimeSpan.FromSeconds(5);
 				if (var.Value != value || var.Difference != difference)
 				{
 					string newText = string.Empty;

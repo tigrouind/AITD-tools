@@ -80,6 +80,11 @@ namespace Shared
 			return true;
 		}	
 		
+		public static TimeSpan GetTimeSpan(int start, int end)
+		{
+			return TimeSpan.FromMilliseconds(start - end);
+		}
+		
 		public static int? GetArgument(string[] args, string name)
 		{
 			int index = Array.IndexOf(args, name);
