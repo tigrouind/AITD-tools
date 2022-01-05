@@ -306,8 +306,10 @@ namespace CacheViewer
 						}					
 
 						bool kilobyte = entry.Size > 1024;
-						Console.SetCursorPosition(column * 19, row + 4);
-						Console.Write("{0,5} {1,4} {2} {3,5}", entry.Id, kilobyte ? entry.Size / 1024 : entry.Size, kilobyte ? 'K' : 'B', entry.Time / 60);
+						TimeSpan time = TimeSpan.FromSeconds(entry.Time / 60);
+						
+						Console.SetCursorPosition(column * 19, row + 4);						
+						Console.Write("{0,5} {1,4} {2} {3,2}:{4,2:D2}", entry.Id, kilobyte ? entry.Size / 1024 : entry.Size, kilobyte ? 'K' : 'B', time.Minutes, time.Seconds);
 						row++;
 					}
 				}

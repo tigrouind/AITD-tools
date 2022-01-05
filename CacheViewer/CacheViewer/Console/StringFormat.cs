@@ -5,12 +5,13 @@ namespace CacheViewer
 	//GC friendly (unlike string.Format())	
 	public static class StringFormat
 	{			
-		public static char[] Buffer = new char[32];
+		public static char[] Buffer = new char[256];
 		public static int BufferLength;
 		static int charStart, charLength;
 				
-		public static void Format(string format, FormatArgument arg0, FormatArgument arg1, FormatArgument arg2, FormatArgument arg3)
+		public static void Format(string format, FormatArgument arg0, FormatArgument arg1, FormatArgument arg2, FormatArgument arg3, FormatArgument arg4)
 		{			
+			Array.Clear(Buffer, 0, Buffer.Length);
 			BufferLength = 0;
 			int pos = 0;
 			while (pos < format.Length)
@@ -37,11 +38,15 @@ namespace CacheViewer
 						case 3:
 							value = arg3;
 							break;							
+						case 4:
+							value = arg4;
+							break;									
 						default:
 							throw new FormatException();
 					}
-
+					
 					int width = 0;
+					int zeroPad = 0;
 					ch = format[pos++];
 					
 					//padding (optional)
@@ -57,6 +62,25 @@ namespace CacheViewer
 		                    ch = format[pos++];
 		                } 
 						while (ch >= '0' && ch <= '9');
+						
+						//zero padding (optional)
+						if (ch == ':')
+						{
+							ch = format[pos++];
+							if (ch != 'D') throw new FormatException();
+							
+							ch = format[pos++];
+							if (ch < '0' || ch > '9') throw new FormatException();
+							do
+							{	 
+								zeroPad = zeroPad * 10 + ch - '0';								
+			                    if (pos == format.Length) throw new FormatException();
+			                    ch = format[pos++];
+			                } 
+							while (ch >= '0' && ch <= '9');
+							
+							if(zeroPad > width) width = zeroPad;
+						}
 					}
 					
 					if (value.Type == typeof(int))
@@ -89,7 +113,7 @@ namespace CacheViewer
 					{
 						for(int i = 0 ; i < width - charLength ; i++)
 						{
-							Buffer[BufferLength++] = ' ';
+							Buffer[BufferLength++] = zeroPad > 0 ? '0' : ' ';
 						}
 					}
 					
