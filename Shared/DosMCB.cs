@@ -9,8 +9,5 @@ namespace Shared
 		public int Tag;
 		public int Owner;
 		public int Size;
-		#if DEBUG
-		public string Name;
-		#endif
 	}
 }

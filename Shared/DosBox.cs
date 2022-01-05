@@ -44,10 +44,7 @@ namespace Shared
 				Position = offset + 16,
 				Tag = memory[offset],				
 				Owner = memory.ReadUnsignedShort(offset + 1) * 16,
-				Size = memory.ReadUnsignedShort(offset + 3) * 16,
-				#if DEBUG
-				Name = Encoding.ASCII.GetString(memory, offset + 8, 8).Replace("\0", string.Empty)
-				#endif
+				Size = memory.ReadUnsignedShort(offset + 3) * 16
 			};
 		}
 

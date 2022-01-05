@@ -41,7 +41,6 @@ namespace CacheViewer
 							throw new FormatException();
 					}
 
-					bool neg = false;
 					int width = 0;
 					ch = format[pos++];
 					
@@ -49,11 +48,6 @@ namespace CacheViewer
 					if (ch == ',') 
 					{		
 						ch = format[pos++];
-						if (ch == '-')
-						{
-							neg = true;
-							ch = format[pos++];
-						}
 						
 						if (ch < '0' || ch > '9') throw new FormatException();
 						do
@@ -63,11 +57,6 @@ namespace CacheViewer
 		                    ch = format[pos++];
 		                } 
 						while (ch >= '0' && ch <= '9');
-
-						if(neg)
-						{
-							width = -width;
-						}
 					}
 					
 					if (value.Type == typeof(int))
