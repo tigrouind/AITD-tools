@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Shared
 {
-	public class ProcessMemoryReader
+	public class ProcessMemory
 	{
 		const int PROCESS_QUERY_INFORMATION = 0x0400;
 		const int PROCESS_VM_READ = 0x0010;
@@ -46,12 +46,12 @@ namespace Shared
 		
 		public long BaseAddress;
 
-		public ProcessMemoryReader(int processId)
+		public ProcessMemory(int processId)
 		{
 			this.processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION, false, processId);
 		}
 
-		~ProcessMemoryReader()
+		~ProcessMemory()
 		{
 			Close();
 		}
