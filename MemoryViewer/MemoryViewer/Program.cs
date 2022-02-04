@@ -15,6 +15,7 @@ namespace MemoryViewer
 		static int winx, winy, zoom;
 		static readonly bool[] needRefresh = new bool[SCREENS];
 		static bool mustClearScreen;
+		static bool needPaletteUpdate;
 			
 		public static int Main(string[] args)
 		{
@@ -32,7 +33,8 @@ namespace MemoryViewer
 			//SDL.SDL_SetHint(SDL.SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 			IntPtr texture = SDL.SDL_CreateTexture(renderer, SDL.SDL_PIXELFORMAT_ARGB8888, (int)SDL.SDL_TextureAccess.SDL_TEXTUREACCESS_STREAMING, RESX, RESY);
 			
-			uint[] palette = LoadPalette();
+			uint[] palette = new uint[256];
+			byte[] palette256 = new byte[768];
 			SetRefreshState(true);
 
 			bool quit = false, mcb = false, minimized = false;
@@ -40,9 +42,10 @@ namespace MemoryViewer
 			uint[] mcbPixels = new uint[RESX * RESY * SCREENS];			
 			byte[] pixelData = new byte[RESX * RESY * SCREENS];
 			byte[] oldPixelData = new byte[RESX * RESY * SCREENS];			
+			long paletteAddress = -1;
 
 			ProcessMemory process = null;
-			uint lastCheck = 0;
+			uint lastCheck = 0, lastCheckPalette = 0;
 
 			while(!quit)
 			{
@@ -127,6 +130,7 @@ namespace MemoryViewer
 					if ((time - lastCheck) > 1000 || lastCheck == 0)
 					{
 						lastCheck = time;
+						paletteAddress = -1;
 
 						int processId = DosBox.SearchProcess();
 						if (processId != -1)
@@ -144,6 +148,22 @@ namespace MemoryViewer
 
 				if (process != null)
 				{
+					if(paletteAddress == -1)
+					{
+						uint time = SDL.SDL_GetTicks();
+						if ((time - lastCheckPalette) > 1000 || lastCheckPalette == 0)
+						{
+							lastCheckPalette = time;
+							
+							//3 bytes + EGA 16 colors palette
+							var pattern = new byte[] { 0x01, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05 };
+							paletteAddress = process.SearchForBytePattern(buffer => Tools.IndexOf(buffer, pattern, 1, 4));
+						}
+					}
+				}
+				
+				if (process != null)
+				{
 					//DOS conventional memory (640KB)
 					//EMS memory (64000B) (skip 64KB (HMA) + 128KB (VCPI))					
 					if(!(process.Read(pixelData, 0, 640 * 1024) > 0 &&
@@ -154,6 +174,18 @@ namespace MemoryViewer
 					}
 				}
 
+				if (process != null)
+				{
+					if(paletteAddress != -1)
+					{
+						if (process.Read(palette256, paletteAddress + 19 - process.BaseAddress, palette256.Length) <= 0) {
+							process.Close();
+							process = null;
+						}								
+					}
+				}				
+				
+				UpdatePalette(palette256, palette);
 				Update(pixelData, oldPixelData, pixels, palette);
 				UpdateMCB(pixelData, oldPixelData, mcbPixels);
 
@@ -193,6 +225,28 @@ namespace MemoryViewer
 			return 0;
 		}
 		
+		static bool UpdatePalette(byte[] palette256, uint[] palette)
+		{
+			needPaletteUpdate = false;
+			
+			int src = 0;
+			for(int i = 0 ; i < 256 ; i++)
+			{						
+				var r = palette256[src++];
+				var g = palette256[src++];
+				var b = palette256[src++];
+				
+				uint val = unchecked((uint)(((r << 2) | (r >> 4 )) << 16 | ((g << 2) | (g >> 4)) << 8 | ((b << 2) | (b >> 4)) << 0));				
+				if(palette[i] != val)
+				{
+					palette[i] = val;
+					needPaletteUpdate = true;						
+				}
+			}
+			
+			return needPaletteUpdate;
+		}
+		
 		static unsafe void Update(byte[] pixelData, byte[] oldPixelData, uint[] pixels, uint[] palette)
 		{
 			//compare current vs old and only update pixels that have changed
@@ -208,7 +262,7 @@ namespace MemoryViewer
 					bool refresh = false;
 					for(int i = 0 ; i < RESX * RESY ; i += 16)
 					{					
-						if(*pixelsPtr != *oldPixelsPtr || *(pixelsPtr+1) != *(oldPixelsPtr+1))
+						if(*pixelsPtr != *oldPixelsPtr || *(pixelsPtr+1) != *(oldPixelsPtr+1) || needPaletteUpdate)
 						{
 							for(int j = start ; j < start + 16 ; j++)
 							{
@@ -323,46 +377,6 @@ namespace MemoryViewer
 
 				skip += RESX * (winy / zoom);
 			}
-		}
-		
-		static uint[] LoadPalette()
-		{			
-			const string filename = "ITD_RESS.PAK";
-			if (File.Exists(filename))
-			{
-				return LoadPalette(filename);
-			}
-			
-			return LoadDefaultPalette();
-		}
-		
-		static uint[] LoadPalette(string filename)
-		{
-			var palette = new uint[256];
-			using (var pak = new UnPAK(filename))
-			{
-				var buffer = pak.GetEntry(3);				
-				for(int i = 0; i < palette.Length; i++)
-				{
-					byte r = buffer[i * 3 + 0];
-					byte g = buffer[i * 3 + 1];
-					byte b = buffer[i * 3 + 2];
-					palette[i] = (uint)(r << 16 | g << 8 | b);
-				}
-			}
-			
-			return palette;
-		}
-		
-		static uint[] LoadDefaultPalette()
-		{
-			var palette = new uint[256];
-			for (int i = 0 ; i < 256 ; i++)
-			{
-				palette[i] = (uint)(i << 16 | i << 8 | i);
-			}
-			
-			return palette;
 		}
 		
 		static void SetRefreshState(bool state)

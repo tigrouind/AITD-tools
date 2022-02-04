@@ -14,6 +14,7 @@ namespace Shared
 		const uint PROCESS_VM_OPERATION = 0x0008;
 		const uint MEM_COMMIT = 0x00001000;
 		const uint MEM_PRIVATE = 0x20000;
+		const uint MEM_IMAGE = 0x1000000;
 		const uint PAGE_READWRITE = 0x04;
 
 		[StructLayout(LayoutKind.Sequential)]
@@ -36,6 +37,9 @@ namespace Shared
 
 		[DllImport("kernel32.dll")]
 		static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, IntPtr lpBuffer, int dwSize, out IntPtr lpNumberOfBytesRead);
+		
+		[DllImport("kernel32.dll")]
+		static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, int dwSize, out IntPtr lpNumberOfBytesRead);
 
 		[DllImport("kernel32.dll")]
 		static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, int dwSize, out IntPtr lpNumberOfBytesWritten);
@@ -133,6 +137,37 @@ namespace Shared
 				// move to next memory region
 				min_address = (long)mem_info.BaseAddress + (long)mem_info.RegionSize;
 			}
+		}
+		
+		public int SearchForBytePattern(Func<byte[], int> searchFunction)
+		{
+			byte[] buffer = new byte[81920];
+
+			//scan process memory regions
+			foreach(var mem_info in GetMemoryRegions(0, 0x0FFFFFFF))
+			{
+				if(mem_info.Protect == PAGE_READWRITE && mem_info.State == MEM_COMMIT && (mem_info.Type & MEM_IMAGE) == MEM_IMAGE)
+				{							
+					long readPosition = (long)mem_info.BaseAddress;
+					int bytesToRead = (int)mem_info.RegionSize;
+
+					IntPtr bytesRead;
+					while (bytesToRead > 0 && ReadProcessMemory(processHandle, new IntPtr(readPosition), buffer, Math.Min(buffer.Length, bytesToRead), out bytesRead))
+					{
+						//search bytes pattern
+						int index = searchFunction(buffer);
+						if (index != -1)
+						{
+							return (int)(readPosition + index);
+						}
+			
+						readPosition += (int)bytesRead;
+						bytesToRead -= (int)bytesRead;
+					}
+				}
+			}
+
+			return -1;
 		}
 	}
 }

@@ -54,11 +54,11 @@ namespace Shared
 			}
 		}
 
-		public static int IndexOf(byte[] buffer, byte[] pattern)
+		public static int IndexOf(byte[] buffer, byte[] pattern, int offset = 0, int stride = 1)
 		{
-			for (int index = 0; index < buffer.Length - pattern.Length + 1; index++)
+			for (int index = offset; index < buffer.Length - pattern.Length + 1; index += stride)
 			{
-				if (buffer.IsMatch(pattern, index))
+				if (buffer[index] == pattern[0] && buffer.IsMatch(pattern, index))
 				{
 					return index;
 				}
