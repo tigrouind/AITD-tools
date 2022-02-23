@@ -36,8 +36,6 @@ MemoryViewer [-screen-width width] [-screen-height height] [-zoom zoom]
 | <kbd>ctrl</kbd> + <kbd>mouse wheel</kbd> <br> <kbd>ctrl</kbd> + <kbd>+</kbd> or <kbd>-</kbd>| increase / decrease zoom
 | <kbd>ctrl</kbd> + <kbd>0</kbd> | reset zoom
 
-Copy file *ITD_RESS.PAK* to same folder as executable to get palette to work.
-
 # VarsViewer
 
 ## Command-line arguments : 

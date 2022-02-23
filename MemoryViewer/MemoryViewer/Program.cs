@@ -16,6 +16,7 @@ namespace MemoryViewer
 		static readonly bool[] needRefresh = new bool[SCREENS];
 		static bool mustClearScreen;
 		static bool needPaletteUpdate;
+		static bool[] needPaletteUpdate256 = new bool[256];
 			
 		public static int Main(string[] args)
 		{
@@ -237,7 +238,10 @@ namespace MemoryViewer
 				var b = palette256[src++];
 				
 				uint val = unchecked((uint)(((r << 2) | (r >> 4 )) << 16 | ((g << 2) | (g >> 4)) << 8 | ((b << 2) | (b >> 4)) << 0));				
-				if(palette[i] != val)
+				bool diff = palette[i] != val;
+				needPaletteUpdate256[i] = diff;
+				
+				if (diff)
 				{
 					palette[i] = val;
 					needPaletteUpdate = true;						
@@ -262,7 +266,7 @@ namespace MemoryViewer
 					bool refresh = false;
 					for(int i = 0 ; i < RESX * RESY ; i += 16)
 					{					
-						if(*pixelsPtr != *oldPixelsPtr || *(pixelsPtr+1) != *(oldPixelsPtr+1) || needPaletteUpdate)
+						if(*pixelsPtr != *oldPixelsPtr || *(pixelsPtr+1) != *(oldPixelsPtr+1))
 						{
 							for(int j = start ; j < start + 16 ; j++)
 							{
@@ -270,6 +274,18 @@ namespace MemoryViewer
 							}	
 							
 							refresh = true;
+						}
+						else if(needPaletteUpdate)
+						{
+							for(int j = start ; j < start + 16 ; j++)
+							{
+								byte color = pixelData[j];
+								if (needPaletteUpdate256[color])
+								{
+									pixels[j] = palette[color];
+									refresh = true;
+								}
+							}														
 						}
 						
 						start += 16;
