@@ -50,6 +50,7 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SDL2.cs" />
+    <Compile Include="SDL2_gfx.cs" />
     <Compile Include="SDL2_image.cs" />
     <Compile Include="SDL2_mixer.cs" />
     <Compile Include="SDL2_ttf.cs" />

@@ -1,7 +1,7 @@
 #region License
 /* SDL2# - C# Wrapper for SDL2
  *
- * Copyright (c) 2013-2020 Ethan Lee.
+ * Copyright (c) 2013-2021 Ethan Lee.
  *
  * This software is provided 'as-is', without any express or implied warranty.
  * In no event will the authors be held liable for any damages arising from
@@ -200,12 +200,17 @@ namespace SDL2
 
 		/* IntPtr refers to a Mix_Music* */
 		[DllImport(nativeLibName, EntryPoint = "Mix_LoadMUS", CallingConvention = CallingConvention.Cdecl)]
-		private static extern IntPtr INTERNAL_Mix_LoadMUS(
-			byte[] file
+		private static extern unsafe IntPtr INTERNAL_Mix_LoadMUS(
+			byte* file
 		);
-		public static IntPtr Mix_LoadMUS(string file)
+		public static unsafe IntPtr Mix_LoadMUS(string file)
 		{
-			return INTERNAL_Mix_LoadMUS(SDL.UTF8_ToNative(file));
+			byte* utf8File = SDL.Utf8EncodeHeap(file);
+			IntPtr handle = INTERNAL_Mix_LoadMUS(
+				utf8File
+			);
+			Marshal.FreeHGlobal((IntPtr) utf8File);
+			return handle;
 		}
 
 		/* IntPtr refers to a Mix_Chunk* */
@@ -569,14 +574,17 @@ namespace SDL2
 		public static extern int Mix_PlayingMusic();
 
 		[DllImport(nativeLibName, EntryPoint = "Mix_SetMusicCMD", CallingConvention = CallingConvention.Cdecl)]
-		private static extern int INTERNAL_Mix_SetMusicCMD(
-			byte[] command
+		private static extern unsafe int INTERNAL_Mix_SetMusicCMD(
+			byte* command
 		);
-		public static int Mix_SetMusicCMD(string command)
+		public static unsafe int Mix_SetMusicCMD(string command)
 		{
-			return INTERNAL_Mix_SetMusicCMD(
-				SDL.UTF8_ToNative(command)
+			byte* utf8Cmd = SDL.Utf8EncodeHeap(command);
+			int result = INTERNAL_Mix_SetMusicCMD(
+				utf8Cmd
 			);
+			Marshal.FreeHGlobal((IntPtr) utf8Cmd);
+			return result;
 		}
 
 		[DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
@@ -586,14 +594,17 @@ namespace SDL2
 		public static extern int Mix_GetSynchroValue();
 
 		[DllImport(nativeLibName, EntryPoint = "Mix_SetSoundFonts", CallingConvention = CallingConvention.Cdecl)]
-		private static extern int INTERNAL_Mix_SetSoundFonts(
-			byte[] paths
+		private static extern unsafe int INTERNAL_Mix_SetSoundFonts(
+			byte* paths
 		);
-		public static int Mix_SetSoundFonts(string paths)
+		public static unsafe int Mix_SetSoundFonts(string paths)
 		{
-			return INTERNAL_Mix_SetSoundFonts(
-				SDL.UTF8_ToNative(paths)
+			byte* utf8Paths = SDL.Utf8EncodeHeap(paths);
+			int result = INTERNAL_Mix_SetSoundFonts(
+				utf8Paths
 			);
+			Marshal.FreeHGlobal((IntPtr) utf8Paths);
+			return result;
 		}
 
 		[DllImport(nativeLibName, EntryPoint = "Mix_GetSoundFonts", CallingConvention = CallingConvention.Cdecl)]
@@ -635,6 +646,21 @@ namespace SDL2
 		[DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void Mix_CloseAudio();
 
+		public static string Mix_GetError()
+		{
+			return SDL.SDL_GetError();
+		}
+
+		public static void Mix_SetError(string fmtAndArglist)
+		{
+			SDL.SDL_SetError(fmtAndArglist);
+		}
+		
+		public static void Mix_ClearError()
+		{
+			SDL.SDL_ClearError();
+		}
+		
 		#endregion
 	}
 }
