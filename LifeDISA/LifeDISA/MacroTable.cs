@@ -302,9 +302,9 @@ namespace LifeDISA
 			EvalEnum.LIFE,
 			EvalEnum.OBJECT,
 			EvalEnum.MUSIC,	
-			EvalEnum.TEST_ZV_END_ANIM,
-			EvalEnum.UNKNOWN,
 			EvalEnum.C_VAR,
+			EvalEnum.STAGE,
+			EvalEnum.THROW,
 			EvalEnum.MATRIX,
 			EvalEnum.HARD_MAT,
 			EvalEnum.PROTECT

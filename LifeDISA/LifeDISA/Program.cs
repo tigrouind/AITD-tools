@@ -461,12 +461,6 @@ namespace LifeDISA
 					ins.Add(GetParam());
 					ins.Add(GetParam());
 					break;	
-
-				case LifeEnum.UNKNOWN2:
-					ins.Add(Evalvar());
-					ins.Add(GetParam());
-					ins.Add(GetParam());
-					break;								
 					
 				case LifeEnum.PLAY_SEQUENCE:
 					if (config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3)
@@ -594,6 +588,7 @@ namespace LifeDISA
 				case LifeEnum.DO_NORMAL_ZV:
 				case LifeEnum.CALL_INVENTORY:
 				case LifeEnum.PROTECT:
+				case LifeEnum.UNKNOWN2:
 					break;
 
 				case LifeEnum.HIT:

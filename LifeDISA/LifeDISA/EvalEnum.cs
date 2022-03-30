@@ -42,7 +42,6 @@ namespace LifeDISA
 		ROOMY,	
 		TEST_ZV_END_ANIM,	
 		MUSIC,		
-		UNKNOWN,
 		C_VAR,
 		STAGE,
 		THROW,
