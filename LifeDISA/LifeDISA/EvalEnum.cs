@@ -39,23 +39,15 @@ namespace LifeDISA
 		ROOM,
 		LIFE,
 		OBJECT,
-		#if !JITD
 		ROOMY,	
 		TEST_ZV_END_ANIM,	
 		MUSIC,		
-		#else
-		MUSIC,	
-		TEST_ZV_END_ANIM,
 		UNKNOWN,
-		#endif
 		C_VAR,
-		#if !JITD
 		STAGE,
-		THROW
-		#endif
-		#if JITD
+		THROW,
 		MATRIX,
-		HARD_MAT
-		#endif
+		HARD_MAT,
+		PROTECT
 	}
 }

@@ -14,9 +14,9 @@ namespace CacheViewer
 		static readonly Dictionary<GameVersion, int[]> gameConfigs = new Dictionary<GameVersion, int[]>
 		{
 			// ListSamp / ListLife / ListBody / ListAnim / ListTrak / _MEMORY_ 
-			{ GameVersion.CD_ROM, new [] { 0x218CB, 0x218CF, 0x218D7, 0x218D3, 0x218C7, 0x218BF } },
-			{ GameVersion.FLOPPY, new [] { 0x2053E, 0x2049C, 0x20494, 0x20498, 0x204AA, 0x20538 } },
-			{ GameVersion.DEMO,   new [] { 0x20506, 0x20464, 0x2045C, 0x20460, 0x20472, 0x20500 } },
+			{ GameVersion.AITD1, new [] { 0x218CB, 0x218CF, 0x218D7, 0x218D3, 0x218C7, 0x218BF } },
+			{ GameVersion.AITD1_FLOPPY, new [] { 0x2053E, 0x2049C, 0x20494, 0x20498, 0x204AA, 0x20538 } },
+			{ GameVersion.AITD1_DEMO,   new [] { 0x20506, 0x20464, 0x2045C, 0x20460, 0x20472, 0x20500 } },
 		};
 		static int entryPoint = -1;
 		static readonly Cache[] cache = { new Cache(), new Cache(), new Cache(), new Cache(), new Cache(), new Cache() };
@@ -76,12 +76,12 @@ namespace CacheViewer
 			{						
 				//check if CDROM/floppy version
 				byte[] cdPattern = Encoding.ASCII.GetBytes("CD Not Found");
-				var gameVersion = Shared.Tools.IndexOf(memory, cdPattern) != -1 ? GameVersion.CD_ROM : GameVersion.FLOPPY;				
-				if (gameVersion == GameVersion.FLOPPY) 
+				var gameVersion = Shared.Tools.IndexOf(memory, cdPattern) != -1 ? GameVersion.AITD1 : GameVersion.AITD1_FLOPPY;				
+				if (gameVersion == GameVersion.AITD1_FLOPPY) 
 				{
 					if (Shared.Tools.IndexOf(memory, Encoding.ASCII.GetBytes("USA.PAK")) != -1)
 					{
-						gameVersion = GameVersion.DEMO;
+						gameVersion = GameVersion.AITD1_DEMO;
 					}
 				}	
 

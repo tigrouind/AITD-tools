@@ -3,12 +3,18 @@
 This is a disassembler for LIFE scripts in Alone in the Dark series.
 
 Supported :
-* Alone in the Dark 1 (floppy and CD-ROM)
-* Alone in the Dark 2 / 3
+* Alone in the Dark 1 (CD-ROM, floppy, demo)
+* Alone in the Dark 2 (CD-ROM, floppy, demo)
+* Alone in the Dark 3 (CD-ROM, demo)
 * Jack in the Dark
 
 Not supported :
 * Time Gate: Knight's Chase
+
+## Command-line arguments : 
+```
+LifeDISA {AITD1|AITD1_FLOPPY|JACK|AITD2|AITD2_DEMO|AITD3}
+```
 
 ## How to use : 
 
@@ -17,7 +23,7 @@ Not supported :
    - *LISTLIFE.PAK*
    - *ENGLISH.PAK* (or *FRANCAIS.PAK*)
 4. Copy the file *OBJETS.ITD* (from AITD folder) into GAMEDATA folder.
-5. Start LifeDISA executable. A file named *output.txt* will be created.
+5. Start LifeDISA executable with appropriate arguments. A file named *output.txt* will be created.
 
 # TrackDISA
 
@@ -49,12 +55,6 @@ VarsViewer [-screen-width width] [-screen-height height]
 | <kbd>f</kbd> | freeze capture
 | <kbd>s</kbd> | save state
 | <kbd>c</kbd> | compare current state with saved state
-
-# CacheViewer
-## Command-line arguments : 
-```
-CacheViewer [ListSamp] [ListLife] [ListBody|ListBod2] [ListAnim|ListAni2] [ListTrak] [_MEMORY_]
-```
 
 ## Commands
 | Key | Description |

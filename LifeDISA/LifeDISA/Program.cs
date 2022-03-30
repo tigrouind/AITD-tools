@@ -12,7 +12,7 @@ namespace LifeDISA
 	class Program
 	{
 		static int pos;
-		static byte[] allBytes;
+		static byte[] allBytes;		
 
 		static readonly Dictionary<int, string> objectsByIndex = new Dictionary<int, string>();
 		static readonly Dictionary<int, string> namesByIndex = new Dictionary<int, string>();
@@ -23,11 +23,32 @@ namespace LifeDISA
 		static readonly string[] foundFlagsNames = { "use", "eat_or_drink", "read", "reload", "fight", "jump", "open_or_search", "close", "push", "throw", "drop_or_put" };
 
 		static readonly VarParserExt vars = new VarParserExt();
-
-		public static int Main()
+		static GameConfig config;
+		static readonly GameConfig[] gameConfigs =
 		{
+			new GameConfig(GameVersion.AITD1       , MacroTable.LifeA, MacroTable.EvalA),
+			new GameConfig(GameVersion.AITD1_FLOPPY, MacroTable.LifeA, MacroTable.EvalA),
+			new GameConfig(GameVersion.JACK        , MacroTable.LifeB, MacroTable.EvalB),
+			new GameConfig(GameVersion.AITD2_DEMO  , MacroTable.LifeB, MacroTable.EvalB),
+			new GameConfig(GameVersion.AITD2       , MacroTable.LifeB, MacroTable.EvalB),
+			new GameConfig(GameVersion.AITD3       , MacroTable.LifeB, MacroTable.EvalB)
+		};
+
+		public static int Main(string[] args)
+		{			
 			Directory.CreateDirectory("GAMEDATA");
 
+			config = gameConfigs[0];
+			if (args.Length > 0)
+			{
+				config = gameConfigs.FirstOrDefault(x => x.Version.ToString() == args[0]);
+				if(config == null)
+				{
+					Console.WriteLine("Invalid argument");
+					return -1;
+				}
+			}
+			
 			//parse vars
 			if(File.Exists(@"GAMEDATA\vars.txt"))
 			{
@@ -86,11 +107,14 @@ namespace LifeDISA
 				int count = allBytes.ReadShort(0);
 				int offset;
 				
-				#if JITD
-				offset = 54;
-				#else
-				offset = 52;
-				#endif
+				if (config.Version == GameVersion.JACK || config.Version == GameVersion.AITD2_DEMO || config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3)
+				{
+					offset = 54;
+				}
+				else
+				{
+					offset = 52;
+				}
 				
 				for(int i = 0 ; i < count ; i++)
 				{
@@ -138,9 +162,10 @@ namespace LifeDISA
 					writer.WriteLine("#{0} {1}", i, vars.GetText(VarEnum.LIFES, i, string.Empty));
 					writer.WriteLine("--------------------------------------------------");					
 					allBytes = pak.GetEntry(i);
-					#if AITD2 && !AITD3
-					if(i == 670 && allBytes.Length == 182) Fix670();
-					#endif
+					if (config.Version == GameVersion.AITD2 && (i == 670 || i == 652) && allBytes.Length == 182)
+					{
+						Fix670();
+					}
 					
 					ParseFile();
 					#if !NO_OPTIMIZE
@@ -199,7 +224,7 @@ namespace LifeDISA
 					actor = allBytes.ReadShort(pos);
 				}
 
-				LifeEnum life = (LifeEnum)curr;
+				LifeEnum life = config.LifeMacro[curr];
 				
 				Instruction ins = new Instruction();
 				ins.Type = life;
@@ -214,7 +239,6 @@ namespace LifeDISA
 			}
 		}
 		
-		#if AITD2 && !AITD3
 		static void Fix670()
 		{
 			var list = allBytes.ToList();
@@ -225,7 +249,6 @@ namespace LifeDISA
 				allBytes[j] -= 4;
 			}
 		}
-		#endif
 
 		static void Dump(TextWriter writer)
 		{
@@ -335,11 +358,14 @@ namespace LifeDISA
 					break;
 
 				case LifeEnum.SOUND:
-					#if AITD2
+					if (config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3)
+					{
 						ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
-					#else
+					}
+					else
+					{
 						ins.Add(vars.GetText(VarEnum.SOUNDS, Evalvar()));
-					#endif
+					}
 					break;
 
 				case LifeEnum.BODY:
@@ -347,22 +373,28 @@ namespace LifeDISA
 					break;
 
 				case LifeEnum.SAMPLE_THEN:
-					#if AITD2
+					if (config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3)
+					{
 						ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
 			        	ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
-					#else
+					}
+					else
+					{
 						ins.Add(vars.GetText(VarEnum.SOUNDS, Evalvar()));
 			        	ins.Add(vars.GetText(VarEnum.SOUNDS, Evalvar()));
-					#endif										
+					}
 					break;
 					
 				case LifeEnum.DELETE:
 				case LifeEnum.IN_HAND:
-					#if AITD2 
+					if (config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3)
+					{
 						ins.Add(GetObjectName(Evalvar()));
-					#else
+					}
+					else
+					{
 						ins.Add(GetObjectName(GetParam()));
-					#endif
+					}
 					break;					
 
 				case LifeEnum.CAMERA_TARGET:
@@ -437,13 +469,16 @@ namespace LifeDISA
 					break;								
 					
 				case LifeEnum.PLAY_SEQUENCE:
-					#if AITD2 
-					ins.Add(GetParam());
-					ins.Add(GetParam());
-					ins.Add(GetParam());
-					#else
-					ins.Add(GetParam());
-					#endif
+					if (config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3)
+					{
+						ins.Add(GetParam());
+						ins.Add(GetParam());
+						ins.Add(GetParam());
+					}
+					else
+					{
+						ins.Add(GetParam());
+					}
 					break;
 					
 				case LifeEnum.FIRE_UP_DOWN:
@@ -485,9 +520,10 @@ namespace LifeDISA
 				case LifeEnum.READ:
 					ins.Add(GetParam());
 					ins.Add(GetParam());
-					#if !JITD && !AITD1_FLOPPY
-					ins.Add(GetParam());
-					#endif
+					if (config.Version == GameVersion.AITD1)
+					{
+						ins.Add(GetParam());
+					}
 					break;
 
 				case LifeEnum.PUT_AT:
@@ -541,11 +577,9 @@ namespace LifeDISA
 				case LifeEnum.DEL_INVENTORY:	
 				case LifeEnum.CONTINUE_TRACK:
 				case LifeEnum.RESET_MOVE_MANUAL:				
-				#if !JITD
 				case LifeEnum.END_SEQUENCE:
 				case LifeEnum.UP_COOR_Y:
 				case LifeEnum.GET_HARD_CLIP:
-				#endif
 				case LifeEnum.RETURN:
 				case LifeEnum.DO_MAX_ZV:
 				case LifeEnum.GAME_OVER:
@@ -559,6 +593,7 @@ namespace LifeDISA
 				case LifeEnum.DO_CARRE_ZV:
 				case LifeEnum.DO_NORMAL_ZV:
 				case LifeEnum.CALL_INVENTORY:
+				case LifeEnum.PROTECT:
 					break;
 
 				case LifeEnum.HIT:
@@ -580,21 +615,27 @@ namespace LifeDISA
 					break;
 
 				case LifeEnum.FIRE:
-					#if AITD2
+					if (config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3)
+					{
 						ins.Add(vars.GetText(VarEnum.ANIMS, Evalvar()));
-					#else
+					}
+					else
+					{
 						ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
-					#endif					
+					}
 					ins.Add(GetParam()); //shoot frame
 					ins.Add(GetParam()); //hotpoint
 					ins.Add(GetParam()); //range
 					ins.Add(GetParam()); //hitforce					
-					#if AITD2
+					if (config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3)
+					{
 						ins.Add(GetParam());
 						ins.Add(vars.GetText(VarEnum.ANIMS, Evalvar()));
-					#else
+					}
+					else
+					{
 						ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
-					#endif
+					}
 					break;
 
 				case LifeEnum.ANIM_MOVE:
@@ -632,11 +673,14 @@ namespace LifeDISA
 					break;
 
 				case LifeEnum.REP_SAMPLE:
-					#if AITD2
-					ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
-					#else
-					ins.Add(vars.GetText(VarEnum.SOUNDS, Evalvar()));
-					#endif
+					if (config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3)
+					{
+						ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
+					}
+					else
+					{
+						ins.Add(vars.GetText(VarEnum.SOUNDS, Evalvar()));
+					}
 					ins.Add(GetParam());
 					break;
 					
@@ -874,7 +918,7 @@ namespace LifeDISA
 
 			curr &= 0x7FFF;
 			curr--;
-			evalEnum = (EvalEnum)curr;
+			evalEnum = config.EvalMacro[curr];
 
 			string parameter = evalEnum.ToString().ToLowerInvariant();
 			
@@ -883,9 +927,7 @@ namespace LifeDISA
 				case EvalEnum.DIST:
 				case EvalEnum.POSREL:
 				case EvalEnum.OBJECT:
-				#if !JITD
 				case EvalEnum.THROW:
-				#endif
 					parameter += string.Format("({0})", GetObjectName(GetParam()));
 					break;
 				
@@ -902,9 +944,7 @@ namespace LifeDISA
 					break;
 					
 				case EvalEnum.TEST_ZV_END_ANIM:
-				#if JITD
 				case EvalEnum.MATRIX:
-				#endif
 					parameter += string.Format("({0} {1})", GetParam(), GetParam());
 					break;
 			}

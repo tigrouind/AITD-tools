@@ -18,9 +18,9 @@ namespace VarsViewer
 		GameConfig gameConfig;
 		Dictionary<GameVersion, GameConfig> gameConfigs = new Dictionary<GameVersion, GameConfig>
 		{
-			{ GameVersion.CD_ROM, new GameConfig(0x2184B, 0x22074) },
-			{ GameVersion.FLOPPY, new GameConfig(0x2048E, 0x204B8) },
-			{ GameVersion.DEMO  , new GameConfig(0x20456, 0x20480) }
+			{ GameVersion.AITD1, new GameConfig(0x2184B, 0x22074) },
+			{ GameVersion.AITD1_FLOPPY, new GameConfig(0x2048E, 0x204B8) },
+			{ GameVersion.AITD1_DEMO  , new GameConfig(0x20456, 0x20480) }
 		};
 
 		public readonly List<Var> vars;
@@ -83,12 +83,12 @@ namespace VarsViewer
 				{						
 					//check if CDROM/floppy version
 					byte[] cdPattern = Encoding.ASCII.GetBytes("CD Not Found");
-					gameVersion = Tools.IndexOf(memory, cdPattern) != -1 ? GameVersion.CD_ROM : GameVersion.FLOPPY;
-					if (gameVersion == GameVersion.FLOPPY) 
+					gameVersion = Tools.IndexOf(memory, cdPattern) != -1 ? GameVersion.AITD1 : GameVersion.AITD1_FLOPPY;
+					if (gameVersion == GameVersion.AITD1_FLOPPY) 
 					{
 						if (Tools.IndexOf(memory, Encoding.ASCII.GetBytes("USA.PAK")) != -1)
 						{
-							gameVersion = GameVersion.DEMO;
+							gameVersion = GameVersion.AITD1_DEMO;
 						}
 					}
 					
@@ -115,7 +115,7 @@ namespace VarsViewer
 					}
 					else 
 					{
-						InitVars(vars, gameVersion == GameVersion.DEMO ? 22 : 207, VarEnum.VARS);
+						InitVars(vars, gameVersion == GameVersion.AITD1_DEMO ? 22 : 207, VarEnum.VARS);
 						if (result &= (process.Read(memory, varsPointer, vars.Count * 2) > 0))
 						{								
 							needRefresh |= CheckDifferences(vars, time);
