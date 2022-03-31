@@ -38,18 +38,13 @@ namespace LifeDISA
 
 		public static int Main(string[] args)
 		{			
-			Directory.CreateDirectory("GAMEDATA");
-
-			config = gameConfigs[0];
-			if (args.Length > 0)
+			if(args.Length == 0 || (config = gameConfigs.FirstOrDefault(x => x.Version.ToString() == args[0])) == null)
 			{
-				config = gameConfigs.FirstOrDefault(x => x.Version.ToString() == args[0]);
-				if(config == null)
-				{
-					Console.WriteLine("Invalid argument");
-					return -1;
-				}
+				Console.WriteLine("Usage: LifeDISA {{{0}}}", string.Join("|", gameConfigs.Select(x => x.Version)));
+				return -1;
 			}
+			
+			Directory.CreateDirectory("GAMEDATA");
 			
 			//parse vars
 			if(File.Exists(@"GAMEDATA\vars.txt"))
