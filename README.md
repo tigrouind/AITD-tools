@@ -23,6 +23,15 @@ LifeDISA {AITD1|AITD1_FLOPPY|JACK|AITD2|AITD2_DEMO|AITD3|TIMEGATE|TIMEGATE_DEMO}
 3. Copy the file *OBJETS.ITD* (from AITD folder) into GAMEDATA folder.
 4. Start LifeDISA executable with appropriate arguments. A file named *output.txt* will be created.
 
+## Syntax highlighting (Notepad++)
+
+Download file [here](https://github.com/tigrouind/AITD-tools/releases/download/1.40/AITD.xml)
+
+How to install it :
+1. Click on "Language" > "User Defined Language" > "Define your language..."
+2. Click "Import..."
+3. In the opening dialog, choose the xml file you downloaded previously.
+
 # TrackDISA
 
 Copy file *LISTTRAK.PAK* into a folder named GAMEDATA
