@@ -43,6 +43,8 @@ namespace LifeDISA
 					case LifeEnum.IF_SUP:
 					case LifeEnum.IF_INF_EGAL:
 					case LifeEnum.IF_INF:
+					case LifeEnum.IF_IN:
+					case LifeEnum.IF_OUT:
 					case LifeEnum.ELSE:
 					case LifeEnum.SWITCH:
 					case LifeEnum.CASE:	
@@ -86,6 +88,8 @@ namespace LifeDISA
 					case LifeEnum.IF_SUP:
 					case LifeEnum.IF_INF_EGAL:
 					case LifeEnum.IF_INF:
+					case LifeEnum.IF_IN:
+					case LifeEnum.IF_OUT:
 						return " and ";
 					#endif			
 					default:
@@ -108,6 +112,8 @@ namespace LifeDISA
 					case LifeEnum.IF_SUP:
 					case LifeEnum.IF_INF_EGAL:
 					case LifeEnum.IF_INF:
+					case LifeEnum.IF_IN:
+					case LifeEnum.IF_OUT:
 						return "if";
 						
 					case LifeEnum.MULTI_CASE:

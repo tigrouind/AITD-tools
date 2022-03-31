@@ -17,12 +17,28 @@ namespace LifeDISA
 				
 		public void Run()
 		{
+			CheckGotos();
 			Optimize();			
 			Cleanup();
 		}
 		
-		void Optimize()
+		void CheckGotos()
 		{
+			for (var node = nodes.First; node != null; node = node.Next)
+			{
+				var ins = node.Value;
+				if (ins.Goto != -1)
+				{
+					if (!nodesMap.ContainsKey(ins.Goto))
+					{
+						throw new Exception("Invalid goto: " + ins.Goto);
+					}
+				}
+			}
+		}
+		
+		void Optimize()
+		{					
 			for(var node = nodes.First; node != null; node = node.Next)
 			{
 				var ins = node.Value;
@@ -34,6 +50,8 @@ namespace LifeDISA
 					case LifeEnum.IF_SUP:
 					case LifeEnum.IF_INF_EGAL:
 					case LifeEnum.IF_INF:
+					case LifeEnum.IF_IN:
+					case LifeEnum.IF_OUT:
 						OptimizeIf(node);
 						break;
 
@@ -69,6 +87,8 @@ namespace LifeDISA
 				next.Value.Type == LifeEnum.IF_INF ||
 				next.Value.Type == LifeEnum.IF_INF_EGAL ||
 				next.Value.Type == LifeEnum.IF_SUP ||
+				next.Value.Type == LifeEnum.IF_IN ||
+				next.Value.Type == LifeEnum.IF_OUT ||
 				next.Value.Type == LifeEnum.IF_SUP_EGAL) &&
 				target == nodesMap[next.Value.Goto]) //the IFs ends up at same place
 			{

@@ -7,23 +7,21 @@ Supported :
 * Alone in the Dark 2 (CD-ROM, floppy, demo)
 * Alone in the Dark 3 (CD-ROM, demo)
 * Jack in the Dark
-
-Not supported :
-* Time Gate: Knight's Chase
+* Time Gate: Knight's Chase (CD-ROM, demo)
 
 ## Command-line arguments : 
 ```
-LifeDISA {AITD1|AITD1_FLOPPY|JACK|AITD2|AITD2_DEMO|AITD3}
+LifeDISA {AITD1|AITD1_FLOPPY|JACK|AITD2|AITD2_DEMO|AITD3|TIMEGATE|TIMEGATE_DEMO}
 ```
 
 ## How to use : 
 
 1. Create a new folder named "GAMEDATA" (located in same folder as the LifeDISA executable).
-3. Copy the following files from game to GAMEDATA :
+2. Copy the following files from game to GAMEDATA :
    - *LISTLIFE.PAK*
    - *ENGLISH.PAK* (or *FRANCAIS.PAK*)
-4. Copy the file *OBJETS.ITD* (from AITD folder) into GAMEDATA folder.
-5. Start LifeDISA executable with appropriate arguments. A file named *output.txt* will be created.
+3. Copy the file *OBJETS.ITD* (from AITD folder) into GAMEDATA folder.
+4. Start LifeDISA executable with appropriate arguments. A file named *output.txt* will be created.
 
 # TrackDISA
 

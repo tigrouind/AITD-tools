@@ -47,6 +47,9 @@ namespace LifeDISA
 		THROW,
 		MATRIX,
 		HARD_MAT,
-		PROTECT
+		PROTECT,
+		END_WAY,
+		DIV_BY_2,
+		UNKNOWN
 	}
 }

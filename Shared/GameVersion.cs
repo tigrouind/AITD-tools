@@ -10,6 +10,8 @@ namespace Shared
 		JACK,
 		AITD2,
 		AITD2_DEMO,
-		AITD3
+		AITD3,
+		TIMEGATE,
+		TIMEGATE_DEMO
 	}
 }

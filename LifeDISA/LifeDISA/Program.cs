@@ -26,12 +26,14 @@ namespace LifeDISA
 		static GameConfig config;
 		static readonly GameConfig[] gameConfigs =
 		{
-			new GameConfig(GameVersion.AITD1       , MacroTable.LifeA, MacroTable.EvalA),
-			new GameConfig(GameVersion.AITD1_FLOPPY, MacroTable.LifeA, MacroTable.EvalA),
-			new GameConfig(GameVersion.JACK        , MacroTable.LifeB, MacroTable.EvalB),
-			new GameConfig(GameVersion.AITD2_DEMO  , MacroTable.LifeB, MacroTable.EvalB),
-			new GameConfig(GameVersion.AITD2       , MacroTable.LifeB, MacroTable.EvalB),
-			new GameConfig(GameVersion.AITD3       , MacroTable.LifeB, MacroTable.EvalB)
+			new GameConfig(GameVersion.AITD1        , MacroTable.LifeA, MacroTable.EvalA),
+			new GameConfig(GameVersion.AITD1_FLOPPY , MacroTable.LifeA, MacroTable.EvalA),
+			new GameConfig(GameVersion.JACK         , MacroTable.LifeB, MacroTable.EvalB),
+			new GameConfig(GameVersion.AITD2_DEMO   , MacroTable.LifeB, MacroTable.EvalB),
+			new GameConfig(GameVersion.AITD2        , MacroTable.LifeB, MacroTable.EvalB),
+			new GameConfig(GameVersion.AITD3        , MacroTable.LifeB, MacroTable.EvalB),
+			new GameConfig(GameVersion.TIMEGATE     , MacroTable.LifeB, MacroTable.EvalB),
+			new GameConfig(GameVersion.TIMEGATE_DEMO, MacroTable.LifeB, MacroTable.EvalB)				
 		};
 
 		public static int Main(string[] args)
@@ -107,7 +109,8 @@ namespace LifeDISA
 				int count = allBytes.ReadShort(0);
 				int offset;
 				
-				if (config.Version == GameVersion.JACK || config.Version == GameVersion.AITD2_DEMO || config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3)
+				if (config.Version == GameVersion.JACK || config.Version == GameVersion.AITD2_DEMO || config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3
+				    || config.Version == GameVersion.TIMEGATE || config.Version == GameVersion.TIMEGATE_DEMO)
 				{
 					offset = 54;
 				}
@@ -156,27 +159,30 @@ namespace LifeDISA
 			using (var pak = new UnPAK(@"GAMEDATA\LISTLIFE.PAK"))				
 			{
 				//dump all
-				for(int i = 0 ; i < pak.EntryCount ; i++)
+				for(int i = 0; i < pak.EntryCount ; i++)
 				{
 					writer.WriteLine("--------------------------------------------------");
 					writer.WriteLine("#{0} {1}", i, vars.GetText(VarEnum.LIFES, i, string.Empty));
 					writer.WriteLine("--------------------------------------------------");					
 					allBytes = pak.GetEntry(i);
-					if (config.Version == GameVersion.AITD2 && (i == 670 || i == 652) && allBytes.Length == 182)
+					
+					try
 					{
-						Fix670();
+						ParseFile();
+						#if !NO_OPTIMIZE
+						var optimizer = new Optimizer(nodes, nodesMap);
+						optimizer.Run();
+						Debug.Assert(nodes.Count(x => x.IndentDec) == nodes.Count(x => x.IndentInc), "Indentation should be equal to zero");
+						Debug.Assert(nodes.All(x => x.Type != LifeEnum.GOTO), "Unexpected goto");
+						
+						ProcessCaseStatements();
+						#endif					
+						Dump(writer);
 					}
-					
-					ParseFile();
-					#if !NO_OPTIMIZE
-					var optimizer = new Optimizer(nodes, nodesMap);
-					optimizer.Run();
-					Debug.Assert(nodes.Count(x => x.IndentDec) == nodes.Count(x => x.IndentInc), "Indentation should be equal to zero");
-					Debug.Assert(nodes.All(x => x.Type != LifeEnum.GOTO), "Unexpected goto");
-					
-					ProcessCaseStatements();
-					#endif					
-					Dump(writer);
+					catch(Exception ex)
+					{
+						writer.WriteLine(ex);
+					}
 				}
 			}
 
@@ -224,6 +230,10 @@ namespace LifeDISA
 					actor = allBytes.ReadShort(pos);
 				}
 
+				if(curr < 0 || curr >= config.LifeMacro.Length)
+				{
+					throw new NotImplementedException(curr.ToString());
+				}
 				LifeEnum life = config.LifeMacro[curr];
 				
 				Instruction ins = new Instruction();
@@ -239,17 +249,6 @@ namespace LifeDISA
 			}
 		}
 		
-		static void Fix670()
-		{
-			var list = allBytes.ToList();
-			list.RemoveRange(172, 8); //remove GOTO (4) + invalid instruction (4)
-			allBytes = list.ToArray();
-			foreach(var j in new [] { 28, 108, 132, 146, 160, 166 }) //fix GOTOs
-			{
-				allBytes[j] -= 4;
-			}
-		}
-
 		static void Dump(TextWriter writer)
 		{
 			int indent = 0;
@@ -290,7 +289,7 @@ namespace LifeDISA
 				case LifeEnum.IF_SUP_EGAL:
 				case LifeEnum.IF_SUP:
 				case LifeEnum.IF_INF_EGAL:
-				case LifeEnum.IF_INF:
+				case LifeEnum.IF_INF:				
 					EvalEnum evalEnum;
 					string paramA = Evalvar(out evalEnum);
 					string paramB = Evalvar();
@@ -356,12 +355,33 @@ namespace LifeDISA
 					ins.Add("goto {0}", ins.Goto);
 					#endif
 					break;
-
+					
+				case LifeEnum.IF_IN:
+				case LifeEnum.IF_OUT:
+					ins.Add("{0} {3} ({1}, {2})", Evalvar(), Evalvar(), Evalvar(), life == LifeEnum.IF_IN ? "in" : "not in");
+					
+					ins.Goto = GetParam() * 2 + pos;
+					#if NO_OPTIMIZE
+					ins.Add("goto {0}", ins.Goto);
+					#endif
+					break;
+					
 				case LifeEnum.SOUND:
 					if (config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3)
 					{
 						ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
 					}
+					else if(config.Version == GameVersion.TIMEGATE_DEMO)					
+					{			
+						ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
+						ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));						
+					}
+					else if (config.Version == GameVersion.TIMEGATE)
+					{
+						ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
+						ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
+						ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
+					}				
 					else
 					{
 						ins.Add(vars.GetText(VarEnum.SOUNDS, Evalvar()));
@@ -373,7 +393,7 @@ namespace LifeDISA
 					break;
 
 				case LifeEnum.SAMPLE_THEN:
-					if (config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3)
+					if (config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3 || config.Version == GameVersion.TIMEGATE || config.Version == GameVersion.TIMEGATE_DEMO)
 					{
 						ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
 			        	ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
@@ -387,7 +407,7 @@ namespace LifeDISA
 					
 				case LifeEnum.DELETE:
 				case LifeEnum.IN_HAND:
-					if (config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3)
+					if (config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3 || config.Version == GameVersion.TIMEGATE || config.Version == GameVersion.TIMEGATE_DEMO)
 					{
 						ins.Add(GetObjectName(Evalvar()));
 					}
@@ -438,6 +458,10 @@ namespace LifeDISA
 					break;
 					
 				case LifeEnum.STOP_SAMPLE:
+					if (config.Version == GameVersion.TIMEGATE || config.Version == GameVersion.TIMEGATE_DEMO)
+					{
+						ins.Add(GetParam());
+					}
 					break;
 					
 				case LifeEnum.READ_ON_PICTURE:
@@ -456,14 +480,14 @@ namespace LifeDISA
 					ins.Add(GetParam());
 					break;
 				
-				case LifeEnum.UNKNOWN1:
+				case LifeEnum.DO_ROT_CLUT:
 					ins.Add(GetParam());
 					ins.Add(GetParam());
 					ins.Add(GetParam());
 					break;	
 					
 				case LifeEnum.PLAY_SEQUENCE:
-					if (config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3)
+					if (config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3 || config.Version == GameVersion.TIMEGATE || config.Version == GameVersion.TIMEGATE_DEMO)
 					{
 						ins.Add(GetParam());
 						ins.Add(GetParam());
@@ -507,8 +531,15 @@ namespace LifeDISA
 				case LifeEnum.RND_FREQ:
 				case LifeEnum.LIGHT:
 				case LifeEnum.SHAKING:
+					ins.Add(GetParam());
+					break;
+					
 				case LifeEnum.FADE_MUSIC:
 					ins.Add(GetParam());
+					if (config.Version == GameVersion.TIMEGATE || config.Version == GameVersion.TIMEGATE_DEMO)
+					{
+						ins.Add(GetParam());
+					}
 					break;
 
 				case LifeEnum.READ:
@@ -523,6 +554,10 @@ namespace LifeDISA
 				case LifeEnum.PUT_AT:
 					ins.Add(GetObjectName(GetParam()));
 					ins.Add(GetObjectName(GetParam()));
+					if (config.Version == GameVersion.TIMEGATE || config.Version == GameVersion.TIMEGATE_DEMO)
+					{
+						ins.Add(GetObjectName(GetParam()));
+					}
 					break;
 
 				case LifeEnum.TRACKMODE:
@@ -543,6 +578,10 @@ namespace LifeDISA
 
 						case 3: //track
 							ins.Add(vars.GetText(VarEnum.TRACKS, GetParam()));
+							break;
+							
+						default:
+							ins.Add(GetParam());
 							break;
 					}
 					break;
@@ -588,7 +627,43 @@ namespace LifeDISA
 				case LifeEnum.DO_NORMAL_ZV:
 				case LifeEnum.CALL_INVENTORY:
 				case LifeEnum.PROTECT:
-				case LifeEnum.UNKNOWN2:
+				case LifeEnum.STOP_CLUT:				
+				case LifeEnum.UNKNOWN6:				
+					break;
+					
+				case LifeEnum.UNKNOWN5:
+					int count = GetParam();
+					for(int i = 0 ; i < count ; i++)
+					{
+						ins.Add(GetParam());
+						ins.Add(GetParam());
+					}	
+					break;	
+					
+				case LifeEnum.SET_VOLUME_SAMPLE:
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					break;
+
+				case LifeEnum.MUSIC_B:
+					ins.Add(GetParam());			
+					ins.Add(GetParam());	
+					ins.Add(GetParam());	
+					break;
+				
+				case LifeEnum.START_FADE_IN_MUSIC:						
+				case LifeEnum.START_FADE_IN_MUSIC_LOOP:	
+					ins.Add(GetParam());					
+					ins.Add(GetParam());		
+					ins.Add(GetParam());		
+					ins.Add(GetParam());		
+					ins.Add(GetParam());	
+					break;
+				
+				case LifeEnum.MUSIC_AND_LOOP:	
+				case LifeEnum.FADE_OUT_MUSIC_STOP:	
+					ins.Add(GetParam());					
+					ins.Add(GetParam());		
 					break;
 
 				case LifeEnum.HIT:
@@ -610,7 +685,7 @@ namespace LifeDISA
 					break;
 
 				case LifeEnum.FIRE:
-					if (config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3)
+					if (config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3 || config.Version == GameVersion.TIMEGATE || config.Version == GameVersion.TIMEGATE_DEMO)
 					{
 						ins.Add(vars.GetText(VarEnum.ANIMS, Evalvar()));
 					}
@@ -622,7 +697,7 @@ namespace LifeDISA
 					ins.Add(GetParam()); //hotpoint
 					ins.Add(GetParam()); //range
 					ins.Add(GetParam()); //hitforce					
-					if (config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3)
+					if (config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3 || config.Version == GameVersion.TIMEGATE || config.Version == GameVersion.TIMEGATE_DEMO)
 					{
 						ins.Add(GetParam());
 						ins.Add(vars.GetText(VarEnum.ANIMS, Evalvar()));
@@ -653,11 +728,25 @@ namespace LifeDISA
 					ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
 					break;
 
-				case LifeEnum.PICTURE:
 				case LifeEnum.ANGLE:
 					ins.Add(GetParam());
 					ins.Add(GetParam());
 					ins.Add(GetParam());
+					break;
+					
+				case LifeEnum.PICTURE:
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					ins.Add(GetParam());
+					if (config.Version == GameVersion.TIMEGATE_DEMO)
+					{
+						ins.Add(GetParam());
+					}
+					else if (config.Version == GameVersion.TIMEGATE)
+					{
+						ins.Add(GetParam());
+						ins.Add(GetParam());
+					}
 					break;
 
 				case LifeEnum.CHANGEROOM:
@@ -667,9 +756,14 @@ namespace LifeDISA
 					ins.Add(GetParam());
 					break;
 
-				case LifeEnum.REP_SAMPLE:
-					if (config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3)
+				case LifeEnum.REP_SAMPLE:					
+					if (config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3 || config.Version == GameVersion.TIMEGATE_DEMO)
+					{						
+						ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
+					}
+					else if (config.Version == GameVersion.TIMEGATE)
 					{
+						ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
 						ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
 					}
 					else
@@ -703,6 +797,10 @@ namespace LifeDISA
 					ins.Add(vars.GetText(VarEnum.SOUNDS, Evalvar()));
 					ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
 					ins.Add(GetParam());
+					if (config.Version == GameVersion.TIMEGATE || config.Version == GameVersion.TIMEGATE_DEMO)
+					{
+						ins.Add(GetParam());
+					}
 					break;
 
 				case LifeEnum.SET:
@@ -913,6 +1011,11 @@ namespace LifeDISA
 
 			curr &= 0x7FFF;
 			curr--;
+			if(curr < 0 || curr >= config.EvalMacro.Length)
+			{
+				throw new NotImplementedException(curr.ToString());
+			}
+			
 			evalEnum = config.EvalMacro[curr];
 
 			string parameter = evalEnum.ToString().ToLowerInvariant();
@@ -920,7 +1023,20 @@ namespace LifeDISA
 			switch (evalEnum)
 			{
 				case EvalEnum.DIST:
+					parameter += string.Format("({0})", GetObjectName(GetParam()));
+					break;
+					
 				case EvalEnum.POSREL:
+					if (config.Version == GameVersion.TIMEGATE || config.Version == GameVersion.TIMEGATE_DEMO)
+					{
+						parameter += string.Format("({0} {1})", GetParam(), GetParam());
+					}
+					else
+					{
+						parameter += string.Format("({0})", GetObjectName(GetParam()));
+					}
+					break;
+					
 				case EvalEnum.OBJECT:
 				case EvalEnum.THROW:
 					parameter += string.Format("({0})", GetObjectName(GetParam()));
@@ -941,6 +1057,10 @@ namespace LifeDISA
 				case EvalEnum.TEST_ZV_END_ANIM:
 				case EvalEnum.MATRIX:
 					parameter += string.Format("({0} {1})", GetParam(), GetParam());
+					break;
+					
+				case EvalEnum.DIV_BY_2:
+					parameter += string.Format("({0})", GetParam());
 					break;
 			}
 

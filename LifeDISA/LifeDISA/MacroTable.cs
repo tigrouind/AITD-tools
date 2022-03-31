@@ -113,8 +113,8 @@ namespace LifeDISA
 			LifeEnum.DEF_SEQUENCE_SAMPLE,
 			LifeEnum.READ_ON_PICTURE,
 			LifeEnum.FIRE_UP_DOWN,
-			LifeEnum.UNKNOWN1,
-			LifeEnum.UNKNOWN2
+			LifeEnum.DO_ROT_CLUT,
+			LifeEnum.STOP_CLUT
 		};
 		
 		public readonly static LifeEnum[] LifeB = 
@@ -219,8 +219,29 @@ namespace LifeDISA
 			LifeEnum.DEF_SEQUENCE_SAMPLE,
 			LifeEnum.READ_ON_PICTURE,
 			LifeEnum.FIRE_UP_DOWN,
+			LifeEnum.DO_ROT_CLUT,
+			LifeEnum.STOP_CLUT,
+			LifeEnum.IF_IN,
+			LifeEnum.IF_OUT,
 			LifeEnum.UNKNOWN1,
-			LifeEnum.UNKNOWN2
+			LifeEnum.SET_VOLUME_SAMPLE,
+			LifeEnum.UNKNOWN2,
+			LifeEnum.UNKNOWN3,
+			LifeEnum.FADE_IN_MUSIC,
+			LifeEnum.SET_MUSIC_VOLUME,
+			LifeEnum.MUSIC_AND_LOOP,
+			LifeEnum.MUSIC_A,
+			LifeEnum.MUSIC_B,
+			LifeEnum.START_FADE_IN_MUSIC,
+			LifeEnum.START_FADE_IN_MUSIC_THEN,
+			LifeEnum.START_FADE_IN_MUSIC_LOOP,
+			LifeEnum.FADE_OUT_MUSIC_STOP,
+			LifeEnum.MUSIC_ALTER_TEMPO,
+			LifeEnum.REP_SAMPLE_N_TIME,
+			LifeEnum.UNKNOWN4,
+			LifeEnum.DEBUG,
+			LifeEnum.UNKNOWN5,
+			LifeEnum.UNKNOWN6
 		};
 		
 		public readonly static EvalEnum[] EvalA = 
@@ -307,7 +328,10 @@ namespace LifeDISA
 			EvalEnum.THROW,
 			EvalEnum.MATRIX,
 			EvalEnum.HARD_MAT,
-			EvalEnum.PROTECT
+			EvalEnum.PROTECT,
+			EvalEnum.END_WAY,
+			EvalEnum.DIV_BY_2,
+			EvalEnum.UNKNOWN
 		};
 	}
 }
