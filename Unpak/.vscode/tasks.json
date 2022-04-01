@@ -11,7 +11,7 @@
 				"-s",
 				"${file}",
 				"-o",
-				"${fileDirname}\\Unpak.dll"
+				"${fileDirname}\\bin\\Release\\UnPAK.dll"
 			],
 			"options": {
 				"cwd": "${workspaceFolder}"
