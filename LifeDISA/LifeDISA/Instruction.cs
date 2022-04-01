@@ -39,27 +39,28 @@ namespace LifeDISA
 		{
 			get
 			{
-				switch(Type)
+				if (!Program.NoOptimize)
 				{
-					#if !NO_OPTIMIZE
-					case LifeEnum.IF_EGAL:
-					case LifeEnum.IF_DIFFERENT:
-					case LifeEnum.IF_SUP_EGAL:
-					case LifeEnum.IF_SUP:
-					case LifeEnum.IF_INF_EGAL:
-					case LifeEnum.IF_INF:
-					case LifeEnum.IF_IN:
-					case LifeEnum.IF_OUT:
-					case LifeEnum.ELSE:
-					case LifeEnum.SWITCH:
-					case LifeEnum.CASE:	
-					case LifeEnum.MULTI_CASE:										
-					case LifeEnum.DEFAULT:								
-						return true;
-					#endif	
-					default:
-						return false;
+					switch(Type)
+					{
+						case LifeEnum.IF_EGAL:
+						case LifeEnum.IF_DIFFERENT:
+						case LifeEnum.IF_SUP_EGAL:
+						case LifeEnum.IF_SUP:
+						case LifeEnum.IF_INF_EGAL:
+						case LifeEnum.IF_INF:
+						case LifeEnum.IF_IN:
+						case LifeEnum.IF_OUT:
+						case LifeEnum.ELSE:
+						case LifeEnum.SWITCH:
+						case LifeEnum.CASE:	
+						case LifeEnum.MULTI_CASE:										
+						case LifeEnum.DEFAULT:								
+							return true;						
+					}								
 				}
+				
+				return false;
 			}
 		}
 		
@@ -67,16 +68,17 @@ namespace LifeDISA
 		{
 			get
 			{
-				switch(Type)
+				if (!Program.NoOptimize)
 				{
-					#if !NO_OPTIMIZE
-					case LifeEnum.ELSE:						
-					case LifeEnum.END:					
-						return true;
-					#endif		
-					default:
-						return false;
+					switch(Type)
+					{
+						case LifeEnum.ELSE:						
+						case LifeEnum.END:					
+							return true;
+					}
 				}
+				
+				return false;
 			}
 		}
 		
@@ -84,22 +86,23 @@ namespace LifeDISA
 		{
 			get
 			{
-				switch (Type)
+				if (!Program.NoOptimize)
 				{
-					#if !NO_OPTIMIZE
-					case LifeEnum.IF_EGAL:
-					case LifeEnum.IF_DIFFERENT:
-					case LifeEnum.IF_SUP_EGAL:
-					case LifeEnum.IF_SUP:
-					case LifeEnum.IF_INF_EGAL:
-					case LifeEnum.IF_INF:
-					case LifeEnum.IF_IN:
-					case LifeEnum.IF_OUT:
-						return " and ";
-					#endif			
-					default:
-						return " ";
+					switch (Type)
+					{
+						case LifeEnum.IF_EGAL:
+						case LifeEnum.IF_DIFFERENT:
+						case LifeEnum.IF_SUP_EGAL:
+						case LifeEnum.IF_SUP:
+						case LifeEnum.IF_INF_EGAL:
+						case LifeEnum.IF_INF:
+						case LifeEnum.IF_IN:
+						case LifeEnum.IF_OUT:
+							return " and ";
+					}
 				}
+				
+				return " ";
 			}
 		}
 		
@@ -107,27 +110,29 @@ namespace LifeDISA
 		{
 			get
 			{
-				#if !NO_OPTIMIZE
-				switch (Type)
+				if (!Program.NoOptimize)
 				{
-					
-					case LifeEnum.IF_EGAL:
-					case LifeEnum.IF_DIFFERENT:
-					case LifeEnum.IF_SUP_EGAL:
-					case LifeEnum.IF_SUP:
-					case LifeEnum.IF_INF_EGAL:
-					case LifeEnum.IF_INF:
-					case LifeEnum.IF_IN:
-					case LifeEnum.IF_OUT:
-						return "if";
+					switch (Type)
+					{
 						
-					case LifeEnum.MULTI_CASE:
-						return "case";
-						
-					case LifeEnum.C_VAR:
-						return "set";						
+						case LifeEnum.IF_EGAL:
+						case LifeEnum.IF_DIFFERENT:
+						case LifeEnum.IF_SUP_EGAL:
+						case LifeEnum.IF_SUP:
+						case LifeEnum.IF_INF_EGAL:
+						case LifeEnum.IF_INF:
+						case LifeEnum.IF_IN:
+						case LifeEnum.IF_OUT:
+							return "if";
+							
+						case LifeEnum.MULTI_CASE:
+							return "case";
+							
+						case LifeEnum.C_VAR:
+							return "set";						
+					}
 				}
-				#endif	
+
 				string name = Type.ToString().ToLowerInvariant();
 				if (Actor != null) 
 				{

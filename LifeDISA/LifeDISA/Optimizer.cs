@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 namespace LifeDISA
 {
-	#if !NO_OPTIMIZE
 	public class Optimizer
 	{
 		readonly LinkedList<Instruction> nodes;
@@ -189,5 +188,4 @@ namespace LifeDISA
 			}
 		}			
 	}
-	#endif		
 }

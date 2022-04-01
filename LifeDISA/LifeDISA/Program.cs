@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -11,6 +10,7 @@ namespace LifeDISA
 {
 	class Program
 	{
+		public static bool NoOptimize;
 		static int pos;
 		static byte[] allBytes;		
 
@@ -38,11 +38,14 @@ namespace LifeDISA
 
 		public static int Main(string[] args)
 		{			
-			if(args.Length == 0 || (config = gameConfigs.FirstOrDefault(x => x.Version.ToString() == args[0])) == null)
+			config = gameConfigs.Join(args, x => x.Version.ToString(), x => x, (x, y) => x).FirstOrDefault();
+			if (config == null)
 			{
-				Console.WriteLine("Usage: LifeDISA {{{0}}}", string.Join("|", gameConfigs.Select(x => x.Version)));
+				Console.WriteLine("Usage: LifeDISA {{{0}}} [-raw]", string.Join("|", gameConfigs.Select(x => x.Version)));
 				return -1;
 			}
+			
+			NoOptimize |= args.Contains("-raw");
 			
 			Directory.CreateDirectory("GAMEDATA");
 			
@@ -164,24 +167,28 @@ namespace LifeDISA
 					try
 					{
 						ParseFile();
-						#if !NO_OPTIMIZE
-						var optimizer = new Optimizer(nodes, nodesMap);
-						optimizer.Run();
-						
-						if (nodes.Count(x => x.IndentDec) != nodes.Count(x => x.IndentInc)) 
+						if (!NoOptimize)
 						{
-							throw new Exception("Indentation should be equal to zero");
+							var optimizer = new Optimizer(nodes, nodesMap);
+							optimizer.Run();
+							
+							if (nodes.Count(x => x.IndentDec) != nodes.Count(x => x.IndentInc)) 
+							{
+								throw new Exception("Indentation should be equal to zero");
+							}
+							
+							if (nodes.Any(x => x.Type == LifeEnum.GOTO))
+							{
+								throw new Exception("Unexpected gotos");
+							}
+							
+							ProcessCaseStatements();
+						}
+						else
+						{
+							ProcessGotos();
 						}
 						
-						if (nodes.Any(x => x.Type == LifeEnum.GOTO))
-						{
-							throw new Exception("Unexpected gotos");
-						}
-						
-						ProcessCaseStatements();
-						#else
-						ProcessGotos();
-						#endif					
 						Dump(writer);
 					}
 					catch(Exception ex)
@@ -292,9 +299,10 @@ namespace LifeDISA
 
 				writer.Write(new String('\t', indent));
 				
-				#if NO_OPTIMIZE
-				writer.Write(ins.Line.ToString().PadLeft(4) + " ");
-				#endif
+				if (NoOptimize)
+				{
+					writer.Write(ins.Line.ToString().PadLeft(4) + " ");
+				}
 				
 				writer.Write(ins.Name);	
 				if (ins.Arguments.Any())
