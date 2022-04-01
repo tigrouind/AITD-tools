@@ -167,8 +167,16 @@ namespace LifeDISA
 						#if !NO_OPTIMIZE
 						var optimizer = new Optimizer(nodes, nodesMap);
 						optimizer.Run();
-						Debug.Assert(nodes.Count(x => x.IndentDec) == nodes.Count(x => x.IndentInc), "Indentation should be equal to zero");
-						Debug.Assert(nodes.All(x => x.Type != LifeEnum.GOTO), "Unexpected goto");
+						
+						if (nodes.Count(x => x.IndentDec) != nodes.Count(x => x.IndentInc)) 
+						{
+							throw new Exception("Indentation should be equal to zero");
+						}
+						
+						if (nodes.Any(x => x.Type == LifeEnum.GOTO))
+						{
+							throw new Exception("Unexpected gotos");
+						}
 						
 						ProcessCaseStatements();
 						#endif					
