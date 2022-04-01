@@ -393,8 +393,7 @@ namespace LifeDISA
 					}
 					else if (config.Version == GameVersion.TIMEGATE)
 					{
-						ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
-						ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
+						ins.Add(vars.GetText(VarEnum.SOUNDS, Evalvar()));
 						ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
 					}				
 					else
@@ -650,8 +649,7 @@ namespace LifeDISA
 					int count = GetParam();
 					for(int i = 0 ; i < count ; i++)
 					{
-						ins.Add(GetParam());
-						ins.Add(GetParam());
+						ins.Add(Evalvar());
 					}	
 					break;	
 					
@@ -750,15 +748,22 @@ namespace LifeDISA
 					break;
 					
 				case LifeEnum.PICTURE:
-					ins.Add(GetParam());
-					ins.Add(GetParam());
-					ins.Add(GetParam());
 					if (config.Version == GameVersion.TIMEGATE_DEMO)
 					{
 						ins.Add(GetParam());
+						ins.Add(GetParam());
+						ins.Add(Evalvar());
 					}
 					else if (config.Version == GameVersion.TIMEGATE)
 					{
+						ins.Add(GetParam());
+						ins.Add(GetParam());
+						ins.Add(GetParam());
+						ins.Add(Evalvar());
+					}
+					else
+					{
+						ins.Add(GetParam());
 						ins.Add(GetParam());
 						ins.Add(GetParam());
 					}
@@ -774,11 +779,6 @@ namespace LifeDISA
 				case LifeEnum.REP_SAMPLE:					
 					if (config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3 || config.Version == GameVersion.TIMEGATE_DEMO)
 					{						
-						ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
-					}
-					else if (config.Version == GameVersion.TIMEGATE)
-					{
-						ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
 						ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
 					}
 					else
@@ -1045,7 +1045,7 @@ namespace LifeDISA
 				case EvalEnum.POSREL:
 					if (config.Version == GameVersion.TIMEGATE || config.Version == GameVersion.TIMEGATE_DEMO)
 					{
-						parameter += string.Format("({0} {1})", GetParam(), GetParam());
+						parameter += string.Format("({0})", Evalvar());
 					}
 					else
 					{
