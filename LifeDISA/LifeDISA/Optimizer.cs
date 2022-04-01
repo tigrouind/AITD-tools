@@ -93,7 +93,7 @@ namespace LifeDISA
 				target == nodesMap[next.Value.Goto]) //the IFs ends up at same place
 			{
 				var after = next.Next;
-				ins.Arguments.Add(next.Value.Arguments[0]);
+				ins.Add(next.Value.Arguments[0]);
 				nodes.Remove(next);
 
 				next = after;

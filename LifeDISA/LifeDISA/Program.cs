@@ -179,6 +179,8 @@ namespace LifeDISA
 						}
 						
 						ProcessCaseStatements();
+						#else
+						ProcessGotos();
 						#endif					
 						Dump(writer);
 					}
@@ -205,11 +207,37 @@ namespace LifeDISA
 						{
 							for(int i = 0 ; i < ins.Arguments.Count ; i++)
 							{
-								ins.Arguments[i] = GetConditionName(ins.Parent.EvalEnum, ins.Arguments[i]);
+								ins.Set(i, GetConditionName(ins.Parent.EvalEnum, ins.Arguments[i]));
 							}
 						}
 					}
 					break;
+				}
+			}
+		}
+		
+		static void ProcessGotos()
+		{
+			foreach(var ins in nodes)
+			{
+				switch (ins.Type)
+				{
+					case LifeEnum.IF_EGAL:
+					case LifeEnum.IF_DIFFERENT:
+					case LifeEnum.IF_SUP_EGAL:
+					case LifeEnum.IF_SUP:
+					case LifeEnum.IF_INF_EGAL:
+					case LifeEnum.IF_INF:
+					case LifeEnum.IF_IN:
+					case LifeEnum.IF_OUT:
+					case LifeEnum.CASE:
+					case LifeEnum.MULTI_CASE:
+						ins.Add("goto " + ins.Goto);
+						break;
+						
+					case LifeEnum.GOTO:
+						ins.Add(ins.Goto.ToString());
+						break;
 				}
 			}
 		}
@@ -322,16 +350,10 @@ namespace LifeDISA
 					}
 
 					ins.Goto = GetParam() * 2 + pos;
-					#if NO_OPTIMIZE
-					ins.Add("goto {0}", ins.Goto);
-					#endif
 					break;
 
 				case LifeEnum.GOTO: //should never be called
 					ins.Goto = GetParam() * 2 + pos;
-					#if NO_OPTIMIZE
-					ins.Add("{0}", ins.Goto);
-					#endif
 					break;
 
 				case LifeEnum.SWITCH:		
@@ -341,9 +363,6 @@ namespace LifeDISA
 				case LifeEnum.CASE:
 					ins.Add(GetParam());
 					ins.Goto = GetParam() * 2 + pos;
-					#if NO_OPTIMIZE
-					ins.Add("goto {0}", ins.Goto);
-					#endif
 					break;
 
 				case LifeEnum.MULTI_CASE:
@@ -354,19 +373,12 @@ namespace LifeDISA
 					}
 
 					ins.Goto = GetParam() * 2 + pos;
-					#if NO_OPTIMIZE
-					ins.Add("goto {0}", ins.Goto);
-					#endif
 					break;
 					
 				case LifeEnum.IF_IN:
 				case LifeEnum.IF_OUT:
-					ins.Add("{0} {3} ({1}, {2})", Evalvar(), Evalvar(), Evalvar(), life == LifeEnum.IF_IN ? "in" : "not in");
-					
+					ins.Add("{0} {3} ({1}, {2})", Evalvar(), Evalvar(), Evalvar(), life == LifeEnum.IF_IN ? "in" : "not in");					
 					ins.Goto = GetParam() * 2 + pos;
-					#if NO_OPTIMIZE
-					ins.Add("goto {0}", ins.Goto);
-					#endif
 					break;
 					
 				case LifeEnum.SOUND:
@@ -631,10 +643,10 @@ namespace LifeDISA
 				case LifeEnum.CALL_INVENTORY:
 				case LifeEnum.PROTECT:
 				case LifeEnum.STOP_CLUT:				
-				case LifeEnum.UNKNOWN6:				
+				case LifeEnum.UNKNOWN_6:				
 					break;
 					
-				case LifeEnum.UNKNOWN5:
+				case LifeEnum.UNKNOWN_5:
 					int count = GetParam();
 					for(int i = 0 ; i < count ; i++)
 					{
@@ -986,15 +998,15 @@ namespace LifeDISA
 		{
 			evalEnum = EvalEnum.NONE;
 			int curr = GetParam();
-			if(curr == -1)
+			if (curr == -1)
 			{
-				//CONST
+				//constant
 				return GetParam().ToString();
 			}
 
-			if(curr == 0)
+			if (curr == 0)
 			{
-				//CONST
+				//variable
 				curr = GetParam();
 				string name =  vars.GetText(VarEnum.VARS, curr, "var_" + curr);				
 				if(name == "player_current_action")
@@ -1005,8 +1017,9 @@ namespace LifeDISA
 				return name;
 			}
 
+			//function
 			string result = string.Empty;
-			if((curr & 0x8000) == 0x8000)
+			if ((curr & 0x8000) == 0x8000)
 			{
 				//change actor
 				result = GetObjectName(GetParam()) + ".";

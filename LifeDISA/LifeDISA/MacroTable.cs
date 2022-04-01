@@ -223,10 +223,10 @@ namespace LifeDISA
 			LifeEnum.STOP_CLUT,
 			LifeEnum.IF_IN,
 			LifeEnum.IF_OUT,
-			LifeEnum.UNKNOWN1,
+			LifeEnum.UNKNOWN_1,
 			LifeEnum.SET_VOLUME_SAMPLE,
-			LifeEnum.UNKNOWN2,
-			LifeEnum.UNKNOWN3,
+			LifeEnum.UNKNOWN_2,
+			LifeEnum.UNKNOWN_3,
 			LifeEnum.FADE_IN_MUSIC,
 			LifeEnum.SET_MUSIC_VOLUME,
 			LifeEnum.MUSIC_AND_LOOP,
@@ -238,10 +238,10 @@ namespace LifeDISA
 			LifeEnum.FADE_OUT_MUSIC_STOP,
 			LifeEnum.MUSIC_ALTER_TEMPO,
 			LifeEnum.REP_SAMPLE_N_TIME,
-			LifeEnum.UNKNOWN4,
+			LifeEnum.UNKNOWN_4,
 			LifeEnum.DEBUG,
-			LifeEnum.UNKNOWN5,
-			LifeEnum.UNKNOWN6
+			LifeEnum.UNKNOWN_5,
+			LifeEnum.UNKNOWN_6
 		};
 		
 		public readonly static EvalEnum[] EvalA = 

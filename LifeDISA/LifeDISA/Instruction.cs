@@ -9,7 +9,7 @@ namespace LifeDISA
 		public LifeEnum Type;
 		public EvalEnum EvalEnum; //first argument of switch
 		public Instruction Parent;
-		public List<string> Arguments = new List<string>();
+		readonly List<string> arguments = new List<string>();
 		public string Actor;
 		public int Goto = -1;
 		public bool ToRemove;
@@ -17,17 +17,22 @@ namespace LifeDISA
 
 		public void Add(string format, params object[] args)
 		{
-			Arguments.Add(string.Format(format, args));
+			arguments.Add(string.Format(format, args));
 		}
 
 		public void Add(string value)
 		{
-			Arguments.Add(value);
+			arguments.Add(value);
 		}
 
 		public void Add(int value)
 		{
-			Arguments.Add(value.ToString());
+			arguments.Add(value.ToString());
+		}
+		
+		public void Set(int index, string value)
+		{
+			arguments[index] = value;
 		}
 		
 		public bool IndentInc
@@ -130,6 +135,14 @@ namespace LifeDISA
 				}
 				
 				return name;
+			}
+		}
+		
+		public IReadOnlyList<string> Arguments
+		{
+			get				
+			{
+				return arguments;
 			}
 		}
 	}
