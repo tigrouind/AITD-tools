@@ -1,5 +1,7 @@
 @echo off
 
+%WINDIR%\Microsoft.NET\Framework\v4.0.30319\msbuild.exe /p:Configuration=Release ".\Shared\Shared.csproj" /t:Rebuild
+if %ERRORLEVEL% NEQ 0 pause
 %WINDIR%\Microsoft.NET\Framework\v4.0.30319\msbuild.exe /p:Configuration=Release ".\CacheViewer\CacheViewer.sln" /t:Rebuild
 if %ERRORLEVEL% NEQ 0 pause
 %WINDIR%\Microsoft.NET\Framework\v4.0.30319\msbuild.exe /p:Configuration=Release ".\LifeDISA\LifeDISA.sln" /t:Rebuild
@@ -9,8 +11,6 @@ if %ERRORLEVEL% NEQ 0 pause
 %WINDIR%\Microsoft.NET\Framework\v4.0.30319\msbuild.exe /p:Configuration=Release ".\TrackDISA\TrackDISA.sln" /t:Rebuild
 if %ERRORLEVEL% NEQ 0 pause
 %WINDIR%\Microsoft.NET\Framework\v4.0.30319\msbuild.exe /p:Configuration=Release ".\VarsViewer\VarsViewer.sln" /t:Rebuild
-if %ERRORLEVEL% NEQ 0 pause
-%WINDIR%\Microsoft.NET\Framework\v4.0.30319\msbuild.exe /p:Configuration=Release ".\Shared\Shared.csproj" /t:Rebuild
 if %ERRORLEVEL% NEQ 0 pause
 
 "%PROGRAMFILES%\7-Zip\7z" a -tzip "AITD-tools.zip" ^
