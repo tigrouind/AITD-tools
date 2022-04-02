@@ -28,6 +28,7 @@ namespace LifeDISA
 		{
 			new GameConfig(GameVersion.AITD1        , MacroTable.LifeA, MacroTable.EvalA),
 			new GameConfig(GameVersion.AITD1_FLOPPY , MacroTable.LifeA, MacroTable.EvalA),
+			new GameConfig(GameVersion.AITD1_DEMO   , MacroTable.LifeA, MacroTable.EvalA),
 			new GameConfig(GameVersion.JACK         , MacroTable.LifeB, MacroTable.EvalB),
 			new GameConfig(GameVersion.AITD2_DEMO   , MacroTable.LifeB, MacroTable.EvalB),
 			new GameConfig(GameVersion.AITD2        , MacroTable.LifeB, MacroTable.EvalB),
@@ -130,9 +131,9 @@ namespace LifeDISA
 					if(string.IsNullOrEmpty(name))
 					{
 						int index = allBytes.ReadShort(n + 10);
-						if(index != -1 && index != 0)
+						if(index != -1 && index != 0 && namesByIndex.TryGetValue(index, out name))
 						{
-							name = namesByIndex[index].ToLowerInvariant();
+							name = name.ToLowerInvariant();
 							name = string.Join("_", name.Split(' ').Where(x => x != "an" && x != "a").ToArray());
 						}
 					}
@@ -706,7 +707,7 @@ namespace LifeDISA
 					break;
 
 				case LifeEnum.FIRE:
-					if (config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3 || config.Version == GameVersion.TIMEGATE || config.Version == GameVersion.TIMEGATE_DEMO)
+					if (config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD2_DEMO || config.Version == GameVersion.AITD3 || config.Version == GameVersion.TIMEGATE || config.Version == GameVersion.TIMEGATE_DEMO)
 					{
 						ins.Add(vars.GetText(VarEnum.ANIMS, Evalvar()));
 					}
@@ -718,7 +719,7 @@ namespace LifeDISA
 					ins.Add(GetParam()); //hotpoint
 					ins.Add(GetParam()); //range
 					ins.Add(GetParam()); //hitforce					
-					if (config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3 || config.Version == GameVersion.TIMEGATE || config.Version == GameVersion.TIMEGATE_DEMO)
+					if (config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD2_DEMO || config.Version == GameVersion.AITD3 || config.Version == GameVersion.TIMEGATE || config.Version == GameVersion.TIMEGATE_DEMO)
 					{
 						ins.Add(GetParam());
 						ins.Add(vars.GetText(VarEnum.ANIMS, Evalvar()));
