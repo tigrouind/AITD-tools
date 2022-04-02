@@ -87,7 +87,7 @@ namespace Shared
 		
 		public static int? GetArgument(string[] args, string name)
 		{
-			int index = Array.IndexOf(args, name);
+			int index = Array.FindIndex(args, x => x.Equals(name, StringComparison.OrdinalIgnoreCase));
 			if (index >= 0 && index < (args.Length - 1))
 			{
 				int value;

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using Shared;
 
 namespace LifeDISA
@@ -29,24 +28,24 @@ namespace LifeDISA
 			new GameConfig(GameVersion.AITD1        , MacroTable.LifeA, MacroTable.EvalA),
 			new GameConfig(GameVersion.AITD1_FLOPPY , MacroTable.LifeA, MacroTable.EvalA),
 			new GameConfig(GameVersion.AITD1_DEMO   , MacroTable.LifeA, MacroTable.EvalA),
-			new GameConfig(GameVersion.JACK         , MacroTable.LifeB, MacroTable.EvalB),
-			new GameConfig(GameVersion.AITD2_DEMO   , MacroTable.LifeB, MacroTable.EvalB),
 			new GameConfig(GameVersion.AITD2        , MacroTable.LifeB, MacroTable.EvalB),
+			new GameConfig(GameVersion.AITD2_DEMO   , MacroTable.LifeB, MacroTable.EvalB),
 			new GameConfig(GameVersion.AITD3        , MacroTable.LifeB, MacroTable.EvalB),
+			new GameConfig(GameVersion.JACK         , MacroTable.LifeB, MacroTable.EvalB),
 			new GameConfig(GameVersion.TIMEGATE     , MacroTable.LifeB, MacroTable.EvalB),
 			new GameConfig(GameVersion.TIMEGATE_DEMO, MacroTable.LifeB, MacroTable.EvalB)				
 		};
 
 		public static int Main(string[] args)
 		{			
-			config = gameConfigs.Join(args, x => x.Version.ToString(), x => x, (x, y) => x).FirstOrDefault();
+			config = gameConfigs.Join(args, x => x.Version.ToString(), x => x, (x, y) => x, StringComparer.InvariantCultureIgnoreCase).FirstOrDefault();
 			if (config == null)
 			{
-				Console.WriteLine("Usage: LifeDISA {{{0}}} [-raw]", string.Join("|", gameConfigs.Select(x => x.Version)));
+				Console.WriteLine("Usage: LifeDISA {{{0}}} [-raw]", string.Join("|", gameConfigs.Select(x => x.Version.ToString().ToLowerInvariant())));
 				return -1;
 			}
 			
-			NoOptimize |= args.Contains("-raw");
+			NoOptimize |= args.Contains("-raw", StringComparer.InvariantCultureIgnoreCase);
 			
 			Directory.CreateDirectory("GAMEDATA");
 			
@@ -69,7 +68,6 @@ namespace LifeDISA
 				          VarEnum.TRACKMODE);
 			}
 
-			Regex r = new Regex(@"[0-9a-fA-F]{8}\.DAT", RegexOptions.IgnoreCase);
 			int fileCount = 0;
 			if (File.Exists(@"GAMEDATA\LISTLIFE.PAK")) 
 			{

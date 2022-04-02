@@ -11,7 +11,7 @@ Supported :
 
 ## Command-line arguments : 
 ```
-LifeDISA {AITD1|AITD1_FLOPPY|AITD1_DEMO|JACK|AITD2|AITD2_DEMO|AITD3|TIMEGATE|TIMEGATE_DEMO} [-raw]
+LifeDISA {aitd1|aitd1_floppy|aitd1_demo|aitd2|aitd2_demo|aitd3|jack|timegate|timegate_demo} [-raw]
 ```
 
 ## How to use : 
@@ -28,8 +28,8 @@ LifeDISA {AITD1|AITD1_FLOPPY|AITD1_DEMO|JACK|AITD2|AITD2_DEMO|AITD3|TIMEGATE|TIM
 Download file [here](https://github.com/tigrouind/AITD-tools/releases/download/1.40/AITD.xml)
 
 How to install it :
-1. Click on "Language" > "User Defined Language" > "Define your language..."
-2. Click "Import..."
+1. Click on `Language` > `User Defined Language` > `Define your language...`
+2. Click `Import...`
 3. In the opening dialog, choose the xml file you downloaded previously.
 
 # TrackDISA
