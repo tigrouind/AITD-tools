@@ -384,7 +384,17 @@ namespace LifeDISA
 					
 				case LifeEnum.IF_IN:
 				case LifeEnum.IF_OUT:
-					ins.Add("{0} {3} ({1}, {2})", Evalvar(), Evalvar(), Evalvar(), life == LifeEnum.IF_IN ? "in" : "not in");					
+					switch(life)
+					{
+						case LifeEnum.IF_IN:
+							ins.Add("{0} in ({1}, {2})", Evalvar(), Evalvar(), Evalvar());				
+							break;
+							
+						case LifeEnum.IF_OUT:
+							ins.Add("{0} not in ({1}, {2})", Evalvar(), Evalvar(), Evalvar());				
+							break;							
+					}
+						
 					ins.Goto = GetParam() * 2 + pos;
 					break;
 					
