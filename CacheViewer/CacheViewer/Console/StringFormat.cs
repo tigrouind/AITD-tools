@@ -83,31 +83,8 @@ namespace CacheViewer
 						}
 					}
 					
-					if (value.Type == typeof(int))
-					{
-						ToString(value.Int);
-					}
-					else if (value.Type == typeof(uint))
-			        {
-			        	ToString(value.UInt);	
-			        }
-					else if (value.Type == typeof(char))
-					{
-						ToString(value.Char);	
-					}
-					else if (value.Type == typeof(string))
-					{
-						ToString(value.String);	
-					}
-					else if (value.Type == null)
-					{
-						throw new IndexOutOfRangeException();
-					}
-					else
-					{
-						throw new NotSupportedException();
-					}
-					
+					ToString(value);
+										
 					//padding left
 					if (width > 0)
 					{
@@ -140,6 +117,34 @@ namespace CacheViewer
 				}
 			}
 		}		
+		
+		static void ToString(FormatArgument value)
+		{
+			if (value.Type == typeof(int))
+			{
+				ToString(value.Int);
+			}
+			else if (value.Type == typeof(uint))
+	        {
+	        	ToString(value.UInt);	
+	        }
+			else if (value.Type == typeof(char))
+			{
+				ToString(value.Char);	
+			}
+			else if (value.Type == typeof(string))
+			{
+				ToString(value.String);	
+			}
+			else if (value.Type == null)
+			{
+				throw new IndexOutOfRangeException();
+			}
+			else
+			{
+				throw new NotSupportedException();
+			}
+		}
 				
 		static void ToString(uint value)
 		{
