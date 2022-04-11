@@ -63,7 +63,7 @@ namespace CacheViewer
 				return String;
 			}
 			
-			if(Type == null)
+			if (Type == null)
 			{
 				return string.Empty;
 			}

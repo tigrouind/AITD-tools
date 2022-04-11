@@ -5,25 +5,31 @@ namespace CacheViewer
 	//GC friendly (unlike string.Format())	
 	public static class StringFormat
 	{			
-		public static char[] Buffer = new char[256];
-		public static int BufferLength;
-		static int charStart, charLength;
+		public readonly static StringBuffer Buffer = new StringBuffer();
+		static readonly StringBuffer temp = new StringBuffer();
+		static readonly StringBuffer args = new StringBuffer();
 				
 		public static void Format(string format, FormatArgument arg0, FormatArgument arg1, FormatArgument arg2, FormatArgument arg3, FormatArgument arg4)
 		{			
-			Array.Clear(Buffer, 0, Buffer.Length);
-			BufferLength = 0;
+			Buffer.Clear();
 			int pos = 0;
 			while (pos < format.Length)
 			{
 				char ch = format[pos++];
 				if (ch == '{')
 				{					
+					int arg = 0;
 					ch = format[pos++];
+					
 					if (ch < '0' || ch > '9') throw new FormatException();
+					do
+					{
+	                    arg = arg * 10 + ch - '0';		                  
+	                    ch = format[pos++];
+	                } 
+					while (ch >= '0' && ch <= '9');
 					
 					FormatArgument value;
-					int arg = ch - '0';
 					switch (arg)
 					{
 						case 0:
@@ -45,96 +51,93 @@ namespace CacheViewer
 							throw new FormatException();
 					}
 					
+					bool neg = false;
 					int width = 0;
-					int zeroPad = 0;
-					ch = format[pos++];
 					
 					//padding (optional)
 					if (ch == ',') 
 					{		
 						ch = format[pos++];
+						if (ch == '-')
+						{
+							neg = true;
+							ch = format[pos++];
+						}
 						
 						if (ch < '0' || ch > '9') throw new FormatException();
 						do
 						{
-		                    width = width * 10 + ch - '0';		                    
-		                    if (pos == format.Length) throw new FormatException();
+		                    width = width * 10 + ch - '0';		                  
 		                    ch = format[pos++];
 		                } 
 						while (ch >= '0' && ch <= '9');
 						
-						//zero padding (optional)
-						if (ch == ':')
+						if (neg)
 						{
-							ch = format[pos++];
-							if (ch != 'D') throw new FormatException();
-							
-							ch = format[pos++];
-							if (ch < '0' || ch > '9') throw new FormatException();
-							do
-							{	 
-								zeroPad = zeroPad * 10 + ch - '0';								
-			                    if (pos == format.Length) throw new FormatException();
-			                    ch = format[pos++];
-			                } 
-							while (ch >= '0' && ch <= '9');
-							
-							if(zeroPad > width) width = zeroPad;
+							width = -width;
 						}
 					}
 					
+					//format arguments (optional)
+					args.Clear();
+					if (ch == ':')
+					{						
+						ch = format[pos++];
+						if (ch == '}') throw new FormatException();
+																		
+						do
+						{
+							args.Append(ch);
+							ch = format[pos++];
+						}
+						while(ch != '}');
+					}
+					
+					if (ch != '}') throw new FormatException();
+										
 					ToString(value);
 										
 					//padding left
 					if (width > 0)
 					{
-						for(int i = 0 ; i < width - charLength ; i++)
-						{
-							Buffer[BufferLength++] = zeroPad > 0 ? '0' : ' ';
-						}
+						Buffer.Append(' ', width - temp.Length);
 					}
 					
-					for(int i = 0 ; i < charLength ; i++)
-					{
-						Buffer[BufferLength++] = Buffer[i + charStart];
-					}
+					Buffer.Append(temp);
 	
 					//padding right					
 					if (width < 0)
 					{
-						width = -width;
-						for(int i = 0 ; i < width - charLength ; i++)
-						{
-							Buffer[BufferLength++] = ' ';
-						}
+						Buffer.Append(' ', -width - temp.Length);
 					}
-																																		
-					if (ch != '}') throw new FormatException();
 				}
 				else
 				{
-					Buffer[BufferLength++] = ch;
+					Buffer.Append(ch);
 				}
 			}
 		}		
 		
 		static void ToString(FormatArgument value)
-		{
+		{			
+			temp.Clear();
 			if (value.Type == typeof(int))
-			{
-				ToString(value.Int);
+			{				
+				int digits = ParseIntFormat();
+				temp.Append(value.Int, digits);
 			}
 			else if (value.Type == typeof(uint))
-	        {
-	        	ToString(value.UInt);	
+	        {		
+				int digits = ParseIntFormat();				
+	        	temp.Append(value.UInt, digits);
 	        }
 			else if (value.Type == typeof(char))
 			{
-				ToString(value.Char);	
+				temp.Append(value.Char);
 			}
 			else if (value.Type == typeof(string))
 			{
-				ToString(value.String);	
+				temp.Append(value.String);
 			}
 			else if (value.Type == null)
 			{
@@ -146,53 +149,25 @@ namespace CacheViewer
 			}
 		}
 				
-		static void ToString(uint value)
+		static int ParseIntFormat()
 		{
-			charLength = 0;
-			charStart = Buffer.Length;			
-			do
-			{	
-				var reminder = value % 10;
-				Buffer[--charStart] = (char)(reminder + '0');
-				value /= 10;
-				charLength++;
-			}
-			while(value > 0);
-		}		
-		
-		static void ToString(int value)
-		{
-			bool negative = false;
-			if (value < 0)
-			{
-				value = -value;
-				negative = true;
+			int length = 0;
+			if (args.Length > 0)
+			{		
+				int pos = 0;
+				char ch = args[pos++];
+				if (ch != 'D') throw new FormatException();
+				
+				do
+				{
+					ch = args[pos++];
+					if (ch < '0' || ch > '9') throw new FormatException();
+					length = length * 10 + ch - '0';	
+				}
+				while(pos < args.Length);
 			}
 			
-			ToString((uint)value);
-			
-			if(negative) 
-			{
-				Buffer[--charStart] = '-';
-				charLength++;
-			}
-		}	
-
-		static void ToString(char value)
-		{
-			charLength = 1;
-			charStart = Buffer.Length;
-			Buffer[--charStart] = value;
-		}	
-
-		static void ToString(string value)
-		{
-			charLength = value.Length;
-			charStart = Buffer.Length;
-			for(int i = value.Length - 1 ; i >= 0 ; i--)
-			{
-				Buffer[--charStart] = value[i];
-			}			
+			return length;
 		}		
 	}
 }

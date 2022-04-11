@@ -112,7 +112,7 @@ namespace CacheViewer
 		                         FormatArgument arg4 = default(FormatArgument))
 		{
 			StringFormat.Format(format, arg0, arg1, arg2, arg3, arg4);
-			for(int i = 0 ; i < StringFormat.BufferLength ; i++)
+			for(int i = 0 ; i < StringFormat.Buffer.Length ; i++)
 			{
 				Write(StringFormat.Buffer[i]);				
 			}
