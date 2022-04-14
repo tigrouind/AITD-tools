@@ -2,6 +2,7 @@
 {
 	public enum VarEnum
 	{
+		NONE,
 		LIFES,
 		BODYS, 
 		MUSIC, 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -14,17 +15,32 @@ namespace CacheViewer
 		static readonly Dictionary<GameVersion, int[]> gameConfigs = new Dictionary<GameVersion, int[]>
 		{
 			// ListSamp / ListLife / ListBody / ListAnim / ListTrak / _MEMORY_ 
-			{ GameVersion.AITD1, new [] { 0x218CB, 0x218CF, 0x218D7, 0x218D3, 0x218C7, 0x218BF } },
+			{ GameVersion.AITD1,        new [] { 0x218CB, 0x218CF, 0x218D7, 0x218D3, 0x218C7, 0x218BF } },
 			{ GameVersion.AITD1_FLOPPY, new [] { 0x2053E, 0x2049C, 0x20494, 0x20498, 0x204AA, 0x20538 } },
 			{ GameVersion.AITD1_DEMO,   new [] { 0x20506, 0x20464, 0x2045C, 0x20460, 0x20472, 0x20500 } },
 		};
 		static int entryPoint = -1;
-		static readonly Cache[] cache = { new Cache(), new Cache(), new Cache(), new Cache(), new Cache(), new Cache() };
+		static readonly VarParserExt varParser = new VarParserExt();
+		static readonly Cache[] cache = { 
+			new Cache(VarEnum.SOUNDS), 
+			new Cache(VarEnum.LIFES), 
+			new Cache(VarEnum.BODYS), 
+			new Cache(VarEnum.ANIMS), 
+			new Cache(VarEnum.TRACKS), 
+			new Cache(VarEnum.NONE) 
+		};
 		static int[] gameConfig;
+		static bool clearCache, showTimestamp;
 
 		public static void Main()
 		{
 			System.Console.Title = "AITD cache viewer";
+			
+			Directory.CreateDirectory("GAMEDATA");
+			if (File.Exists("GAMEDATA/vars.txt"))
+			{
+				varParser.Load("GAMEDATA/vars.txt", VarEnum.SOUNDS, VarEnum.LIFES, VarEnum.BODYS, VarEnum.ANIMS, VarEnum.TRACKS);
+			}
 			
 			while (true)
 			{
@@ -40,6 +56,7 @@ namespace CacheViewer
 
 				if (process != null)
 				{
+					ReadInput();
 					ReadMemory();
 				}
 
@@ -92,12 +109,24 @@ namespace CacheViewer
 				CloseReader();
 			}
 		}
+		
+		static void ReadInput()
+		{
+			switch (ReadKey().Key)
+			{
+				case ConsoleKey.F5:
+					clearCache = true;
+					break;
+					
+				case ConsoleKey.Spacebar:
+					showTimestamp = !showTimestamp;
+					break;
+			}
+		}
 
 		static void ReadMemory()
 		{
-			bool readSuccess = true;
-			bool clearCache = ReadKey().Key == ConsoleKey.F5;
-						
+			bool readSuccess = true;						
 			int ticks = Environment.TickCount;
 			for(int i = 0 ; i < cache.Length ; i++)
 			{
@@ -129,7 +158,8 @@ namespace CacheViewer
 					}
 				}
 			}
-
+			
+			clearCache = false; 
 			if (!readSuccess)
 			{
 				CloseReader();
@@ -308,8 +338,12 @@ namespace CacheViewer
 						bool kilobyte = entry.Size > 1024;
 						TimeSpan time = TimeSpan.FromSeconds(entry.Time / 60);
 						
-						Console.SetCursorPosition(column * 19, row + 4);						
-						Console.Write("{0,5} {1,4} {2} {3,2}:{4:D2}", entry.Id, kilobyte ? entry.Size / 1024 : entry.Size, kilobyte ? 'K' : 'B', time.Minutes, time.Seconds);
+						Console.SetCursorPosition(column * 19, row + 4);	
+						Console.Write(showTimestamp ? "{0,3} {2}:{3:D2}:{4:D2} {5,4} {6}" : "{0,3} {1,-7} {5,4} {6}",
+							entry.Id, 
+							varParser.GetText(ch.Section, entry.Id), 
+							time.Hours, time.Minutes, time.Seconds, 
+							kilobyte ? entry.Size / 1024 : entry.Size, kilobyte ? 'K' : 'B');
 						row++;
 					}
 				}

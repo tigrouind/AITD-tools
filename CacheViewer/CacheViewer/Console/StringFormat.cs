@@ -9,7 +9,7 @@ namespace CacheViewer
 		static readonly StringBuffer temp = new StringBuffer();
 		static readonly StringBuffer args = new StringBuffer();
 				
-		public static void Format(string format, FormatArgument arg0, FormatArgument arg1, FormatArgument arg2, FormatArgument arg3, FormatArgument arg4)
+		public static void Format(string format, FormatArgument arg0, FormatArgument arg1, FormatArgument arg2, FormatArgument arg3, FormatArgument arg4, FormatArgument arg5, FormatArgument arg6)
 		{			
 			Buffer.Clear();
 			int pos = 0;
@@ -46,6 +46,12 @@ namespace CacheViewer
 							break;							
 						case 4:
 							value = arg4;
+							break;	
+						case 5:
+							value = arg5;
+							break;	
+						case 6:
+							value = arg6;
 							break;									
 						default:
 							throw new FormatException();
