@@ -54,6 +54,7 @@
   <ItemGroup>
     <Compile Include="Cache.cs" />
     <Compile Include="CacheEntry.cs" />
+    <Compile Include="CacheEntryComparer.cs" />
     <Compile Include="Console\Console.cs" />
     <Compile Include="Console\FormatArgument.cs" />
     <Compile Include="Console\StringBuffer.cs" />

@@ -63,7 +63,11 @@ VarsViewer [-screen-width width] [-screen-height height]
 | <kbd>s</kbd> | save state
 | <kbd>c</kbd> | compare current state with saved state
 
+# CacheViewer
+
 ## Commands
 | Key | Description |
 | :-: | - |
-| <kbd>F5</kbd> | clear all cache entries (ideally, the game should be paused before by pressing `p`)
+| <kbd>s</kbd> | sort entries by timestamp
+| <kbd>space</kbd> | display cache entries timestamp / name
+| <kbd>F5</kbd> | clear all cache entries

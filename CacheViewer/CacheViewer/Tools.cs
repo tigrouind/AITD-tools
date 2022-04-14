@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace CacheViewer
 {
@@ -43,6 +45,29 @@ namespace CacheViewer
 			}
 			
 			return count;
+		}	
+
+		public static void InsertionSort<T>(LinkedList<T> list, IComparer<T> comparer)
+		{
+			var node = list.First;
+			while (node != null)
+			{
+				var next = node.Next;
+				
+				var min = node;
+				for (var comp = node.Previous; comp != null && comparer.Compare(node.Value, comp.Value) < 0; comp = comp.Previous)
+				{
+					min = comp;
+				}
+				
+				if(node != min) 
+				{				
+					list.Remove(node);
+					list.AddBefore(min, node);
+				}
+				
+				node = next;
+			}
 		}		
 	}
 }

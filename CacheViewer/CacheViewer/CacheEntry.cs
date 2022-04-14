@@ -16,5 +16,6 @@ namespace CacheViewer
 		public int TouchedTicks; //time != lasTtime
 		public int Ticks; //last time seen
 		public int StartTicks; //time added
+		public int Index; //for sorting
 	}
 }
