@@ -18,7 +18,7 @@ namespace VarsViewer
 		GameConfig gameConfig;
 		Dictionary<GameVersion, GameConfig> gameConfigs = new Dictionary<GameVersion, GameConfig>
 		{
-			{ GameVersion.AITD1, new GameConfig(0x2184B, 0x22074) },
+			{ GameVersion.AITD1,        new GameConfig(0x2184B, 0x22074) },
 			{ GameVersion.AITD1_FLOPPY, new GameConfig(0x2048E, 0x204B8) },
 			{ GameVersion.AITD1_DEMO  , new GameConfig(0x20456, 0x20480) }
 		};
