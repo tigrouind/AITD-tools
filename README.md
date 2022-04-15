@@ -37,6 +37,10 @@ How to install it :
 Copy file *LISTTRAK.PAK* into a folder named GAMEDATA
 
 # MemoryViewer
+
+Supported :
+* All DOS games
+
 ## Command-line arguments : 
 ```
 MemoryViewer [-screen-width width] [-screen-height height] [-zoom zoom]
@@ -51,6 +55,9 @@ MemoryViewer [-screen-width width] [-screen-height height] [-zoom zoom]
 
 # VarsViewer
 
+Supported :
+* Alone in the Dark 1 (CD-ROM, floppy, demo)
+
 ## Command-line arguments : 
 ```
 VarsViewer [-screen-width width] [-screen-height height]
@@ -64,6 +71,9 @@ VarsViewer [-screen-width width] [-screen-height height]
 | <kbd>c</kbd> | compare current state with saved state
 
 # CacheViewer
+
+Supported :
+* Alone in the Dark 1 (CD-ROM, floppy, demo)
 
 ## Commands
 | Key | Description |
