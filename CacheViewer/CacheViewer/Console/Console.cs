@@ -66,7 +66,7 @@ namespace CacheViewer
 		}
 
 		static readonly short SIZEX = 120;
-		static readonly short SIZEY = 80;
+		static readonly short SIZEY = 120;
 		static readonly SafeFileHandle handle;
 		static CharInfo[] buf = new CharInfo[SIZEX * SIZEY];
 		static CharInfo[] previousBuf = new CharInfo[SIZEX * SIZEY];
