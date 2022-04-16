@@ -32,7 +32,6 @@ namespace CacheViewer
 		static int[] gameConfig;
 		static bool clearCache, showTimestamp;
 		static int uniqueIndex;
-		static int lastSortTime;
 		static CacheEntryComparer comparer = new CacheEntryComparer();
 
 		public static void Main()
@@ -58,11 +57,13 @@ namespace CacheViewer
 				}
 
 				if (process != null)
-				{
-					int ticks = Environment.TickCount;					
-					ReadInput(ticks);
-					ReadMemory(ticks);
-					SortEntries(ticks);
+				{										
+					ReadInput();
+					ReadMemory();
+					if (comparer.SortByTimestamp)
+					{
+						SortEntries();
+					}
 				}
 
 				if (process != null)
@@ -115,15 +116,6 @@ namespace CacheViewer
 			}
 		}
 		
-		static void SortEntries(int ticks)
-		{
-			if (comparer.SortByTimestamp && (ticks - lastSortTime) > 1000)
-			{
-				lastSortTime = ticks;
-				SortEntries();
-			}
-		}
-		
 		static void SortEntries()
 		{
 			for(int i = 0 ; i < cache.Length ; i++)
@@ -136,7 +128,7 @@ namespace CacheViewer
 			}
 		}
 		
-		static void ReadInput(int ticks)
+		static void ReadInput()
 		{
 			switch (ReadKey().Key)
 			{
@@ -150,14 +142,14 @@ namespace CacheViewer
 					
 				case ConsoleKey.S:
 					comparer.SortByTimestamp = !comparer.SortByTimestamp;
-					lastSortTime = ticks;
 					SortEntries();
 					break;
 			}
 		}
 
-		static void ReadMemory(int ticks)
+		static void ReadMemory()
 		{
+			int ticks = Environment.TickCount;
 			bool readSuccess = true;									
 			for(int i = 0 ; i < cache.Length ; i++)
 			{
