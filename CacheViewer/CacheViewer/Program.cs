@@ -271,14 +271,14 @@ namespace CacheViewer
 			{
 				var next = node.Next;
 				var entry = node.Value;
-				if (Shared.Tools.GetTimeSpan(ticks, entry.Ticks) > TimeSpan.FromSeconds(3))
+				if (Shared.Tools.GetTimeSpan(ticks, entry.Ticks) > TimeSpan.FromSeconds(2))
 				{
 					ch.Entries.Remove(node);
 				}
 				else
 				{
-					entry.Touched = Shared.Tools.GetTimeSpan(ticks, entry.TouchedTicks) < TimeSpan.FromSeconds(2);
-					entry.Added = Shared.Tools.GetTimeSpan(ticks, entry.StartTicks) < TimeSpan.FromSeconds(3);
+					entry.Touched = Shared.Tools.GetTimeSpan(ticks, entry.TouchedTicks) < TimeSpan.FromSeconds(1);
+					entry.Added = Shared.Tools.GetTimeSpan(ticks, entry.StartTicks) < TimeSpan.FromSeconds(2);
 					entry.Removed = Shared.Tools.GetTimeSpan(ticks, entry.Ticks) > TimeSpan.Zero;				
 				}				
 				node = next;
