@@ -367,15 +367,18 @@ namespace CacheViewer
 							Console.BackgroundColor = ConsoleColor.Black;
 						}					
 
-						bool kilobyte = entry.Size > 1024;
+						int entrySize = entry.Size;
+						if (entrySize >= 1000 && entrySize < 1024) entrySize = 1024;
+						bool kilobyte = entrySize >= 1024;
+						
 						TimeSpan time = TimeSpan.FromSeconds(entry.Time / 60);
 						
 						Console.SetCursorPosition(column * 19, row + 4);	
-						Console.Write(showTimestamp ? "{0,3} {2}:{3:D2}:{4:D2} {5,4} {6}" : "{0,3} {1,-7} {5,4} {6}",
+						Console.Write(showTimestamp ? "{0,3} {2:D2}:{3:D2}.{4:D2} {5,3} {6}" : "{0,3} {1,-8} {5,3} {6}",
 							entry.Id, 
 							varParser.GetText(ch.Section, entry.Id), 
-							time.Hours, time.Minutes, time.Seconds, 
-							kilobyte ? entry.Size / 1024 : entry.Size, kilobyte ? 'K' : 'B');
+							time.Minutes, time.Seconds, entry.Time % 60,
+							kilobyte ? entrySize / 1024 : entrySize, kilobyte ? 'K' : 'B');
 						row++;
 					}
 				}

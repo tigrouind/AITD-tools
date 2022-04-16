@@ -8,7 +8,7 @@ namespace CacheViewer
 	{
 		protected override string FormatText(string text)
 		{			
-			const int maximumSize = 7;			
+			const int maximumSize = 8;			
 			text = Regex.Replace(text, @"^(E\d+|R\d+|-|player)+\s+", string.Empty, RegexOptions.IgnoreCase);
 			if (text.Length > maximumSize) 
 			{
