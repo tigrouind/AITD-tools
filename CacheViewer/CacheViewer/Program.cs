@@ -20,7 +20,7 @@ namespace CacheViewer
 			{ GameVersion.AITD1_DEMO,   new [] { 0x20506, 0x20464, 0x2045C, 0x20460, 0x20472, 0x20500 } },
 		};
 		static int entryPoint = -1;
-		static readonly VarParserExt varParser = new VarParserExt();
+		static VarParserExt varParser;
 		static readonly Cache[] cache = { 
 			new Cache(VarEnum.SOUNDS), 
 			new Cache(VarEnum.LIFES), 
@@ -41,6 +41,7 @@ namespace CacheViewer
 			Directory.CreateDirectory("GAMEDATA");
 			if (File.Exists("GAMEDATA/vars.txt"))
 			{
+				varParser = new VarParserExt();
 				varParser.Load("GAMEDATA/vars.txt", VarEnum.SOUNDS, VarEnum.LIFES, VarEnum.BODYS, VarEnum.ANIMS, VarEnum.TRACKS);
 			}
 			
@@ -245,7 +246,7 @@ namespace CacheViewer
 				}
 				else if (entry.Removed)
 				{
-					entry.StartTicks = ticks;
+					entry.StartTicks = ticks; //entry removed then added should appears as added
 				}
 				
 				entry.Size = memory.ReadUnsignedShort(addr+4);
@@ -319,19 +320,30 @@ namespace CacheViewer
 			}
 		}
 		
-		static void WriteEntry(CacheEntry entry, VarEnum section)
+		static void WriteEntry(CacheEntry entry, Cache ch)
 		{
-			int entrySize = entry.Size;
-			if (entrySize >= 1000 && entrySize < 1024) entrySize = 1024;
-			bool kilobyte = entrySize >= 1024;
+			Console.Write("{0,3} ", entry.Id);
+			if (ch.Name == "_MEMORY_")
+			{
+				Console.Write("        ");
+			}
+			else if (showTimestamp || varParser == null)
+			{
+				TimeSpan time = TimeSpan.FromSeconds(entry.Time / 60);
+				Console.Write("{0:D2}:{1:D2}.{2:D2}", time.Minutes, time.Seconds, entry.Time % 60);
+			}
+			else
+			{
+				Console.Write("{0,-8}", varParser.GetText(ch.Section, entry.Id));
+			}
 			
-			TimeSpan time = TimeSpan.FromSeconds(entry.Time / 60);
-						
-			Console.Write(showTimestamp ? "{0,3} {2:D2}:{3:D2}.{4:D2} {5,3} {6}" : "{0,3} {1,-8} {5,3} {6}",
-				entry.Id, 
-				varParser.GetText(section, entry.Id), 
-				time.Minutes, time.Seconds, entry.Time % 60,
-				kilobyte ? entrySize / 1024 : entrySize, kilobyte ? 'K' : 'B');
+			int entrySize = entry.Size;
+			if (entrySize >= 1000 && entrySize < 1024) 
+			{
+				entrySize = 1024; //make sure entry size always fit 3 digits
+			}
+			bool kilobyte = entrySize >= 1024;
+			Console.Write(" {0,3} {1}", kilobyte ? entrySize /= 1024 : entrySize, kilobyte ? 'K' : 'B');
 		}
 		
 		static void Render()
@@ -383,7 +395,7 @@ namespace CacheViewer
 						}					
 
 						Console.SetCursorPosition(column * 19, row + 4);	
-						WriteEntry(entry, ch.Section);
+						WriteEntry(entry, ch);
 						row++;
 					}
 				}
