@@ -117,6 +117,10 @@ namespace CacheViewer
 						Buffer.Append(' ', -width - temp.Length);
 					}
 				}
+				else if(ch == '}')
+				{
+					throw new FormatException();
+				}
 				else
 				{
 					Buffer.Append(ch);
