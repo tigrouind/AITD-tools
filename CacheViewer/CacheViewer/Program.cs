@@ -14,21 +14,23 @@ namespace CacheViewer
 		static readonly byte[] memory = new byte[640 * 1024];
 		static readonly Dictionary<GameVersion, int[]> gameConfigs = new Dictionary<GameVersion, int[]>
 		{
-			// ListSamp / ListLife / ListBody / ListAnim / ListTrak / _MEMORY_ 
-			{ GameVersion.AITD1,        new [] { 0x218CB, 0x218CF, 0x218D7, 0x218D3, 0x218C7, 0x218BF } },
-			{ GameVersion.AITD1_FLOPPY, new [] { 0x2053E, 0x2049C, 0x20494, 0x20498, 0x204AA, 0x20538 } },
-			{ GameVersion.AITD1_DEMO,   new [] { 0x20506, 0x20464, 0x2045C, 0x20460, 0x20472, 0x20500 } },
+			// ListSamp / ListLife / ListBody / ListAnim / ListTrak / ListMus / _MEMORY_  
+			{ GameVersion.AITD1,        new [] { 0x218CB, 0x218CF, 0x218D7, 0x218D3, 0x218C7, 0x218C3, 0x218BF } },
+			{ GameVersion.AITD1_FLOPPY, new [] { 0x2053E, 0x2049C, 0x20494, 0x20498, 0x204AA, 0x204AE, 0x20538 } },
+			{ GameVersion.AITD1_DEMO,   new [] { 0x20506, 0x20464, 0x2045C, 0x20460, 0x20472, 0x20476, 0x20500 } },
 		};
 		static int entryPoint = -1;
 		static VarParserExt varParser;
-		static readonly Cache[] cache = { 
-			new Cache(VarEnum.SOUNDS), 
-			new Cache(VarEnum.LIFES), 
-			new Cache(VarEnum.BODYS), 
-			new Cache(VarEnum.ANIMS), 
-			new Cache(VarEnum.TRACKS), 
-			new Cache(VarEnum.NONE) 
+		static readonly Cache[] cacheConfig = { 
+			new Cache(0, VarEnum.SOUNDS), 
+			new Cache(1, VarEnum.LIFES), 
+			new Cache(2, VarEnum.BODYS), 
+			new Cache(3, VarEnum.ANIMS), 
+			new Cache(4, VarEnum.TRACKS), 
+			new Cache(5, VarEnum.MUSIC),
+			new Cache(6, VarEnum.NONE) 
 		};
+		static Cache[] cache;
 		static int[] gameConfig;
 		static bool clearCache, showTimestamp;
 		static int uniqueIndex;
@@ -42,7 +44,7 @@ namespace CacheViewer
 			if (File.Exists("GAMEDATA/vars.txt"))
 			{
 				varParser = new VarParserExt();
-				varParser.Load("GAMEDATA/vars.txt", VarEnum.SOUNDS, VarEnum.LIFES, VarEnum.BODYS, VarEnum.ANIMS, VarEnum.TRACKS);
+				varParser.Load("GAMEDATA/vars.txt", cacheConfig.Select(x => x.Section).ToArray());
 			}
 			
 			while (true)
@@ -110,6 +112,17 @@ namespace CacheViewer
 				}	
 
 				gameConfig = gameConfigs[gameVersion];	
+				
+				switch(gameVersion)
+				{
+					case GameVersion.AITD1:
+						cache = cacheConfig.Where(x => x.Section != VarEnum.MUSIC).ToArray();
+						break;
+						
+					default:
+						cache = cacheConfig;
+						break;
+				}
 			} 
 			else
 			{
@@ -155,7 +168,7 @@ namespace CacheViewer
 			for(int i = 0 ; i < cache.Length ; i++)
 			{
 				var ch = cache[i];
-				if (readSuccess &= (process.Read(memory, entryPoint + gameConfig[i], 4) > 0))
+				if (readSuccess &= (process.Read(memory, entryPoint + gameConfig[ch.Index], 4) > 0))
 				{
 					int cachePointer = memory.ReadFarPointer(0);	
 					if(cachePointer != 0 && (readSuccess &= (process.Read(memory, cachePointer - 16, 4096) > 0))) 
@@ -346,6 +359,52 @@ namespace CacheViewer
 			Console.Write(" {0,3} {1}", kilobyte ? entrySize /= 1024 : entrySize, kilobyte ? 'K' : 'B');
 		}
 		
+		static void RenderCache(Cache ch, int column)
+		{
+			Console.ForegroundColor = ConsoleColor.Gray;
+			Console.BackgroundColor = ConsoleColor.Black;
+			
+			Console.SetCursorPosition(column * 19 + 5, 0);						
+			Console.Write(ch.Name);
+								
+			Console.SetCursorPosition(column * 19, 1);					
+			WriteStats(ch.MaxFreeData - ch.SizeFreeData, ch.MaxFreeData);
+													
+			Console.SetCursorPosition(column * 19, 2);
+			WriteStats(ch.NumUsedEntry, ch.NumMaxEntry);
+
+			int row = 0;
+			for (var node = ch.Entries.First; node != null; node = node.Next)
+			{
+				var entry = node.Value;
+
+				if (entry.Removed)
+				{
+					Console.ForegroundColor = ConsoleColor.Black;
+					Console.BackgroundColor = ConsoleColor.DarkGray;
+				}
+				else if (entry.Added)
+				{
+					Console.ForegroundColor = ConsoleColor.Black;
+					Console.BackgroundColor = ConsoleColor.DarkGreen;
+				}
+				else if (entry.Touched)
+				{
+					Console.ForegroundColor = ConsoleColor.DarkYellow;
+					Console.BackgroundColor = ConsoleColor.Black;
+				}
+				else
+				{
+					Console.ForegroundColor = ConsoleColor.DarkGray;
+					Console.BackgroundColor = ConsoleColor.Black;
+				}					
+
+				Console.SetCursorPosition(column * 19, row + 4);	
+				WriteEntry(entry, ch);
+				row++;
+			}
+		}
+		
 		static void Render()
 		{
 			Console.Clear();
@@ -356,50 +415,9 @@ namespace CacheViewer
 				var ch = cache[i];
 				if (ch.Name != null)
 				{
-					Console.ForegroundColor = ConsoleColor.Gray;
-					Console.BackgroundColor = ConsoleColor.Black;
-					
-					Console.SetCursorPosition(column * 19 + 5, 0);						
-					Console.Write(ch.Name);
-										
-					Console.SetCursorPosition(column * 19, 1);					
-					WriteStats(ch.MaxFreeData - ch.SizeFreeData, ch.MaxFreeData);
-															
-					Console.SetCursorPosition(column * 19, 2);
-					WriteStats(ch.NumUsedEntry, ch.NumMaxEntry);
-
-					int row = 0;
-					for (var node = ch.Entries.First; node != null; node = node.Next)
-					{
-						var entry = node.Value;
-
-						if (entry.Removed)
-						{
-							Console.ForegroundColor = ConsoleColor.Black;
-							Console.BackgroundColor = ConsoleColor.DarkGray;
-						}
-						else if (entry.Added)
-						{
-							Console.ForegroundColor = ConsoleColor.Black;
-							Console.BackgroundColor = ConsoleColor.DarkGreen;
-						}
-						else if (entry.Touched)
-						{
-							Console.ForegroundColor = ConsoleColor.DarkYellow;
-							Console.BackgroundColor = ConsoleColor.Black;
-						}
-						else
-						{
-							Console.ForegroundColor = ConsoleColor.DarkGray;
-							Console.BackgroundColor = ConsoleColor.Black;
-						}					
-
-						Console.SetCursorPosition(column * 19, row + 4);	
-						WriteEntry(entry, ch);
-						row++;
-					}
+					RenderCache(ch, column);
 				}
-
+				
 				column++;
 			}
 
