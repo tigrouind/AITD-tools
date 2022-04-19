@@ -65,11 +65,13 @@ namespace CacheViewer
 			public short Bottom;
 		}
 
-		static readonly short SIZEX = 120;
-		static readonly short SIZEY = 120;
+		static readonly short SIZEX = 256;
+		static readonly short SIZEY = 128;
 		static readonly SafeFileHandle handle;
 		static CharInfo[] buf = new CharInfo[SIZEX * SIZEY];
 		static CharInfo[] previousBuf = new CharInfo[SIZEX * SIZEY];
+		static int maxSizeX;
+		static int maxSizeY;
 		
 		public static ConsoleColor BackgroundColor;
 		public static ConsoleColor ForegroundColor;
@@ -83,7 +85,10 @@ namespace CacheViewer
 
 		public static void Clear()
 		{
-			Array.Clear(buf, 0, buf.Length);
+			for(int i = 0 ; i < maxSizeY ; i++)
+			{
+				Array.Clear(buf, i * SIZEX, maxSizeX);
+			}
 		}
 		
 		public static void Write(char value)
@@ -92,6 +97,9 @@ namespace CacheViewer
 			{
 				short color = (short)((int)ForegroundColor | (int)BackgroundColor << 4);
 				buf[CursorTop * SIZEX + CursorLeft] = new CharInfo { Char = new CharUnion { UnicodeChar = value }, Attributes = color };
+				
+				if (CursorLeft >= maxSizeX) maxSizeX = CursorLeft + 1;
+				if (CursorTop >= maxSizeY) maxSizeY = CursorTop + 1;
 				CursorLeft++;
 			}
 		}
@@ -148,9 +156,9 @@ namespace CacheViewer
 			bool refresh = false;
 			rect = new SmallRect { Left = short.MaxValue, Top = short.MaxValue, Right = short.MinValue, Bottom = short.MinValue };
 
-			for (short y = 0 ; y < SIZEY ; y++)
+			for (short y = 0 ; y < maxSizeY ; y++)
 			{
-				for (short x = 0 ; x < SIZEX ; x++)
+				for (short x = 0 ; x < maxSizeX ; x++)
 				{
 					int i = x + y * SIZEX;
 					if (!buf[i].Equals(previousBuf[i]))
