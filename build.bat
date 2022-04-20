@@ -12,6 +12,10 @@ if %ERRORLEVEL% NEQ 0 pause
 if %ERRORLEVEL% NEQ 0 pause
 %WINDIR%\Microsoft.NET\Framework\v4.0.30319\msbuild.exe /p:Configuration=Release ".\VarsViewer\VarsViewer.sln" /t:Rebuild
 if %ERRORLEVEL% NEQ 0 pause
+if exist C:\MinGW\bin\gcc.exe (
+	C:\MinGW\bin\gcc.exe -shared -O2 -s "UnPAK\unpak.c" -o "UnPAK\bin\Release\UnPAK.dll"
+	if %ERRORLEVEL% NEQ 0 pause
+) 
 
 "%PROGRAMFILES%\7-Zip\7z" a -tzip "AITD-tools.zip" ^
  ".\CacheViewer\CacheViewer\bin\Release\*.exe" ^
