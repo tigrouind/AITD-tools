@@ -32,9 +32,7 @@ namespace CacheViewer
 		};
 		static Cache[] cache;
 		static int[] gameConfig;
-		static bool clearCache, showTimestamp;
-		static int uniqueIndex;
-		static CacheEntryComparer comparer = new CacheEntryComparer();
+		static bool clearCache, showTimestamp, sortEntries;
 
 		public static void Main()
 		{
@@ -63,9 +61,9 @@ namespace CacheViewer
 				{										
 					ReadInput();
 					ReadMemory();
-					if (comparer.SortByTimestamp)
+					if (sortEntries)
 					{
-						SortEntries();
+						Sort.SortEntries(cache);
 					}
 				}
 
@@ -130,18 +128,6 @@ namespace CacheViewer
 			}
 		}
 		
-		static void SortEntries()
-		{
-			for(int i = 0 ; i < cache.Length ; i++)
-			{
-				var ch = cache[i];		
-				if (ch.Name != "_MEMORY_")
-				{				
-					Tools.InsertionSort(ch.Entries, comparer);
-				}
-			}
-		}
-		
 		static void ReadInput()
 		{
 			switch (ReadKey().Key)
@@ -155,8 +141,8 @@ namespace CacheViewer
 					break;
 					
 				case ConsoleKey.S:
-					comparer.SortByTimestamp = !comparer.SortByTimestamp;
-					SortEntries();
+					sortEntries = !sortEntries;
+					Sort.SortEntries(cache);
 					break;
 			}
 		}
@@ -246,16 +232,8 @@ namespace CacheViewer
 					entry = new CacheEntry();
 					entry.Id = id;
 					entry.StartTicks = ticks;
-					entry.Index = uniqueIndex++;
-					
-					if (comparer.SortByTimestamp)
-					{
-						ch.Entries.AddFirst(entry);
-					}
-					else
-					{
-						ch.Entries.AddLast(entry);
-					}
+										
+					ch.Entries.AddLast(entry);
 				}
 				else if (entry.Removed)
 				{
@@ -264,6 +242,7 @@ namespace CacheViewer
 				
 				entry.Size = memory.ReadUnsignedShort(addr+4);
 				entry.Ticks = ticks;
+				entry.Index = i;
 								
 				if (ch.Name != "_MEMORY_")
 				{
@@ -366,6 +345,10 @@ namespace CacheViewer
 			
 			Console.SetCursorPosition(column * 19 + 5, 0);						
 			Console.Write(ch.Name);
+			if (sortEntries && ch.Name != "_MEMORY_")
+			{
+				Console.Write(" ▼");
+			}
 								
 			Console.SetCursorPosition(column * 19, 1);					
 			WriteStats(ch.MaxFreeData - ch.SizeFreeData, ch.MaxFreeData);
