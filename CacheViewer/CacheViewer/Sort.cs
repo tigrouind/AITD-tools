@@ -22,48 +22,39 @@ namespace CacheViewer
 		
 		static void SortEntries(Cache ch)
 		{
-			comparer.CompareMode = false;
 			Tools.InsertionSort(ch.Entries, comparer);
-			
-			Reset(ch);
-			Markdown(ch);			
-			
-			comparer.CompareMode = true;
-			Tools.InsertionSort(ch.Entries, comparer);
+			SelectionSort(ch.Entries);
 		}
-		
-		static void Reset(Cache ch)
-		{
-			for (var node = ch.Entries.First; node != null; node = node.Next)
-			{
-				node.Value.Sort = -1;
-			}
-		}
-		
-		static void Markdown(Cache ch)
-		{			
-			int uniqueId = 0;
-			bool anyItem = ch.Entries.Count > 0;
-			while (anyItem)
-			{			
-				anyItem = false;				
-				var minTime = uint.MaxValue;
 				
-				CacheEntry bestEntry = null;				
-				for (var node = ch.Entries.First; node != null; node = node.Next)
-				{
-					if (!node.Value.Removed && node.Value.Sort == -1 && node.Value.Time < minTime)
-					{
-						anyItem = true;
-						minTime = (bestEntry ?? node.Value).Time;
-						bestEntry = node.Value;
-					}
-				}
+		static void SelectionSort(LinkedList<CacheEntry> entries)
+		{			
+			var node = entries.Last;
+			while (node != null && node.Value.Removed)
+			{
+				node = node.Previous;
+			}
 			
-				if (anyItem)
-				{
-					bestEntry.Sort = uniqueId++;
-				}
+			while (node != null)
+			{
+				var minValue = uint.MaxValue;
+				var min = entries.First;
+				
+		        for (var comp = entries.First; comp != node.Next; comp = comp.Next)
+		        {
+		            if (comp.Value.Time < minValue)
+		            {
+		            	minValue = min.Value.Time;
+		                min = comp;
+		            }
+		        }				
+		        
+		        if (min != node)
+		        {
+		        	entries.Remove(min);
+		        	entries.AddAfter(node, min);
+		        }
+				
+				node = min.Previous;
 			}
 		}
 	}
