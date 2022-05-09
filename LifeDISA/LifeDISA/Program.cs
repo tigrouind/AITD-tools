@@ -25,15 +25,15 @@ namespace LifeDISA
 		static GameConfig config;
 		static readonly GameConfig[] gameConfigs =
 		{
-			new GameConfig(GameVersion.AITD1        , MacroTable.LifeA, MacroTable.EvalA),
-			new GameConfig(GameVersion.AITD1_FLOPPY , MacroTable.LifeA, MacroTable.EvalA),
-			new GameConfig(GameVersion.AITD1_DEMO   , MacroTable.LifeA, MacroTable.EvalA),
-			new GameConfig(GameVersion.AITD2        , MacroTable.LifeB, MacroTable.EvalB),
-			new GameConfig(GameVersion.AITD2_DEMO   , MacroTable.LifeB, MacroTable.EvalB),
-			new GameConfig(GameVersion.AITD3        , MacroTable.LifeB, MacroTable.EvalB),
-			new GameConfig(GameVersion.JACK         , MacroTable.LifeB, MacroTable.EvalB),
-			new GameConfig(GameVersion.TIMEGATE     , MacroTable.LifeB, MacroTable.EvalB),
-			new GameConfig(GameVersion.TIMEGATE_DEMO, MacroTable.LifeB, MacroTable.EvalB)				
+			new GameConfig(GameVersion.AITD1        , MacroTable.LifeA, MacroTable.EvalA, 52),
+			new GameConfig(GameVersion.AITD1_FLOPPY , MacroTable.LifeA, MacroTable.EvalA, 52),
+			new GameConfig(GameVersion.AITD1_DEMO   , MacroTable.LifeA, MacroTable.EvalA, 52),
+			new GameConfig(GameVersion.AITD2        , MacroTable.LifeB, MacroTable.EvalB, 54),
+			new GameConfig(GameVersion.AITD2_DEMO   , MacroTable.LifeB, MacroTable.EvalB, 54),
+			new GameConfig(GameVersion.AITD3        , MacroTable.LifeB, MacroTable.EvalB, 54),
+			new GameConfig(GameVersion.JACK         , MacroTable.LifeB, MacroTable.EvalB, 54),
+			new GameConfig(GameVersion.TIMEGATE     , MacroTable.LifeB, MacroTable.EvalB, 54),
+			new GameConfig(GameVersion.TIMEGATE_DEMO, MacroTable.LifeB, MacroTable.EvalB, 54)				
 		};
 
 		public static int Main(string[] args)
@@ -104,22 +104,11 @@ namespace LifeDISA
 			{
 				allBytes = File.ReadAllBytes(@"GAMEDATA\OBJETS.ITD");
 				int count = allBytes.ReadShort(0);
-				int offset;
-				
-				if (config.Version == GameVersion.JACK || config.Version == GameVersion.AITD2_DEMO || config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3
-				    || config.Version == GameVersion.TIMEGATE || config.Version == GameVersion.TIMEGATE_DEMO)
-				{
-					offset = 54;
-				}
-				else
-				{
-					offset = 52;
-				}
-				
+								
 				for(int i = 0 ; i < count ; i++)
 				{
 					string name = null;
-					int n = i * offset + 2;
+					int n = i * config.Offset + 2;
 					int body = allBytes.ReadShort(n + 2);
 					if(body != -1)
 					{
