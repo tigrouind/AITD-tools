@@ -20,9 +20,9 @@ namespace MemoryViewer
 			
 		public static int Main(string[] args)
 		{
-			winx = Tools.GetArgument(args, "-screen-width") ?? 640;
-			winy = Tools.GetArgument(args, "-screen-height") ?? 480;
-			zoom = Tools.GetArgument(args, "-zoom") ?? 2;
+			winx = Tools.GetArgument<int?>(args, "-screen-width") ?? 640;
+			winy = Tools.GetArgument<int?>(args, "-screen-height") ?? 480;
+			zoom = Tools.GetArgument<int?>(args, "-zoom") ?? 2;
 
 			//init SDL
 			SDL.SDL_Init(SDL.SDL_INIT_VIDEO);

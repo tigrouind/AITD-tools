@@ -19,8 +19,8 @@ namespace VarsViewer
 			Application.SetCompatibleTextRenderingDefault(false);
 
 			var form = new MainForm();
-			var width = Tools.GetArgument(args, "-screen-width") ?? 1024;
-			var height = Tools.GetArgument(args, "-screen-height") ?? 504;
+			var width = Tools.GetArgument<int?>(args, "-screen-width") ?? 1024;
+			var height = Tools.GetArgument<int?>(args, "-screen-height") ?? 504;
 			form.ClientSize = new Size(width, height);
 
 			Application.Run(form);

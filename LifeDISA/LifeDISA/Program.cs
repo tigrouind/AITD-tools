@@ -38,14 +38,16 @@ namespace LifeDISA
 
 		public static int Main(string[] args)
 		{			
-			config = gameConfigs.Join(args, x => x.Version.ToString(), x => x, (x, y) => x, StringComparer.InvariantCultureIgnoreCase).FirstOrDefault();
-			if (config == null)
+			
+			string version = Shared.Tools.GetArgument<string>(args, "-version");
+			config = gameConfigs.FirstOrDefault(x => string.Equals(x.Version.ToString(), version, StringComparison.InvariantCultureIgnoreCase));
+			if (version == null)
 			{
-				Console.WriteLine("Usage: LifeDISA {{{0}}} [-raw]", string.Join("|", gameConfigs.Select(x => x.Version.ToString().ToLowerInvariant())));
+				Console.WriteLine("Usage: LifeDISA -version {{{0}}} [-raw]", string.Join("|", gameConfigs.Select(x => x.Version.ToString().ToLowerInvariant())));
 				return -1;
 			}
 			
-			NoOptimize |= args.Contains("-raw", StringComparer.InvariantCultureIgnoreCase);
+			NoOptimize |= Shared.Tools.HasArgument(args, "-raw");
 			
 			Directory.CreateDirectory("GAMEDATA");
 			

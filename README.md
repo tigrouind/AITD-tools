@@ -11,8 +11,14 @@ Supported :
 
 ## Command-line arguments : 
 ```
-LifeDISA {aitd1|aitd1_floppy|aitd1_demo|aitd2|aitd2_demo|aitd3|jack|timegate|timegate_demo} [-raw]
+LifeDISA -version VERSION [-raw]
 ```
+| Argument | Description |
+|-|-|
+| -version VERSION | Must be one of the following values:<br>AITD1, AITD1_FLOPPY, AITD1_DEMO<br>AITD2, AITD2_DEMO<br>AITD3<br>JACK<br>TIMEGATE, TIMEGATE_DEMO |
+| -raw | Raw output. Disable IF ELSE or SWITCH CASE statements detection and indentation |
+
+
 
 ## How to use : 
 
@@ -43,7 +49,7 @@ Supported :
 
 ## Command-line arguments : 
 ```
-MemoryViewer [-screen-width width] [-screen-height height] [-zoom zoom]
+MemoryViewer [-screen-width WIDTH] [-screen-height HEIGHT] [-zoom ZOOM]
 ```
 
 ## Commands
@@ -60,7 +66,7 @@ Supported :
 
 ## Command-line arguments : 
 ```
-VarsViewer [-screen-width width] [-screen-height height]
+VarsViewer [-screen-width WIDTH] [-screen-height HEIGHT]
 ```
 
 ## Commands

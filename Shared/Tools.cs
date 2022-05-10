@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 
 namespace Shared
 {
@@ -85,19 +86,38 @@ namespace Shared
 			return TimeSpan.FromMilliseconds(start - end);
 		}
 		
-		public static int? GetArgument(string[] args, string name)
+		public static T GetArgument<T>(string[] args, string name)
 		{
-			int index = Array.FindIndex(args, x => x.Equals(name, StringComparison.OrdinalIgnoreCase));
+			int index = Array.FindIndex(args, x => x.Equals(name, StringComparison.InvariantCultureIgnoreCase));
 			if (index >= 0 && index < (args.Length - 1))
 			{
-				int value;
-				if (int.TryParse(args[index + 1], out value))
+				Type type = typeof(T);
+				string argument = args[index + 1];					
+					
+				if (type == typeof(int) || type == typeof(int?))
 				{
-					return value;
+					int value;
+					if (int.TryParse(argument, out value))
+					{
+						return (T)(object)value;
+					}
+				}
+				else if (type == typeof(string))
+				{
+					return (T)(object)argument;
+				}
+				else 
+				{
+					throw new NotSupportedException(type.ToString());
 				}
 			}
 
-			return null;
+			return default(T);
+		}
+		
+		public static bool HasArgument(string[] args, string name)
+		{
+			return args.Contains(name, StringComparer.InvariantCultureIgnoreCase);
 		}
 	}
 }
