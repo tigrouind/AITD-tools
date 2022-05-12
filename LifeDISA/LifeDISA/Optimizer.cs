@@ -119,8 +119,16 @@ namespace LifeDISA
 			if (defaultCase && target.Previous.Value.Type == LifeEnum.GOTO) //default statement right after switch with a goto
 			{
 				toRemove.Add(target.Previous); //remove goto
+								
+				//remove everything after default/end block
+				var start = target;
+				var end = nodesMap[target.Value.Goto];
+				RemoveNodes(start, end);
+							
 				AddBefore(node.Next, new Instruction { Type = LifeEnum.DEFAULT });
-				AddBefore(target, new Instruction { Type = LifeEnum.END });	
+				AddBefore(end, new Instruction { Type = LifeEnum.END }); //end of default	
+				AddBefore(end, new Instruction { Type = LifeEnum.END }); //end of switch			
+				return;
 			}
 	
 			//detect end of switch
@@ -168,6 +176,16 @@ namespace LifeDISA
 			{
 				AddBefore(target, new Instruction { Type = LifeEnum.END });
 			}
+		}
+		
+		void RemoveNodes(LinkedListNode<Instruction> start, LinkedListNode<Instruction> end)
+		{
+			while (start != null && start != end)
+			{
+				var next = start.Next;
+				nodes.Remove(start);
+				start = next;
+			}	
 		}
 		
 		void AddBefore(LinkedListNode<Instruction> node, Instruction value)
