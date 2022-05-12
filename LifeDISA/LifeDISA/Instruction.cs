@@ -12,7 +12,6 @@ namespace LifeDISA
 		readonly List<string> arguments = new List<string>();
 		public string Actor;
 		public int Goto = -1;
-		public bool ToRemove;
 		public int Line;
 
 		public void Add(string format, params object[] args)

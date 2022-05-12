@@ -7,6 +7,8 @@ namespace LifeDISA
 	{
 		readonly LinkedList<Instruction> nodes;
 		readonly Dictionary<int, LinkedListNode<Instruction>> nodesMap = new Dictionary<int, LinkedListNode<Instruction>>();
+		readonly List<LinkedListNode<Instruction>> toRemove = new List<LinkedListNode<Instruction>>();
+		readonly List<Tuple<LinkedListNode<Instruction>, Instruction>> toAdd = new List<Tuple<LinkedListNode<Instruction>, Instruction>>();
 		
 		public Optimizer(LinkedList<Instruction> nodes, Dictionary<int, LinkedListNode<Instruction>> nodesMap)
 		{
@@ -18,6 +20,7 @@ namespace LifeDISA
 		{
 			CheckGotos();
 			Optimize();			
+			AddItems();			
 			Cleanup();
 		}
 		
@@ -68,13 +71,13 @@ namespace LifeDISA
 			var previous = target.Previous;
 			if (previous.Value.Type == LifeEnum.GOTO)
 			{							
-				previous.Value.ToRemove = true;
-				nodes.AddBefore(target, new Instruction { Type = LifeEnum.ELSE });						
-				nodes.AddBefore(nodesMap[previous.Value.Goto], new Instruction { Type = LifeEnum.END });
+				toRemove.Add(previous);
+				AddBefore(target, new Instruction { Type = LifeEnum.ELSE });						
+				AddBefore(nodesMap[previous.Value.Goto], new Instruction { Type = LifeEnum.END });
 			}
 			else
 			{
-				nodes.AddBefore(target, new Instruction { Type = LifeEnum.END });
+				AddBefore(target, new Instruction { Type = LifeEnum.END });
 			}
 
 			//check for consecutive IFs
@@ -118,11 +121,11 @@ namespace LifeDISA
 			{
 				if (target.Previous.Value.Type == LifeEnum.GOTO)
 				{
-					target.Previous.Value.ToRemove = true;
+					toRemove.Add(target.Previous);
 				}
 				
-				nodes.AddBefore(node.Next, new Instruction { Type = LifeEnum.DEFAULT });
-				nodes.AddBefore(target, new Instruction { Type = LifeEnum.END });	
+				AddBefore(node.Next, new Instruction { Type = LifeEnum.DEFAULT });
+				AddBefore(target, new Instruction { Type = LifeEnum.END });	
 			}
 	
 			//detect end of switch
@@ -135,20 +138,20 @@ namespace LifeDISA
 				switch(ins.Type)
 				{
 					case LifeEnum.CASE:
-					case LifeEnum.MULTI_CASE:
+					case LifeEnum.MULTI_CASE: //detect end of case
 					{
 						ins.Parent = node.Value;
 						target = nodesMap[ins.Goto];
 						if (target.Previous.Value.Type == LifeEnum.GOTO)
 						{
-							target.Previous.Value.ToRemove = true;
-							if(endOfSwitch == null)
+							toRemove.Add(target.Previous);
+							if(endOfSwitch == null) //first case target is end of switch
 							{
 								endOfSwitch = nodesMap[target.Previous.Value.Goto];
 							}
 						}
 	
-						nodes.AddBefore(target, new Instruction { Type = LifeEnum.END });
+						AddBefore(target, new Instruction { Type = LifeEnum.END });
 						break;
 					}
 	
@@ -162,29 +165,42 @@ namespace LifeDISA
 			//should be equal, otherwise there is a default case
 			if(endOfSwitch != null && target != endOfSwitch)
 			{
-				nodes.AddBefore(endOfSwitch, new Instruction { Type = LifeEnum.END });
-				nodes.AddBefore(endOfSwitch, new Instruction { Type = LifeEnum.END });
-				nodes.AddBefore(target, new Instruction { Type = LifeEnum.DEFAULT });
+				AddBefore(endOfSwitch, new Instruction { Type = LifeEnum.END });
+				AddBefore(endOfSwitch, new Instruction { Type = LifeEnum.END });
+				AddBefore(target, new Instruction { Type = LifeEnum.DEFAULT });
 			}
 			else
 			{
-				nodes.AddBefore(target, new Instruction { Type = LifeEnum.END });
+				AddBefore(target, new Instruction { Type = LifeEnum.END });
+			}
+		}
+		
+		void AddBefore(LinkedListNode<Instruction> node, Instruction value)
+		{
+			toAdd.Add(new Tuple<LinkedListNode<Instruction>, Instruction>(node, value));
+		}
+		
+		void AddItems()
+		{
+			foreach (var item in toAdd)
+			{
+				nodes.AddBefore(item.Item1, item.Item2);
 			}
 		}
 		
 		void Cleanup()
 		{
-			//remove GOTO and ENDLIFE
-			var currentNode = nodes.First;
-			while(currentNode != null)
+			//remove gotos
+			//gotos can't be removed immediately because they might be referenced by IF/CASE statements
+			foreach (var node in toRemove)
 			{
-				var nextNode = currentNode.Next;
-				if(currentNode.Value.ToRemove)
-				{
-					nodes.Remove(currentNode);
-				}
-
-				currentNode = nextNode;
+				nodes.Remove(node);
+			}
+			
+			//remove endlife
+			if (nodes.Last != null && nodes.Last.Value.Type == LifeEnum.ENDLIFE)
+			{
+				nodes.Remove(nodes.Last);
 			}
 		}			
 	}

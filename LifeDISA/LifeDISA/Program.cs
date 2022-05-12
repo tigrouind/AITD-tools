@@ -625,7 +625,6 @@ namespace LifeDISA
 					break;
 					
 				case LifeEnum.ENDLIFE:
-					ins.ToRemove = true;
 					break;
 				
 				case LifeEnum.PLUIE:
