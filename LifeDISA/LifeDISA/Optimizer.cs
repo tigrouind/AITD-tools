@@ -103,8 +103,7 @@ namespace LifeDISA
 		}
 		
 		void OptimizeSwitch(LinkedListNode<Instruction> node)
-		{
-			var ins = node.Value;			
+		{	
 			//instruction after switch should be CASE or MULTICASE
 			//but if could be instructions (eg: DEFAULT after switch)
 			var target = node.Next;
@@ -117,13 +116,9 @@ namespace LifeDISA
 				target = target.Next;
 			}
 			
-			if (defaultCase) //default statement right after switch
+			if (defaultCase && target.Previous.Value.Type == LifeEnum.GOTO) //default statement right after switch with a goto
 			{
-				if (target.Previous.Value.Type == LifeEnum.GOTO)
-				{
-					toRemove.Add(target.Previous);
-				}
-				
+				toRemove.Add(target.Previous); //remove goto
 				AddBefore(node.Next, new Instruction { Type = LifeEnum.DEFAULT });
 				AddBefore(target, new Instruction { Type = LifeEnum.END });	
 			}
@@ -134,7 +129,7 @@ namespace LifeDISA
 	
 			do
 			{
-				ins = target.Value;
+				var ins = target.Value;
 				switch(ins.Type)
 				{
 					case LifeEnum.CASE:
@@ -144,7 +139,7 @@ namespace LifeDISA
 						target = nodesMap[ins.Goto];
 						if (target.Previous.Value.Type == LifeEnum.GOTO)
 						{
-							toRemove.Add(target.Previous);
+							toRemove.Add(target.Previous); //remote goto
 							if(endOfSwitch == null) //first case target is end of switch
 							{
 								endOfSwitch = nodesMap[target.Previous.Value.Goto];
@@ -165,8 +160,8 @@ namespace LifeDISA
 			//should be equal, otherwise there is a default case
 			if(endOfSwitch != null && target != endOfSwitch)
 			{
-				AddBefore(endOfSwitch, new Instruction { Type = LifeEnum.END });
-				AddBefore(endOfSwitch, new Instruction { Type = LifeEnum.END });
+				AddBefore(endOfSwitch, new Instruction { Type = LifeEnum.END }); //end of default
+				AddBefore(endOfSwitch, new Instruction { Type = LifeEnum.END }); //end of switch
 				AddBefore(target, new Instruction { Type = LifeEnum.DEFAULT });
 			}
 			else
