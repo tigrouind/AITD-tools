@@ -32,11 +32,12 @@ namespace CacheViewer
 		};
 		static Cache[] cache;
 		static int[] gameConfig;
-		static bool clearCache, showTimestamp, sortEntries;
+		static bool clearCache, showTimestamp;
+		static int uniqueId;
 
 		public static void Main()
 		{
-			System.Console.Title = "AITD cache viewer";
+			SetConsoleTitle();
 			
 			Directory.CreateDirectory("GAMEDATA");
 			if (File.Exists("GAMEDATA/vars.txt"))
@@ -61,7 +62,7 @@ namespace CacheViewer
 				{										
 					ReadInput();
 					ReadMemory();
-					if (sortEntries)
+					if (Sort.SortMode != SortMode.Default)
 					{
 						Sort.SortEntries(cache);
 					}
@@ -141,7 +142,8 @@ namespace CacheViewer
 					break;
 					
 				case ConsoleKey.S:
-					sortEntries = !sortEntries;
+					Sort.SortMode = (SortMode)(((int)Sort.SortMode + 1) % 3);
+					SetConsoleTitle();
 					Sort.SortEntries(cache);
 					break;
 			}
@@ -232,6 +234,7 @@ namespace CacheViewer
 					entry = new CacheEntry();
 					entry.Id = id;
 					entry.StartTicks = ticks;
+					entry.Index = uniqueId++;
 										
 					ch.Entries.AddLast(entry);
 				}
@@ -242,7 +245,7 @@ namespace CacheViewer
 				
 				entry.Size = memory.ReadUnsignedShort(addr+4);
 				entry.Ticks = ticks;
-				entry.Index = i;
+				entry.Slot = i;
 								
 				if (ch.Name != "_MEMORY_")
 				{
@@ -345,10 +348,6 @@ namespace CacheViewer
 			
 			Console.SetCursorPosition(column * 19 + 5, 0);						
 			Console.Write(ch.Name);
-			if (sortEntries && ch.Name != "_MEMORY_")
-			{
-				Console.Write(" ▼");
-			}
 								
 			Console.SetCursorPosition(column * 19, 1);					
 			WriteStats(ch.MaxFreeData - ch.SizeFreeData, ch.MaxFreeData);
@@ -405,6 +404,22 @@ namespace CacheViewer
 			}
 
 			Console.Flush();
+		}
+		
+		static void SetConsoleTitle()
+		{
+			string title = "AITD cache viewer";
+			switch(Sort.SortMode)
+			{
+				case SortMode.Memory:
+					title += " ▼ memory";
+					break;
+				case SortMode.LRU:
+					title += " ▼ lru";					
+					break;
+			}
+			
+			System.Console.Title = title;
 		}
 	}
 }

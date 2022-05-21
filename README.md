@@ -84,6 +84,6 @@ Supported :
 ## Commands
 | Key | Description |
 | :-: | - |
-| <kbd>s</kbd> | sort entries by timestamp
+| <kbd>s</kbd> | change sort mode (default, memory, lru)
 | <kbd>space</kbd> | display cache entries timestamp / name
 | <kbd>F5</kbd> | clear all cache entries
