@@ -7,6 +7,8 @@ namespace CacheViewer
 {
 	public static class Console
 	{
+		#region Native
+		
 		[DllImport("Kernel32.dll")]
 		static extern SafeFileHandle CreateFile(
 			string fileName,
@@ -64,6 +66,8 @@ namespace CacheViewer
 			public short Right;
 			public short Bottom;
 		}
+		
+		#endregion
 
 		static readonly short SIZEX = 256;
 		static readonly short SIZEY = 128;
