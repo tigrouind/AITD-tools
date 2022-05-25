@@ -12,13 +12,15 @@ namespace CacheViewer
 		[DllImport("Kernel32.dll")]
 		static extern SafeFileHandle CreateFile(
 			string fileName,
-			[MarshalAs(UnmanagedType.U4)] uint fileAccess,
-			[MarshalAs(UnmanagedType.U4)] uint fileShare,
+			[MarshalAs(UnmanagedType.U4)] FileAccess fileAccess,
+			[MarshalAs(UnmanagedType.U4)] FileShare fileShare,
 			IntPtr securityAttributes,
 			[MarshalAs(UnmanagedType.U4)] FileMode creationDisposition,
-			[MarshalAs(UnmanagedType.U4)] int flags,
+			[MarshalAs(UnmanagedType.U4)] FileAttributes flags,
 			IntPtr template);
-
+		
+		const uint GENERIC_WRITE = 0x40000000;
+		
 		[DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
 		static extern bool WriteConsoleOutput(
 		  SafeFileHandle hConsoleOutput,
@@ -70,7 +72,7 @@ namespace CacheViewer
 		#endregion
 
 		static readonly short SIZEX = 256;
-		static readonly short SIZEY = 128;
+		static readonly short SIZEY = 256;
 		static readonly SafeFileHandle handle;
 		static CharInfo[] buf = new CharInfo[SIZEX * SIZEY];
 		static CharInfo[] previousBuf = new CharInfo[SIZEX * SIZEY];
@@ -84,7 +86,7 @@ namespace CacheViewer
 		
 		static Console()
 		{
-			handle = CreateFile("CONOUT$", 0x40000000, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
+			handle = CreateFile("CONOUT$", (FileAccess)GENERIC_WRITE, FileShare.Write, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
 		}
 
 		public static void Clear()
