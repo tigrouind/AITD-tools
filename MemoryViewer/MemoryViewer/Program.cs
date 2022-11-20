@@ -156,9 +156,13 @@ namespace MemoryViewer
 						{
 							lastCheckPalette = time;
 							
-							//3 bytes + EGA 16 colors palette
-							var pattern = new byte[] { 0x01, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05 };
+							//3 bytes + EGA 16 colors palette (see DOSBox VGA_Dac in vga.h)
+							var pattern = new byte[] { 0x01, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
 							paletteAddress = process.SearchForBytePattern(buffer => Tools.IndexOf(buffer, pattern, 1, 4));
+							if(paletteAddress != -1)
+							{
+								paletteAddress += pattern.Length;
+							}
 						}
 					}
 				}
@@ -179,7 +183,7 @@ namespace MemoryViewer
 				{
 					if(paletteAddress != -1)
 					{
-						if (process.Read(palette256, paletteAddress + 19 - process.BaseAddress, palette256.Length) <= 0) {
+						if (process.Read(palette256, paletteAddress, palette256.Length) <= 0) {
 							process.Close();
 							process = null;
 						}								

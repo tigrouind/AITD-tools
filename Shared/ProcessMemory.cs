@@ -158,7 +158,7 @@ namespace Shared
 						int index = searchFunction(buffer);
 						if (index != -1)
 						{
-							return (int)(readPosition + index);
+							return (int)((readPosition + index) - BaseAddress);
 						}
 			
 						readPosition += (int)bytesRead;
