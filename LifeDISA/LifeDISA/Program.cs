@@ -114,7 +114,7 @@ namespace LifeDISA
 					int body = allBytes.ReadShort(n + 2);
 					if(body != -1)
 					{
-						name = vars.GetText(VarEnum.BODYS, body, string.Empty);
+						name = vars.GetText(VarEnum.BODYS, body, string.Empty, false);
 					}
 					
 					if(string.IsNullOrEmpty(name))
@@ -132,7 +132,7 @@ namespace LifeDISA
 						int life = allBytes.ReadShort(n + 34);
 						if(life != -1)
 						{
-							name = vars.GetText(VarEnum.LIFES, life, string.Empty);
+							name = vars.GetText(VarEnum.LIFES, life, string.Empty, false);
 						}
 					}
 															
@@ -150,7 +150,7 @@ namespace LifeDISA
 				for(int i = 0; i < pak.EntryCount ; i++)
 				{
 					writer.WriteLine("--------------------------------------------------");
-					writer.WriteLine("#{0} {1}", i, vars.GetText(VarEnum.LIFES, i, string.Empty));
+					writer.WriteLine("#{0} {1}", i, vars.GetText(VarEnum.LIFES, i, string.Empty, false));
 					writer.WriteLine("--------------------------------------------------");					
 					allBytes = pak.GetEntry(i);
 					

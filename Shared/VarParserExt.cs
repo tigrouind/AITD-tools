@@ -20,12 +20,17 @@ namespace Shared
 		{
 			return GetText(section, value, null);
 		}
-
-		public string GetText(VarEnum section, int value, string defaultText)
+		
+		public string GetText(VarEnum section, int value, string defaultText, bool includeId = true)
 		{
 			string text = base.GetText(section, value);
 			if (!string.IsNullOrEmpty(text))
 			{
+				if (includeId)
+				{
+					return text + "_" + value;	
+				}
+				
 				return text;
 			}
 			
