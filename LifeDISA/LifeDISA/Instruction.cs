@@ -12,7 +12,7 @@ namespace LifeDISA
 		readonly List<string> arguments = new List<string>();
 		public string Actor;
 		public int Goto = -1;
-		public int Line;
+		public int LineStart, LineEnd;
 
 		public void Add(string format, params object[] args)
 		{

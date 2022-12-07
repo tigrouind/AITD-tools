@@ -12,6 +12,7 @@ namespace LifeDISA
 		public static bool NoOptimize;
 		static int pos;
 		static byte[] allBytes;		
+		static bool verbose;
 
 		static readonly Dictionary<int, string> objectsByIndex = new Dictionary<int, string>();
 		static readonly Dictionary<int, string> namesByIndex = new Dictionary<int, string>();
@@ -40,6 +41,8 @@ namespace LifeDISA
 		{			
 			
 			string version = Shared.Tools.GetArgument<string>(args, "-version");
+			verbose = Shared.Tools.HasArgument(args, "-verbose");
+			
 			config = gameConfigs.FirstOrDefault(x => string.Equals(x.Version.ToString(), version, StringComparison.InvariantCultureIgnoreCase));
 			if (version == null)
 			{
@@ -266,7 +269,7 @@ namespace LifeDISA
 				
 				Instruction ins = new Instruction();
 				ins.Type = life;
-				ins.Line = pos;
+				ins.LineStart = pos;
 				
 				if(actor != -1) ins.Actor = GetObjectName(actor);
 				pos += 2;
@@ -274,24 +277,35 @@ namespace LifeDISA
 				ParseArguments(life, ins);
 				var node = nodes.AddLast(ins);
 				nodesMap.Add(position, node);
+				ins.LineEnd = pos;
 			}
 		}
 		
 		static void Dump(TextWriter writer)
 		{
+			int maxBytes = nodes.Max(x => x.LineEnd - x.LineStart) / 2;
+			int maxLength = nodes.Max(x => x.LineStart).ToString().Length;
 			int indent = 0;
+			
 			foreach(var ins in nodes)
 			{
 				if(ins.IndentDec)
 				{
 					indent--;
 				}
+				
+				if (verbose)
+				{
+					var bytes = Enumerable.Range(0, (ins.LineEnd - ins.LineStart) / 2).Select(x => (allBytes[ins.LineStart+x*2] << 8 | allBytes[ins.LineStart+x*2+1]).ToString("X4"));					
+					writer.Write("|{0}|", string.Join(" ", bytes).PadLeft(maxBytes * 4 + (maxBytes - 1), ' '));
+					writer.Write('\t');
+				}
 
 				writer.Write(new String('\t', indent));
 				
 				if (NoOptimize)
 				{
-					writer.Write(ins.Line.ToString().PadLeft(4) + " ");
+					writer.Write(ins.LineStart.ToString().PadLeft(maxLength) + " ");
 				}
 				
 				writer.Write(ins.Name);	

@@ -97,6 +97,7 @@ namespace LifeDISA
 				var after = next.Next;
 				ins.Add(next.Value.Arguments[0]);
 				nodes.Remove(next);
+				ins.LineEnd = next.Value.LineEnd;
 
 				next = after;
 			}

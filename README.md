@@ -11,13 +11,13 @@ Supported :
 
 ## Command-line arguments : 
 ```
-LifeDISA -version VERSION [-raw]
+LifeDISA -version VERSION [-raw] [-verbose]
 ```
 | Argument | Description |
 |-|-|
 | -version VERSION | Must be one of the following values:<br>AITD1, AITD1_FLOPPY, AITD1_DEMO<br>AITD2, AITD2_DEMO<br>AITD3<br>JACK<br>TIMEGATE, TIMEGATE_DEMO |
 | -raw | Raw output. Disable IF ELSE or SWITCH CASE statements detection and indentation |
-
+| -verbose | Output byte information on the left side of the disassembly |
 
 
 ## How to use : 
