@@ -53,6 +53,7 @@ namespace LifeDISA
 						case LifeEnum.CASE:	
 						case LifeEnum.MULTI_CASE:										
 						case LifeEnum.DEFAULT:								
+						case LifeEnum.BEGIN:
 							return true;						
 					}								
 				}
@@ -76,6 +77,7 @@ namespace LifeDISA
 					{
 						case LifeEnum.ELSE:						
 						case LifeEnum.END:					
+						case LifeEnum.BEGIN:							
 							return true;
 					}
 				}
@@ -103,19 +105,6 @@ namespace LifeDISA
 					default:
 						return false;
 				}
-			}
-		}
-		
-		public string Separator
-		{
-			get
-			{
-				if (!Program.NoOptimize && IsIfCondition)
-				{
-					return " and ";
-				}
-				
-				return " ";
 			}
 		}
 		

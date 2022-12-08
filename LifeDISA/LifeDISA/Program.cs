@@ -311,7 +311,7 @@ namespace LifeDISA
 				writer.Write(ins.Name);	
 				if (ins.Arguments.Any())
 				{
-					writer.Write(" " + string.Join(ins.Separator, ins.Arguments.ToArray()));	
+					writer.Write(" " + string.Join(" ", ins.Arguments.ToArray()));	
 				}
 
 				writer.WriteLine();

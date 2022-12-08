@@ -108,9 +108,9 @@ namespace LifeDISA
 				AddBefore(target, new Instruction { Type = LifeEnum.END }); //regular if 
 			}
 			
-			// if COND1 goto A       if COND1 and COND2 and COND3
-			// if COND2 goto A   =>     
-			// if COND3 goto A          
+			// if COND1 goto A       if COND1 
+			// if COND2 goto A   =>     and COND2 
+			// if COND3 goto A          and COND3
 			//	 ...                    ...
 			// A:                    end  
 
@@ -120,12 +120,13 @@ namespace LifeDISA
 				next.Value.IsIfCondition &&
 				target == nodesMap[next.Value.Goto]) //the IFs ends up at same place
 			{
-				var after = next.Next;
-				ins.Add(next.Value.Arguments[0]);
-				nodes.Remove(next);
-				ins.LineEnd = next.Value.LineEnd;
-
-				next = after;
+				next.Value.Type = LifeEnum.AND;				
+				next = next.Next;
+			}
+			
+			if (next != node.Next)
+			{
+				AddBefore(next, new Instruction { Type = LifeEnum.BEGIN });
 			}
 		}
 		
