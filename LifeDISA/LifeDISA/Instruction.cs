@@ -13,6 +13,7 @@ namespace LifeDISA
 		public string Actor;
 		public int Goto = -1;
 		public int LineStart, LineEnd;
+		public bool IsIfElse;
 
 		public void Add(string format, params object[] args)
 		{
@@ -40,16 +41,13 @@ namespace LifeDISA
 			{
 				if (!Program.NoOptimize)
 				{
+					if (IsIfCondition)
+					{
+						return true;
+					}
+						
 					switch(Type)
 					{
-						case LifeEnum.IF_EGAL:
-						case LifeEnum.IF_DIFFERENT:
-						case LifeEnum.IF_SUP_EGAL:
-						case LifeEnum.IF_SUP:
-						case LifeEnum.IF_INF_EGAL:
-						case LifeEnum.IF_INF:
-						case LifeEnum.IF_IN:
-						case LifeEnum.IF_OUT:
 						case LifeEnum.ELSE:
 						case LifeEnum.SWITCH:
 						case LifeEnum.CASE:	
@@ -69,6 +67,11 @@ namespace LifeDISA
 			{
 				if (!Program.NoOptimize)
 				{
+					if (IsIfElse)
+					{
+						return true;
+					}
+														
 					switch(Type)
 					{
 						case LifeEnum.ELSE:						
@@ -81,24 +84,35 @@ namespace LifeDISA
 			}
 		}
 		
+		public bool IsIfCondition
+		{
+			get
+			{
+				switch(Type)
+				{
+					case LifeEnum.IF_EGAL:
+					case LifeEnum.IF_DIFFERENT:
+					case LifeEnum.IF_SUP_EGAL:
+					case LifeEnum.IF_SUP:
+					case LifeEnum.IF_INF_EGAL:
+					case LifeEnum.IF_INF:
+					case LifeEnum.IF_IN:
+					case LifeEnum.IF_OUT:
+						return true;
+						
+					default:
+						return false;
+				}
+			}
+		}
+		
 		public string Separator
 		{
 			get
 			{
-				if (!Program.NoOptimize)
+				if (!Program.NoOptimize && IsIfCondition)
 				{
-					switch (Type)
-					{
-						case LifeEnum.IF_EGAL:
-						case LifeEnum.IF_DIFFERENT:
-						case LifeEnum.IF_SUP_EGAL:
-						case LifeEnum.IF_SUP:
-						case LifeEnum.IF_INF_EGAL:
-						case LifeEnum.IF_INF:
-						case LifeEnum.IF_IN:
-						case LifeEnum.IF_OUT:
-							return " and ";
-					}
+					return " and ";
 				}
 				
 				return " ";
@@ -111,19 +125,18 @@ namespace LifeDISA
 			{
 				if (!Program.NoOptimize)
 				{
+					if (IsIfCondition)
+					{
+						if (IsIfElse)
+						{
+							return "else if";
+						}
+						
+						return "if";
+					}
+					
 					switch (Type)
 					{
-						
-						case LifeEnum.IF_EGAL:
-						case LifeEnum.IF_DIFFERENT:
-						case LifeEnum.IF_SUP_EGAL:
-						case LifeEnum.IF_SUP:
-						case LifeEnum.IF_INF_EGAL:
-						case LifeEnum.IF_INF:
-						case LifeEnum.IF_IN:
-						case LifeEnum.IF_OUT:
-							return "if";
-							
 						case LifeEnum.MULTI_CASE:
 							return "case";
 							

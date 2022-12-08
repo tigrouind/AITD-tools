@@ -44,19 +44,13 @@ namespace LifeDISA
 			for(var node = nodes.First; node != null; node = node.Next)
 			{
 				var ins = node.Value;
+				if (ins.IsIfCondition)
+				{
+					OptimizeIf(node);
+				}
+				
 				switch(ins.Type)
 				{
-					case LifeEnum.IF_EGAL:
-					case LifeEnum.IF_DIFFERENT:
-					case LifeEnum.IF_SUP_EGAL:
-					case LifeEnum.IF_SUP:
-					case LifeEnum.IF_INF_EGAL:
-					case LifeEnum.IF_INF:
-					case LifeEnum.IF_IN:
-					case LifeEnum.IF_OUT:
-						OptimizeIf(node);
-						break;
-
 					case LifeEnum.SWITCH:
 						OptimizeSwitch(node);
 						break;
@@ -64,25 +58,52 @@ namespace LifeDISA
 			}
 		}
 		
+		int GetEndOfIf(Instruction ins)
+		{
+			var target = nodesMap[ins.Goto];
+			var previous = target.Previous;
+			if (previous.Value.Type == LifeEnum.GOTO)
+			{
+				return previous.Value.Goto;
+			}
+			
+			return ins.Goto;
+		}
+		
 		void OptimizeIf(LinkedListNode<Instruction> node)
 		{
-			// if COND goto A       if COND
+			// if COND goto A       if COND      
 			//   ...                  ...        
-			//   goto B        =>            
-			// A:                   else     
+			//   goto C                     
+			// A:                   else if    
+			// if COND goto B  =>       
 			//   ...                  ...
-			// B:                   end
+			//   goto C  
+			// B:                   else
+			//   ...                  ...
+			// C:                   end
 			
 			var ins = node.Value;
 			var target = nodesMap[ins.Goto];
 			var previous = target.Previous;
 			if (previous.Value.Type == LifeEnum.GOTO)
-			{							
-				toRemove.Add(previous); //remove goto
-				AddBefore(target, new Instruction { Type = LifeEnum.ELSE });						
-				AddBefore(nodesMap[previous.Value.Goto], new Instruction { Type = LifeEnum.END }); //end of if else 
+			{										
+				toRemove.Add(previous); //remove goto				
+				if (target.Value.IsIfCondition && GetEndOfIf(target.Value) == previous.Value.Goto) //else directly followed by if block (and nothing else after if)
+				{					
+					target.Value.IsIfElse = true;
+				}
+				else 
+				{					
+					AddBefore(target, new Instruction { Type = LifeEnum.ELSE });						
+				}
+				
+				if (!ins.IsIfElse)
+				{					
+					AddBefore(nodesMap[previous.Value.Goto], new Instruction { Type = LifeEnum.END }); //end of if else
+				}
 			}
-			else
+			else if (!ins.IsIfElse)
 			{
 				AddBefore(target, new Instruction { Type = LifeEnum.END }); //regular if 
 			}
@@ -96,15 +117,7 @@ namespace LifeDISA
 			//check for consecutive IFs
 			var next = node.Next;
 			while(next != null &&
-				(
-				next.Value.Type == LifeEnum.IF_EGAL ||
-				next.Value.Type == LifeEnum.IF_DIFFERENT ||
-				next.Value.Type == LifeEnum.IF_INF ||
-				next.Value.Type == LifeEnum.IF_INF_EGAL ||
-				next.Value.Type == LifeEnum.IF_SUP ||
-				next.Value.Type == LifeEnum.IF_IN ||
-				next.Value.Type == LifeEnum.IF_OUT ||
-				next.Value.Type == LifeEnum.IF_SUP_EGAL) &&
+				next.Value.IsIfCondition &&
 				target == nodesMap[next.Value.Goto]) //the IFs ends up at same place
 			{
 				var after = next.Next;
