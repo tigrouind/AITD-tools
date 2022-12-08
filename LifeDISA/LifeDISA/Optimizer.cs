@@ -66,19 +66,32 @@ namespace LifeDISA
 		
 		void OptimizeIf(LinkedListNode<Instruction> node)
 		{
+			// if COND goto A       if COND
+			//   ...                  ...        
+			//   goto B        =>            
+			// A:                   else     
+			//   ...                  ...
+			// B:                   end
+			
 			var ins = node.Value;
 			var target = nodesMap[ins.Goto];
 			var previous = target.Previous;
 			if (previous.Value.Type == LifeEnum.GOTO)
 			{							
-				toRemove.Add(previous);
+				toRemove.Add(previous); //remove goto
 				AddBefore(target, new Instruction { Type = LifeEnum.ELSE });						
-				AddBefore(nodesMap[previous.Value.Goto], new Instruction { Type = LifeEnum.END });
+				AddBefore(nodesMap[previous.Value.Goto], new Instruction { Type = LifeEnum.END }); //end of if else 
 			}
 			else
 			{
-				AddBefore(target, new Instruction { Type = LifeEnum.END });
+				AddBefore(target, new Instruction { Type = LifeEnum.END }); //regular if 
 			}
+			
+			// if COND1 goto A       if COND1 and COND2 and COND3
+			// if COND2 goto A   =>     
+			// if COND3 goto A          
+			//	 ...                    ...
+			// A:                    end  
 
 			//check for consecutive IFs
 			var next = node.Next;
@@ -117,9 +130,17 @@ namespace LifeDISA
 				target = target.Next;
 			}
 			
+			//switch             switch 
+			//                      default                     
+			//    ...                 ...
+			//    goto X       =>   end						
+			//  case 1 goto X       
+			//    ...                      
+			//  X:               end
+			
 			if (defaultCase && target.Previous.Value.Type == LifeEnum.GOTO) //default statement right after switch with a goto
 			{
-				toRemove.Add(target.Previous); //remove goto
+				toRemove.Add(target.Previous); //remove default goto
 								
 				//remove everything after default/end block
 				var start = target;
@@ -131,6 +152,15 @@ namespace LifeDISA
 				AddBefore(end, new Instruction { Type = LifeEnum.END }); //end of switch			
 				return;
 			}
+			
+			//switch             switch 
+			//  case 1 goto A       case 1
+			//    ...                 ...
+			//    goto X      =>    end   
+			//  A:                  default                     
+			//    ...                 ...
+			//                      end 
+			//  X:               end
 	
 			//detect end of switch
 			LinkedListNode<Instruction> endOfSwitch = null;
@@ -211,7 +241,7 @@ namespace LifeDISA
 				nodes.Remove(node);
 			}
 			
-			//remove endlife
+			//remove endlife (if last instruction)
 			if (nodes.Last != null && nodes.Last.Value.Type == LifeEnum.ENDLIFE)
 			{
 				nodes.Remove(nodes.Last);
