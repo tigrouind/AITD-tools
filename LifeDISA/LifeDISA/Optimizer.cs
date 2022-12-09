@@ -46,7 +46,8 @@ namespace LifeDISA
 				var ins = node.Value;
 				if (ins.IsIfCondition)
 				{
-					OptimizeIf(node);
+					DetectIfElse(node);
+					CombineConsecutiveIfs(node);
 				}
 				
 				switch(ins.Type)
@@ -58,24 +59,14 @@ namespace LifeDISA
 			}
 		}
 		
-		int GetEndOfIf(Instruction ins)
-		{
-			var target = nodesMap[ins.Goto];
-			var previous = target.Previous;
-			if (previous.Value.Type == LifeEnum.GOTO)
-			{
-				return previous.Value.Goto;
-			}
-			
-			return ins.Goto;
-		}
+		#region If
 		
-		void OptimizeIf(LinkedListNode<Instruction> node)
+		void DetectIfElse(LinkedListNode<Instruction> node)
 		{
 			// if COND goto A       if COND      
 			//   ...                  ...        
 			//   goto C                     
-			// A:                   else if    
+			// A:                   elseif    
 			// if COND goto B  =>       
 			//   ...                  ...
 			//   goto C  
@@ -86,7 +77,7 @@ namespace LifeDISA
 			var ins = node.Value;
 			var target = nodesMap[ins.Goto];
 			var previous = target.Previous;
-			if (previous.Value.Type == LifeEnum.GOTO)
+			if (previous.Value.Type == LifeEnum.GOTO) //else or elseif
 			{										
 				toRemove.Add(previous); //remove goto				
 				if (target.Value.IsIfCondition && GetEndOfIf(target.Value) == previous.Value.Goto) //else directly followed by if block (and nothing else after if)
@@ -100,21 +91,36 @@ namespace LifeDISA
 				
 				if (!ins.IsIfElse)
 				{					
-					AddBefore(nodesMap[previous.Value.Goto], new Instruction { Type = LifeEnum.END }); //end of if else
+					AddBefore(nodesMap[previous.Value.Goto], new Instruction { Type = LifeEnum.END }); //end of else or elseif
 				}
 			}
 			else if (!ins.IsIfElse)
 			{
 				AddBefore(target, new Instruction { Type = LifeEnum.END }); //regular if 
 			}
+		}
+				
+		int GetEndOfIf(Instruction ins)
+		{
+			var target = nodesMap[ins.Goto];
+			var previous = target.Previous;
+			if (previous.Value.Type == LifeEnum.GOTO)
+			{
+				return previous.Value.Goto;
+			}
 			
+			return ins.Goto;
+		}
+				
+		void CombineConsecutiveIfs(LinkedListNode<Instruction> node)
+		{
 			// if COND1 goto A       if COND1 
 			// if COND2 goto A   =>     and COND2 
 			// if COND3 goto A          and COND3
 			//	 ...                    ...
-			// A:                    end  
-
-			//check for consecutive IFs
+			// A:                    end
+			
+			var target = nodesMap[node.Value.Goto];
 			var next = node.Next;
 			while(next != null &&
 				next.Value.IsIfCondition &&
@@ -130,30 +136,27 @@ namespace LifeDISA
 			}
 		}
 		
+		#endregion
+		
+		#region Switch
+		
 		void OptimizeSwitch(LinkedListNode<Instruction> node)
 		{	
 			//instruction after switch should be CASE or MULTICASE
 			//but if could be instructions (eg: DEFAULT after switch)
-			var target = node.Next;
-			bool defaultCase = false;
-			while(target != null && target.Next != null &&
-				  target.Value.Type != LifeEnum.CASE &&
-				  target.Value.Type != LifeEnum.MULTI_CASE)
-			{
-				defaultCase = true;
-				target = target.Next;
-			}
+			LinkedListNode<Instruction> target = node.Next;
+			SkipCodeAfterSwitchBeforeCase(ref target);
 			
-			//switch             switch 
-			//                      default                     
-			//    ...                 ...
-			//    goto X       =>   end						
-			//  case 1 goto X       
-			//    ...                      
-			//  X:               end
-			
-			if (defaultCase && target.Previous.Value.Type == LifeEnum.GOTO) //default statement right after switch with a goto
+			if (target != node.Next && target.Previous.Value.Type == LifeEnum.GOTO) //default statement right after switch with a goto
 			{
+				//switch             switch 
+				//                      default                     
+				//    ...          =>     ...
+				//    goto X            end						
+				//  case 1 goto X       
+				//    ...                      
+				//  X:               end
+				
 				toRemove.Add(target.Previous); //remove default goto
 								
 				//remove everything after default/end block
@@ -164,64 +167,72 @@ namespace LifeDISA
 				AddBefore(node.Next, new Instruction { Type = LifeEnum.DEFAULT });
 				AddBefore(end, new Instruction { Type = LifeEnum.END }); //end of default	
 				AddBefore(end, new Instruction { Type = LifeEnum.END }); //end of switch			
-				return;
 			}
-			
-			//switch             switch 
-			//  case 1 goto A       case 1
-			//    ...                 ...
-			//    goto X      =>    end   
-			//  A:                  default                     
-			//    ...                 ...
-			//                      end 
-			//  X:               end
-	
-			//detect end of switch
-			LinkedListNode<Instruction> endOfSwitch = null;
-			bool lastInstruction = false;
-	
-			do
+			else 
 			{
-				var ins = target.Value;
-				switch(ins.Type)
+				//switch             switch 
+				//  case 1 goto A       case 1
+				//    ...                 ...
+				//    goto X      =>    end   
+				//  A:                  default                     
+				//    ...                 ...
+				//                      end 
+				//  X:               end
+							
+				var endOfSwitch = ProcessCaseStatements(node, ref target);
+				if(endOfSwitch != null && target != endOfSwitch) //should be equal, otherwise there is a default case
 				{
-					case LifeEnum.CASE:
-					case LifeEnum.MULTI_CASE: //detect end of case
-					{
-						ins.Parent = node.Value;
-						target = nodesMap[ins.Goto];
-						if (target.Previous.Value.Type == LifeEnum.GOTO)
-						{
-							toRemove.Add(target.Previous); //remote goto
-							if(endOfSwitch == null) //first case target is end of switch
-							{
-								endOfSwitch = nodesMap[target.Previous.Value.Goto];
-							}
-						}
-	
-						AddBefore(target, new Instruction { Type = LifeEnum.END });
-						break;
-					}
-	
-					default:
-						lastInstruction = true;
-						break;
+					AddBefore(endOfSwitch, new Instruction { Type = LifeEnum.END }); //end of default
+					AddBefore(endOfSwitch, new Instruction { Type = LifeEnum.END }); //end of switch
+					AddBefore(target, new Instruction { Type = LifeEnum.DEFAULT });
 				}
-			}
-			while (!lastInstruction);
-	
-			//should be equal, otherwise there is a default case
-			if(endOfSwitch != null && target != endOfSwitch)
-			{
-				AddBefore(endOfSwitch, new Instruction { Type = LifeEnum.END }); //end of default
-				AddBefore(endOfSwitch, new Instruction { Type = LifeEnum.END }); //end of switch
-				AddBefore(target, new Instruction { Type = LifeEnum.DEFAULT });
-			}
-			else
-			{
-				AddBefore(target, new Instruction { Type = LifeEnum.END });
-			}
+				else
+				{
+					AddBefore(target, new Instruction { Type = LifeEnum.END });
+				}
+			}			
 		}
+				
+		void SkipCodeAfterSwitchBeforeCase(ref LinkedListNode<Instruction> target)
+		{								
+			while (target != null && target.Next != null &&
+				  target.Value.Type != LifeEnum.CASE &&
+				  target.Value.Type != LifeEnum.MULTI_CASE)
+			{
+				target = target.Next;
+			}						
+		}
+		
+		LinkedListNode<Instruction> ProcessCaseStatements(LinkedListNode<Instruction> node, ref LinkedListNode<Instruction> target)
+		{
+			LinkedListNode<Instruction> endOfSwitch = null;
+	
+			while (target.Value.Type == LifeEnum.CASE
+			    || target.Value.Type == LifeEnum.MULTI_CASE)
+			{
+				target.Value.Parent = node.Value; //used later
+				target = nodesMap[target.Value.Goto];
+				
+				if (target.Previous.Value.Type == LifeEnum.GOTO)
+				{
+					toRemove.Add(target.Previous); //remote goto
+					if (endOfSwitch == null) //first case target is end of switch
+					{
+						endOfSwitch = nodesMap[target.Previous.Value.Goto];
+					}
+					else if(endOfSwitch != nodesMap[target.Previous.Value.Goto])
+					{
+						throw new Exception("Inconsistent case statements found");
+					}
+				}
+
+				AddBefore(target, new Instruction { Type = LifeEnum.END });				
+			}	
+			
+			return endOfSwitch;
+		}		
+		
+		#endregion
 		
 		void RemoveNodes(LinkedListNode<Instruction> start, LinkedListNode<Instruction> end)
 		{
@@ -240,6 +251,7 @@ namespace LifeDISA
 		
 		void AddItems()
 		{
+			//nodes have to be added later to not conflict with optimization
 			foreach (var item in toAdd)
 			{
 				nodes.AddBefore(item.Item1, item.Item2);
