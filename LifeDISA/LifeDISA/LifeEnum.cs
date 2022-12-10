@@ -134,10 +134,6 @@ namespace LifeDISA
 		DEBUG,
 		UNKNOWN_5,
 		UNKNOWN_6,
-		END = 0x10000,
-		BEGIN,
-		AND,
-		DEFAULT,
-		ELSE
+		DEFAULT = 0x10000
 	}
 }

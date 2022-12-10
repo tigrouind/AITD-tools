@@ -12,6 +12,14 @@ namespace Shared
 				return (ushort)(data[offset] | data[offset + 1] << 8);
 			}
 		}
+		
+		public static ushort ReadUnsignedShortSwap(this byte[] data, int offset)
+		{
+			unchecked
+			{
+				return (ushort)(data[offset] << 8 | data[offset + 1]);
+			}
+		}
 
 		public static short ReadShort(this byte[] data, int offset)
 		{

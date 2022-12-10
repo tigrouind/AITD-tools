@@ -8,12 +8,16 @@ namespace LifeDISA
 	{
 		public LifeEnum Type;
 		public EvalEnum EvalEnum; //first argument of switch
-		public Instruction Parent;
 		readonly List<string> arguments = new List<string>();
 		public string Actor;
 		public int Goto = -1;
-		public int LineStart, LineEnd;
-		public bool IsIfElse;
+		public int LineStart, LineEnd;	
+		public int Position;
+		public LinkedListNode<Instruction> Previous;
+		public LinkedListNode<Instruction> Next;
+		public Instruction Parent;
+		public LinkedList<Instruction> NodesA;
+		public LinkedList<Instruction> NodesB;
 
 		public void Add(string format, params object[] args)
 		{
@@ -34,55 +38,26 @@ namespace LifeDISA
 		{
 			arguments[index] = value;
 		}
-		
-		public bool IndentInc
+				
+		public bool IsElseIfCondition
 		{
 			get
 			{
-				if (!Program.NoOptimize)
-				{
-					if (IsIfCondition)
-					{
-						return true;
-					}
-						
-					switch(Type)
-					{
-						case LifeEnum.ELSE:
-						case LifeEnum.SWITCH:
-						case LifeEnum.CASE:	
-						case LifeEnum.MULTI_CASE:										
-						case LifeEnum.DEFAULT:								
-						case LifeEnum.BEGIN:
-							return true;						
-					}								
-				}
-				
-				return false;
+				return NodesB != null 
+					&& NodesB.Count == 1 
+					&& NodesB.First.Value.IsIfCondition;
 			}
 		}
 		
-		public bool IndentDec
+		public bool IsAndCondition
 		{
 			get
 			{
-				if (!Program.NoOptimize)
-				{
-					if (IsIfElse)
-					{
-						return true;
-					}
-														
-					switch(Type)
-					{
-						case LifeEnum.ELSE:						
-						case LifeEnum.END:					
-						case LifeEnum.BEGIN:							
-							return true;
-					}
-				}
-				
-				return false;
+				return IsIfCondition 
+					&& NodesA != null
+				    && NodesA.Count == 1
+				    && NodesA.First.Value.IsIfCondition 
+				    && NodesA.First.Value.NodesB == null;
 			}
 		}
 		
@@ -116,11 +91,6 @@ namespace LifeDISA
 				{
 					if (IsIfCondition)
 					{
-						if (IsIfElse)
-						{
-							return "else if";
-						}
-						
 						return "if";
 					}
 					
@@ -151,5 +121,10 @@ namespace LifeDISA
 				return arguments;
 			}
 		}
+		
+		public override string ToString()
+		{
+			return Type.ToString();
+		} 
 	}
 }

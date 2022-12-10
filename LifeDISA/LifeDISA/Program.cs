@@ -10,9 +10,9 @@ namespace LifeDISA
 	class Program
 	{
 		public static bool NoOptimize;
+		public static bool Verbose;
 		static int pos;
 		static byte[] allBytes;		
-		static bool verbose;
 
 		static readonly Dictionary<int, string> objectsByIndex = new Dictionary<int, string>();
 		static readonly Dictionary<int, string> namesByIndex = new Dictionary<int, string>();
@@ -40,7 +40,7 @@ namespace LifeDISA
 		public static int Main(string[] args)
 		{
 			string version = Shared.Tools.GetArgument<string>(args, "-version");
-			verbose = Shared.Tools.HasArgument(args, "-verbose");
+			Verbose = Shared.Tools.HasArgument(args, "-verbose");
 			
 			config = gameConfigs.FirstOrDefault(x => string.Equals(x.Version.ToString(), version, StringComparison.InvariantCultureIgnoreCase));
 			if (version == null || config == null)
@@ -163,25 +163,20 @@ namespace LifeDISA
 						{
 							var optimizer = new Optimizer(nodes, nodesMap);
 							optimizer.Run();
-							
-							if (nodes.Count(x => x.IndentDec) != nodes.Count(x => x.IndentInc)) 
-							{
-								throw new Exception("Indentation should be equal to zero");
-							}
-							
+														
 							if (nodes.Any(x => x.Type == LifeEnum.GOTO))
 							{
 								throw new Exception("Unexpected gotos");
 							}
 							
 							ProcessCaseStatements();
+							Writer.DumpOptimized(writer, nodes, allBytes);
 						}
 						else
 						{
 							ProcessGotos();
+							Writer.DumpRaw(writer, nodes, allBytes);
 						}
-						
-						Dump(writer);
 					}
 					catch(Exception ex)
 					{
@@ -194,9 +189,10 @@ namespace LifeDISA
 		}
 		
 		static void ProcessCaseStatements()
-		{
-			foreach(var ins in nodes)
+		{		
+			for (var node = nodes.First; node != null; node = node.Value.Next)
 			{
+				var ins = node.Value;
 				switch(ins.Type)
 				{
 					case LifeEnum.CASE:
@@ -276,48 +272,21 @@ namespace LifeDISA
 				ParseArguments(life, ins);
 				var node = nodes.AddLast(ins);
 				nodesMap.Add(position, node);
+				ins.Position = position;
 				ins.LineEnd = pos;
 			}
-		}
-		
-		static void Dump(TextWriter writer)
-		{
-			int maxBytes = nodes.Any() ? nodes.Max(x => x.LineEnd - x.LineStart) / 2 : 0;
-			int maxLength = nodes.Any() ? nodes.Max(x => x.LineStart).ToString().Length : 0;
-			int indent = 0;
 			
-			foreach(var ins in nodes)
+			
+			for(var node = nodes.First; node != null; node = node.Next)
 			{
-				if(ins.IndentDec)
-				{
-					indent--;
+				if (node.Previous != null)
+				{					
+					node.Previous.Value.Next = node;
 				}
 				
-				if (verbose)
+				if (node.Next != null)
 				{
-					var bytes = Enumerable.Range(0, (ins.LineEnd - ins.LineStart) / 2).Select(x => (allBytes[ins.LineStart+x*2] << 8 | allBytes[ins.LineStart+x*2+1]).ToString("X4"));					
-					writer.Write("|{0}|", string.Join(" ", bytes).PadLeft(maxBytes * 4 + (maxBytes - 1), ' '));
-					writer.Write('\t');
-				}
-
-				writer.Write(new String('\t', indent));
-				
-				if (NoOptimize)
-				{
-					writer.Write(ins.LineStart.ToString().PadLeft(maxLength) + " ");
-				}
-				
-				writer.Write(ins.Name);	
-				if (ins.Arguments.Any())
-				{
-					writer.Write(" " + string.Join(" ", ins.Arguments.ToArray()));	
-				}
-
-				writer.WriteLine();
-
-				if(ins.IndentInc)
-				{
-					indent++;
+					node.Next.Value.Previous = node;
 				}
 			}
 		}

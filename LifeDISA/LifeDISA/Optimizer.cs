@@ -8,9 +8,7 @@ namespace LifeDISA
 	{
 		readonly LinkedList<Instruction> nodes;
 		readonly Dictionary<int, LinkedListNode<Instruction>> nodesMap = new Dictionary<int, LinkedListNode<Instruction>>();
-		readonly List<LinkedListNode<Instruction>> toRemove = new List<LinkedListNode<Instruction>>();
-		readonly List<Tuple<LinkedListNode<Instruction>, Instruction>> toAdd = new List<Tuple<LinkedListNode<Instruction>, Instruction>>();
-		
+			
 		public Optimizer(LinkedList<Instruction> nodes, Dictionary<int, LinkedListNode<Instruction>> nodesMap)
 		{
 			this.nodes = nodes;
@@ -20,8 +18,7 @@ namespace LifeDISA
 		public void Run()
 		{
 			CheckGotos();
-			Optimize();			
-			AddItems();			
+			Optimize(nodes);			
 			Cleanup();
 		}
 		
@@ -40,22 +37,19 @@ namespace LifeDISA
 			}
 		}
 		
-		void Optimize()
+		void Optimize(LinkedList<Instruction> list)
 		{					
-			for(var node = nodes.First; node != null; node = node.Next)
+			for(var node = list.First; node != null; node = node.Next)
 			{
 				var ins = node.Value;
 				if (ins.IsIfCondition)
 				{
 					DetectIfElse(node);
-					CombineConsecutiveIfs(node);
 				}
 				
-				switch(ins.Type)
+				if (ins.Type == LifeEnum.SWITCH)
 				{
-					case LifeEnum.SWITCH:
-						OptimizeSwitch(node);
-						break;
+					DetectSwitch(node);
 				}
 			}
 		}
@@ -66,216 +60,142 @@ namespace LifeDISA
 		{
 			// if COND goto A       if COND      
 			//   ...                  ...        
-			//   goto C                     
-			// A:                   elseif    
-			// if COND goto B  =>       
+			//   goto B                     
+			// A:                   else
 			//   ...                  ...
-			//   goto C  
-			// B:                   else
-			//   ...                  ...
-			// C:                   end
+			// B:                   end
 			
 			var ins = node.Value;
 			var target = nodesMap[ins.Goto];
-			var previous = target.Previous;
+			var previous = target.Value.Previous;
 			if (previous.Value.Type == LifeEnum.GOTO) //else or elseif
 			{										
-				toRemove.Add(previous); //remove goto	
-				if (ins.Goto != previous.Value.Goto) //empty elseif
-				{
-					if (target.Value.IsIfCondition && GetEndOfIf(target.Value) == previous.Value.Goto) //else directly followed by if block (and nothing else after if)
-					{					
-						target.Value.IsIfElse = true;
-					}
-					else 
-					{					
-						AddBefore(target, new Instruction { Type = LifeEnum.ELSE });						
-					}
-					
-					if (!ins.IsIfElse)
-					{					
-						AddBefore(nodesMap[previous.Value.Goto], new Instruction { Type = LifeEnum.END }); //end of else or elseif
-					}
-				}
-				else 
-				{
-					AddBefore(target, new Instruction { Type = LifeEnum.END }); //regular if 
-				}
-			}
-			else if (!ins.IsIfElse)
-			{
-				AddBefore(target, new Instruction { Type = LifeEnum.END }); //regular if 
-			}
-		}
+				RemoveNode(previous); //remove goto
+				ins.NodesA = GetNodesBetween(node.Next, target, ins);
+				ins.NodesB = GetNodesBetween(target, nodesMap[previous.Value.Goto], ins);
 				
-		int GetEndOfIf(Instruction ins)
-		{
-			var target = nodesMap[ins.Goto];
-			var previous = target.Previous;
-			if (previous.Value.Type == LifeEnum.GOTO)
-			{
-				return previous.Value.Goto;
+				Optimize(ins.NodesA);
+				Optimize(ins.NodesB);
 			}
-			
-			return ins.Goto;
-		}
-				
-		void CombineConsecutiveIfs(LinkedListNode<Instruction> node)
-		{
-			// if COND1 goto A       if COND1 
-			// if COND2 goto A   =>     and COND2 
-			// if COND3 goto A          and COND3
-			//	 ...                    ...
-			// A:                    end
-			
-			var target = nodesMap[node.Value.Goto];
-			var next = node.Next;
-			while(next != null &&
-				next.Value.IsIfCondition &&
-				target == nodesMap[next.Value.Goto]) //the IFs ends up at same place
+			else //if
 			{
-				next.Value.Type = LifeEnum.AND;				
-				next = next.Next;
-			}
-			
-			if (next != node.Next)
-			{
-				AddBefore(next, new Instruction { Type = LifeEnum.BEGIN });
+				ins.NodesA = GetNodesBetween(node.Next, target, ins);
+				Optimize(ins.NodesA);				
 			}
 		}
-		
+			
 		#endregion
 		
 		#region Switch
 		
-		void OptimizeSwitch(LinkedListNode<Instruction> node)
+		void OptimizeCase(LinkedList<Instruction> list)
+		{
+			for (var node = list.First; node != null; node = node.Next)
+			{
+				if (node.Value.Type == LifeEnum.CASE ||
+				    node.Value.Type == LifeEnum.MULTI_CASE ||
+				    node.Value.Type == LifeEnum.DEFAULT)
+				{
+					var target = nodesMap[node.Value.Goto];													
+					node.Value.NodesA = GetNodesBetween(node.Next, target, node.Value);
+					Optimize(node.Value.NodesA);
+				}
+			}
+		}
+		
+		void DetectSwitch(LinkedListNode<Instruction> node)
 		{	
+			//switch             switch 
+			//                      default
+			//    ...                  ...
+			//    goto B            end			
+			//  case 1 goto A       case 1
+			//    ...                 ...
+			//    goto B      =>    end   
+			//  A:                  default                     
+			//    ...                 ...
+			//                      end 
+			//  B:               end			
+			
 			//instruction after switch should be CASE or MULTICASE
 			//but if could be instructions (eg: DEFAULT after switch)
 			LinkedListNode<Instruction> target = node.Next;
-			SkipCodeAfterSwitchBeforeCase(ref target);
 			
-			if (target != node.Next //code after switch
-			    && target.Previous.Value.Type == LifeEnum.GOTO) //default statement right after switch with a goto
-			{
-				//switch             switch 
-				//                      default                     
-				//    ...          =>     ...
-				//    goto X            end						
-				//  case 1 goto X       
-				//    ...                      
-				//  X:               end
-				
-				toRemove.Add(target.Previous); //remove default goto
-								
-				//remove everything after default/end block
-				var start = target;
-				var end = nodesMap[target.Value.Goto];
-				RemoveNodes(start, end);
-							
-				AddBefore(node.Next, new Instruction { Type = LifeEnum.DEFAULT });
-				AddBefore(end, new Instruction { Type = LifeEnum.END }); //end of default	
-				AddBefore(end, new Instruction { Type = LifeEnum.END }); //end of switch			
-			}
-			else 
-			{
-				//switch             switch 
-				//  case 1 goto A       case 1
-				//    ...                 ...
-				//    goto X      =>    end   
-				//  A:                  default                     
-				//    ...                 ...
-				//                      end 
-				//  X:               end
-							
-				var endOfSwitch = ProcessCaseStatements(node, ref target);
-				if(endOfSwitch != null && target != endOfSwitch) //should be equal, otherwise there is a default case
-				{
-					AddBefore(endOfSwitch, new Instruction { Type = LifeEnum.END }); //end of default
-					AddBefore(endOfSwitch, new Instruction { Type = LifeEnum.END }); //end of switch
-					AddBefore(target, new Instruction { Type = LifeEnum.DEFAULT });
-				}
-				else
-				{
-					AddBefore(target, new Instruction { Type = LifeEnum.END });
-				}
-			}			
-		}
-				
-		void SkipCodeAfterSwitchBeforeCase(ref LinkedListNode<Instruction> target)
-		{								
-			while (target != null && target.Next != null &&
+			//skip code before after switch, before first case 
+			while (target != null && target.Value.Next != null &&
 				  target.Value.Type != LifeEnum.CASE &&
 				  target.Value.Type != LifeEnum.MULTI_CASE)
 			{
-				target = target.Next;
-			}						
-		}
-		
-		LinkedListNode<Instruction> ProcessCaseStatements(LinkedListNode<Instruction> node, ref LinkedListNode<Instruction> target)
-		{
-			LinkedListNode<Instruction> endOfSwitch = null;
-	
-			while (target.Value.Type == LifeEnum.CASE
-			    || target.Value.Type == LifeEnum.MULTI_CASE)
-			{
-				target.Value.Parent = node.Value; //used later
-				target = nodesMap[target.Value.Goto];
-				
-				if (target.Previous.Value.Type == LifeEnum.GOTO)
-				{
-					toRemove.Add(target.Previous); //remote goto
-					if (endOfSwitch == null) //first case target is end of switch
-					{
-						endOfSwitch = nodesMap[target.Previous.Value.Goto];
-					}
-					else if(endOfSwitch != nodesMap[target.Previous.Value.Goto])
-					{
-						throw new Exception("Inconsistent case statements found");
-					}
-				}
-
-				AddBefore(target, new Instruction { Type = LifeEnum.END });				
-			}	
+				target = target.Value.Next;
+			}
 			
-			return endOfSwitch;
-		}		
-		
+			if (target != node.Next) //default statement right after switch
+			{			
+				if (target.Value.Previous.Value.Type == LifeEnum.GOTO)
+				{
+					RemoveNode(target.Value.Previous); //remote goto
+				}
+				
+				var def = new Instruction { Type = LifeEnum.DEFAULT, Goto = target.Value.Position };
+				var defNode = node.List.AddBefore(node.Next, def);		
+			}
+			 			
+			//follow all cases to detect end of switch
+			LinkedListNode<Instruction> endOfSwitch = null;
+			while (target.Value.Type == LifeEnum.CASE
+		        || target.Value.Type == LifeEnum.MULTI_CASE)
+			{
+				target = nodesMap[target.Value.Goto];	
+				
+				if (target.Value.Previous.Value.Type == LifeEnum.GOTO)
+				{					
+					endOfSwitch = nodesMap[target.Value.Previous.Value.Goto];
+					RemoveNode(target.Value.Previous); //remote goto
+				}
+			}
+			
+			if(endOfSwitch != null && target != endOfSwitch) //should be equal, otherwise there is a default case
+			{	
+				var def = new Instruction { Type = LifeEnum.DEFAULT, Goto = endOfSwitch.Value.Position };
+				var defNode = node.List.AddBefore(target, def);
+				nodesMap[target.Value.Position] = defNode;
+									
+				node.Value.NodesA = GetNodesBetween(node.Next, endOfSwitch, node.Value);				
+			}
+			else
+			{
+				node.Value.NodesA = GetNodesBetween(node.Next, target, node.Value);				
+			}			
+			
+			OptimizeCase(node.Value.NodesA);
+		}
+			
 		#endregion
-		
-		void RemoveNodes(LinkedListNode<Instruction> start, LinkedListNode<Instruction> end)
+				
+		LinkedList<Instruction> GetNodesBetween(LinkedListNode<Instruction> start, LinkedListNode<Instruction> end, Instruction parent)
 		{
-			while (start != null && start != end)
+			LinkedList<Instruction> result = new LinkedList<Instruction>();
+			while (start != null && start.Value != end.Value)
 			{
 				var next = start.Next;
-				nodes.Remove(start);
+				start.List.Remove(start);
+				start.Value.Parent = parent;
+				result.AddLast(start);
 				start = next;
-			}	
-		}
-		
-		void AddBefore(LinkedListNode<Instruction> node, Instruction value)
-		{
-			toAdd.Add(new Tuple<LinkedListNode<Instruction>, Instruction>(node, value));
-		}
-		
-		void AddItems()
-		{
-			//nodes have to be added later to not conflict with optimization
-			foreach (var item in toAdd)
-			{
-				nodes.AddBefore(item.Item1, item.Item2);
 			}
+			
+			return result;
+		}
+		
+		void RemoveNode(LinkedListNode<Instruction> node)
+		{
+			node.Value.Previous.Value.Next = node.Value.Next;
+			node.Value.Next.Value.Previous = node.Value.Previous;		
+			node.List.Remove(node);
 		}
 		
 		void Cleanup()
 		{
-			//remove gotos
-			//gotos can't be removed immediately because they might be referenced by IF/CASE statements
-			foreach (var node in toRemove.Distinct())
-			{
-				nodes.Remove(node);
-			}
-			
 			//remove endlife (if last instruction)
 			if (nodes.Last != null && nodes.Last.Value.Type == LifeEnum.ENDLIFE)
 			{
