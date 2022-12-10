@@ -282,8 +282,8 @@ namespace LifeDISA
 		
 		static void Dump(TextWriter writer)
 		{
-			int maxBytes = nodes.Max(x => x.LineEnd - x.LineStart) / 2;
-			int maxLength = nodes.Max(x => x.LineStart).ToString().Length;
+			int maxBytes = nodes.Any() ? nodes.Max(x => x.LineEnd - x.LineStart) / 2 : 0;
+			int maxLength = nodes.Any() ? nodes.Max(x => x.LineStart).ToString().Length : 0;
 			int indent = 0;
 			
 			foreach(var ins in nodes)
