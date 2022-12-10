@@ -38,13 +38,12 @@ namespace LifeDISA
 		};
 
 		public static int Main(string[] args)
-		{			
-			
+		{
 			string version = Shared.Tools.GetArgument<string>(args, "-version");
 			verbose = Shared.Tools.HasArgument(args, "-verbose");
 			
 			config = gameConfigs.FirstOrDefault(x => string.Equals(x.Version.ToString(), version, StringComparison.InvariantCultureIgnoreCase));
-			if (version == null)
+			if (version == null || config == null)
 			{
 				Console.WriteLine("Usage: LifeDISA -version {{{0}}} [-raw]", string.Join("|", gameConfigs.Select(x => x.Version.ToString().ToLowerInvariant())));
 				return -1;
