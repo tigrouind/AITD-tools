@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace LifeDISA
 {
@@ -79,19 +80,26 @@ namespace LifeDISA
 			var previous = target.Previous;
 			if (previous.Value.Type == LifeEnum.GOTO) //else or elseif
 			{										
-				toRemove.Add(previous); //remove goto				
-				if (target.Value.IsIfCondition && GetEndOfIf(target.Value) == previous.Value.Goto) //else directly followed by if block (and nothing else after if)
-				{					
-					target.Value.IsIfElse = true;
+				toRemove.Add(previous); //remove goto	
+				if (ins.Goto != previous.Value.Goto) //empty elseif
+				{
+					if (target.Value.IsIfCondition && GetEndOfIf(target.Value) == previous.Value.Goto) //else directly followed by if block (and nothing else after if)
+					{					
+						target.Value.IsIfElse = true;
+					}
+					else 
+					{					
+						AddBefore(target, new Instruction { Type = LifeEnum.ELSE });						
+					}
+					
+					if (!ins.IsIfElse)
+					{					
+						AddBefore(nodesMap[previous.Value.Goto], new Instruction { Type = LifeEnum.END }); //end of else or elseif
+					}
 				}
 				else 
-				{					
-					AddBefore(target, new Instruction { Type = LifeEnum.ELSE });						
-				}
-				
-				if (!ins.IsIfElse)
-				{					
-					AddBefore(nodesMap[previous.Value.Goto], new Instruction { Type = LifeEnum.END }); //end of else or elseif
+				{
+					AddBefore(target, new Instruction { Type = LifeEnum.END }); //regular if 
 				}
 			}
 			else if (!ins.IsIfElse)
@@ -147,7 +155,8 @@ namespace LifeDISA
 			LinkedListNode<Instruction> target = node.Next;
 			SkipCodeAfterSwitchBeforeCase(ref target);
 			
-			if (target != node.Next && target.Previous.Value.Type == LifeEnum.GOTO) //default statement right after switch with a goto
+			if (target != node.Next //code after switch
+			    && target.Previous.Value.Type == LifeEnum.GOTO) //default statement right after switch with a goto
 			{
 				//switch             switch 
 				//                      default                     
@@ -262,7 +271,7 @@ namespace LifeDISA
 		{
 			//remove gotos
 			//gotos can't be removed immediately because they might be referenced by IF/CASE statements
-			foreach (var node in toRemove)
+			foreach (var node in toRemove.Distinct())
 			{
 				nodes.Remove(node);
 			}
