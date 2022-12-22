@@ -6,23 +6,26 @@ using Shared;
 
 namespace LifeDISA
 {
-	public class Writer
+	public class Writer : StreamWriter
 	{
-		static TextWriter writer;
-		static byte[] allBytes;		
-		static int padding;
-		static int indent;
+		byte[] allBytes;		
+		int padding;
+		int indent;
 		
-		static void Init(TextWriter textWriter, LinkedList<Instruction> nodes, byte[] bytes)
+		public Writer(string filePath)
+			: base(filePath)
 		{
-			writer = textWriter;
+		}
+		
+		void Init(LinkedList<Instruction> nodes, byte[] bytes)
+		{
 			padding = nodes.Any() ? GetNodes(nodes).Max(x => x.LineEnd - x.LineStart) / 2 : 0;
 			allBytes = bytes;
 		}
 						
-		public static void DumpRaw(TextWriter textWriter, LinkedList<Instruction> nodes, byte[] bytes)
+		public void DumpRaw(LinkedList<Instruction> nodes, byte[] bytes)
 		{
-			Init(textWriter, nodes, bytes);
+			Init(nodes, bytes);
 			int maxLength = nodes.Any() ? nodes.Max(x => x.LineStart).ToString().Length : 0;	
 			foreach(var ins in nodes)
 			{
@@ -30,13 +33,13 @@ namespace LifeDISA
 			}
 		}
 		
-		public static void DumpOptimized(TextWriter textWriter, LinkedList<Instruction> nodes, byte[] bytes)
+		public void DumpOptimized(LinkedList<Instruction> nodes, byte[] bytes)
 		{
-			Init(textWriter, nodes, bytes);
+			Init(nodes, bytes);
 			Dump(nodes);
 		}
 				
-		static void Dump(LinkedList<Instruction> nodes)
+		void Dump(LinkedList<Instruction> nodes)
 		{			
 			foreach(var ins in nodes)
 			{				
@@ -45,7 +48,7 @@ namespace LifeDISA
 			}
 		}
 				
-		static void WriteNodes(Instruction ins)
+		void WriteNodes(Instruction ins)
 		{
 			if (ins.NodesB != null) 
 			{
@@ -91,25 +94,25 @@ namespace LifeDISA
 			}
 		}
 				
-		static void WriteLine(string format, params string[] args)
+		void WriteLine(string format, params string[] args)
 		{
 			WriteLine(new Instruction(), format, args);
 		}
 				
-		static void WriteLine(Instruction ins, string format, params string[] args)
+		void WriteLine(Instruction ins, string format, params string[] args)
 		{
 			if (Program.Verbose)
 			{
 				var bytes = Enumerable.Range(0, (ins.LineEnd - ins.LineStart) / 2).Select(x => allBytes.ReadUnsignedShortSwap(x * 2).ToString("X4"));
-				writer.Write("|{0}|", string.Join(" ", bytes).PadLeft(padding * 4 + (padding - 1), ' '));
-				writer.Write('\t');
+				Write("|{0}|", string.Join(" ", bytes).PadLeft(padding * 4 + (padding - 1), ' '));
+				Write('\t');
 			}
 			
-			writer.Write(new String('\t', indent));	
-			writer.WriteLine(string.Format(format, args));
+			Write(new String('\t', indent));	
+			base.WriteLine(string.Format(format, args));
 		}
 				
-		static string GetArguments(Instruction ins)
+		string GetArguments(Instruction ins)
 		{			
 			if (ins.Arguments.Any())
 			{
@@ -119,7 +122,7 @@ namespace LifeDISA
 			return string.Empty;
 		}
 		
-		static IEnumerable<Instruction> GetNodes(LinkedList<Instruction> nodes)
+		IEnumerable<Instruction> GetNodes(LinkedList<Instruction> nodes)
 		{
 			for(var node = nodes.First; node != null; node = node.Value.Next)
 			{

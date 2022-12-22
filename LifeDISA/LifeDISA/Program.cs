@@ -145,7 +145,7 @@ namespace LifeDISA
 				}
 			}
 
-			using (var writer = new StreamWriter("scripts.life"))
+			using (var writer = new Writer("scripts.life"))
 			using (var pak = new UnPAK(@"GAMEDATA\LISTLIFE.PAK"))				
 			{
 				//dump all
@@ -170,12 +170,12 @@ namespace LifeDISA
 							}
 							
 							ProcessCaseStatements();
-							Writer.DumpOptimized(writer, nodes, allBytes);
+							writer.DumpOptimized(nodes, allBytes);
 						}
 						else
 						{
 							ProcessGotos();
-							Writer.DumpRaw(writer, nodes, allBytes);
+							writer.DumpRaw(nodes, allBytes);
 						}
 					}
 					catch(Exception ex)
