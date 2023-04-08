@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using Shared;
@@ -19,12 +19,12 @@ namespace TrackDISA
 			}
 
 			if(!File.Exists(@"GAMEDATA\LISTTRAK.PAK"))
-			{				
+			{
 				return -1;
 			}
 
 			using (var writer = new StreamWriter("output.txt"))
-			using (var pak = new UnPAK(@"GAMEDATA\LISTTRAK.PAK"))			
+			using (var pak = new UnPAK(@"GAMEDATA\LISTTRAK.PAK"))
 			{
 				for(int i = 0 ; i < pak.EntryCount ; i++)
 				{

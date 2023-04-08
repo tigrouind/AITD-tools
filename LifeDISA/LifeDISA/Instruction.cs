@@ -1,4 +1,4 @@
-﻿
+
 using System;
 using System.Collections.Generic;
 
@@ -11,7 +11,7 @@ namespace LifeDISA
 		readonly List<string> arguments = new List<string>();
 		public string Actor;
 		public int Goto = -1;
-		public int LineStart, LineEnd;	
+		public int LineStart, LineEnd;
 		public int Position;
 		public LinkedListNode<Instruction> Previous;
 		public LinkedListNode<Instruction> Next;
@@ -33,34 +33,34 @@ namespace LifeDISA
 		{
 			arguments.Add(value.ToString());
 		}
-		
+
 		public void Set(int index, string value)
 		{
 			arguments[index] = value;
 		}
-				
+
 		public bool IsElseIfCondition
 		{
 			get
 			{
-				return NodesB != null 
-					&& NodesB.Count == 1 
+				return NodesB != null
+					&& NodesB.Count == 1
 					&& NodesB.First.Value.IsIfCondition;
 			}
 		}
-		
+
 		public bool IsAndCondition
 		{
 			get
 			{
-				return IsIfCondition 
+				return IsIfCondition
 					&& NodesA != null
-				    && NodesA.Count == 1
-				    && NodesA.First.Value.IsIfCondition 
-				    && NodesA.First.Value.NodesB == null;
+					&& NodesA.Count == 1
+					&& NodesA.First.Value.IsIfCondition
+					&& NodesA.First.Value.NodesB == null;
 			}
 		}
-		
+
 		public bool IsIfCondition
 		{
 			get
@@ -76,13 +76,13 @@ namespace LifeDISA
 					case LifeEnum.IF_IN:
 					case LifeEnum.IF_OUT:
 						return true;
-						
+
 					default:
 						return false;
 				}
 			}
 		}
-		
+
 		public string Name
 		{
 			get
@@ -93,38 +93,38 @@ namespace LifeDISA
 					{
 						return "if";
 					}
-					
+
 					switch (Type)
 					{
 						case LifeEnum.MULTI_CASE:
 							return "case";
-							
+
 						case LifeEnum.C_VAR:
-							return "set";						
+							return "set";
 					}
 				}
 
 				string name = Type.ToString().ToLowerInvariant();
-				if (Actor != null) 
+				if (Actor != null)
 				{
 					return Actor + "." + name;
 				}
-				
+
 				return name;
 			}
 		}
-		
+
 		public IReadOnlyList<string> Arguments
 		{
-			get				
+			get
 			{
 				return arguments;
 			}
 		}
-		
+
 		public override string ToString()
 		{
 			return Type.ToString();
-		} 
+		}
 	}
 }

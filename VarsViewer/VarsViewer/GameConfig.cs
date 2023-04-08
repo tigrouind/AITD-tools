@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace VarsViewer
 {
@@ -6,7 +6,7 @@ namespace VarsViewer
 	{
 		public readonly int VarsAddress;
 		public readonly int CvarAddress;
-		
+
 		public GameConfig(int varsAddress, int cvarAddress)
 		{
 			VarsAddress = varsAddress;

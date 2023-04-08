@@ -1,4 +1,4 @@
-﻿namespace VarsViewer
+namespace VarsViewer
 {
 	partial class MainForm
 	{
@@ -7,7 +7,7 @@
 		/// </summary>
 		private System.ComponentModel.IContainer components = null;
 		private System.Windows.Forms.Timer timer;
-		
+
 		/// <summary>
 		/// Disposes resources used by the form.
 		/// </summary>
@@ -21,7 +21,7 @@
 			}
 			base.Dispose(disposing);
 		}
-		
+
 		/// <summary>
 		/// This method is required for Windows Forms designer support.
 		/// Do not change the method contents inside the source code editor. The Forms designer might
@@ -40,7 +40,7 @@
 			this.timer.Tick += new System.EventHandler(this.TimerTick);
 			// 
 			// MainForm
-			// 		
+			//
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
 			this.DoubleBuffered = true;
 			this.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));

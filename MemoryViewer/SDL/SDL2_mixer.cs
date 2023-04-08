@@ -1,29 +1,29 @@
 #region License
 /* SDL2# - C# Wrapper for SDL2
- *
- * Copyright (c) 2013-2021 Ethan Lee.
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- * 1. The origin of this software must not be misrepresented; you must not
- * claim that you wrote the original software. If you use this software in a
- * product, an acknowledgment in the product documentation would be
- * appreciated but is not required.
- *
- * 2. Altered source versions must be plainly marked as such, and must not be
- * misrepresented as being the original software.
- *
- * 3. This notice may not be removed or altered from any source distribution.
- *
- * Ethan "flibitijibibo" Lee <flibitijibibo@flibitijibibo.com>
- *
- */
+*
+* Copyright (c) 2013-2021 Ethan Lee.
+*
+* This software is provided 'as-is', without any express or implied warranty.
+* In no event will the authors be held liable for any damages arising from
+* the use of this software.
+*
+* Permission is granted to anyone to use this software for any purpose,
+* including commercial applications, and to alter it and redistribute it
+* freely, subject to the following restrictions:
+*
+* 1. The origin of this software must not be misrepresented; you must not
+* claim that you wrote the original software. If you use this software in a
+* product, an acknowledgment in the product documentation would be
+* appreciated but is not required.
+*
+* 2. Altered source versions must be plainly marked as such, and must not be
+* misrepresented as being the original software.
+*
+* 3. This notice may not be removed or altered from any source distribution.
+*
+* Ethan "flibitijibibo" Lee <flibitijibibo@flibitijibibo.com>
+*
+*/
 #endregion
 
 #region Using Statements
@@ -45,17 +45,17 @@ namespace SDL2
 		#region SDL_mixer.h
 
 		/* Similar to the headers, this is the version we're expecting to be
-		 * running with. You will likely want to check this somewhere in your
-		 * program!
-		 */
+		* running with. You will likely want to check this somewhere in your
+		* program!
+		*/
 		public const int SDL_MIXER_MAJOR_VERSION =	2;
 		public const int SDL_MIXER_MINOR_VERSION =	0;
 		public const int SDL_MIXER_PATCHLEVEL =		5;
 
 		/* In C, you can redefine this value before including SDL_mixer.h.
-		 * We're not going to allow this in SDL2#, since the value of this
-		 * variable is persistent and not dependent on preprocessor ordering.
-		 */
+		* We're not going to allow this in SDL2#, since the value of this
+		* variable is persistent and not dependent on preprocessor ordering.
+		*/
 		public const int MIX_CHANNELS = 8;
 
 		public static readonly int MIX_DEFAULT_FREQUENCY = 44100;
@@ -189,7 +189,7 @@ namespace SDL2
 			IntPtr src,
 			int freesrc
 		);
-		
+
 		/* IntPtr refers to a Mix_Chunk* */
 		/* This is an RWops macro in the C header. */
 		public static IntPtr Mix_LoadWAV(string file)
@@ -265,8 +265,8 @@ namespace SDL2
 		public static extern Mix_MusicType Mix_GetMusicType(IntPtr music);
 
 		/* music refers to a Mix_Music*
-		 * Only available in 2.0.5 or higher.
-		 */
+		* Only available in 2.0.5 or higher.
+		*/
 		[DllImport(nativeLibName, EntryPoint = "Mix_GetMusicTitle", CallingConvention = CallingConvention.Cdecl)]
 		public static extern IntPtr INTERNAL_Mix_GetMusicTitle(IntPtr music);
 		public static string Mix_GetMusicTitle(IntPtr music)
@@ -277,8 +277,8 @@ namespace SDL2
 		}
 
 		/* music refers to a Mix_Music*
-		 * Only available in 2.0.5 or higher.
-		 */
+		* Only available in 2.0.5 or higher.
+		*/
 		[DllImport(nativeLibName, EntryPoint = "Mix_GetMusicTitleTag", CallingConvention = CallingConvention.Cdecl)]
 		public static extern IntPtr INTERNAL_Mix_GetMusicTitleTag(IntPtr music);
 		public static string Mix_GetMusicTitleTag(IntPtr music)
@@ -289,8 +289,8 @@ namespace SDL2
 		}
 
 		/* music refers to a Mix_Music*
-		 * Only available in 2.0.5 or higher.
-		 */
+		* Only available in 2.0.5 or higher.
+		*/
 		[DllImport(nativeLibName, EntryPoint = "Mix_GetMusicArtistTag", CallingConvention = CallingConvention.Cdecl)]
 		public static extern IntPtr INTERNAL_Mix_GetMusicArtistTag(IntPtr music);
 		public static string Mix_GetMusicArtistTag(IntPtr music)
@@ -301,8 +301,8 @@ namespace SDL2
 		}
 
 		/* music refers to a Mix_Music*
-		 * Only available in 2.0.5 or higher.
-		 */
+		* Only available in 2.0.5 or higher.
+		*/
 		[DllImport(nativeLibName, EntryPoint = "Mix_GetMusicAlbumTag", CallingConvention = CallingConvention.Cdecl)]
 		public static extern IntPtr INTERNAL_Mix_GetMusicAlbumTag(IntPtr music);
 		public static string Mix_GetMusicAlbumTag(IntPtr music)
@@ -313,8 +313,8 @@ namespace SDL2
 		}
 
 		/* music refers to a Mix_Music*
-		 * Only available in 2.0.5 or higher.
-		 */
+		* Only available in 2.0.5 or higher.
+		*/
 		[DllImport(nativeLibName, EntryPoint = "Mix_GetMusicCopyrightTag", CallingConvention = CallingConvention.Cdecl)]
 		public static extern IntPtr INTERNAL_Mix_GetMusicCopyrightTag(IntPtr music);
 		public static string Mix_GetMusicCopyrightTag(IntPtr music)
@@ -481,8 +481,8 @@ namespace SDL2
 		public static extern int Mix_VolumeMusic(int volume);
 
 		/* music refers to a Mix_Music*
-		 * Only available in 2.0.5 or higher.
-		 */
+		* Only available in 2.0.5 or higher.
+		*/
 		[DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern int Mix_GetVolumeMusicStream(IntPtr music);
 
@@ -538,32 +538,32 @@ namespace SDL2
 		public static extern int Mix_SetMusicPosition(double position);
 
 		/* music refers to a Mix_Music*
-		 * Only available in 2.0.5 or higher.
-		 */
+		* Only available in 2.0.5 or higher.
+		*/
 		[DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern double Mix_GetMusicPosition(IntPtr music);
 
 		/* music refers to a Mix_Music*
-		 * Only available in 2.0.5 or higher.
-		 */
+		* Only available in 2.0.5 or higher.
+		*/
 		[DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern double Mix_MusicDuration(IntPtr music);
 
 		/* music refers to a Mix_Music*
-		 * Only available in 2.0.5 or higher.
-		 */
+		* Only available in 2.0.5 or higher.
+		*/
 		[DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern double Mix_GetMusicLoopStartTime(IntPtr music);
 
 		/* music refers to a Mix_Music*
-		 * Only available in 2.0.5 or higher.
-		 */
+		* Only available in 2.0.5 or higher.
+		*/
 		[DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern double Mix_GetMusicLoopEndTime(IntPtr music);
 
 		/* music refers to a Mix_Music*
-		 * Only available in 2.0.5 or higher.
-		 */
+		* Only available in 2.0.5 or higher.
+		*/
 		[DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern double Mix_GetMusicLoopLengthTime(IntPtr music);
 
@@ -655,12 +655,12 @@ namespace SDL2
 		{
 			SDL.SDL_SetError(fmtAndArglist);
 		}
-		
+
 		public static void Mix_ClearError()
 		{
 			SDL.SDL_ClearError();
 		}
-		
+
 		#endregion
 	}
 }

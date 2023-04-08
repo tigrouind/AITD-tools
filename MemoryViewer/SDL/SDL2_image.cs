@@ -1,29 +1,29 @@
 #region License
 /* SDL2# - C# Wrapper for SDL2
- *
- * Copyright (c) 2013-2021 Ethan Lee.
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- * 1. The origin of this software must not be misrepresented; you must not
- * claim that you wrote the original software. If you use this software in a
- * product, an acknowledgment in the product documentation would be
- * appreciated but is not required.
- *
- * 2. Altered source versions must be plainly marked as such, and must not be
- * misrepresented as being the original software.
- *
- * 3. This notice may not be removed or altered from any source distribution.
- *
- * Ethan "flibitijibibo" Lee <flibitijibibo@flibitijibibo.com>
- *
- */
+*
+* Copyright (c) 2013-2021 Ethan Lee.
+*
+* This software is provided 'as-is', without any express or implied warranty.
+* In no event will the authors be held liable for any damages arising from
+* the use of this software.
+*
+* Permission is granted to anyone to use this software for any purpose,
+* including commercial applications, and to alter it and redistribute it
+* freely, subject to the following restrictions:
+*
+* 1. The origin of this software must not be misrepresented; you must not
+* claim that you wrote the original software. If you use this software in a
+* product, an acknowledgment in the product documentation would be
+* appreciated but is not required.
+*
+* 2. Altered source versions must be plainly marked as such, and must not be
+* misrepresented as being the original software.
+*
+* 3. This notice may not be removed or altered from any source distribution.
+*
+* Ethan "flibitijibibo" Lee <flibitijibibo@flibitijibibo.com>
+*
+*/
 #endregion
 
 #region Using Statements
@@ -45,9 +45,9 @@ namespace SDL2
 		#region SDL_image.h
 
 		/* Similar to the headers, this is the version we're expecting to be
-		 * running with. You will likely want to check this somewhere in your
-		 * program!
-		 */
+		* running with. You will likely want to check this somewhere in your
+		* program!
+		*/
 		public const int SDL_IMAGE_MAJOR_VERSION =	2;
 		public const int SDL_IMAGE_MINOR_VERSION =	0;
 		public const int SDL_IMAGE_PATCHLEVEL =		6;
@@ -152,9 +152,9 @@ namespace SDL2
 		}
 
 		/* renderer refers to an SDL_Renderer*.
-		 * src refers to an SDL_RWops*.
-		 * IntPtr to an SDL_Texture*.
-		 */
+		* src refers to an SDL_RWops*.
+		* IntPtr to an SDL_Texture*.
+		*/
 		/* THIS IS A PUBLIC RWops FUNCTION! */
 		[DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern IntPtr IMG_LoadTexture_RW(
@@ -164,9 +164,9 @@ namespace SDL2
 		);
 
 		/* renderer refers to an SDL_Renderer*.
-		 * src refers to an SDL_RWops*.
-		 * IntPtr to an SDL_Texture*.
-		 */
+		* src refers to an SDL_RWops*.
+		* IntPtr to an SDL_Texture*.
+		*/
 		/* THIS IS A PUBLIC RWops FUNCTION! */
 		[DllImport(nativeLibName, EntryPoint = "IMG_LoadTextureTyped_RW", CallingConvention = CallingConvention.Cdecl)]
 		private static extern unsafe IntPtr INTERNAL_IMG_LoadTextureTyped_RW(

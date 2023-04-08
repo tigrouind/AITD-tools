@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 
 namespace LifeDISA
 {
 	public static class MacroTable
 	{
-		public readonly static LifeEnum[] LifeA = 
+		public readonly static LifeEnum[] LifeA =
 		{
 			LifeEnum.DO_MOVE,
 			LifeEnum.ANIM_ONCE,
@@ -116,8 +116,8 @@ namespace LifeDISA
 			LifeEnum.DO_ROT_CLUT,
 			LifeEnum.STOP_CLUT
 		};
-		
-		public readonly static LifeEnum[] LifeB = 
+
+		public readonly static LifeEnum[] LifeB =
 		{
 			LifeEnum.DO_MOVE,
 			LifeEnum.ANIM_ONCE,
@@ -243,8 +243,8 @@ namespace LifeDISA
 			LifeEnum.UNKNOWN_5,
 			LifeEnum.UNKNOWN_6
 		};
-		
-		public readonly static EvalEnum[] EvalA = 
+
+		public readonly static EvalEnum[] EvalA =
 		{
 			EvalEnum.ACTOR_COLLIDER,
 			EvalEnum.TRIGGER_COLLIDER,
@@ -279,15 +279,15 @@ namespace LifeDISA
 			EvalEnum.ROOM,
 			EvalEnum.LIFE,
 			EvalEnum.OBJECT,
-			EvalEnum.ROOMY,	
-			EvalEnum.TEST_ZV_END_ANIM,	
+			EvalEnum.ROOMY,
+			EvalEnum.TEST_ZV_END_ANIM,
 			EvalEnum.MUSIC,
 			EvalEnum.C_VAR,
 			EvalEnum.STAGE,
 			EvalEnum.THROW
 		};
-		
-		public readonly static EvalEnum[] EvalB = 
+
+		public readonly static EvalEnum[] EvalB =
 		{
 			EvalEnum.ACTOR_COLLIDER,
 			EvalEnum.TRIGGER_COLLIDER,
@@ -322,7 +322,7 @@ namespace LifeDISA
 			EvalEnum.ROOM,
 			EvalEnum.LIFE,
 			EvalEnum.OBJECT,
-			EvalEnum.MUSIC,	
+			EvalEnum.MUSIC,
 			EvalEnum.C_VAR,
 			EvalEnum.STAGE,
 			EvalEnum.THROW,

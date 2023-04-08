@@ -1,4 +1,4 @@
-﻿
+
 using System;
 
 namespace LifeDISA
@@ -39,9 +39,9 @@ namespace LifeDISA
 		ROOM,
 		LIFE,
 		OBJECT,
-		ROOMY,	
-		TEST_ZV_END_ANIM,	
-		MUSIC,		
+		ROOMY,
+		TEST_ZV_END_ANIM,
+		MUSIC,
 		C_VAR,
 		STAGE,
 		THROW,

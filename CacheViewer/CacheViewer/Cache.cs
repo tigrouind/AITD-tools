@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Shared;
 
 namespace CacheViewer
@@ -14,7 +14,7 @@ namespace CacheViewer
 		public int SizeFreeData;
 		public int NumMaxEntry;
 		public int NumUsedEntry;
-		
+
 		public Cache(int index, VarEnum section)
 		{
 			Section = section;

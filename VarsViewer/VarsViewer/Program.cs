@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
@@ -9,8 +9,8 @@ namespace VarsViewer
 	sealed class Program
 	{
 		[DllImport("user32.dll")]
-        static extern bool SetProcessDPIAware();
-        
+		static extern bool SetProcessDPIAware();
+
 		[STAThread]
 		static void Main(string[] args)
 		{

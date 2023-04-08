@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -33,22 +33,22 @@ namespace Shared
 				return string.Empty;
 			}
 		}
-		
+
 		public static DosMCB ReadMCB(byte[] memory, int offset)
 		{
 			return new DosMCB
 			{
 				Position = offset + 16,
-				Tag = memory[offset],				
+				Tag = memory[offset],
 				Owner = memory.ReadUnsignedShort(offset + 1) * 16,
 				Size = memory.ReadUnsignedShort(offset + 3) * 16
 			};
 		}
 
 		public static IEnumerable<DosMCB> GetMCBs(byte[] memory)
-		{			
+		{
 			int firstMCB = memory.ReadUnsignedShort(0x0824) * 16; //sysvars (list of lists) (0x80) + firstMCB (0x24) (see DOSBox/dos_inc.h)
-			
+
 			//scan DOS memory control block (MCB) chain
 			int pos = firstMCB;
 			while (pos <= (memory.Length - 16))
@@ -69,7 +69,7 @@ namespace Shared
 				pos += block.Size + 16;
 			}
 		}
-		
+
 		public static bool GetExeEntryPoint(byte[] memory, out int entryPoint)
 		{
 			int psp = memory.ReadUnsignedShort(0x0B30) * 16; // 0xB2 (dos swappable area) + 0x10 (current PSP) (see DOSBox/dos_inc.h)
@@ -82,7 +82,7 @@ namespace Shared
 					return true;
 				}
 			}
-	
+
 			entryPoint = -1;
 			return false;
 		}

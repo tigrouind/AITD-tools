@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System;
 using System.Linq;
@@ -37,7 +37,7 @@ namespace Shared
 
 		[DllImport("kernel32.dll")]
 		static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, IntPtr lpBuffer, int dwSize, out IntPtr lpNumberOfBytesRead);
-		
+
 		[DllImport("kernel32.dll")]
 		static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, int dwSize, out IntPtr lpNumberOfBytesRead);
 
@@ -48,7 +48,7 @@ namespace Shared
 		static extern int VirtualQueryEx(IntPtr hProcess, IntPtr lpAddress, out MEMORY_BASIC_INFORMATION lpBuffer, uint dwLength);
 
 		IntPtr processHandle;
-		
+
 		public long BaseAddress;
 
 		public ProcessMemory(int processId)
@@ -60,17 +60,17 @@ namespace Shared
 		{
 			Close();
 		}
-		
+
 		public unsafe long Read(byte[] buffer, long address, int count, int offset = 0)
 		{
 			if ((offset + count) > buffer.Length)
 			{
 				throw new ArgumentOutOfRangeException();
 			}
-			
+
 			IntPtr bytesRead;
 			fixed (byte* ptr = buffer)
-			{				
+			{
 				if (ReadProcessMemory(processHandle, new IntPtr(BaseAddress + address), new IntPtr((void*)(ptr + offset)), count, out bytesRead))
 				{
 					return (long)bytesRead;
@@ -85,7 +85,7 @@ namespace Shared
 			{
 				throw new ArgumentOutOfRangeException();
 			}
-			
+
 			IntPtr bytesWritten;
 			if (WriteProcessMemory(processHandle, new IntPtr(BaseAddress + offset), buffer, count, out bytesWritten))
 			{
@@ -113,7 +113,7 @@ namespace Shared
 				//check if memory region is accessible
 				//skip regions smaller than 16M (default DOSBOX memory size)
 				if (mem_info.Protect == PAGE_READWRITE && mem_info.State == MEM_COMMIT && (mem_info.Type & MEM_PRIVATE) == MEM_PRIVATE
-					&& (int)mem_info.RegionSize >= 1024 * 1024 * 16 
+					&& (int)mem_info.RegionSize >= 1024 * 1024 * 16
 					&& Read(memory, (long)mem_info.BaseAddress, memory.Length) > 0
 					&& Tools.IndexOf(memory, Encoding.ASCII.GetBytes("CON ")) != -1)
 				{
@@ -123,7 +123,7 @@ namespace Shared
 
 			return -1;
 		}
-		
+
 		IEnumerable<MEMORY_BASIC_INFORMATION> GetMemoryRegions(long min_address = 0, long max_address = 0x7FFFFFFF)
 		{
 			MEMORY_BASIC_INFORMATION mem_info;
@@ -138,7 +138,7 @@ namespace Shared
 				min_address = (long)mem_info.BaseAddress + (long)mem_info.RegionSize;
 			}
 		}
-		
+
 		public int SearchForBytePattern(Func<byte[], int> searchFunction)
 		{
 			byte[] buffer = new byte[81920];
@@ -147,7 +147,7 @@ namespace Shared
 			foreach(var mem_info in GetMemoryRegions(0, 0x0FFFFFFF))
 			{
 				if(mem_info.Protect == PAGE_READWRITE && mem_info.State == MEM_COMMIT && (mem_info.Type & MEM_IMAGE) == MEM_IMAGE)
-				{							
+				{
 					long readPosition = (long)mem_info.BaseAddress;
 					int bytesToRead = (int)mem_info.RegionSize;
 
@@ -160,7 +160,7 @@ namespace Shared
 						{
 							return (int)((readPosition + index) - BaseAddress);
 						}
-			
+
 						readPosition += (int)bytesRead;
 						bytesToRead -= (int)bytesRead;
 					}

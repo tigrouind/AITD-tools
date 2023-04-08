@@ -1,29 +1,29 @@
 #region License
 /* SDL2# - C# Wrapper for SDL2
- *
- * Copyright (c) 2013-2021 Ethan Lee.
- *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from
- * the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- * 1. The origin of this software must not be misrepresented; you must not
- * claim that you wrote the original software. If you use this software in a
- * product, an acknowledgment in the product documentation would be
- * appreciated but is not required.
- *
- * 2. Altered source versions must be plainly marked as such, and must not be
- * misrepresented as being the original software.
- *
- * 3. This notice may not be removed or altered from any source distribution.
- *
- * Ethan "flibitijibibo" Lee <flibitijibibo@flibitijibibo.com>
- *
- */
+*
+* Copyright (c) 2013-2021 Ethan Lee.
+*
+* This software is provided 'as-is', without any express or implied warranty.
+* In no event will the authors be held liable for any damages arising from
+* the use of this software.
+*
+* Permission is granted to anyone to use this software for any purpose,
+* including commercial applications, and to alter it and redistribute it
+* freely, subject to the following restrictions:
+*
+* 1. The origin of this software must not be misrepresented; you must not
+* claim that you wrote the original software. If you use this software in a
+* product, an acknowledgment in the product documentation would be
+* appreciated but is not required.
+*
+* 2. Altered source versions must be plainly marked as such, and must not be
+* misrepresented as being the original software.
+*
+* 3. This notice may not be removed or altered from any source distribution.
+*
+* Ethan "flibitijibibo" Lee <flibitijibibo@flibitijibibo.com>
+*
+*/
 #endregion
 
 #region Using Statements
@@ -45,9 +45,9 @@ namespace SDL2
 		#region SDL_ttf.h
 
 		/* Similar to the headers, this is the version we're expecting to be
-		 * running with. You will likely want to check this somewhere in your
-		 * program!
-		 */
+		* running with. You will likely want to check this somewhere in your
+		* program!
+		*/
 		public const int SDL_TTF_MAJOR_VERSION =	2;
 		public const int SDL_TTF_MINOR_VERSION =	0;
 		public const int SDL_TTF_PATCHLEVEL =		16;
@@ -152,8 +152,8 @@ namespace SDL2
 		);
 
 		/* font refers to a TTF_Font*
-		 * Only available in 2.0.16 or higher.
-		 */
+		* Only available in 2.0.16 or higher.
+		*/
 		[DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern int TTF_SetFontSize(
 			IntPtr font,
@@ -209,8 +209,8 @@ namespace SDL2
 		public static extern void TTF_SetFontKerning(IntPtr font, int allowed);
 
 		/* font refers to a TTF_Font*.
-		 * IntPtr is actually a C long! This ignores Win64!
-		 */
+		* IntPtr is actually a C long! This ignores Win64!
+		*/
 		[DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern IntPtr TTF_FontFaces(IntPtr font);
 
@@ -247,8 +247,8 @@ namespace SDL2
 		public static extern int TTF_GlyphIsProvided(IntPtr font, ushort ch);
 
 		/* font refers to a TTF_Font*
-		 * Only available in 2.0.16 or higher.
-		 */
+		* Only available in 2.0.16 or higher.
+		*/
 		[DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern int TTF_GlyphIsProvided32(IntPtr font, uint ch);
 
@@ -265,8 +265,8 @@ namespace SDL2
 		);
 
 		/* font refers to a TTF_Font*
-		 * Only available in 2.0.16 or higher.
-		 */
+		* Only available in 2.0.16 or higher.
+		*/
 		[DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern int TTF_GlyphMetrics32(
 			IntPtr font,
@@ -324,8 +324,8 @@ namespace SDL2
 		);
 
 		/* font refers to a TTF_Font*
-		 * Only available in 2.0.16 or higher.
-		 */
+		* Only available in 2.0.16 or higher.
+		*/
 		[DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern int TTF_MeasureText(
 			IntPtr font,
@@ -337,8 +337,8 @@ namespace SDL2
 		);
 
 		/* font refers to a TTF_Font*
-		 * Only available in 2.0.16 or higher.
-		 */
+		* Only available in 2.0.16 or higher.
+		*/
 		[DllImport(nativeLibName, EntryPoint = "TTF_MeasureUTF8", CallingConvention = CallingConvention.Cdecl)]
 		public static extern unsafe int INTERNAL_TTF_MeasureUTF8(
 			IntPtr font,
@@ -367,8 +367,8 @@ namespace SDL2
 		}
 
 		/* font refers to a TTF_Font*
-		 * Only available in 2.0.16 or higher.
-		 */
+		* Only available in 2.0.16 or higher.
+		*/
 		[DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern int TTF_MeasureUNICODE(
 			IntPtr font,
@@ -420,8 +420,8 @@ namespace SDL2
 		);
 
 		/* IntPtr refers to an SDL_Surface*, font to a TTF_Font*
-		 * Only available in 2.0.16 or higher.
-		 */
+		* Only available in 2.0.16 or higher.
+		*/
 		[DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern IntPtr TTF_RenderText_Solid_Wrapped(
 			IntPtr font,
@@ -432,8 +432,8 @@ namespace SDL2
 		);
 
 		/* IntPtr refers to an SDL_Surface*, font to a TTF_Font*
-		 * Only available in 2.0.16 or higher.
-		 */
+		* Only available in 2.0.16 or higher.
+		*/
 		[DllImport(nativeLibName, EntryPoint = "TTF_RenderUTF8_Solid_Wrapped", CallingConvention = CallingConvention.Cdecl)]
 		public static extern unsafe IntPtr INTERNAL_TTF_RenderUTF8_Solid_Wrapped(
 			IntPtr font,
@@ -459,8 +459,8 @@ namespace SDL2
 		}
 
 		/* IntPtr refers to an SDL_Surface*, font to a TTF_Font*
-		 * Only available in 2.0.16 or higher.
-		 */
+		* Only available in 2.0.16 or higher.
+		*/
 		[DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern IntPtr TTF_RenderUNICODE_Solid_Wrapped(
 			IntPtr font,
@@ -479,8 +479,8 @@ namespace SDL2
 		);
 
 		/* IntPtr refers to an SDL_Surface*, font to a TTF_Font*
-		 * Only available in 2.0.16 or higher.
-		 */
+		* Only available in 2.0.16 or higher.
+		*/
 		[DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern IntPtr TTF_RenderGlyph32_Solid(
 			IntPtr font,
@@ -545,8 +545,8 @@ namespace SDL2
 		);
 
 		/* IntPtr refers to an SDL_Surface*, font to a TTF_Font*
-		 * Only available in 2.0.16 or higher.
-		 */
+		* Only available in 2.0.16 or higher.
+		*/
 		[DllImport(nativeLibName, EntryPoint = "TTF_RenderUTF8_Shaded_Wrapped", CallingConvention = CallingConvention.Cdecl)]
 		public static extern unsafe IntPtr INTERNAL_TTF_RenderUTF8_Shaded_Wrapped(
 			IntPtr font,
@@ -595,8 +595,8 @@ namespace SDL2
 		);
 
 		/* IntPtr refers to an SDL_Surface*, font to a TTF_Font*
-		 * Only available in 2.0.16 or higher.
-		 */
+		* Only available in 2.0.16 or higher.
+		*/
 		[DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern IntPtr TTF_RenderGlyph32_Shaded(
 			IntPtr font,
@@ -699,8 +699,8 @@ namespace SDL2
 		);
 
 		/* IntPtr refers to an SDL_Surface*, font to a TTF_Font*
-		 * Only available in 2.0.16 or higher.
-		 */
+		* Only available in 2.0.16 or higher.
+		*/
 		[DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern IntPtr TTF_RenderGlyph32_Blended(
 			IntPtr font,
@@ -735,8 +735,8 @@ namespace SDL2
 		);
 
 		/* font refers to a TTF_Font*
-		 * Only available in 2.0.15 or higher.
-		 */
+		* Only available in 2.0.15 or higher.
+		*/
 		[DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern int TTF_GetFontKerningSizeGlyphs(
 			IntPtr font,
@@ -745,8 +745,8 @@ namespace SDL2
 		);
 
 		/* font refers to a TTF_Font*
-		 * Only available in 2.0.16 or higher.
-		 */
+		* Only available in 2.0.16 or higher.
+		*/
 		[DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern int TTF_GetFontKerningSizeGlyphs32(
 			IntPtr font,
@@ -763,7 +763,7 @@ namespace SDL2
 		{
 			SDL.SDL_SetError(fmtAndArglist);
 		}
-		
+
 		#endregion
 	}
 }

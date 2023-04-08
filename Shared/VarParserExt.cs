@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text.RegularExpressions;
 
 namespace Shared
@@ -15,12 +15,12 @@ namespace Shared
 
 			return value;
 		}
-		
+
 		public override string GetText(VarEnum section, int value)
 		{
 			return GetText(section, value, null);
 		}
-		
+
 		public string GetText(VarEnum section, int value, string defaultText, bool includeId = true)
 		{
 			string text = base.GetText(section, value);
@@ -28,12 +28,12 @@ namespace Shared
 			{
 				if (includeId)
 				{
-					return text + "_" + value;	
+					return text + "_" + value;
 				}
-				
+
 				return text;
 			}
-			
+
 			if (defaultText != null)
 			{
 				return defaultText;
@@ -41,7 +41,7 @@ namespace Shared
 
 			return value.ToString();
 		}
-		
+
 		protected override string FormatText(string text)
 		{
 			text = Regex.Replace(text, @"-", " ");

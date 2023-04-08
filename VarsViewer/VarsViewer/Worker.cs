@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,7 +13,7 @@ namespace VarsViewer
 		int entryPoint = -1;
 		GameVersion gameVersion;
 		readonly byte[] memory = new byte[640 * 1024];
-		
+
 		int varsPointer;
 		GameConfig gameConfig;
 		Dictionary<GameVersion, GameConfig> gameConfigs = new Dictionary<GameVersion, GameConfig>
@@ -35,7 +35,7 @@ namespace VarsViewer
 			this.vars = vars;
 			this.cvars = cvars;
 		}
-		
+
 		void InitVars(List<Var> data, int length, VarEnum type)
 		{
 			if(data.Count != length)
@@ -51,7 +51,7 @@ namespace VarsViewer
 				}
 			}
 		}
-		
+
 		public bool IsRunning
 		{
 			get
@@ -77,23 +77,23 @@ namespace VarsViewer
 			}
 
 			if (process != null && entryPoint == -1)
-			{		
-				if (process.Read(memory, 0, memory.Length) > 0 && 
-				      DosBox.GetExeEntryPoint(memory, out entryPoint))
-				{						
+			{
+				if (process.Read(memory, 0, memory.Length) > 0 &&
+					DosBox.GetExeEntryPoint(memory, out entryPoint))
+				{
 					//check if CDROM/floppy version
 					byte[] cdPattern = Encoding.ASCII.GetBytes("CD Not Found");
 					gameVersion = Tools.IndexOf(memory, cdPattern) != -1 ? GameVersion.AITD1 : GameVersion.AITD1_FLOPPY;
-					if (gameVersion == GameVersion.AITD1_FLOPPY) 
+					if (gameVersion == GameVersion.AITD1_FLOPPY)
 					{
 						if (Tools.IndexOf(memory, Encoding.ASCII.GetBytes("USA.PAK")) != -1)
 						{
 							gameVersion = GameVersion.AITD1_DEMO;
 						}
 					}
-					
+
 					gameConfig = gameConfigs[gameVersion];
-				} 
+				}
 				else
 				{
 					CloseReader();
@@ -110,14 +110,14 @@ namespace VarsViewer
 				{
 					varsPointer = memory.ReadFarPointer(0);
 					if(varsPointer == 0)
-					{							
+					{
 						InitVars(vars, 0, VarEnum.VARS);
 					}
-					else 
+					else
 					{
 						InitVars(vars, gameVersion == GameVersion.AITD1_DEMO ? 22 : 207, VarEnum.VARS);
 						if (result &= (process.Read(memory, varsPointer, vars.Count * 2) > 0))
-						{								
+						{
 							needRefresh |= CheckDifferences(vars, time);
 						}
 					}
@@ -138,7 +138,7 @@ namespace VarsViewer
 
 				return needRefresh;
 			}
-			
+
 			return false;
 		}
 
@@ -148,7 +148,7 @@ namespace VarsViewer
 			process.Close();
 			process = null;
 		}
-		
+
 		bool CheckDifferences(List<Var> data, int time)
 		{
 			bool needRefresh = false;
@@ -191,7 +191,7 @@ namespace VarsViewer
 					{
 						newText = value.ToString();
 					}
-					
+
 					var.Text = newText;
 					var.Value = value;
 					var.Difference = difference;
