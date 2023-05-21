@@ -54,7 +54,7 @@ namespace LifeDISA
 			Directory.CreateDirectory("GAMEDATA");
 
 			//parse vars
-			if(File.Exists(@"GAMEDATA\vars.txt"))
+			if (File.Exists(@"GAMEDATA\vars.txt"))
 			{
 				vars.Load(@"GAMEDATA\vars.txt",
 						VarEnum.LIFES,
@@ -95,7 +95,7 @@ namespace LifeDISA
 					buffer = pak.GetEntry(0);
 				}
 
-				foreach(var item in Tools.ReadLines(buffer, Encoding.GetEncoding(850))
+				foreach (var item in Tools.ReadLines(buffer, Encoding.GetEncoding(850))
 					.Where(x => x.Contains(":"))
 					.Select(x => x.Split(':'))
 					.Where(x => x[1] != string.Empty))
@@ -104,41 +104,41 @@ namespace LifeDISA
 				}
 			}
 
-			if(File.Exists(@"GAMEDATA\OBJETS.ITD"))
+			if (File.Exists(@"GAMEDATA\OBJETS.ITD"))
 			{
 				allBytes = File.ReadAllBytes(@"GAMEDATA\OBJETS.ITD");
 				int count = allBytes.ReadShort(0);
 
-				for(int i = 0 ; i < count ; i++)
+				for (int i = 0 ; i < count ; i++)
 				{
 					string name = null;
 					int n = i * config.Offset + 2;
 					int body = allBytes.ReadShort(n + 2);
-					if(body != -1)
+					if (body != -1)
 					{
 						name = vars.GetText(VarEnum.BODYS, body, string.Empty, false);
 					}
 
-					if(string.IsNullOrEmpty(name))
+					if (string.IsNullOrEmpty(name))
 					{
 						int index = allBytes.ReadShort(n + 10);
-						if(index != -1 && index != 0 && namesByIndex.TryGetValue(index, out name))
+						if (index != -1 && index != 0 && namesByIndex.TryGetValue(index, out name))
 						{
 							name = name.ToLowerInvariant();
 							name = string.Join("_", name.Split(' ').Where(x => x != "an" && x != "a").ToArray());
 						}
 					}
 
-					if(string.IsNullOrEmpty(name))
+					if (string.IsNullOrEmpty(name))
 					{
 						int life = allBytes.ReadShort(n + 34);
-						if(life != -1)
+						if (life != -1)
 						{
 							name = vars.GetText(VarEnum.LIFES, life, string.Empty, false);
 						}
 					}
 
-					if(!string.IsNullOrEmpty(name))
+					if (!string.IsNullOrEmpty(name))
 					{
 						objectsByIndex.Add(i, name.ToLowerInvariant());
 					}
@@ -149,7 +149,7 @@ namespace LifeDISA
 			using (var pak = new UnPAK(@"GAMEDATA\LISTLIFE.PAK"))
 			{
 				//dump all
-				for(int i = 0; i < pak.EntryCount ; i++)
+				for (int i = 0; i < pak.EntryCount ; i++)
 				{
 					writer.WriteLine("--------------------------------------------------");
 					writer.WriteLine("#{0} {1}", i, vars.GetText(VarEnum.LIFES, i, string.Empty, false));
@@ -178,7 +178,7 @@ namespace LifeDISA
 							writer.DumpRaw(nodes, allBytes);
 						}
 					}
-					catch(Exception ex)
+					catch (Exception ex)
 					{
 						writer.WriteLine(ex);
 					}
@@ -193,14 +193,14 @@ namespace LifeDISA
 			for (var node = nodes.First; node != null; node = node.Value.Next)
 			{
 				var ins = node.Value;
-				switch(ins.Type)
+				switch (ins.Type)
 				{
 					case LifeEnum.CASE:
 					case LifeEnum.MULTI_CASE:
 					{
 						if (ins.Parent != null)
 						{
-							for(int i = 0 ; i < ins.Arguments.Count ; i++)
+							for (int i = 0 ; i < ins.Arguments.Count ; i++)
 							{
 								ins.Set(i, GetConditionName(ins.Parent.EvalEnum, ins.Arguments[i]));
 							}
@@ -213,7 +213,7 @@ namespace LifeDISA
 
 		static void ProcessGotos()
 		{
-			foreach(var ins in nodes)
+			foreach (var ins in nodes)
 			{
 				switch (ins.Type)
 				{
@@ -243,20 +243,20 @@ namespace LifeDISA
 			nodes.Clear();
 			nodesMap.Clear();
 
-			while(pos < allBytes.Length)
+			while (pos < allBytes.Length)
 			{
 				int position = pos;
 
 				int curr = allBytes.ReadShort(pos);
 				int actor = -1;
-				if((curr & 0x8000) == 0x8000)
+				if ((curr & 0x8000) == 0x8000)
 				{
 					curr = curr & 0x7FFF;
 					pos += 2;
 					actor = allBytes.ReadShort(pos);
 				}
 
-				if(curr < 0 || curr >= config.LifeMacro.Length)
+				if (curr < 0 || curr >= config.LifeMacro.Length)
 				{
 					throw new NotImplementedException(curr.ToString());
 				}
@@ -266,7 +266,7 @@ namespace LifeDISA
 				ins.Type = life;
 				ins.LineStart = pos;
 
-				if(actor != -1) ins.Actor = GetObjectName(actor);
+				if (actor != -1) ins.Actor = GetObjectName(actor);
 				pos += 2;
 
 				ParseArguments(life, ins);
@@ -277,7 +277,7 @@ namespace LifeDISA
 			}
 
 
-			for(var node = nodes.First; node != null; node = node.Next)
+			for (var node = nodes.First; node != null; node = node.Next)
 			{
 				if (node.Previous != null)
 				{
@@ -293,7 +293,7 @@ namespace LifeDISA
 
 		static void ParseArguments(LifeEnum life, Instruction ins)
 		{
-			switch(life)
+			switch (life)
 			{
 				case LifeEnum.IF_EGAL:
 				case LifeEnum.IF_DIFFERENT:
@@ -307,7 +307,7 @@ namespace LifeDISA
 
 					paramB = GetConditionName(evalEnum, paramB);
 
-					switch(life)
+					switch (life)
 					{
 						case LifeEnum.IF_EGAL:
 							ins.Add("{0} == {1}", paramA, paramB);
@@ -347,7 +347,7 @@ namespace LifeDISA
 
 				case LifeEnum.MULTI_CASE:
 					int numcases = GetParam();
-					for(int n = 0; n < numcases; n++)
+					for (int n = 0; n < numcases; n++)
 					{
 						ins.Add(GetParam());
 					}
@@ -357,7 +357,7 @@ namespace LifeDISA
 
 				case LifeEnum.IF_IN:
 				case LifeEnum.IF_OUT:
-					switch(life)
+					switch (life)
 					{
 						case LifeEnum.IF_IN:
 							ins.Add("{0} in ({1}, {2})", Evalvar(), Evalvar(), Evalvar());
@@ -376,7 +376,7 @@ namespace LifeDISA
 					{
 						ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
 					}
-					else if(config.Version == GameVersion.TIMEGATE_DEMO)
+					else if (config.Version == GameVersion.TIMEGATE_DEMO)
 					{
 						ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
 						ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
@@ -569,7 +569,7 @@ namespace LifeDISA
 					int curr = GetParam();
 					ins.Add(vars.GetText(VarEnum.TRACKMODE, curr));
 
-					switch(curr)
+					switch (curr)
 					{
 						case 0: //none
 						case 1: //manual
@@ -636,7 +636,7 @@ namespace LifeDISA
 
 				case LifeEnum.UNKNOWN_5:
 					int count = GetParam();
-					for(int i = 0 ; i < count ; i++)
+					for (int i = 0 ; i < count ; i++)
 					{
 						ins.Add(Evalvar());
 					}
@@ -903,7 +903,7 @@ namespace LifeDISA
 		static string GetObjectName(string index)
 		{
 			int value;
-			if(int.TryParse(index, out value))
+			if (int.TryParse(index, out value))
 			{
 				index = GetObjectName(value);
 			}
@@ -998,7 +998,7 @@ namespace LifeDISA
 				//variable
 				curr = GetParam();
 				string name =  vars.GetText(VarEnum.VARS, curr, "var_" + curr);
-				if(name == "player_current_action")
+				if (name == "player_current_action")
 				{
 					evalEnum = EvalEnum.ACTION;
 				}
@@ -1016,7 +1016,7 @@ namespace LifeDISA
 
 			curr &= 0x7FFF;
 			curr--;
-			if(curr < 0 || curr >= config.EvalMacro.Length)
+			if (curr < 0 || curr >= config.EvalMacro.Length)
 			{
 				throw new NotImplementedException(curr.ToString());
 			}

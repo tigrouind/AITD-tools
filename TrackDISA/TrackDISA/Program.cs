@@ -13,12 +13,12 @@ namespace TrackDISA
 		{
 			Directory.CreateDirectory("GAMEDATA");
 
-			if(File.Exists(@"GAMEDATA\vars.txt"))
+			if (File.Exists(@"GAMEDATA\vars.txt"))
 			{
 				vars.Load(@"GAMEDATA\vars.txt");
 			}
 
-			if(!File.Exists(@"GAMEDATA\LISTTRAK.PAK"))
+			if (!File.Exists(@"GAMEDATA\LISTTRAK.PAK"))
 			{
 				return -1;
 			}
@@ -26,7 +26,7 @@ namespace TrackDISA
 			using (var writer = new StreamWriter("output.txt"))
 			using (var pak = new UnPAK(@"GAMEDATA\LISTTRAK.PAK"))
 			{
-				for(int i = 0 ; i < pak.EntryCount ; i++)
+				for (int i = 0 ; i < pak.EntryCount ; i++)
 				{
 					writer.WriteLine("--------------------------------------------------");
 					writer.WriteLine("#{0} {1}", i, vars.GetText(VarEnum.TRACKS, i, string.Empty));
@@ -42,7 +42,7 @@ namespace TrackDISA
 		{
 			int i = 0;
 
-			while(i < allbytes.Length)
+			while (i < allbytes.Length)
 			{
 				writer.Write("{0,2}: ", i / 2);
 				int macro = allbytes.ReadShort(i+0);

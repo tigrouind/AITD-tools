@@ -65,7 +65,7 @@ namespace LifeDISA
 		{
 			get
 			{
-				switch(Type)
+				switch (Type)
 				{
 					case LifeEnum.IF_EGAL:
 					case LifeEnum.IF_DIFFERENT:

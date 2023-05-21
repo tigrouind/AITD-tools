@@ -91,7 +91,7 @@ namespace CacheViewer
 
 		public static void Clear()
 		{
-			for(int i = 0 ; i < maxSizeY ; i++)
+			for (int i = 0 ; i < maxSizeY ; i++)
 			{
 				Array.Clear(buf, i * SIZEX, maxSizeX);
 			}
@@ -128,7 +128,7 @@ namespace CacheViewer
 								FormatArgument arg6 = default(FormatArgument))
 		{
 			StringFormat.Format(format, arg0, arg1, arg2, arg3, arg4, arg5, arg6);
-			for(int i = 0 ; i < StringFormat.Buffer.Length ; i++)
+			for (int i = 0 ; i < StringFormat.Buffer.Length ; i++)
 			{
 				Write(StringFormat.Buffer[i]);
 			}

@@ -27,7 +27,7 @@ namespace LifeDISA
 		{
 			Init(nodes, bytes);
 			int maxLength = nodes.Any() ? nodes.Max(x => x.LineStart).ToString().Length : 0;
-			foreach(var ins in nodes)
+			foreach (var ins in nodes)
 			{
 				WriteLine("{0} {1}{2}", ins.LineStart.ToString().PadLeft(maxLength), ins.Name, GetArguments(ins));
 			}
@@ -41,7 +41,7 @@ namespace LifeDISA
 
 		void Dump(LinkedList<Instruction> nodes)
 		{
-			foreach(var ins in nodes)
+			foreach (var ins in nodes)
 			{
 				WriteLine(ins, "{0}{1}", ins.Name, GetArguments(ins));
 				WriteNodes(ins);
@@ -77,7 +77,7 @@ namespace LifeDISA
 				if (ins.IsAndCondition) //if ... AND ..
 				{
 					indent++;
-					while(ins.IsAndCondition)
+					while (ins.IsAndCondition)
 					{
 						ins = ins.NodesA.First.Value;
 						WriteLine("and{0}", GetArguments(ins));
@@ -124,7 +124,7 @@ namespace LifeDISA
 
 		IEnumerable<Instruction> GetNodes(LinkedList<Instruction> nodes)
 		{
-			for(var node = nodes.First; node != null; node = node.Value.Next)
+			for (var node = nodes.First; node != null; node = node.Value.Next)
 			{
 				yield return node.Value;
 			}

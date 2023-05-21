@@ -14,7 +14,7 @@ namespace Shared
 				.Select(x => (int?)x.Id)
 				.FirstOrDefault();
 
-			if(processId.HasValue)
+			if (processId.HasValue)
 			{
 				return processId.Value;
 			}

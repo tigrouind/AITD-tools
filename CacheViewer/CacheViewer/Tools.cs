@@ -13,12 +13,12 @@ namespace CacheViewer
 
 		public static bool StringEquals(byte[] data, int index, int count, string value)
 		{
-			if(value == null)
+			if (value == null)
 			{
 				return false;
 			}
 
-			if(GetByteCount(data, index, count) != value.Length)
+			if (GetByteCount(data, index, count) != value.Length)
 			{
 				return false;
 			}
@@ -36,9 +36,9 @@ namespace CacheViewer
 
 		static int GetByteCount(byte[] data, int index, int count)
 		{
-			for(int i = 0 ; i < count ; i++)
+			for (int i = 0 ; i < count ; i++)
 			{
-				if(data[index + i] == 0)
+				if (data[index + i] == 0)
 				{
 					return i;
 				}
@@ -60,7 +60,7 @@ namespace CacheViewer
 					min = comp;
 				}
 
-				if(node != min)
+				if (node != min)
 				{
 					list.Remove(node);
 					list.AddBefore(min, node);

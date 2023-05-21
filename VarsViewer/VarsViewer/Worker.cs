@@ -38,10 +38,10 @@ namespace VarsViewer
 
 		void InitVars(List<Var> data, int length, VarEnum type)
 		{
-			if(data.Count != length)
+			if (data.Count != length)
 			{
 				data.Clear();
-				for(int i = 0 ; i < length ; i++)
+				for (int i = 0 ; i < length ; i++)
 				{
 					var var = new Var();
 					var.Index = i;
@@ -109,7 +109,7 @@ namespace VarsViewer
 				if (result &= (process.Read(memory, gameConfig.VarsAddress + entryPoint, 4) > 0))
 				{
 					varsPointer = memory.ReadFarPointer(0);
-					if(varsPointer == 0)
+					if (varsPointer == 0)
 					{
 						InitVars(vars, 0, VarEnum.VARS);
 					}
@@ -211,7 +211,7 @@ namespace VarsViewer
 
 		void SaveState(List<Var> data)
 		{
-			foreach(Var var in data)
+			foreach (Var var in data)
 			{
 				var.SaveState = var.Value;
 			}
@@ -219,7 +219,7 @@ namespace VarsViewer
 
 		public void Write(Var var, short value)
 		{
-			if(process != null)
+			if (process != null)
 			{
 				int memoryAddress = (var.Type == VarEnum.VARS ? varsPointer : gameConfig.CvarAddress + entryPoint);
 				memory.Write(value, 0);

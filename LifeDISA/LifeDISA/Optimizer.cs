@@ -39,7 +39,7 @@ namespace LifeDISA
 
 		void Optimize(LinkedList<Instruction> list)
 		{
-			for(var node = list.First; node != null; node = node.Next)
+			for (var node = list.First; node != null; node = node.Next)
 			{
 				var ins = node.Value;
 				if (ins.IsIfCondition)
@@ -154,7 +154,7 @@ namespace LifeDISA
 				}
 			}
 
-			if(endOfSwitch != null && target != endOfSwitch) //should be equal, otherwise there is a default case
+			if (endOfSwitch != null && target != endOfSwitch) //should be equal, otherwise there is a default case
 			{
 				var def = new Instruction { Type = LifeEnum.DEFAULT, Goto = endOfSwitch.Value.Position };
 				var defNode = node.List.AddBefore(target, def);

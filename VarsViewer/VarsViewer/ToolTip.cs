@@ -45,8 +45,8 @@ namespace VarsViewer
 			var rect = new RectangleF(Math.Max(Math.Min(point.X, parent.ClientRectangle.Width - textSize.Width), 0.0f),
 									Math.Max(Math.Min(point.Y, parent.ClientRectangle.Height - textSize.Height), 0.0f), textSize.Width, textSize.Height);
 
-			if(toolTipRect != RectangleF.Empty) Invalidate(toolTipRect);
-			if(rect != RectangleF.Empty) Invalidate(rect);
+			if (toolTipRect != RectangleF.Empty) Invalidate(toolTipRect);
+			if (rect != RectangleF.Empty) Invalidate(rect);
 
 			toolTipRect = rect;
 			toolTipText = text;
@@ -54,7 +54,7 @@ namespace VarsViewer
 
 		public void Hide()
 		{
-			if(toolTipRect != RectangleF.Empty)
+			if (toolTipRect != RectangleF.Empty)
 			{
 				Invalidate(toolTipRect);
 				toolTipRect = Rectangle.Empty;

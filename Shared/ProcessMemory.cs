@@ -108,7 +108,7 @@ namespace Shared
 			byte[] memory = new byte[4096];
 
 			//scan process memory regions
-			foreach(var mem_info in GetMemoryRegions())
+			foreach (var mem_info in GetMemoryRegions())
 			{
 				//check if memory region is accessible
 				//skip regions smaller than 16M (default DOSBOX memory size)
@@ -144,9 +144,9 @@ namespace Shared
 			byte[] buffer = new byte[81920];
 
 			//scan process memory regions
-			foreach(var mem_info in GetMemoryRegions(0, 0x0FFFFFFF))
+			foreach (var mem_info in GetMemoryRegions(0, 0x0FFFFFFF))
 			{
-				if(mem_info.Protect == PAGE_READWRITE && mem_info.State == MEM_COMMIT && (mem_info.Type & MEM_IMAGE) == MEM_IMAGE)
+				if (mem_info.Protect == PAGE_READWRITE && mem_info.State == MEM_COMMIT && (mem_info.Type & MEM_IMAGE) == MEM_IMAGE)
 				{
 					long readPosition = (long)mem_info.BaseAddress;
 					int bytesToRead = (int)mem_info.RegionSize;

@@ -96,7 +96,7 @@ namespace CacheViewer
 							args.Append(ch);
 							ch = format[pos++];
 						}
-						while(ch != '}');
+						while (ch != '}');
 					}
 
 					if (ch != '}') throw new FormatException();
@@ -117,7 +117,7 @@ namespace CacheViewer
 						Buffer.Append(' ', -width - temp.Length);
 					}
 				}
-				else if(ch == '}')
+				else if (ch == '}')
 				{
 					throw new FormatException();
 				}
@@ -174,7 +174,7 @@ namespace CacheViewer
 					if (ch < '0' || ch > '9') throw new FormatException();
 					length = length * 10 + ch - '0';
 				}
-				while(pos < args.Length);
+				while (pos < args.Length);
 			}
 
 			return length;

@@ -56,12 +56,12 @@ namespace VarsViewer
 		{
 			DrawCell(e, 0, position, lightGrayBrush);
 
-			for(int i = 0 ; i < 20 ; i++)
+			for (int i = 0 ; i < 20 ; i++)
 			{
 				DrawCell(e, i + 1, position, lightGrayBrush, i.ToString(), Brushes.Black, StringAlignment.Center, StringAlignment.Far);
 			}
 
-			for(int i = 0 ; i < rows ; i++)
+			for (int i = 0 ; i < rows ; i++)
 			{
 				DrawCell(e, 0, i + 1 + position, lightGrayBrush, (i * 20).ToString(), Brushes.Black, StringAlignment.Far);
 			}
@@ -69,7 +69,7 @@ namespace VarsViewer
 
 		void DrawCells(PaintEventArgs e, List<Var> cells)
 		{
-			foreach(var var in cells)
+			foreach (var var in cells)
 			{
 				bool selected = var == selectedVar;
 				bool highlight = var == focusVar;
@@ -80,7 +80,7 @@ namespace VarsViewer
 
 		Brush GetBackgroundBrush(Var var)
 		{
-			if(var.Difference)
+			if (var.Difference)
 			{
 				return redBrush;
 			}
@@ -143,7 +143,7 @@ namespace VarsViewer
 
 		public void Refresh()
 		{
-			foreach(Var var in vars.Concat(cvars))
+			foreach (Var var in vars.Concat(cvars))
 			{
 				if (var.Refresh)
 				{
@@ -177,7 +177,7 @@ namespace VarsViewer
 		{
 			if (focusVar != null)
 			{
-				switch(e.KeyCode)
+				switch (e.KeyCode)
 				{
 					case Keys.Delete:
 						BeginEdit();
@@ -191,7 +191,7 @@ namespace VarsViewer
 		{
 			if (focusVar != null)
 			{
-				switch((Keys)e.KeyChar)
+				switch ((Keys)e.KeyChar)
 				{
 					case Keys.D0:
 					case Keys.D1:
@@ -205,7 +205,7 @@ namespace VarsViewer
 					case Keys.D9:
 						BeginEdit();
 						ResetCarret();
-						if(inputText.Length < (inputText.Contains("-") ? 6 : 5))
+						if (inputText.Length < (inputText.Contains("-") ? 6 : 5))
 						{
 							inputText += e.KeyChar;
 							Invalidate(focusVar);
@@ -225,7 +225,7 @@ namespace VarsViewer
 					case Keys.Back:
 						BeginEdit();
 						ResetCarret();
-						if(inputText.Length > 0)
+						if (inputText.Length > 0)
 						{
 							inputText = inputText.Remove(inputText.Length - 1);
 							Invalidate(focusVar);
@@ -254,11 +254,11 @@ namespace VarsViewer
 
 			if (selectedVar != var)
 			{
-				if(var != null) CellEnter.Invoke(this, new CellEventArgs { Var = var, Rectangle = GetRectangle(var) });
-				if(var == null) CellLeave.Invoke(this, new CellEventArgs { Var = selectedVar, Rectangle = GetRectangle(selectedVar) });
+				if (var != null) CellEnter.Invoke(this, new CellEventArgs { Var = var, Rectangle = GetRectangle(var) });
+				if (var == null) CellLeave.Invoke(this, new CellEventArgs { Var = selectedVar, Rectangle = GetRectangle(selectedVar) });
 
-				if(var != null) Invalidate(var);
-				if(selectedVar != null) Invalidate(selectedVar);
+				if (var != null) Invalidate(var);
+				if (selectedVar != null) Invalidate(selectedVar);
 				selectedVar = var;
 			}
 		}
@@ -268,7 +268,7 @@ namespace VarsViewer
 			Var var;
 			TryFindVarAtPosition(e.Location, out var);
 
-			if(!Editable)
+			if (!Editable)
 			{
 				var = null;
 			}
@@ -277,7 +277,7 @@ namespace VarsViewer
 			{
 				CommitEdit();
 
-				if(var != null)
+				if (var != null)
 				{
 					inputText = null;
 					Invalidate(var);
@@ -290,7 +290,7 @@ namespace VarsViewer
 
 		public void MouseLeave()
 		{
-			if(selectedVar != null)
+			if (selectedVar != null)
 			{
 				Invalidate(selectedVar);
 				selectedVar = null;
@@ -352,7 +352,7 @@ namespace VarsViewer
 
 		public void AbortEdit()
 		{
-			if(focusVar != null)
+			if (focusVar != null)
 			{
 				Invalidate(focusVar);
 				focusVar = null;
@@ -362,7 +362,7 @@ namespace VarsViewer
 
 		public void CommitEdit()
 		{
-			if(focusVar != null)
+			if (focusVar != null)
 			{
 				int value = 0;
 				if ((inputText == string.Empty || int.TryParse(inputText, out value)) && value != focusVar.Value)
@@ -380,7 +380,7 @@ namespace VarsViewer
 
 		void TimerTick(object sender, EventArgs e)
 		{
-			if(focusVar != null)
+			if (focusVar != null)
 			{
 				carretState = !carretState;
 				Invalidate(focusVar);
@@ -389,12 +389,12 @@ namespace VarsViewer
 
 		void ResetCarret()
 		{
-			if(focusVar != null)
+			if (focusVar != null)
 			{
 				timer.Stop();
 				timer.Start();
 
-				if(!carretState)
+				if (!carretState)
 				{
 					carretState = true;
 					Invalidate(focusVar);

@@ -112,7 +112,7 @@ namespace CacheViewer
 
 				gameConfig = gameConfigs[gameVersion];
 
-				switch(gameVersion)
+				switch (gameVersion)
 				{
 					case GameVersion.AITD1:
 						cache = cacheConfig.Where(x => x.Section != VarEnum.MUSIC).ToArray();
@@ -153,21 +153,21 @@ namespace CacheViewer
 		{
 			int ticks = Environment.TickCount;
 			bool readSuccess = true;
-			for(int i = 0 ; i < cache.Length ; i++)
+			for (int i = 0 ; i < cache.Length ; i++)
 			{
 				var ch = cache[i];
 				if (readSuccess &= (process.Read(memory, entryPoint + gameConfig[ch.Index], 4) > 0))
 				{
 					int cachePointer = memory.ReadFarPointer(0);
-					if(cachePointer != 0 && (readSuccess &= (process.Read(memory, cachePointer - 16, 4096) > 0)))
+					if (cachePointer != 0 && (readSuccess &= (process.Read(memory, cachePointer - 16, 4096) > 0)))
 					{
 						DosMCB block = DosBox.ReadMCB(memory, 0);
-						if((block.Tag == 0x4D || block.Tag == 0x5A) && block.Owner != 0 && block.Size < 4096) //block is still allocated
+						if ((block.Tag == 0x4D || block.Tag == 0x5A) && block.Owner != 0 && block.Size < 4096) //block is still allocated
 						{
 							UpdateCache(ch, ticks, 16);
 							UpdateEntries(ch, ticks);
 
-							if(clearCache)
+							if (clearCache)
 							{
 								ClearCache(ch, cachePointer);
 							}
@@ -309,7 +309,7 @@ namespace CacheViewer
 			Console.CursorLeft++;
 			Console.ForegroundColor = ConsoleColor.DarkGray;
 			int value = Tools.RoundToNearest(done * 6, total);
-			for(int i = 0 ; i < 6 ; i++)
+			for (int i = 0 ; i < 6 ; i++)
 			{
 				Console.Write(i < value ? '▓' : '░');
 			}
@@ -392,7 +392,7 @@ namespace CacheViewer
 			Console.Clear();
 
 			int column = 0;
-			for(int i = 0 ; i < cache.Length ; i++)
+			for (int i = 0 ; i < cache.Length ; i++)
 			{
 				var ch = cache[i];
 				if (ch.Name != null)
@@ -409,7 +409,7 @@ namespace CacheViewer
 		static void SetConsoleTitle()
 		{
 			string title = "AITD cache viewer";
-			switch(Sort.SortMode)
+			switch (Sort.SortMode)
 			{
 				case SortMode.Memory:
 					title += " ▼ memory";

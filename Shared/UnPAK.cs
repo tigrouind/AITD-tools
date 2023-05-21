@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.IO.Compression;
 using System.Runtime.InteropServices;
@@ -70,7 +70,7 @@ namespace Shared
 		{
 			get
 			{
-				if(!entryCount.HasValue)
+				if (!entryCount.HasValue)
 				{
 					entryCount = GetEntryCount();
 				}
@@ -86,7 +86,7 @@ namespace Shared
 			int count = offset / 4 - 1;
 
 			stream.Seek(offset - 4, SeekOrigin.Begin);
-			if(reader.ReadInt32() == 0) count--; //TIMEGATE
+			if (reader.ReadInt32() == 0) count--; //TIMEGATE
 
 			return count;
 		}

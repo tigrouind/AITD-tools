@@ -72,7 +72,7 @@ namespace VarsViewer
 
 		void MainFormKeyDown(object sender, KeyEventArgs e)
 		{
-			switch(e.KeyCode)
+			switch (e.KeyCode)
 			{
 				case Keys.C:
 					if (worker.Compare || vars.Any(x => x.SaveState != x.Value) || cvars.Any(x => x.SaveState != x.Value))

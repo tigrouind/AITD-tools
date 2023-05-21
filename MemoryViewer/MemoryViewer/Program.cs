@@ -48,12 +48,12 @@ namespace MemoryViewer
 			ProcessMemory process = null;
 			uint lastCheck = 0, lastCheckPalette = 0;
 
-			while(!quit)
+			while (!quit)
 			{
 				SDL.SDL_Event sdlEvent;
-				while(SDL.SDL_PollEvent(out sdlEvent) != 0 && !quit)
+				while (SDL.SDL_PollEvent(out sdlEvent) != 0 && !quit)
 				{
-					switch(sdlEvent.type)
+					switch (sdlEvent.type)
 					{
 						case SDL.SDL_EventType.SDL_QUIT:
 							quit = true;
@@ -105,7 +105,7 @@ namespace MemoryViewer
 							break;
 
 						case SDL.SDL_EventType.SDL_WINDOWEVENT:
-							switch(sdlEvent.window.windowEvent)
+							switch (sdlEvent.window.windowEvent)
 							{
 								case SDL.SDL_WindowEventID.SDL_WINDOWEVENT_RESIZED:
 									winx = sdlEvent.window.data1;
@@ -138,7 +138,7 @@ namespace MemoryViewer
 						{
 							process = new ProcessMemory(processId);
 							process.BaseAddress = process.SearchFor16MRegion();
-							if(process.BaseAddress == -1)
+							if (process.BaseAddress == -1)
 							{
 								process.Close();
 								process = null;
@@ -149,7 +149,7 @@ namespace MemoryViewer
 
 				if (process != null)
 				{
-					if(paletteAddress == -1)
+					if (paletteAddress == -1)
 					{
 						uint time = SDL.SDL_GetTicks();
 						if ((time - lastCheckPalette) > 1000 || lastCheckPalette == 0)
@@ -159,7 +159,7 @@ namespace MemoryViewer
 							//3 bytes + EGA 16 colors palette (see DOSBox VGA_Dac in vga.h)
 							var pattern = new byte[] { 0x01, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
 							paletteAddress = process.SearchForBytePattern(buffer => Tools.IndexOf(buffer, pattern, 1, 4));
-							if(paletteAddress != -1)
+							if (paletteAddress != -1)
 							{
 								paletteAddress += pattern.Length;
 							}
@@ -171,7 +171,7 @@ namespace MemoryViewer
 				{
 					//DOS conventional memory (640KB)
 					//EMS memory (64000B) (skip 64KB (HMA) + 128KB (VCPI))
-					if(!(process.Read(pixelData, 0, 640 * 1024) > 0 &&
+					if (!(process.Read(pixelData, 0, 640 * 1024) > 0 &&
 						process.Read(pixelData, (1024+192)*1024, 64000, 640 * 1024) > 0))
 					{
 						process.Close();
@@ -181,7 +181,7 @@ namespace MemoryViewer
 
 				if (process != null)
 				{
-					if(paletteAddress != -1)
+					if (paletteAddress != -1)
 					{
 						if (process.Read(palette256, paletteAddress, palette256.Length) <= 0) {
 							process.Close();
@@ -235,7 +235,7 @@ namespace MemoryViewer
 			needPaletteUpdate = false;
 
 			int src = 0;
-			for(int i = 0 ; i < 256 ; i++)
+			for (int i = 0 ; i < 256 ; i++)
 			{
 				var r = palette256[src++];
 				var g = palette256[src++];
@@ -265,23 +265,23 @@ namespace MemoryViewer
 				ulong* oldPixelsPtr = (ulong*)oldPixelsBytePtr;
 				int start = 0;
 
-				for(int k = 0 ; k < SCREENS ; k++)
+				for (int k = 0 ; k < SCREENS ; k++)
 				{
 					bool refresh = false;
-					for(int i = 0 ; i < RESX * RESY ; i += 16)
+					for (int i = 0 ; i < RESX * RESY ; i += 16)
 					{
-						if(*pixelsPtr != *oldPixelsPtr || *(pixelsPtr+1) != *(oldPixelsPtr+1))
+						if (*pixelsPtr != *oldPixelsPtr || *(pixelsPtr+1) != *(oldPixelsPtr+1))
 						{
-							for(int j = start ; j < start + 16 ; j++)
+							for (int j = start ; j < start + 16 ; j++)
 							{
 								pixels[j] = palette[pixelData[j]];
 							}
 
 							refresh = true;
 						}
-						else if(needPaletteUpdate)
+						else if (needPaletteUpdate)
 						{
-							for(int j = start ; j < start + 16 ; j++)
+							for (int j = start ; j < start + 16 ; j++)
 							{
 								byte color = pixelData[j];
 								if (needPaletteUpdate256[color])
@@ -401,7 +401,7 @@ namespace MemoryViewer
 
 		static void SetRefreshState(bool state)
 		{
-			for(int i = 0 ; i < SCREENS ; i++)
+			for (int i = 0 ; i < SCREENS ; i++)
 			{
 				needRefresh[i] = state;
 			}

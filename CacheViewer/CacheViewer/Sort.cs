@@ -11,7 +11,7 @@ namespace CacheViewer
 
 		public static void SortEntries(Cache[] cache)
 		{
-			for(int i = 0 ; i < cache.Length ; i++)
+			for (int i = 0 ; i < cache.Length ; i++)
 			{
 				var ch = cache[i];
 				if (ch.Name != "_MEMORY_")

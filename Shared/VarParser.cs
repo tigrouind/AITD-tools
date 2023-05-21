@@ -16,7 +16,7 @@ namespace Shared
 			if (sections.TryGetValue(section, out sectionDict))
 			{
 				string text;
-				if(sectionDict.TryGetValue(value, out text))
+				if (sectionDict.TryGetValue(value, out text))
 				{
 					return text;
 				}
@@ -78,7 +78,7 @@ namespace Shared
 				int from = int.Parse(fromString);
 				int to = string.IsNullOrEmpty(toString) ? from : int.Parse(toString);
 
-				for(int i = from; i <= to ; i++)
+				for (int i = from; i <= to ; i++)
 				{
 					section[i] = text;
 				}

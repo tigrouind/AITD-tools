@@ -38,7 +38,7 @@ namespace CacheViewer
 		public void Append(char value, int repeat = 1)
 		{
 			EnsureCapacity(length + repeat);
-			for(int i = 0; i < repeat; i++)
+			for (int i = 0; i < repeat; i++)
 			{
 				buffer[length++] = value;
 			}
@@ -47,7 +47,7 @@ namespace CacheViewer
 		public void Append(string value)
 		{
 			EnsureCapacity(length + value.Length);
-			for(int i = 0; i < value.Length; i++)
+			for (int i = 0; i < value.Length; i++)
 			{
 				buffer[length++] = value[i];
 			}
@@ -62,7 +62,7 @@ namespace CacheViewer
 				Append((char)(reminder + '0'));
 				value /= 10;
 			}
-			while(--digits > 0 || value > 0);
+			while (--digits > 0 || value > 0);
 			Array.Reverse(buffer, start, length - start);
 		}
 
