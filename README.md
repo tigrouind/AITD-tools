@@ -31,7 +31,7 @@ LifeDISA -version VERSION [-raw] [-verbose]
 
 ## Syntax highlighting (Notepad++)
 
-Download file [here](https://github.com/tigrouind/AITD-tools/releases/download/1.40/AITD.xml)
+Download file [here](https://github.com/tigrouind/AITD-tools/raw/master/AITD.xml)
 
 How to install it :
 1. Click on `Language` > `User Defined Language` > `Define your language...`
