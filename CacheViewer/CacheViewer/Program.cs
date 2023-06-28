@@ -37,7 +37,7 @@ namespace CacheViewer
 
 		public static void Main()
 		{
-			SetConsoleTitle();
+			System.Console.Title = "AITD cache viewer";
 
 			Directory.CreateDirectory("GAMEDATA");
 			if (File.Exists("GAMEDATA/vars.txt"))
@@ -143,7 +143,6 @@ namespace CacheViewer
 
 				case ConsoleKey.S:
 					Sort.SortMode = (SortMode)(((int)Sort.SortMode + 1) % 3);
-					SetConsoleTitle();
 					Sort.SortEntries(cache);
 					break;
 			}
@@ -349,6 +348,16 @@ namespace CacheViewer
 			Console.SetCursorPosition(column * 19 + 5, 0);
 			Console.Write(ch.Name);
 
+			switch (Sort.SortMode)
+			{
+				case SortMode.Memory:
+					Console.Write(" ▼mem");
+					break;
+				case SortMode.LRU:
+					Console.Write(" ▼lru");
+					break;
+			}
+
 			Console.SetCursorPosition(column * 19, 1);
 			WriteStats(ch.MaxFreeData - ch.SizeFreeData, ch.MaxFreeData);
 
@@ -404,22 +413,6 @@ namespace CacheViewer
 			}
 
 			Console.Flush();
-		}
-
-		static void SetConsoleTitle()
-		{
-			string title = "AITD cache viewer";
-			switch (Sort.SortMode)
-			{
-				case SortMode.Memory:
-					title += " ▼ memory";
-					break;
-				case SortMode.LRU:
-					title += " ▼ lru";
-					break;
-			}
-
-			System.Console.Title = title;
 		}
 	}
 }
