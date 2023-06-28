@@ -80,7 +80,7 @@ namespace CacheViewer
 		static int maxSizeY;
 
 		public static ConsoleColor BackgroundColor;
-		public static ConsoleColor ForegroundColor;
+		public static ConsoleColor ForegroundColor = ConsoleColor.Gray;
 		public static int CursorLeft;
 		public static int CursorTop;
 
@@ -93,7 +93,10 @@ namespace CacheViewer
 		{
 			for (int i = 0 ; i < maxSizeY ; i++)
 			{
-				Array.Clear(buf, i * SIZEX, maxSizeX);
+				for (int j = 0; j < maxSizeX; j++)
+				{
+					buf[i * SIZEX + j] = new CharInfo { Char = new CharUnion { UnicodeChar = ' ' }, Attributes = 0 };
+				}
 			}
 		}
 
