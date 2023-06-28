@@ -23,7 +23,7 @@ namespace CacheViewer
 
 		static void SortEntries(Cache ch)
 		{
-			switch (Sort.SortMode)
+			switch (SortMode)
 			{
 				case SortMode.Default:
 				case SortMode.Memory:

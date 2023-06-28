@@ -56,9 +56,9 @@
     <Compile Include="CacheEntry.cs" />
     <Compile Include="CacheEntryComparer.cs" />
     <Compile Include="Console\Console.cs" />
-    <Compile Include="Console\FormatArgument.cs" />
-    <Compile Include="Console\StringBuffer.cs" />
-    <Compile Include="Console\StringFormat.cs" />
+    <Compile Include="Console\StringFormat\FormatArgument.cs" />
+    <Compile Include="Console\StringFormat\StringBuffer.cs" />
+    <Compile Include="Console\StringFormat\StringFormat.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Sort.cs" />

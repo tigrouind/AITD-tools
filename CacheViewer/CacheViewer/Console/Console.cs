@@ -133,7 +133,7 @@ namespace CacheViewer
 			StringFormat.Format(format, arg0, arg1, arg2, arg3, arg4, arg5, arg6);
 			for (int i = 0 ; i < StringFormat.Buffer.Length ; i++)
 			{
-				Write(StringFormat.Buffer[i]);
+				Write(StringFormat.Buffer[i]);  //GC friendly equivalent of Write(string.Format(format, args));
 			}
 		}
 
