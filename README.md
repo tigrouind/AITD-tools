@@ -58,6 +58,8 @@ MemoryViewer [-screen-width WIDTH] [-screen-height HEIGHT] [-zoom ZOOM]
 | <kbd>space</kbd> | display memory allocation blocks
 | <kbd>ctrl</kbd> + <kbd>mouse wheel</kbd> <br> <kbd>ctrl</kbd> + <kbd>+</kbd> or <kbd>-</kbd>| increase / decrease zoom
 | <kbd>ctrl</kbd> + <kbd>0</kbd> | reset zoom
+| <kbd>page up</kbd> | decrease memory offset by 640KB
+| <kbd>page down</kbd> | increase memory offset by 640KB
 
 # VarsViewer
 

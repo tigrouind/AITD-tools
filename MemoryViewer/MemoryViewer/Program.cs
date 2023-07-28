@@ -12,11 +12,13 @@ namespace MemoryViewer
 		const int RESX = 320;
 		const int RESY = 60;
 		const int SCREENS = 40;
+
 		static int winx, winy, zoom;
 		static readonly bool[] needRefresh = new bool[SCREENS];
 		static bool mustClearScreen;
 		static bool needPaletteUpdate;
 		static bool[] needPaletteUpdate256 = new bool[256];
+		static int offset;
 
 		public static int Main(string[] args)
 		{
@@ -79,6 +81,24 @@ namespace MemoryViewer
 								case SDL.SDL_Keycode.SDLK_SPACE:
 									mcb = !mcb;
 									SetRefreshState(true);
+									break;
+
+								case SDL.SDL_Keycode.SDLK_PAGEDOWN:
+									if (offset < (16384 / 640 - 1))
+									{
+										if (offset == 0)
+										{
+											ClearAll(pixelData, oldPixelData, pixels, mcbPixels);
+										}
+										offset++;
+									}
+									break;
+
+								case SDL.SDL_Keycode.SDLK_PAGEUP:
+									if (offset > 0)
+									{
+										offset--;
+									}
 									break;
 							}
 
@@ -171,8 +191,8 @@ namespace MemoryViewer
 				{
 					//DOS conventional memory (640KB)
 					//EMS memory (64000B) (skip 64KB (HMA) + 128KB (VCPI))
-					if (!(process.Read(pixelData, 0, 640 * 1024) > 0 &&
-						process.Read(pixelData, (1024+192)*1024, 64000, 640 * 1024) > 0))
+					if (!(process.Read(pixelData, offset * 640 * 1024, 640 * 1024) > 0 &&
+						(offset != 0 || process.Read(pixelData, (1024 + 192) * 1024, 64000, 640 * 1024) > 0)))
 					{
 						process.Close();
 						process = null;
@@ -192,7 +212,10 @@ namespace MemoryViewer
 
 				UpdatePalette(palette256, palette);
 				Update(pixelData, oldPixelData, pixels, palette);
-				UpdateMCB(pixelData, oldPixelData, mcbPixels);
+				if (offset == 0)
+				{
+					UpdateMCB(pixelData, oldPixelData, mcbPixels);
+				}
 
 				//render
 				int tm = (winx + RESX * zoom - 1) / (RESX * zoom);
@@ -405,6 +428,15 @@ namespace MemoryViewer
 			{
 				needRefresh[i] = state;
 			}
+		}
+
+		static void ClearAll(byte[] pixelData, byte[] oldPixelData, uint[] pixels, uint[] mcbPixels)
+		{
+			Array.Clear(pixelData, 0, pixelData.Length);
+			Array.Clear(oldPixelData, 0, oldPixelData.Length);
+			Array.Clear(pixels, 0, pixels.Length);
+			Array.Clear(mcbPixels, 0, mcbPixels.Length);
+			SetRefreshState(true);
 		}
 
 		static void SetZoom(int newZoom)
