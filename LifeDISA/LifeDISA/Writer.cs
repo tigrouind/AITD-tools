@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,39 +10,45 @@ namespace LifeDISA
 		byte[] allBytes;
 		int padding;
 		int indent;
+		readonly bool noOptimize;
+		readonly bool verbose;
 
-		public Writer(string filePath)
+		public Writer(string filePath, bool verbose, bool noOptimize)
 			: base(filePath)
 		{
+			this.verbose = verbose;
+			this.noOptimize = noOptimize;
 		}
 
-		void Init(LinkedList<Instruction> nodes, byte[] bytes)
+		public void Dump(LinkedList<Instruction> nodes, byte[] bytes)
 		{
-			padding = nodes.Any() ? GetNodes(nodes).Max(x => x.LineEnd - x.LineStart) / 2 : 0;
+			padding = nodes.Any() ? GetNodes(nodes).Max(x => x.Size) / 2 : 0;
 			allBytes = bytes;
-		}
 
-		public void DumpRaw(LinkedList<Instruction> nodes, byte[] bytes)
-		{
-			Init(nodes, bytes);
-			int maxLength = nodes.Any() ? nodes.Max(x => x.LineStart).ToString().Length : 0;
-			foreach (var ins in nodes)
+			if (noOptimize)
 			{
-				WriteLine("{0} {1}{2}", ins.LineStart.ToString().PadLeft(maxLength), ins.Name, GetArguments(ins));
+				DumpRaw(nodes);
+			}
+			else
+			{
+				DumpOptimized(nodes);
 			}
 		}
 
-		public void DumpOptimized(LinkedList<Instruction> nodes, byte[] bytes)
+		void DumpRaw(LinkedList<Instruction> nodes)
 		{
-			Init(nodes, bytes);
-			Dump(nodes);
+			int maxLength = nodes.Any() ? nodes.Max(x => x.Position).ToString().Length : 0;
+			foreach (var ins in nodes)
+			{
+				WriteLine("{0} {1}{2}", ins.Position.ToString().PadLeft(maxLength), GetInstructionName(ins), GetArguments(ins));
+			}
 		}
 
-		void Dump(LinkedList<Instruction> nodes)
+		void DumpOptimized(LinkedList<Instruction> nodes)
 		{
 			foreach (var ins in nodes)
 			{
-				WriteLine(ins, "{0}{1}", ins.Name, GetArguments(ins));
+				WriteLine(ins, "{0}{1}", GetInstructionName(ins), GetArguments(ins));
 				WriteNodes(ins);
 			}
 		}
@@ -53,12 +58,12 @@ namespace LifeDISA
 			if (ins.NodesB != null)
 			{
 				indent++;
-				Dump(ins.NodesA);
+				DumpOptimized(ins.NodesA);
 				indent--;
 
 				if (ins.IsElseIfCondition) //else if
 				{
-					WriteLine("else {0}{1}", ins.NodesB.First.Value.Name, GetArguments(ins.NodesB.First.Value));
+					WriteLine("else {0}{1}", GetInstructionName(ins.NodesB.First.Value), GetArguments(ins.NodesB.First.Value));
 					WriteNodes(ins.NodesB.First.Value);
 				}
 				else //else
@@ -66,7 +71,7 @@ namespace LifeDISA
 					WriteLine("else");
 
 					indent++;
-					Dump(ins.NodesB);
+					DumpOptimized(ins.NodesB);
 					indent--;
 
 					WriteLine("end");
@@ -87,7 +92,7 @@ namespace LifeDISA
 				}
 
 				indent++;
-				Dump(ins.NodesA);
+				DumpOptimized(ins.NodesA);
 				indent--;
 
 				WriteLine("end");
@@ -96,20 +101,56 @@ namespace LifeDISA
 
 		void WriteLine(string format, params string[] args)
 		{
-			WriteLine(new Instruction(), format, args);
+			WriteLine(null, format, args);
 		}
 
 		void WriteLine(Instruction ins, string format, params string[] args)
 		{
-			if (Program.Verbose)
+			if (verbose)
 			{
-				var bytes = Enumerable.Range(0, (ins.LineEnd - ins.LineStart) / 2).Select(x => allBytes.ReadUnsignedShortSwap(x * 2).ToString("X4"));
-				Write("|{0}|", string.Join(" ", bytes).PadLeft(padding * 4 + (padding - 1), ' '));
+				if (ins != null)
+				{
+					var bytes = Enumerable.Range(0, ins.Size / 2).Select(x => allBytes.ReadUnsignedShortSwap(ins.Position + x * 2).ToString("x4"));
+					Write("[{0}]", string.Join(" ", bytes).PadLeft(padding * 4 + (padding - 1), ' '));
+				}
+				else
+				{
+					Write(new string(' ', padding * 4 + (padding - 1) + 2));
+				}
+
 				Write('\t');
 			}
 
-			Write(new String('\t', indent));
+			Write(new string('\t', indent));
 			base.WriteLine(string.Format(format, args));
+		}
+
+		string GetInstructionName(Instruction ins)
+		{
+			if (!noOptimize)
+			{
+				if (ins.IsIfCondition)
+				{
+					return "if";
+				}
+
+				switch (ins.Type)
+				{
+					case LifeEnum.MULTI_CASE:
+						return "case";
+
+					case LifeEnum.C_VAR:
+						return "set";
+				}
+			}
+
+			string name = ins.Type.ToString().ToLowerInvariant();
+			if (ins.Actor != null)
+			{
+				return ins.Actor + "." + name;
+			}
+
+			return name;
 		}
 
 		string GetArguments(Instruction ins)

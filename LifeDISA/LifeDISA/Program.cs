@@ -9,8 +9,6 @@ namespace LifeDISA
 {
 	class Program
 	{
-		public static bool NoOptimize;
-		public static bool Verbose;
 		static int pos;
 		static byte[] allBytes;
 
@@ -40,16 +38,16 @@ namespace LifeDISA
 		public static int Main(string[] args)
 		{
 			string version = Shared.Tools.GetArgument<string>(args, "-version");
-			Verbose = Shared.Tools.HasArgument(args, "-verbose");
+			bool verbose = Shared.Tools.HasArgument(args, "-verbose");
+			bool noOptimize = Shared.Tools.HasArgument(args, "-raw");
+			string outputFile = Shared.Tools.GetArgument<string>(args, "-output") ?? "scripts.life";
 
 			config = gameConfigs.FirstOrDefault(x => string.Equals(x.Version.ToString(), version, StringComparison.InvariantCultureIgnoreCase));
 			if (version == null || config == null)
 			{
-				Console.WriteLine("Usage: LifeDISA -version {{{0}}} [-raw]", string.Join("|", gameConfigs.Select(x => x.Version.ToString().ToLowerInvariant())));
+				Console.WriteLine("Usage: LifeDISA -version {{{0}}} [-raw] [-verbose] [-output]", string.Join("|", gameConfigs.Select(x => x.Version.ToString().ToLowerInvariant())));
 				return -1;
 			}
-
-			NoOptimize |= Shared.Tools.HasArgument(args, "-raw");
 
 			Directory.CreateDirectory("GAMEDATA");
 
@@ -145,7 +143,7 @@ namespace LifeDISA
 				}
 			}
 
-			using (var writer = new Writer("scripts.life"))
+			using (var writer = new Writer(outputFile, verbose, noOptimize))
 			using (var pak = new UnPAK(@"GAMEDATA\LISTLIFE.PAK"))
 			{
 				//dump all
@@ -159,7 +157,7 @@ namespace LifeDISA
 					try
 					{
 						ParseFile();
-						if (!NoOptimize)
+						if (!noOptimize)
 						{
 							var optimizer = new Optimizer(nodes, nodesMap);
 							optimizer.Run();
@@ -170,13 +168,13 @@ namespace LifeDISA
 							}
 
 							ProcessCaseStatements();
-							writer.DumpOptimized(nodes, allBytes);
 						}
 						else
 						{
 							ProcessGotos();
-							writer.DumpRaw(nodes, allBytes);
 						}
+
+						writer.Dump(nodes, allBytes);
 					}
 					catch (Exception ex)
 					{
@@ -264,7 +262,6 @@ namespace LifeDISA
 
 				Instruction ins = new Instruction();
 				ins.Type = life;
-				ins.LineStart = pos;
 
 				if (actor != -1) ins.Actor = GetObjectName(actor);
 				pos += 2;
@@ -273,10 +270,10 @@ namespace LifeDISA
 				var node = nodes.AddLast(ins);
 				nodesMap.Add(position, node);
 				ins.Position = position;
-				ins.LineEnd = pos;
+				ins.Size = pos - position;
 			}
 
-
+			//set Previous / Next fields of all instructions, to create linked list
 			for (var node = nodes.First; node != null; node = node.Next)
 			{
 				if (node.Previous != null)

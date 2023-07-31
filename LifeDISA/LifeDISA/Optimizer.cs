@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace LifeDISA
 {
@@ -137,7 +136,7 @@ namespace LifeDISA
 				}
 
 				var def = new Instruction { Type = LifeEnum.DEFAULT, Goto = target.Value.Position };
-				var defNode = node.List.AddBefore(node.Next, def);
+				node.List.AddBefore(node.Next, def);
 			}
 
 			//follow all cases to detect end of switch
@@ -174,6 +173,7 @@ namespace LifeDISA
 
 		LinkedList<Instruction> GetNodesBetween(LinkedListNode<Instruction> start, LinkedListNode<Instruction> end, Instruction parent)
 		{
+			//return a linked list with all nodes between start and end (exclusive), set their parent field, remove them from main list
 			LinkedList<Instruction> result = new LinkedList<Instruction>();
 			while (start != null && start.Value != end.Value)
 			{
@@ -189,6 +189,7 @@ namespace LifeDISA
 
 		void RemoveNode(LinkedListNode<Instruction> node)
 		{
+			//remove node from both linked lists
 			node.Value.Previous.Value.Next = node.Value.Next;
 			node.Value.Next.Value.Previous = node.Value.Previous;
 			node.List.Remove(node);

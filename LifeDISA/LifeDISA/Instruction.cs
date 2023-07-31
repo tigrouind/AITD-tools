@@ -11,13 +11,15 @@ namespace LifeDISA
 		readonly List<string> arguments = new List<string>();
 		public string Actor;
 		public int Goto = -1;
-		public int LineStart, LineEnd;
-		public int Position;
-		public LinkedListNode<Instruction> Previous;
-		public LinkedListNode<Instruction> Next;
-		public Instruction Parent;
-		public LinkedList<Instruction> NodesA;
-		public LinkedList<Instruction> NodesB;
+		public int Position; //used to map gotos to a given instruction
+		public int Size; //size in bytes of instruction
+
+		public LinkedListNode<Instruction> Previous; //previous instruction (before optimisation)
+		public LinkedListNode<Instruction> Next; //next instruction (before optimisation)
+
+		public Instruction Parent; //node above instruction (eg: case -> switch)
+		public LinkedList<Instruction> NodesA; //child nodes below instruction (eg: if -> { ... } )
+		public LinkedList<Instruction> NodesB; //child nodes below instruction (eg: else -> { ... } )
 
 		public void Add(string format, params object[] args)
 		{
@@ -80,37 +82,6 @@ namespace LifeDISA
 					default:
 						return false;
 				}
-			}
-		}
-
-		public string Name
-		{
-			get
-			{
-				if (!Program.NoOptimize)
-				{
-					if (IsIfCondition)
-					{
-						return "if";
-					}
-
-					switch (Type)
-					{
-						case LifeEnum.MULTI_CASE:
-							return "case";
-
-						case LifeEnum.C_VAR:
-							return "set";
-					}
-				}
-
-				string name = Type.ToString().ToLowerInvariant();
-				if (Actor != null)
-				{
-					return Actor + "." + name;
-				}
-
-				return name;
 			}
 		}
 

@@ -7,7 +7,7 @@ namespace Shared
 {
 	public class UnPAK : IDisposable
 	{
-		[DllImport("UnPAK")]
+		[DllImport("UnPAK", CallingConvention = CallingConvention.Cdecl)]
 		static extern void PAK_explode(byte[] srcBuffer, byte[] dstBuffer, uint compressedSize, uint uncompressedSize, ushort flags);
 
 		readonly FileStream stream;
