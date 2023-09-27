@@ -44,8 +44,11 @@ Copy file *LISTTRAK.PAK* into a folder named GAMEDATA
 
 # MemoryViewer
 
+Allow to view DOS memory in realtime. Each pixel is a byte.
+Current VGA palette is automatically loaded.
+
 Supported :
-* All DOS games
+* All DOS games (even non AITD related)
 
 ## Command-line arguments : 
 ```
@@ -55,11 +58,11 @@ MemoryViewer [-screen-width WIDTH] [-screen-height HEIGHT] [-zoom ZOOM]
 ## Commands
 | Key | Description |
 | :-: | - |
-| <kbd>space</kbd> | display memory allocation blocks
 | <kbd>ctrl</kbd> + <kbd>mouse wheel</kbd> <br> <kbd>ctrl</kbd> + <kbd>+</kbd> or <kbd>-</kbd>| increase / decrease zoom
 | <kbd>ctrl</kbd> + <kbd>0</kbd> | reset zoom
 | <kbd>page up</kbd> | decrease memory offset by 640KB
 | <kbd>page down</kbd> | increase memory offset by 640KB
+| <kbd>space</kbd> | display DOS memory control blocks (MCBs)<br>green = free<br>blue = used<br>red = current executable<br>yellow = not current executable
 
 # VarsViewer
 
