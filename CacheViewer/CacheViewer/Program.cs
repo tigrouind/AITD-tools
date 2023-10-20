@@ -131,20 +131,23 @@ namespace CacheViewer
 
 		static void ReadInput()
 		{
-			switch (ReadKey().Key)
+			while (System.Console.KeyAvailable)
 			{
-				case ConsoleKey.F5:
-					clearCache = true;
-					break;
+				switch (System.Console.ReadKey(true).Key)
+				{
+					case ConsoleKey.F5:
+						clearCache = true;
+						break;
 
-				case ConsoleKey.Spacebar:
-					showTimestamp = !showTimestamp;
-					break;
+					case ConsoleKey.Spacebar:
+						showTimestamp = !showTimestamp;
+						break;
 
-				case ConsoleKey.S:
-					Sort.SortMode = (SortMode)(((int)Sort.SortMode + 1) % 3);
-					Sort.SortEntries(cache);
-					break;
+					case ConsoleKey.S:
+						Sort.SortMode = (SortMode)(((int)Sort.SortMode + 1) % 3);
+						Sort.SortEntries(cache);
+						break;
+				}
 			}
 		}
 
@@ -188,16 +191,6 @@ namespace CacheViewer
 			{
 				CloseReader();
 			}
-		}
-
-		static ConsoleKeyInfo ReadKey()
-		{
-			if (System.Console.KeyAvailable)
-			{
-				return System.Console.ReadKey(true);
-			}
-
-			return default(ConsoleKeyInfo);
 		}
 
 		static void UpdateCache(Cache ch, int ticks, int offset)
