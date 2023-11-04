@@ -71,8 +71,8 @@ namespace CacheViewer
 
 		#endregion
 
-		static readonly short SIZEX = 256;
-		static readonly short SIZEY = 256;
+		const short SIZEX = 256;
+		const short SIZEY = 256;
 		static readonly SafeFileHandle handle;
 		static CharInfo[] buf = new CharInfo[SIZEX * SIZEY];
 		static CharInfo[] previousBuf = new CharInfo[SIZEX * SIZEY];
@@ -87,15 +87,21 @@ namespace CacheViewer
 		static Console()
 		{
 			handle = CreateFile("CONOUT$", (FileAccess)GENERIC_WRITE, FileShare.Write, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
+			Clear(SIZEX, SIZEY);
 		}
 
 		public static void Clear()
 		{
-			for (int i = 0 ; i < maxSizeY ; i++)
+			Clear(maxSizeX, maxSizeY);
+		}
+
+		static void Clear(int sizeX, int sizeY)
+		{
+			for (int y = 0 ; y < sizeY; y++)
 			{
-				for (int j = 0; j < maxSizeX; j++)
+				for (int x = 0; x < sizeX; x++)
 				{
-					buf[i * SIZEX + j] = new CharInfo { Char = new CharUnion { UnicodeChar = ' ' }, Attributes = 0 };
+					buf[x + y * SIZEX] = new CharInfo { Char = new CharUnion { UnicodeChar = ' ' }, Attributes = 0 };
 				}
 			}
 		}
@@ -165,9 +171,9 @@ namespace CacheViewer
 			bool refresh = false;
 			rect = new SmallRect { Left = short.MaxValue, Top = short.MaxValue, Right = short.MinValue, Bottom = short.MinValue };
 
-			for (short y = 0 ; y < maxSizeY ; y++)
+			for (short y = 0; y < maxSizeY; y++)
 			{
-				for (short x = 0 ; x < maxSizeX ; x++)
+				for (short x = 0; x < maxSizeX; x++)
 				{
 					int i = x + y * SIZEX;
 					if (!buf[i].Equals(previousBuf[i]))
