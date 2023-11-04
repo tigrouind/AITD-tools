@@ -71,8 +71,8 @@ namespace CacheViewer
 
 		#endregion
 
-		static readonly short SIZEX = 256;
-		static readonly short SIZEY = 256;
+		const short SIZEX = 256;
+		const short SIZEY = 256;
 		static readonly SafeFileHandle handle;
 		static CharInfo[] buf = new CharInfo[SIZEX * SIZEY];
 		static CharInfo[] previousBuf = new CharInfo[SIZEX * SIZEY];
@@ -87,15 +87,21 @@ namespace CacheViewer
 		static Console()
 		{
 			handle = CreateFile("CONOUT$", (FileAccess)GENERIC_WRITE, FileShare.Write, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
+			Clear(SIZEX, SIZEY);
 		}
 
 		public static void Clear()
 		{
-			for (int i = 0 ; i < maxSizeY ; i++)
+			Clear(maxSizeX, maxSizeY);
+		}
+
+		static void Clear(int sizeX, int sizeY)
+		{
+			for (int y = 0 ; y < sizeY; y++)
 			{
-				for (int j = 0; j < maxSizeX; j++)
+				for (int x = 0; x < sizeX; x++)
 				{
-					buf[i * SIZEX + j] = new CharInfo { Char = new CharUnion { UnicodeChar = ' ' }, Attributes = 0 };
+					buf[x + y * SIZEX] = new CharInfo { Char = new CharUnion { UnicodeChar = ' ' }, Attributes = 0 };
 				}
 			}
 		}
@@ -123,12 +129,12 @@ namespace CacheViewer
 
 		public static void Write(string format,
 								FormatArgument arg0,
-								FormatArgument arg1 = default(FormatArgument),
-								FormatArgument arg2 = default(FormatArgument),
-								FormatArgument arg3 = default(FormatArgument),
-								FormatArgument arg4 = default(FormatArgument),
-								FormatArgument arg5 = default(FormatArgument),
-								FormatArgument arg6 = default(FormatArgument))
+								FormatArgument arg1 = default,
+								FormatArgument arg2 = default,
+								FormatArgument arg3 = default,
+								FormatArgument arg4 = default,
+								FormatArgument arg5 = default,
+								FormatArgument arg6 = default)
 		{
 			StringFormat.Format(format, arg0, arg1, arg2, arg3, arg4, arg5, arg6);
 			for (int i = 0 ; i < StringFormat.Buffer.Length ; i++)
@@ -145,8 +151,7 @@ namespace CacheViewer
 
 		public static void Flush()
 		{
-			SmallRect rect;
-			if (CompareBuffers(out rect))
+			if (CompareBuffers(out SmallRect rect))
 			{
 				WriteConsoleOutput(handle, buf,
 					new Coord { X = SIZEX, Y = SIZEY },
@@ -155,9 +160,7 @@ namespace CacheViewer
 			}
 
 			//swap
-			var tmp = buf;
-			buf = previousBuf;
-			previousBuf = tmp;
+			(previousBuf, buf) = (buf, previousBuf);
 		}
 
 		static bool CompareBuffers(out SmallRect rect)
@@ -165,9 +168,9 @@ namespace CacheViewer
 			bool refresh = false;
 			rect = new SmallRect { Left = short.MaxValue, Top = short.MaxValue, Right = short.MinValue, Bottom = short.MinValue };
 
-			for (short y = 0 ; y < maxSizeY ; y++)
+			for (short y = 0; y < maxSizeY; y++)
 			{
-				for (short x = 0 ; x < maxSizeX ; x++)
+				for (short x = 0; x < maxSizeX; x++)
 				{
 					int i = x + y * SIZEX;
 					if (!buf[i].Equals(previousBuf[i]))
