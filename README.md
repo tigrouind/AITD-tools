@@ -92,3 +92,16 @@ Supported :
 | <kbd>s</kbd> | change sort mode (default, memory, lru)
 | <kbd>space</kbd> | display cache entries timestamp / name
 | <kbd>F5</kbd> | clear all cache entries
+
+# PAKExtract
+
+Extracts background images from PAK files.
+
+Supported :
+* Alone in the Dark (all versions)
+* Jack in the Dark
+* Time Gate: Knight's Chase
+
+## Instructions  
+- Copy the following files to same folder as PAKExtract : CAMERAxx.PAK, ITD_RESS.PAK (AITD1 only)
+- Run PAKExtract
