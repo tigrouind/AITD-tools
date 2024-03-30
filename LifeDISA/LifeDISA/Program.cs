@@ -73,9 +73,9 @@ namespace LifeDISA
 			int fileCount = 0;
 			if (File.Exists(@"GAMEDATA\LISTLIFE.PAK"))
 			{
-				using (var pak = new UnPAK(@"GAMEDATA\LISTLIFE.PAK"))
+				using (var pak = new PakArchive(@"GAMEDATA\LISTLIFE.PAK"))
 				{
-					fileCount = pak.EntryCount;
+					fileCount = pak.Count;
 				}
 			}
 
@@ -88,9 +88,9 @@ namespace LifeDISA
 			if (languageFile != null)
 			{
 				byte[] buffer;
-				using (var pak = new UnPAK(languageFile))
+				using (var pak = new PakArchive(languageFile))
 				{
-					buffer = pak.GetEntry(0);
+					buffer = pak[0].Read();
 				}
 
 				foreach (var item in Tools.ReadLines(buffer, Encoding.GetEncoding(850))
@@ -144,15 +144,15 @@ namespace LifeDISA
 			}
 
 			using (var writer = new Writer(outputFile, verbose, noOptimize))
-			using (var pak = new UnPAK(@"GAMEDATA\LISTLIFE.PAK"))
+			using (var pak = new PakArchive(@"GAMEDATA\LISTLIFE.PAK"))
 			{
 				//dump all
-				for (int i = 0; i < pak.EntryCount ; i++)
+				foreach (var entry in pak)
 				{
 					writer.WriteLine("--------------------------------------------------");
-					writer.WriteLine("#{0} {1}", i, vars.GetText(VarEnum.LIFES, i, string.Empty, false));
+					writer.WriteLine("#{0} {1}", entry.Index, vars.GetText(VarEnum.LIFES, entry.Index, string.Empty, false));
 					writer.WriteLine("--------------------------------------------------");
-					allBytes = pak.GetEntry(i);
+					allBytes = entry.Read();
 
 					try
 					{

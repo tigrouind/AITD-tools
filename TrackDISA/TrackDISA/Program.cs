@@ -24,14 +24,14 @@ namespace TrackDISA
 			}
 
 			using (var writer = new StreamWriter("output.txt"))
-			using (var pak = new UnPAK(@"GAMEDATA\LISTTRAK.PAK"))
+			using (var pak = new PakArchive(@"GAMEDATA\LISTTRAK.PAK"))
 			{
-				for (int i = 0 ; i < pak.EntryCount ; i++)
+				foreach (var entry in pak)
 				{
 					writer.WriteLine("--------------------------------------------------");
-					writer.WriteLine("#{0} {1}", i, vars.GetText(VarEnum.TRACKS, i, string.Empty));
+					writer.WriteLine("#{0} {1}", entry.Index, vars.GetText(VarEnum.TRACKS, entry.Index, string.Empty));
 					writer.WriteLine("--------------------------------------------------");
-					Dump(pak.GetEntry(i), writer);
+					Dump(entry.Read(), writer);
 				}
 			}
 
