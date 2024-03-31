@@ -92,3 +92,30 @@ Supported :
 | <kbd>s</kbd> | change sort mode (default, memory, lru)
 | <kbd>space</kbd> | display cache entries timestamp / name
 | <kbd>F5</kbd> | clear all cache entries
+
+# PAKExtract
+
+Extracts files from PAK files.
+
+Supported :
+* Alone in the Dark 1, 2 and 3
+* Jack in the Dark
+* Time Gate: Knight's Chase
+
+## Instructions  
+- Copy PAK files to GAMEDATA folder
+- Run PAKExtract
+
+## Command-line arguments : 
+```
+PAKExtract  [-raw] [-AITD1] [<files>]
+```
+| Argument | Description |
+|-|-|
+| -raw | Extract files in binary data, without extra processing |
+| -AITD1 | Extract overlay masks from ETAGExx.PAK files |
+| &lt;files&gt; | Specifies a list of one or more PAK files to be extracted. If no not specified, all PAK files in GAMEDATA folder are extracted |
+
+Files that are exported as PNG: 
+- backgrounds (CAMERAxx.PAK and ITD_RESS.PAK)
+- overlay masks (ETAGExx.PAK (AITD1), MASKxx.PAK or NASKxx.PAK (AITD2/3), MKxxxxxx.PAK or NKxxxxxx.PAK (Time Gate)

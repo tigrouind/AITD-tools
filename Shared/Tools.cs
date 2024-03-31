@@ -5,6 +5,8 @@ namespace Shared
 {
 	public static class Tools
 	{
+		#region Read
+
 		public static ushort ReadUnsignedShort(this byte[] data, int offset)
 		{
 			unchecked
@@ -37,6 +39,14 @@ namespace Shared
 			}
 		}
 
+		public static int ReadInt(this byte[] data, int offset)
+		{
+			unchecked
+			{
+				return data[offset] | data[offset + 1] << 8 | data[offset + 2] << 16 | data[offset + 3] << 24;
+			}
+		}
+
 		public static int ReadFarPointer(this byte[] data, int offset)
 		{
 			unchecked
@@ -44,6 +54,10 @@ namespace Shared
 				return ReadUnsignedShort(data, offset) + ReadUnsignedShort(data, offset + 2) * 16;
 			}
 		}
+
+		#endregion
+
+		#region Write
 
 		public static void Write(this byte[] data, short value, int offset)
 		{
@@ -62,6 +76,10 @@ namespace Shared
 				data[offset + 1] = (byte)(value >> 8);
 			}
 		}
+
+		#endregion
+
+		#region Pattern
 
 		public static int IndexOf(byte[] buffer, byte[] pattern, int offset = 0, int stride = 1)
 		{
@@ -89,10 +107,14 @@ namespace Shared
 			return true;
 		}
 
+		#endregion
+
 		public static TimeSpan GetTimeSpan(int start, int end)
 		{
 			return TimeSpan.FromMilliseconds(start - end);
 		}
+
+		#region Arguments
 
 		public static T GetArgument<T>(string[] args, string name)
 		{
@@ -127,5 +149,7 @@ namespace Shared
 		{
 			return args.Contains(name, StringComparer.InvariantCultureIgnoreCase);
 		}
+
+		#endregion
 	}
 }

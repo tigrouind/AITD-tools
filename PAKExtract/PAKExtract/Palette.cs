@@ -1,0 +1,65 @@
+﻿using Shared;
+using System.IO;
+using System.Linq;
+
+namespace PAKExtract
+{
+	static class Palette
+	{
+		static bool paletteLoaded = false;
+		static readonly uint[] paletteCustom = new uint[256];
+		static readonly uint[] paletteITD = new uint[256];
+
+		public static uint[] LoadITDPalette(string RootFolder)
+		{
+			if (!paletteLoaded)
+			{
+				paletteLoaded = true;
+				using (var pak = new PakArchive(Path.Combine(RootFolder, "ITD_RESS.PAK")))
+				{
+					foreach (var entry in pak.Reverse())
+					{
+						if (entry.UncompressedSize == 768)
+						{
+							LoadPalette(entry.Read(), 0, paletteITD);
+							break;
+						}
+					}
+				}
+			}
+
+			return paletteITD;
+		}
+
+		public static uint[] LoadPalette(byte[] data, int offset)
+		{
+			LoadPalette(data, offset, paletteCustom);
+			return paletteCustom;
+		}
+
+		public static void LoadPalette(byte[] data, int offset, uint[] pal)
+		{
+			bool vgaMap = Enumerable.Range(0, 768)
+				.All(x => data[x + offset] <= 63);
+
+			for (int i = 0; i < 256; i++)
+			{
+				int r = data[offset++];
+				int g = data[offset++];
+				int b = data[offset++];
+
+				if (vgaMap) //AITD2, AITD3
+				{
+					r = r << 2 | r >> 4;
+					g = g << 2 | g >> 4;
+					b = b << 2 | b >> 4;
+				}
+
+				unchecked
+				{
+					pal[i] = (uint)((255 << 24) | (r << 16) | (g << 8) | b);
+				}
+			}
+		}
+	}
+}
