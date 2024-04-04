@@ -15,7 +15,7 @@ namespace TrackDISA
 
 			if (File.Exists(@"GAMEDATA\vars.txt"))
 			{
-				vars.Load(@"GAMEDATA\vars.txt");
+				vars.Load(@"GAMEDATA\vars.txt", VarEnum.TRACKS);
 			}
 
 			if (!File.Exists(@"GAMEDATA\LISTTRAK.PAK"))
