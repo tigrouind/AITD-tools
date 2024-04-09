@@ -1,16 +1,16 @@
 @echo off
 
-%WINDIR%\Microsoft.NET\Framework\v4.0.30319\msbuild.exe /p:Configuration=Release ".\Shared\Shared.csproj" /t:Rebuild
+"%ProgramFiles%\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\msbuild.exe" /p:Configuration=Release ".\Shared\Shared.csproj" /t:Rebuild
 if %ERRORLEVEL% NEQ 0 pause
-%WINDIR%\Microsoft.NET\Framework\v4.0.30319\msbuild.exe /p:Configuration=Release ".\CacheViewer\CacheViewer.sln" /t:Rebuild
+"%ProgramFiles%\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\msbuild.exe" /p:Configuration=Release ".\CacheViewer\CacheViewer.sln" /t:Rebuild
 if %ERRORLEVEL% NEQ 0 pause
-%WINDIR%\Microsoft.NET\Framework\v4.0.30319\msbuild.exe /p:Configuration=Release ".\LifeDISA\LifeDISA.sln" /t:Rebuild
+"%ProgramFiles%\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\msbuild.exe" /p:Configuration=Release ".\LifeDISA\LifeDISA.sln" /t:Rebuild
 if %ERRORLEVEL% NEQ 0 pause
-%WINDIR%\Microsoft.NET\Framework\v4.0.30319\msbuild.exe /p:Configuration=Release ".\MemoryViewer\MemoryViewer.sln" /t:Rebuild
+"%ProgramFiles%\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\msbuild.exe" /p:Configuration=Release ".\MemoryViewer\MemoryViewer.sln" /t:Rebuild
 if %ERRORLEVEL% NEQ 0 pause
-%WINDIR%\Microsoft.NET\Framework\v4.0.30319\msbuild.exe /p:Configuration=Release ".\TrackDISA\TrackDISA.sln" /t:Rebuild
+"%ProgramFiles%\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\msbuild.exe" /p:Configuration=Release ".\TrackDISA\TrackDISA.sln" /t:Rebuild
 if %ERRORLEVEL% NEQ 0 pause
-%WINDIR%\Microsoft.NET\Framework\v4.0.30319\msbuild.exe /p:Configuration=Release ".\VarsViewer\VarsViewer.sln" /t:Rebuild
+"%ProgramFiles%\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\msbuild.exe" /p:Configuration=Release ".\VarsViewer\VarsViewer.sln" /t:Rebuild
 if %ERRORLEVEL% NEQ 0 pause
 if exist C:\MinGW\bin\gcc.exe (
 	C:\MinGW\bin\gcc.exe -shared -O2 -s "UnPAK\unpak.c" -o "UnPAK\bin\Release\UnPAK.dll"
