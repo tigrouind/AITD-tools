@@ -20,7 +20,7 @@ namespace LifeDISA
 		static readonly string[] flagsNames = { "anim", string.Empty, string.Empty, "back", "push", "coll", "trig", "pick", "grav" };
 		static readonly string[] foundFlagsNames = { "use", "eat_or_drink", "read", "reload", "fight", "jump", "open_or_search", "close", "push", "throw", "drop_or_put" };
 
-		static readonly VarParserExt vars = new VarParserExt();
+		static readonly VarParserForScript vars = new VarParserForScript();
 		static GameConfig config;
 		static readonly GameConfig[] gameConfigs =
 		{

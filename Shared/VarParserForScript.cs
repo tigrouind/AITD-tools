@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace Shared
 {
-	public class VarParserExt : VarParser
+	public class VarParserForScript : VarParser
 	{
 		public string GetText(VarEnum section, string value)
 		{

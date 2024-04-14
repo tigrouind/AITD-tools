@@ -7,7 +7,7 @@ namespace TrackDISA
 {
 	class Program
 	{
-		static readonly VarParserExt vars = new VarParserExt();
+		static readonly VarParserForScript vars = new VarParserForScript();
 
 		public static int Main()
 		{

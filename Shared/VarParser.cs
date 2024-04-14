@@ -7,8 +7,7 @@ namespace Shared
 {
 	public class VarParser
 	{
-		readonly Dictionary<VarEnum, Dictionary<int, string>> sections
-			= new Dictionary<VarEnum, Dictionary<int, string>>();
+		readonly Dictionary<VarEnum, Dictionary<int, string>> sections = new Dictionary<VarEnum, Dictionary<int, string>>();
 
 		public virtual string GetText(VarEnum section, int value)
 		{
