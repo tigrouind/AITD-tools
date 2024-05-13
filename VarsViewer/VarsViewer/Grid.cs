@@ -106,6 +106,7 @@ namespace VarsViewer
 
 				format.LineAlignment = lineAlignment;
 				format.Alignment = alignment;
+				format.FormatFlags = StringFormatFlags.NoWrap;
 
 				if (text != string.Empty)
 				{
