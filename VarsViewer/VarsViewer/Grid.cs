@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -39,9 +38,9 @@ namespace VarsViewer
 			this.parent = parent;
 			this.vars = vars;
 			this.cvars = cvars;
-			this.timer = new Timer();
-			this.timer.Interval = 530;
-			this.timer.Tick += TimerTick;
+			timer = new Timer();
+			timer.Interval = 530;
+			timer.Tick += TimerTick;
 		}
 
 		#region Drawing
@@ -250,8 +249,7 @@ namespace VarsViewer
 
 		public void MouseMove(MouseEventArgs e)
 		{
-			Var var;
-			TryFindVarAtPosition(e.Location, out var);
+			TryFindVarAtPosition(e.Location, out Var var);
 
 			if (selectedVar != var)
 			{
@@ -266,8 +264,7 @@ namespace VarsViewer
 
 		public void MouseDown(MouseEventArgs e)
 		{
-			Var var;
-			TryFindVarAtPosition(e.Location, out var);
+			TryFindVarAtPosition(e.Location, out Var var);
 
 			if (!Editable)
 			{
@@ -286,6 +283,12 @@ namespace VarsViewer
 
 				focusVar = var;
 				ResetCarret();
+			}
+			else if (inputText == null && var != null && var.Value != 0)
+			{
+				inputText = var.Text;
+				ResetCarret();
+				Invalidate(var);
 			}
 		}
 

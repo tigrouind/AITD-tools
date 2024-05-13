@@ -223,10 +223,12 @@ namespace CacheViewer
 
 				if (entry == null)
 				{
-					entry = new CacheEntry();
-					entry.Id = id;
-					entry.StartTicks = ticks;
-					entry.Index = uniqueId++;
+					entry = new CacheEntry
+					{
+						Id = id,
+						StartTicks = ticks,
+						Index = uniqueId++
+					};
 
 					ch.Entries.AddLast(entry);
 				}

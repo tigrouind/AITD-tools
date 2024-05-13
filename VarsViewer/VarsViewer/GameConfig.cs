@@ -1,5 +1,3 @@
-using System;
-
 namespace VarsViewer
 {
 	public class GameConfig
