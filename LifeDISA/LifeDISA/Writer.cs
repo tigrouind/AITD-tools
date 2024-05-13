@@ -40,7 +40,7 @@ namespace LifeDISA
 			int maxLength = nodes.Any() ? nodes.Max(x => x.Position).ToString().Length : 0;
 			foreach (var ins in nodes)
 			{
-				WriteLine("{0} {1}{2}", ins.Position.ToString().PadLeft(maxLength), GetInstructionName(ins), GetArguments(ins));
+				WriteLine(ins, "{0} {1}{2}", ins.Position.ToString().PadLeft(maxLength), GetInstructionName(ins), GetArguments(ins));
 			}
 		}
 

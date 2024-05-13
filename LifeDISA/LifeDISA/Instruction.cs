@@ -57,6 +57,7 @@ namespace LifeDISA
 			{
 				return IsIfCondition
 					&& NodesA != null
+					&& NodesB == null
 					&& NodesA.Count == 1
 					&& NodesA.First.Value.IsIfCondition
 					&& NodesA.First.Value.NodesB == null;
