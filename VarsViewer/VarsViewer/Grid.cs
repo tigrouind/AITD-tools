@@ -13,7 +13,7 @@ namespace VarsViewer
 		Var selectedVar;
 		Var focusVar;
 		string inputText;
-		bool carretState;
+		bool caretState;
 
 		readonly List<Var> vars;
 		readonly List<Var> cvars;
@@ -119,14 +119,14 @@ namespace VarsViewer
 					e.Graphics.DrawString(text, parent.Font, front, rect, format);
 				}
 
-				if (highlight && (inputText != null || text == string.Empty) && carretState)
+				if (highlight && (inputText != null || text == string.Empty) && caretState)
 				{
-					DrawCarret(e, rect, text);
+					DrawCaret(e, rect, text);
 				}
 			}
 		}
 
-		void DrawCarret(PaintEventArgs e, RectangleF rect, string text)
+		void DrawCaret(PaintEventArgs e, RectangleF rect, string text)
 		{
 			if (text == string.Empty)
 			{
@@ -181,7 +181,7 @@ namespace VarsViewer
 				{
 					case Keys.Delete:
 						BeginEdit();
-						ResetCarret();
+						ResetCaret();
 						break;
 				}
 			}
@@ -204,7 +204,7 @@ namespace VarsViewer
 					case Keys.D8:
 					case Keys.D9:
 						BeginEdit();
-						ResetCarret();
+						ResetCaret();
 						if (inputText.Length < (inputText.Contains("-") ? 6 : 5))
 						{
 							inputText += e.KeyChar;
@@ -214,7 +214,7 @@ namespace VarsViewer
 
 					case Keys.Insert:
 						BeginEdit();
-						ResetCarret();
+						ResetCaret();
 						if (inputText.Length == 0)
 						{
 							inputText = "-";
@@ -224,7 +224,7 @@ namespace VarsViewer
 
 					case Keys.Back:
 						BeginEdit();
-						ResetCarret();
+						ResetCaret();
 						if (inputText.Length > 0)
 						{
 							inputText = inputText.Remove(inputText.Length - 1);
@@ -282,12 +282,12 @@ namespace VarsViewer
 				}
 
 				focusVar = var;
-				ResetCarret();
+				ResetCaret();
 			}
 			else if (inputText == null && var != null && var.Value != 0)
 			{
 				inputText = var.Text;
-				ResetCarret();
+				ResetCaret();
 				Invalidate(var);
 			}
 		}
@@ -386,21 +386,21 @@ namespace VarsViewer
 		{
 			if (focusVar != null)
 			{
-				carretState = !carretState;
+				caretState = !caretState;
 				Invalidate(focusVar);
 			}
 		}
 
-		void ResetCarret()
+		void ResetCaret()
 		{
 			if (focusVar != null)
 			{
 				timer.Stop();
 				timer.Start();
 
-				if (!carretState)
+				if (!caretState)
 				{
-					carretState = true;
+					caretState = true;
 					Invalidate(focusVar);
 				}
 			}
