@@ -16,22 +16,29 @@ namespace LifeDISA
 
 		public void Run()
 		{
-			CheckGotos();
+			CheckGoto();
+			CreateLinkedList();
 			Optimize(nodes);
-			Cleanup();
+			RemoveEndLife();
 		}
 
-		void CheckGotos()
+		void CreateLinkedList()
 		{
+			//set Previous / Next fields of all instructions, to create linked list
 			for (var node = nodes.First; node != null; node = node.Next)
 			{
-				var ins = node.Value;
-				if (ins.Goto != -1)
+				node.Value.Previous = node.Previous;
+				node.Value.Next = node.Next;
+			}
+		}
+
+		void CheckGoto()
+		{
+			foreach (var ins in nodes)
+			{
+				if (ins.Goto != -1 && !nodesMap.ContainsKey(ins.Goto))
 				{
-					if (!nodesMap.ContainsKey(ins.Goto))
-					{
-						throw new Exception("Invalid goto: " + ins.Goto);
-					}
+					throw new Exception("Invalid goto: " + ins.Goto);
 				}
 			}
 		}
@@ -93,7 +100,7 @@ namespace LifeDISA
 			{
 				if (node.Value.Type == LifeEnum.CASE ||
 					node.Value.Type == LifeEnum.MULTI_CASE ||
-					node.Value.Type == LifeEnum.DEFAULT)
+					node.Value.Type == LifeEnum.CASE_DEFAULT)
 				{
 					var target = nodesMap[node.Value.Goto];
 					node.Value.NodesA = GetNodesBetween(node.Next, target, node.Value);
@@ -135,7 +142,7 @@ namespace LifeDISA
 					RemoveNode(target.Value.Previous); //remote goto
 				}
 
-				var def = new Instruction { Type = LifeEnum.DEFAULT, Goto = target.Value.Position };
+				var def = new Instruction { Type = LifeEnum.CASE_DEFAULT, Goto = target.Value.Position };
 				node.List.AddBefore(node.Next, def);
 			}
 
@@ -155,7 +162,7 @@ namespace LifeDISA
 
 			if (endOfSwitch != null && target != endOfSwitch) //should be equal, otherwise there is a default case
 			{
-				var def = new Instruction { Type = LifeEnum.DEFAULT, Goto = endOfSwitch.Value.Position };
+				var def = new Instruction { Type = LifeEnum.CASE_DEFAULT, Goto = endOfSwitch.Value.Position };
 				var defNode = node.List.AddBefore(target, def);
 				nodesMap[target.Value.Position] = defNode;
 
@@ -195,12 +202,11 @@ namespace LifeDISA
 			node.List.Remove(node);
 		}
 
-		void Cleanup()
+		void RemoveEndLife()
 		{
-			//remove endlife (if last instruction)
 			if (nodes.Last != null && nodes.Last.Value.Type == LifeEnum.ENDLIFE)
 			{
-				nodes.Remove(nodes.Last);
+				nodes.Remove(nodes.Last); //remove ENDLIFE (if last instruction)
 			}
 		}
 	}

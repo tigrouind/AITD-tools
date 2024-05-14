@@ -21,11 +21,6 @@ namespace LifeDISA
 		public LinkedList<Instruction> NodesA; //child nodes below instruction (eg: if -> { ... } )
 		public LinkedList<Instruction> NodesB; //child nodes below instruction (eg: else -> { ... } )
 
-		public void Add(string format, params object[] args)
-		{
-			arguments.Add(string.Format(format, args));
-		}
-
 		public void Add(string value)
 		{
 			arguments.Add(value);
@@ -45,7 +40,7 @@ namespace LifeDISA
 		{
 			get
 			{
-				return NodesB != null
+				return NodesB != null //must have only one if child inside else part
 					&& NodesB.Count == 1
 					&& NodesB.First.Value.IsIfCondition;
 			}
@@ -57,10 +52,10 @@ namespace LifeDISA
 			{
 				return IsIfCondition
 					&& NodesA != null
-					&& NodesB == null
 					&& NodesA.Count == 1
-					&& NodesA.First.Value.IsIfCondition
-					&& NodesA.First.Value.NodesB == null;
+					&& NodesA.First.Value.IsIfCondition  //must have only one if child inside if part
+					&& NodesA.First.Value.NodesB == null //no else for if child
+					&& NodesB == null; //no else part
 			}
 		}
 
@@ -86,13 +81,7 @@ namespace LifeDISA
 			}
 		}
 
-		public IReadOnlyList<string> Arguments
-		{
-			get
-			{
-				return arguments;
-			}
-		}
+		public IReadOnlyList<string> Arguments => arguments;
 
 		public override string ToString()
 		{

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Shared;
@@ -9,7 +10,20 @@ namespace TrackDISA
 	{
 		static readonly VarParserForScript vars = new VarParserForScript();
 
-		public static int Main()
+		static readonly GameConfig[] gameConfigs =
+		{
+				new GameConfig(GameVersion.AITD1        , MacroTable.TrackA),
+				new GameConfig(GameVersion.AITD1_FLOPPY , MacroTable.TrackA),
+				new GameConfig(GameVersion.AITD1_DEMO   , MacroTable.TrackA),
+				new GameConfig(GameVersion.AITD2        , MacroTable.TrackB),
+				new GameConfig(GameVersion.AITD2_DEMO   , MacroTable.TrackB),
+				new GameConfig(GameVersion.AITD3        , MacroTable.TrackB),
+				new GameConfig(GameVersion.JACK         , MacroTable.TrackB),
+				new GameConfig(GameVersion.TIMEGATE     , MacroTable.TrackB),
+				new GameConfig(GameVersion.TIMEGATE_DEMO, MacroTable.TrackB)
+		};
+
+		public static int Main(string[] args)
 		{
 			Directory.CreateDirectory("GAMEDATA");
 
@@ -23,134 +37,175 @@ namespace TrackDISA
 				return -1;
 			}
 
-			using (var writer = new StreamWriter("output.txt"))
+			string version = Tools.GetArgument<string>(args, "-version");
+			string outputFile = Tools.GetArgument<string>(args, "-output") ?? "tracks.vb";
+			bool verbose = Tools.HasArgument(args, "-verbose");
+
+			var config = gameConfigs.FirstOrDefault(x => string.Equals(x.Version.ToString(), version, StringComparison.InvariantCultureIgnoreCase));
+			if (version == null || config == null)
+			{
+				var versions = string.Join("|", gameConfigs.Select(x => x.Version.ToString().ToLowerInvariant()));
+				Console.WriteLine($"Usage: TrackDISA -version {{{versions}}} [-output]");
+				return -1;
+			}
+
+			using (var writer = new StreamWriter(outputFile))
 			using (var pak = new PakArchive(@"GAMEDATA\LISTTRAK.PAK"))
 			{
 				foreach (var entry in pak)
 				{
-					writer.WriteLine("--------------------------------------------------");
-					writer.WriteLine("#{0} {1}", entry.Index, vars.GetText(VarEnum.TRACKS, entry.Index, string.Empty));
-					writer.WriteLine("--------------------------------------------------");
-					Dump(entry.Read(), writer);
+					writer.WriteLine("'--------------------------------------------------");
+					writer.WriteLine("'#{0} {1}", entry.Index, vars.GetText(VarEnum.TRACKS, entry.Index, string.Empty));
+					writer.WriteLine("'--------------------------------------------------");
+					Dump(entry.Read(), writer, config, verbose);
 				}
 			}
 
 			return 0;
 		}
 
-		static void Dump(byte[] allbytes, TextWriter writer)
+		static void Dump(byte[] allbytes, TextWriter writer, GameConfig config, bool verbose)
 		{
 			int i = 0;
 
-			while (i < allbytes.Length)
+			var result = new List<(string Result, int Position, int Size)>();
+			bool quit = false;
+			while (i < allbytes.Length && !quit)
 			{
-				writer.Write("{0,2}: ", i / 2);
-				int macro = allbytes.ReadShort(i+0);
+				int pos = i;
+				int macro = allbytes.ReadShort(i + 0);
 				i += 2;
-				TrackEnum trackEnum = (TrackEnum)macro;
+
+				string output;
+				TrackEnum trackEnum = config.TrackMacro[macro];
 				switch (trackEnum)
 				{
-
 					case TrackEnum.WARP:
-						writer.WriteLine("warp ROOM{0} {1} {2} {3}",
-							allbytes.ReadShort(i+0),
-							allbytes.ReadShort(i+2),
-							allbytes.ReadShort(i+4),
-							allbytes.ReadShort(i+6));
+						output = string.Format("warp(ROOM{0} {1}, {2}, {3})",
+							allbytes.ReadShort(i + 0),
+							allbytes.ReadShort(i + 2),
+							allbytes.ReadShort(i + 4),
+							allbytes.ReadShort(i + 6));
 						i += 8;
 						break;
 
 					case TrackEnum.GOTO_POS:
-						writer.WriteLine("goto position ROOM{0} {1} {2}",
-							allbytes.ReadShort(i+0),
-							allbytes.ReadShort(i+2),
-							allbytes.ReadShort(i+4));
+						output = string.Format("goto_position(ROOM{0}, {1}, {2})",
+							allbytes.ReadShort(i + 0),
+							allbytes.ReadShort(i + 2),
+							allbytes.ReadShort(i + 4));
 						i += 6;
 						break;
 
 					case TrackEnum.END:
-						writer.WriteLine("end of track");
-						return;
+						output = "stop()";
+						quit = true;
+						break;
 
 					case TrackEnum.REWIND:
-						writer.WriteLine("rewind");
-						return;
+						output = "rewind()";
+						quit = true;
+						break;
 
 					case TrackEnum.MARK:
-						writer.WriteLine("mark {0}", allbytes.ReadShort(i+0));
+						output = string.Format("mark({0})", allbytes.ReadShort(i + 0));
 						i += 2;
 						break;
 
 					case TrackEnum.SPEED_4:
-						writer.WriteLine("speed 4");
+						output = "speed(4)";
 						break;
 
 					case TrackEnum.SPEED_5:
-						writer.WriteLine("speed 5");
+						output = "speed(5)";
 						break;
 
 					case TrackEnum.SPEED_0:
-						writer.WriteLine("speed 0");
+						output = "speed(0)";
 						break;
 
 					case TrackEnum.ROTATE_X:
-						writer.WriteLine("rotate {0}", allbytes.ReadShort(i+0) * 360 / 1024);
+						output = string.Format("rotate({0})", allbytes.ReadShort(i + 0) * 360 / 1024);
 						i += 2;
 						break;
 
 					case TrackEnum.COLLISION_ENABLE:
-						writer.WriteLine("enable collision");
+						output = "collision(1)";
 						break;
 
 					case TrackEnum.COLLISION_DISABLE:
-						writer.WriteLine("disable collision");
-						break;
-
-					case TrackEnum.TRIGGERS_DISABLE:
-						writer.WriteLine("disable triggers");
+						output = "collision(0)";
 						break;
 
 					case TrackEnum.TRIGGERS_ENABLE:
-						writer.WriteLine("enable triggers");
+						output = "triggers(1)";
+						break;
+
+					case TrackEnum.TRIGGERS_DISABLE:
+						output = "triggers(0)";
 						break;
 
 					case TrackEnum.WARP_ROT:
-						writer.WriteLine("warp ROOM{0} {1} {2} {3} {4}",
-							allbytes.ReadShort(i+0),
-							allbytes.ReadShort(i+2),
-							allbytes.ReadShort(i+4),
-							allbytes.ReadShort(i+6),
-							allbytes.ReadShort(i+8));
+						output = string.Format("warp(ROOM{0}, {1}, {2}, {3}, {4})",
+							allbytes.ReadShort(i + 0),
+							allbytes.ReadShort(i + 2),
+							allbytes.ReadShort(i + 4),
+							allbytes.ReadShort(i + 6),
+							allbytes.ReadShort(i + 8));
 						i += 10;
 						break;
 
 					case TrackEnum.STORE_POS:
-						writer.WriteLine("store position");
+						output = "store_position()";
 						break;
 
 					case TrackEnum.STAIRS_X:
 					case TrackEnum.STAIRS_Z:
-						writer.WriteLine("walk stairs on {0} {1} {2} {3}",
-							trackEnum == TrackEnum.STAIRS_X ? "X" : "Z",
-							allbytes.ReadShort(i+0),
-							allbytes.ReadShort(i+2),
-							allbytes.ReadShort(i+4));
+						output = string.Format("walk_stairs_on_{0}({1}, {2}, {3})",
+							trackEnum == TrackEnum.STAIRS_X ? "x" : "z",
+							allbytes.ReadShort(i + 0),
+							allbytes.ReadShort(i + 2),
+							allbytes.ReadShort(i + 4));
 						i += 6;
 						break;
 
 					case TrackEnum.ROTATE_XYZ:
-						writer.WriteLine("rotate {0} {1} {2}",
-							allbytes.ReadShort(i+0) * 360 / 1024,
-							allbytes.ReadShort(i+2) * 360 / 1024,
-							allbytes.ReadShort(i+4) * 360 / 1024);
+						output = string.Format("rotate({0}, {1}, {2})",
+							allbytes.ReadShort(i + 0) * 360 / 1024,
+							allbytes.ReadShort(i + 2) * 360 / 1024,
+							allbytes.ReadShort(i + 4) * 360 / 1024);
 						i += 6;
 						break;
 
+					case TrackEnum.DUMMY:
+						output = "dummy()";
+						break;
+
 					default:
-						throw new NotImplementedException(macro.ToString());
+						throw new NotSupportedException(trackEnum.ToString());
 				}
+
+				result.Add((output, pos, i - pos));
 			}
 
+			int maxLength = result.Max(x => x.Position / 2).ToString().Length;
+			int padding = result.Max(x => x.Size) / 2;
+
+			foreach (var item in result)
+			{
+				if (verbose)
+				{
+					var bytesData = Enumerable.Range(0, item.Size / 2)
+						.Select(x => allbytes.ReadUnsignedShortSwap(item.Position + x * 2)
+						.ToString("x4"));
+
+					var byteInfo = string.Join("_", bytesData).PadLeft(padding * 4 + (padding - 1), ' ');
+
+					writer.Write($"{byteInfo} ");
+				}
+
+				writer.WriteLine($"{(item.Position / 2).ToString().PadLeft(maxLength)}: {item.Result}");
+			}
 		}
 	}
 }

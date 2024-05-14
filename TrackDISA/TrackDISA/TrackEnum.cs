@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 
 namespace TrackDISA
 {
 	public enum TrackEnum
 	{
-		WARP = 0,
+		WARP,
 		GOTO_POS,
 		END,
 		REWIND,
@@ -12,15 +12,17 @@ namespace TrackDISA
 		SPEED_4,
 		SPEED_5,
 		SPEED_0,
-		ROTATE_X = 9,
+		ROTATE_X,
 		COLLISION_DISABLE,
 		COLLISION_ENABLE,
-		TRIGGERS_DISABLE = 13,
+		DUMMY,
+		TRIGGERS_DISABLE,
 		TRIGGERS_ENABLE,
 		WARP_ROT,
 		STORE_POS,
 		STAIRS_X,
 		STAIRS_Z,
 		ROTATE_XYZ,
+		UNUSED
 	}
 }

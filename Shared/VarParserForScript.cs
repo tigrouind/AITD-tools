@@ -7,8 +7,7 @@ namespace Shared
 	{
 		public string GetText(VarEnum section, string value)
 		{
-			int parsedNumber;
-			if (int.TryParse(value, out parsedNumber))
+			if (int.TryParse(value, out int parsedNumber))
 			{
 				return GetText(section, parsedNumber);
 			}

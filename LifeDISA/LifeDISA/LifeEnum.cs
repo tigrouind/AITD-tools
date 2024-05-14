@@ -23,7 +23,7 @@ namespace LifeDISA
 		HIT,
 		MESSAGE,
 		MESSAGE_VALUE,
-		SET,
+		VAR,
 		INC,
 		DEC,
 		ADD,
@@ -134,6 +134,6 @@ namespace LifeDISA
 		DEBUG,
 		UNKNOWN_5,
 		UNKNOWN_6,
-		DEFAULT = 0x10000
+		CASE_DEFAULT = 0x10000
 	}
 }

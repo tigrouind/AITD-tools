@@ -2,7 +2,7 @@
 
 This is a disassembler for LIFE scripts in Alone in the Dark series.
 
-Supported :
+## Supported
 * Alone in the Dark 1 (CD-ROM, floppy, demo)
 * Alone in the Dark 2 (CD-ROM, floppy, demo)
 * Alone in the Dark 3 (CD-ROM, demo)
@@ -11,7 +11,7 @@ Supported :
 
 ## Command-line arguments : 
 ```
-LifeDISA -version VERSION [-raw] [-verbose] [-output]
+LifeDISA -version VERSION [-raw] [-verbose] [-output FILENAME]
 ```
 | Argument | Description |
 |-|-|
@@ -20,7 +20,7 @@ LifeDISA -version VERSION [-raw] [-verbose] [-output]
 | -verbose | Display byte information on the left side of the disassembly |
 | -output | Output filename |
 
-## How to use : 
+## Instructions 
 
 1. Create a new folder named "GAMEDATA" (located in same folder as the LifeDISA executable).
 2. Copy the following files from game to GAMEDATA :
@@ -29,16 +29,22 @@ LifeDISA -version VERSION [-raw] [-verbose] [-output]
 3. Copy the file *OBJETS.ITD* (from AITD folder) into GAMEDATA folder.
 4. Start LifeDISA executable with appropriate arguments. A file named *output.txt* will be created.
 
-## Syntax highlighting (Notepad++)
-
-Download file [here](https://github.com/tigrouind/AITD-tools/raw/master/AITD.xml)
-
-How to install it :
-1. Click on `Language` > `User Defined Language` > `Define your language...`
-2. Click `Import...`
-3. In the opening dialog, choose the xml file you downloaded previously.
-
 # TrackDISA
+
+## Supported 
+Same as [LifeDISA](#LifeDISA)
+
+## Command-line arguments : 
+```
+TrackDISA -version VERSION [-verbose] [-output FILENAME]
+```
+| Argument | Description |
+|-|-|
+| -version VERSION | Must be one of the following values:<br>AITD1, AITD1_FLOPPY, AITD1_DEMO<br>AITD2, AITD2_DEMO<br>AITD3<br>JACK<br>TIMEGATE, TIMEGATE_DEMO |
+| -verbose | Display byte information on the left side of the disassembly |
+| -output | Output filename |
+
+## Instructions  
 
 Copy file *LISTTRAK.PAK* into a folder named GAMEDATA
 
@@ -66,7 +72,7 @@ MemoryViewer [-screen-width WIDTH] [-screen-height HEIGHT] [-zoom ZOOM]
 
 # VarsViewer
 
-Supported :
+## Supported
 * Alone in the Dark 1 (CD-ROM, floppy, demo)
 
 ## Command-line arguments : 
@@ -83,7 +89,7 @@ VarsViewer [-screen-width WIDTH] [-screen-height HEIGHT]
 
 # CacheViewer
 
-Supported :
+## Supported 
 * Alone in the Dark 1 (CD-ROM, floppy, demo)
 
 ## Commands
