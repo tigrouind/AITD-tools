@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -16,24 +15,25 @@ namespace LifeDISA
 		static readonly Dictionary<int, string> objectsByIndex = new Dictionary<int, string>();
 		static readonly Dictionary<int, string> namesByIndex = new Dictionary<int, string>();
 
+		static (GameVersion Version, LifeEnum[] LifeMacro, EvalEnum[] EvalMacro, int Offset) config;
 		static readonly LinkedList<Instruction> nodes = new LinkedList<Instruction>();
 		static readonly Dictionary<int, LinkedListNode<Instruction>> nodesMap = new Dictionary<int, LinkedListNode<Instruction>>();
 		static readonly string[] flagsNames = { "anim", string.Empty, string.Empty, "back", "push", "coll", "trig", "pick", "grav" };
 		static readonly string[] foundFlagsNames = { "use", "eat_or_drink", "read", "reload", "fight", "jump", "open_or_search", "close", "push", "throw", "drop_or_put" };
 
 		static readonly VarParserForScript vars = new VarParserForScript();
-		static GameConfig config;
-		static readonly GameConfig[] gameConfigs =
+
+		static readonly (GameVersion Version, LifeEnum[] LifeMacro, EvalEnum[] EvalMacro, int Offset)[] gameConfigs =
 		{
-			new GameConfig(GameVersion.AITD1        , MacroTable.LifeA, MacroTable.EvalA, 52),
-			new GameConfig(GameVersion.AITD1_FLOPPY , MacroTable.LifeA, MacroTable.EvalA, 52),
-			new GameConfig(GameVersion.AITD1_DEMO   , MacroTable.LifeA, MacroTable.EvalA, 52),
-			new GameConfig(GameVersion.AITD2        , MacroTable.LifeB, MacroTable.EvalB, 54),
-			new GameConfig(GameVersion.AITD2_DEMO   , MacroTable.LifeB, MacroTable.EvalB, 54),
-			new GameConfig(GameVersion.AITD3        , MacroTable.LifeB, MacroTable.EvalB, 54),
-			new GameConfig(GameVersion.JACK         , MacroTable.LifeB, MacroTable.EvalB, 54),
-			new GameConfig(GameVersion.TIMEGATE     , MacroTable.LifeB, MacroTable.EvalB, 54),
-			new GameConfig(GameVersion.TIMEGATE_DEMO, MacroTable.LifeB, MacroTable.EvalB, 54)
+			(GameVersion.AITD1        , MacroTable.LifeA, MacroTable.EvalA, 52),
+			(GameVersion.AITD1_FLOPPY , MacroTable.LifeA, MacroTable.EvalA, 52),
+			(GameVersion.AITD1_DEMO   , MacroTable.LifeA, MacroTable.EvalA, 52),
+			(GameVersion.AITD2        , MacroTable.LifeB, MacroTable.EvalB, 54),
+			(GameVersion.AITD2_DEMO   , MacroTable.LifeB, MacroTable.EvalB, 54),
+			(GameVersion.AITD3        , MacroTable.LifeB, MacroTable.EvalB, 54),
+			(GameVersion.JACK         , MacroTable.LifeB, MacroTable.EvalB, 54),
+			(GameVersion.TIMEGATE     , MacroTable.LifeB, MacroTable.EvalB, 54),
+			(GameVersion.TIMEGATE_DEMO, MacroTable.LifeB, MacroTable.EvalB, 54)
 		};
 
 		public static int Main(string[] args)
@@ -44,7 +44,7 @@ namespace LifeDISA
 			string outputFile = Shared.Tools.GetArgument<string>(args, "-output") ?? "scripts.vb";
 
 			config = gameConfigs.FirstOrDefault(x => string.Equals(x.Version.ToString(), version, StringComparison.InvariantCultureIgnoreCase));
-			if (version == null || config == null)
+			if (version == null || config == default)
 			{
 				var versions = string.Join("|", gameConfigs.Select(x => x.Version.ToString().ToLowerInvariant()));
 				Console.WriteLine($"Usage: LifeDISA -version {{{versions}}} [-raw] [-verbose] [-output]");

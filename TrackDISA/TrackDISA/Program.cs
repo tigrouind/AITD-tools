@@ -10,17 +10,17 @@ namespace TrackDISA
 	{
 		static readonly VarParserForScript vars = new VarParserForScript();
 
-		static readonly GameConfig[] gameConfigs =
+		static readonly (GameVersion Version, TrackEnum[] TrackMacro)[] gameConfigs =
 		{
-				new GameConfig(GameVersion.AITD1        , MacroTable.TrackA),
-				new GameConfig(GameVersion.AITD1_FLOPPY , MacroTable.TrackA),
-				new GameConfig(GameVersion.AITD1_DEMO   , MacroTable.TrackA),
-				new GameConfig(GameVersion.AITD2        , MacroTable.TrackB),
-				new GameConfig(GameVersion.AITD2_DEMO   , MacroTable.TrackB),
-				new GameConfig(GameVersion.AITD3        , MacroTable.TrackB),
-				new GameConfig(GameVersion.JACK         , MacroTable.TrackB),
-				new GameConfig(GameVersion.TIMEGATE     , MacroTable.TrackB),
-				new GameConfig(GameVersion.TIMEGATE_DEMO, MacroTable.TrackB)
+			(GameVersion.AITD1        , MacroTable.TrackA),
+			(GameVersion.AITD1_FLOPPY , MacroTable.TrackA),
+			(GameVersion.AITD1_DEMO   , MacroTable.TrackA),
+			(GameVersion.AITD2        , MacroTable.TrackB),
+			(GameVersion.AITD2_DEMO   , MacroTable.TrackB),
+			(GameVersion.AITD3        , MacroTable.TrackB),
+			(GameVersion.JACK         , MacroTable.TrackB),
+			(GameVersion.TIMEGATE     , MacroTable.TrackB),
+			(GameVersion.TIMEGATE_DEMO, MacroTable.TrackB)
 		};
 
 		public static int Main(string[] args)
@@ -42,7 +42,7 @@ namespace TrackDISA
 			bool verbose = Tools.HasArgument(args, "-verbose");
 
 			var config = gameConfigs.FirstOrDefault(x => string.Equals(x.Version.ToString(), version, StringComparison.InvariantCultureIgnoreCase));
-			if (version == null || config == null)
+			if (version == null || config == default)
 			{
 				var versions = string.Join("|", gameConfigs.Select(x => x.Version.ToString().ToLowerInvariant()));
 				Console.WriteLine($"Usage: TrackDISA -version {{{versions}}} [-output]");
@@ -57,14 +57,14 @@ namespace TrackDISA
 					writer.WriteLine("'--------------------------------------------------");
 					writer.WriteLine("'#{0} {1}", entry.Index, vars.GetText(VarEnum.TRACKS, entry.Index, string.Empty));
 					writer.WriteLine("'--------------------------------------------------");
-					Dump(entry.Read(), writer, config, verbose);
+					Dump(entry.Read(), writer, config.TrackMacro, verbose);
 				}
 			}
 
 			return 0;
 		}
 
-		static void Dump(byte[] allbytes, TextWriter writer, GameConfig config, bool verbose)
+		static void Dump(byte[] allbytes, TextWriter writer, TrackEnum[] trackMacro, bool verbose)
 		{
 			int i = 0;
 
@@ -77,7 +77,7 @@ namespace TrackDISA
 				i += 2;
 
 				string output;
-				TrackEnum trackEnum = config.TrackMacro[macro];
+				TrackEnum trackEnum = trackMacro[macro];
 				switch (trackEnum)
 				{
 					case TrackEnum.WARP:
