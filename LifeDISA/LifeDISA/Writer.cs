@@ -54,7 +54,7 @@ namespace LifeDISA
 
 			IEnumerable<Instruction> GetNodes()
 			{
-				for (var node = nodes.First; node != null; node = node.Value.Next)
+				for (var node = nodes.First; node != null; node = node.Next)
 				{
 					yield return node.Value;
 				}

@@ -192,9 +192,8 @@ namespace LifeDISA
 
 		static void ProcessCaseStatements()
 		{
-			for (var node = nodes.First; node != null; node = node.Value.Next)
+			foreach (var ins in GetNodes(nodes))
 			{
-				var ins = node.Value;
 				switch (ins.Type)
 				{
 					case LifeEnum.CASE:
@@ -204,11 +203,35 @@ namespace LifeDISA
 						{
 							for (int i = 0 ; i < ins.Arguments.Count ; i++)
 							{
-								ins.Set(i, GetConditionName(ins.Parent.EvalEnum, ins.Arguments[i]));
+								ins.Set(i, GetConditionName(ins.Parent.Value.EvalEnum, ins.Arguments[i]));
 							}
 						}
 					}
 					break;
+				}
+			}
+
+			IEnumerable<Instruction> GetNodes(IEnumerable<Instruction> nodes)
+			{
+				foreach (var node in nodes)
+				{
+					yield return node;
+
+					if (node.NodesA != null)
+					{
+						foreach (var childNode in GetNodes(node.NodesA))
+						{
+							yield return childNode;
+						}
+					}
+
+					if (node.NodesB != null)
+					{
+						foreach (var childNode in GetNodes(node.NodesB))
+						{
+							yield return childNode;
+						}
+					}
 				}
 			}
 		}

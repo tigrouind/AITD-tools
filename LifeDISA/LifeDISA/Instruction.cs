@@ -14,10 +14,7 @@ namespace LifeDISA
 		public int Position; //used to map gotos to a given instruction
 		public int Size; //size in bytes of instruction
 
-		public LinkedListNode<Instruction> Previous; //previous instruction (before optimisation)
-		public LinkedListNode<Instruction> Next; //next instruction (before optimisation)
-
-		public Instruction Parent; //node above instruction (eg: case -> switch)
+		public LinkedListNode<Instruction> Parent; //node above instruction (eg: case -> switch)
 		public LinkedList<Instruction> NodesA; //child nodes below instruction (eg: if -> { ... } )
 		public LinkedList<Instruction> NodesB; //child nodes below instruction (eg: else -> { ... } )
 

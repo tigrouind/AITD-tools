@@ -17,19 +17,8 @@ namespace LifeDISA
 		public void Run()
 		{
 			CheckGoto();
-			CreateLinkedList();
 			Optimize(nodes);
 			RemoveEndLife();
-		}
-
-		void CreateLinkedList()
-		{
-			//set Previous / Next fields of all instructions, to create linked list
-			for (var node = nodes.First; node != null; node = node.Next)
-			{
-				node.Value.Previous = node.Previous;
-				node.Value.Next = node.Next;
-			}
 		}
 
 		void CheckGoto()
@@ -73,19 +62,19 @@ namespace LifeDISA
 
 			var ins = node.Value;
 			var target = nodesMap[ins.Goto];
-			var previous = target.Value.Previous;
-			if (previous.Value.Type == LifeEnum.GOTO) //else or elseif
+			var previous = target.Previous;
+			if (previous != null && previous.Value.Type == LifeEnum.GOTO) //else or elseif
 			{
-				RemoveNode(previous); //remove goto
-				ins.NodesA = GetNodesBetween(node.Next, target, ins);
-				ins.NodesB = GetNodesBetween(target, nodesMap[previous.Value.Goto], ins);
+				previous.List.Remove(previous); //remove goto
+				ins.NodesA = GetNodesBetween(node.Next, target, node);
+				ins.NodesB = GetNodesBetween(target, nodesMap[previous.Value.Goto], node);
 
 				Optimize(ins.NodesA);
 				Optimize(ins.NodesB);
 			}
 			else //if
 			{
-				ins.NodesA = GetNodesBetween(node.Next, target, ins);
+				ins.NodesA = GetNodesBetween(node.Next, target, node);
 				Optimize(ins.NodesA);
 			}
 		}
@@ -93,21 +82,6 @@ namespace LifeDISA
 		#endregion
 
 		#region Switch
-
-		void OptimizeCase(LinkedList<Instruction> list)
-		{
-			for (var node = list.First; node != null; node = node.Next)
-			{
-				if (node.Value.Type == LifeEnum.CASE ||
-					node.Value.Type == LifeEnum.MULTI_CASE ||
-					node.Value.Type == LifeEnum.CASE_DEFAULT)
-				{
-					var target = nodesMap[node.Value.Goto];
-					node.Value.NodesA = GetNodesBetween(node.Next, target, node.Value);
-					Optimize(node.Value.NodesA);
-				}
-			}
-		}
 
 		void DetectSwitch(LinkedListNode<Instruction> node)
 		{
@@ -128,18 +102,31 @@ namespace LifeDISA
 			LinkedListNode<Instruction> target = node.Next;
 
 			//skip code before after switch, before first case
-			while (target != null && target.Value.Next != null &&
+			while (target.Next != null &&
 				target.Value.Type != LifeEnum.CASE &&
 				target.Value.Type != LifeEnum.MULTI_CASE)
 			{
-				target = target.Value.Next;
+				target = target.Next;
+			}
+
+			if (target.Next == null) //end of local list reached, get next instruction another way
+			{
+				while (target.Value.Parent != null) //get first parent that has a non null next sibling
+				{
+					target = target.Value.Parent;
+					if (target.Next != null)
+					{
+						target = target.Next;
+						break;
+					}
+				}
 			}
 
 			if (target != node.Next) //default statement right after switch
 			{
-				if (target.Value.Previous.Value.Type == LifeEnum.GOTO)
+				if (target.Previous.Value.Type == LifeEnum.GOTO)
 				{
-					RemoveNode(target.Value.Previous); //remote goto
+					target.Previous.List.Remove(target.Previous); //remote goto
 				}
 
 				var def = new Instruction { Type = LifeEnum.CASE_DEFAULT, Goto = target.Value.Position };
@@ -153,32 +140,47 @@ namespace LifeDISA
 			{
 				target = nodesMap[target.Value.Goto];
 
-				if (target.Value.Previous.Value.Type == LifeEnum.GOTO)
+				if (target.Previous != null && target.Previous.Value.Type == LifeEnum.GOTO)
 				{
-					endOfSwitch = nodesMap[target.Value.Previous.Value.Goto];
-					RemoveNode(target.Value.Previous); //remote goto
+					endOfSwitch = nodesMap[target.Previous.Value.Goto];
+					target.Previous.List.Remove(target.Previous); //remote goto before case
 				}
 			}
 
-			if (endOfSwitch != null && target != endOfSwitch) //should be equal, otherwise there is a default case
+			if (endOfSwitch == null || target == endOfSwitch) //should be equal, otherwise there is a default case
+			{
+				node.Value.NodesA = GetNodesBetween(node.Next, target, node);
+			}
+			else
 			{
 				var def = new Instruction { Type = LifeEnum.CASE_DEFAULT, Goto = endOfSwitch.Value.Position };
 				var defNode = node.List.AddBefore(target, def);
 				nodesMap[target.Value.Position] = defNode;
 
-				node.Value.NodesA = GetNodesBetween(node.Next, endOfSwitch, node.Value);
-			}
-			else
-			{
-				node.Value.NodesA = GetNodesBetween(node.Next, target, node.Value);
+				node.Value.NodesA = GetNodesBetween(node.Next, endOfSwitch, node);
 			}
 
 			OptimizeCase(node.Value.NodesA);
 		}
 
+		void OptimizeCase(LinkedList<Instruction> list)
+		{
+			for (var node = list.First; node != null; node = node.Next)
+			{
+				if (node.Value.Type == LifeEnum.CASE ||
+					node.Value.Type == LifeEnum.MULTI_CASE ||
+					node.Value.Type == LifeEnum.CASE_DEFAULT)
+				{
+					var target = nodesMap[node.Value.Goto];
+					node.Value.NodesA = GetNodesBetween(node.Next, target, node);
+					Optimize(node.Value.NodesA);
+				}
+			}
+		}
+
 		#endregion
 
-		LinkedList<Instruction> GetNodesBetween(LinkedListNode<Instruction> start, LinkedListNode<Instruction> end, Instruction parent)
+		LinkedList<Instruction> GetNodesBetween(LinkedListNode<Instruction> start, LinkedListNode<Instruction> end, LinkedListNode<Instruction> parent)
 		{
 			//return a linked list with all nodes between start and end (exclusive), set their parent field, remove them from main list
 			LinkedList<Instruction> result = new LinkedList<Instruction>();
@@ -192,14 +194,6 @@ namespace LifeDISA
 			}
 
 			return result;
-		}
-
-		void RemoveNode(LinkedListNode<Instruction> node)
-		{
-			//remove node from both linked lists
-			node.Value.Previous.Value.Next = node.Value.Next;
-			node.Value.Next.Value.Previous = node.Value.Previous;
-			node.List.Remove(node);
 		}
 
 		void RemoveEndLife()
