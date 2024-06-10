@@ -40,7 +40,7 @@ namespace MemoryViewer
 			byte[] palette256 = new byte[768];
 			SetRefreshState(true);
 
-			bool quit = false, mcb = false, minimized = false;
+			bool quit = false, mcb = false, minimized = false, showpalette = false;
 			uint[] pixels = new uint[RESX * RESY * SCREENS];
 			uint[] mcbPixels = new uint[RESX * RESY * SCREENS];
 			byte[] pixelData = new byte[RESX * RESY * SCREENS];
@@ -76,6 +76,7 @@ namespace MemoryViewer
 							break;
 
 						case SDL.SDL_EventType.SDL_KEYDOWN:
+							bool control = (sdlEvent.key.keysym.mod & SDL.SDL_Keymod.KMOD_CTRL) != 0;
 							switch (sdlEvent.key.keysym.sym)
 							{
 								case SDL.SDL_Keycode.SDLK_SPACE:
@@ -100,27 +101,34 @@ namespace MemoryViewer
 										offset--;
 									}
 									break;
-							}
 
-							if ((sdlEvent.key.keysym.mod & SDL.SDL_Keymod.KMOD_CTRL) != 0)
-							{
-								switch (sdlEvent.key.keysym.sym)
-								{
-									case SDL.SDL_Keycode.SDLK_EQUALS:
-									case SDL.SDL_Keycode.SDLK_KP_PLUS:
+								case SDL.SDL_Keycode.SDLK_p:
+									showpalette = !showpalette;
+									break;
+
+								case SDL.SDL_Keycode.SDLK_EQUALS:
+								case SDL.SDL_Keycode.SDLK_KP_PLUS:
+									if (control)
+									{
 										SetZoom(zoom + 1);
-										break;
+									}
+									break;
 
-									case SDL.SDL_Keycode.SDLK_MINUS:
-									case SDL.SDL_Keycode.SDLK_KP_MINUS:
+								case SDL.SDL_Keycode.SDLK_MINUS:
+								case SDL.SDL_Keycode.SDLK_KP_MINUS:
+									if (control)
+									{
 										SetZoom(zoom - 1);
-										break;
+									}
+									break;
 
-									case SDL.SDL_Keycode.SDLK_0:
-									case SDL.SDL_Keycode.SDLK_KP_0:
+								case SDL.SDL_Keycode.SDLK_0:
+								case SDL.SDL_Keycode.SDLK_KP_0:
+									if (control)
+									{
 										SetZoom(2);
-										break;
-								}
+									}
+									break;
 							}
 							break;
 
@@ -206,6 +214,17 @@ namespace MemoryViewer
 						if (process.Read(palette256, paletteAddress, palette256.Length) <= 0) {
 							process.Close();
 							process = null;
+						}
+					}
+
+					if (showpalette)
+					{
+						const int PALETTESIZE = 4;
+						for (int i = 0; i < 256 * PALETTESIZE * PALETTESIZE; i++)
+						{
+							int x = i % (16 * PALETTESIZE);
+							int y = i / (16 * PALETTESIZE);
+							pixelData[x + y * 320] = (byte)(x / PALETTESIZE + y / PALETTESIZE * 16);
 						}
 					}
 				}

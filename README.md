@@ -69,6 +69,7 @@ MemoryViewer [-screen-width WIDTH] [-screen-height HEIGHT] [-zoom ZOOM]
 | <kbd>page up</kbd> | decrease memory offset by 640KB
 | <kbd>page down</kbd> | increase memory offset by 640KB
 | <kbd>space</kbd> | display DOS memory control blocks (MCBs)<br>green = free<br>blue = used<br>red = current executable<br>yellow = not current executable
+| <kbd>p</kbd> | show palette
 
 # VarsViewer
 
