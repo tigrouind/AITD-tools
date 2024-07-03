@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace CacheViewer
+namespace VarsViewer
 {
 	public class CacheEntryComparer : IComparer<CacheEntry>
 	{

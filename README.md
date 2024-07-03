@@ -78,22 +78,25 @@ MemoryViewer [-screen-width WIDTH] [-screen-height HEIGHT] [-zoom ZOOM]
 
 ## Command-line arguments : 
 ```
-VarsViewer [-screen-width WIDTH] [-screen-height HEIGHT]
+VarsViewer [-view {vars|cache}]
 ```
 
-## Commands
+## Commands 
+
+| Key | Description |
+| :-: | - |
+| <kbd>F1</kbd> | vars view
+| <kbd>F2</kbd> | cache view
+| <kbd>control</kbd> + <kbd>mouse wheel</kbd> | zoom in/out
+
+## Commands (vars)
 | Key | Description |
 | :-: | - |
 | <kbd>f</kbd> | freeze capture
 | <kbd>s</kbd> | save state
 | <kbd>c</kbd> | compare current state with saved state
 
-# CacheViewer
-
-## Supported 
-* Alone in the Dark 1 (CD-ROM, floppy, demo)
-
-## Commands
+## Commands (cache)
 | Key | Description |
 | :-: | - |
 | <kbd>s</kbd> | change sort mode (default, memory, lru)

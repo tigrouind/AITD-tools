@@ -2,18 +2,17 @@
 using System;
 using System.Collections.Generic;
 
-namespace CacheViewer
+namespace VarsViewer
 {
 	public static class Sort
 	{
 		static readonly CacheEntryComparer comparer = new CacheEntryComparer();
 		public static SortMode SortMode;
 
-		public static void SortEntries(Cache[] cache)
+		public static void SortEntries(IEnumerable<Cache> cache)
 		{
-			for (int i = 0 ; i < cache.Length ; i++)
+			foreach (var ch in cache)
 			{
-				var ch = cache[i];
 				if (ch.Name != "_MEMORY_")
 				{
 					SortEntries(ch);

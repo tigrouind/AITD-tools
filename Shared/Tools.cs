@@ -142,7 +142,7 @@ namespace Shared
 				}
 			}
 
-			return default(T);
+			return default;
 		}
 
 		public static bool HasArgument(string[] args, string name)

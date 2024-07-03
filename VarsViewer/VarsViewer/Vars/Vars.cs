@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Shared;
 
 namespace VarsViewer
@@ -7,8 +7,6 @@ namespace VarsViewer
 	{
 		public string Text;
 		public bool Difference;
-
-		public bool Refresh;
 
 		public int Index;
 		public VarEnum Type;

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace CacheViewer
+namespace VarsViewer
 {
 	public static class Tools
 	{

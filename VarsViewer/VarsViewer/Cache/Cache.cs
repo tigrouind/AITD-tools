@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Shared;
 
-namespace CacheViewer
+namespace VarsViewer
 {
 	public class Cache
 	{
