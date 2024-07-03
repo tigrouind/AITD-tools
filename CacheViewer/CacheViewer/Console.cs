@@ -127,20 +127,9 @@ namespace CacheViewer
 			}
 		}
 
-		public static void Write(string format,
-								FormatArgument arg0,
-								FormatArgument arg1 = default,
-								FormatArgument arg2 = default,
-								FormatArgument arg3 = default,
-								FormatArgument arg4 = default,
-								FormatArgument arg5 = default,
-								FormatArgument arg6 = default)
+		public static void Write(string format, params object[] args)
 		{
-			StringFormat.Format(format, arg0, arg1, arg2, arg3, arg4, arg5, arg6);
-			for (int i = 0 ; i < StringFormat.Buffer.Length ; i++)
-			{
-				Write(StringFormat.Buffer[i]);  //GC friendly equivalent of Write(string.Format(format, args));
-			}
+			Write(string.Format(format, args));
 		}
 
 		public static void SetCursorPosition(int left, int top)
