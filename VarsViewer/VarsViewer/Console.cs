@@ -124,14 +124,12 @@ namespace VarsViewer
 
 		#endregion
 
-		const short SIZEX = 256;
-		const short SIZEY = 256;
+		static int sizeX = 0;
+		static int sizeY = 0;
 		static readonly SafeFileHandle outputHandle;
 		static readonly SafeFileHandle inputHandle;
-		static CharInfo[] buf = new CharInfo[SIZEX * SIZEY];
-		static CharInfo[] previousBuf = new CharInfo[SIZEX * SIZEY];
-		static int maxSizeX;
-		static int maxSizeY;
+		static CharInfo[] buf = new CharInfo[0];
+		static CharInfo[] previousBuf = new CharInfo[0];
 
 		public static ConsoleColor BackgroundColor = ConsoleColor.Black;
 		public static ConsoleColor ForegroundColor = ConsoleColor.Gray;
@@ -146,8 +144,6 @@ namespace VarsViewer
 		static Console()
 		{
 			outputHandle = CreateFile("CONOUT$", (FileAccess)GENERIC_WRITE, FileShare.Write, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
-			Clear(SIZEX, SIZEY);
-
 			inputHandle = GetStdHandle(STD_INPUT_HANDLE);
 		}
 
@@ -155,30 +151,49 @@ namespace VarsViewer
 		{
 			CursorLeft = 0;
 			CursorTop = 0;
-			Clear(maxSizeX, maxSizeY);
+			Clear(buf);
 		}
 
-		static void Clear(int sizeX, int sizeY)
+		static void Clear(CharInfo[] array)
 		{
-			for (int y = 0; y < sizeY; y++)
+			for (int i = 0; i < array.Length; i++)
 			{
-				for (int x = 0; x < sizeX; x++)
-				{
-					buf[x + y * SIZEX] = new CharInfo { Char = new CharUnion { UnicodeChar = ' ' }, Attributes = 0 };
-				}
+				array[i] = new CharInfo { Char = new CharUnion { UnicodeChar = ' ' }, Attributes = 0 };
 			}
 		}
 
 		public static void Write(char value)
 		{
-			if (CursorLeft < SIZEX && CursorTop < SIZEY)
-			{
-				short color = (short)((int)ForegroundColor | (int)BackgroundColor << 4);
-				buf[CursorTop * SIZEX + CursorLeft] = new CharInfo { Char = new CharUnion { UnicodeChar = value }, Attributes = color };
+			EnsureCapacity(Math.Max(sizeX, CursorLeft + 1), Math.Max(sizeY, CursorTop + 1));
+			short color = (short)((int)ForegroundColor | (int)BackgroundColor << 4);
+			buf[CursorTop * sizeX + CursorLeft] = new CharInfo { Char = new CharUnion { UnicodeChar = value }, Attributes = color };
 
-				if (CursorLeft >= maxSizeX) maxSizeX = CursorLeft + 1;
-				if (CursorTop >= maxSizeY) maxSizeY = CursorTop + 1;
-				CursorLeft++;
+			CursorLeft++;
+
+			void EnsureCapacity(int newx, int newy)
+			{
+				if (newx != sizeX || newy != sizeY)
+				{
+					Resize(ref buf);
+					Resize(ref previousBuf);
+
+					sizeX = newx;
+					sizeY = newy;
+				}
+
+				void Resize(ref CharInfo[] array)
+				{
+					if (array.Length < newx * newy)
+					{
+						var oldArray = array;
+						array = new CharInfo[newx * newy];
+						Clear(array);
+						for (int y = 0; y < sizeY; y++)
+						{
+							Array.Copy(oldArray, y * sizeX, array, y * newx, sizeX);
+						}
+					}
+				}
 			}
 		}
 
@@ -206,7 +221,7 @@ namespace VarsViewer
 			if (CompareBuffers(out SmallRect rect))
 			{
 				WriteConsoleOutput(outputHandle, buf,
-					new Coord { X = SIZEX, Y = SIZEY },
+					new Coord { X = (short)sizeX, Y = (short)sizeY },
 					new Coord { X = rect.Left, Y = rect.Top },
 					ref rect);
 			}
@@ -220,11 +235,11 @@ namespace VarsViewer
 			bool refresh = false;
 			rect = new SmallRect { Left = short.MaxValue, Top = short.MaxValue, Right = short.MinValue, Bottom = short.MinValue };
 
-			for (short y = 0; y < maxSizeY; y++)
+			for (short y = 0; y < sizeY; y++)
 			{
-				for (short x = 0; x < maxSizeX; x++)
+				for (short x = 0; x < sizeX; x++)
 				{
-					int i = x + y * SIZEX;
+					int i = x + y * sizeX;
 					if (!buf[i].Equals(previousBuf[i]))
 					{
 						refresh = true;

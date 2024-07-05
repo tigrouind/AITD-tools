@@ -18,7 +18,7 @@ namespace VarsViewer
 		static readonly Stopwatch dosboxTimer = new Stopwatch();
 
 		static readonly IWorker[] workers = new IWorker[] { new VarsWorker(), new CacheWorker() };
-		static IWorker worker => workers[mode];
+		static IWorker worker => workers[view];
 
 		public static void Main(string[] args)
 		{
