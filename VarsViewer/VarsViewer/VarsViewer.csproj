@@ -66,6 +66,7 @@
     <Compile Include="Cache\SortMode.cs" />
     <Compile Include="Tools.cs" />
     <Compile Include="Vars\Vars.cs" />
+    <Compile Include="Vars\VarsCollection.cs" />
     <Compile Include="Vars\VarsWorker.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -19,8 +19,8 @@ namespace VarsViewer
 			{ GameVersion.AITD1_DEMO,   (0x20456, 0x20480) },
 		};
 
-		readonly List<Var> vars = new List<Var>();
-		readonly List<Var> cvars = new List<Var>();
+		readonly VarsCollection vars = new VarsCollection(VarEnum.VARS);
+		readonly VarsCollection cvars = new VarsCollection(VarEnum.CVARS);
 
 		int varsPointer;
 
@@ -41,7 +41,7 @@ namespace VarsViewer
 			RenderTab(cvars, 1, 12);
 			RenderToolTip();
 
-			void RenderTab(List<Var> vars, int rows, int posY)
+			void RenderTab(VarsCollection vars, int rows, int posY)
 			{
 				DrawHeader();
 				DrawCells();
@@ -149,11 +149,11 @@ namespace VarsViewer
 				varsPointer = Program.Memory.ReadFarPointer(0);
 				if (varsPointer == 0)
 				{
-					ResizeVars(vars, 0, VarEnum.VARS);
+					vars.Count = 0;
 				}
 				else
 				{
-					ResizeVars(vars, Program.GameVersion == GameVersion.AITD1_DEMO ? 22 : 207, VarEnum.VARS);
+					vars.Count = Program.GameVersion == GameVersion.AITD1_DEMO ? 22 : 207;
 					if (result &= Program.Process.Read(Program.Memory, varsPointer, vars.Count * 2) > 0)
 					{
 						CheckDifferences(vars);
@@ -161,7 +161,7 @@ namespace VarsViewer
 				}
 			}
 
-			ResizeVars(cvars, 16, VarEnum.CVARS);
+			cvars.Count = 16;
 			if (result &= Program.Process.Read(Program.Memory, gameConfig.CvarAddress + Program.EntryPoint, cvars.Count * 2) > 0)
 			{
 				CheckDifferences(cvars);
@@ -171,25 +171,7 @@ namespace VarsViewer
 
 			return result;
 
-			void ResizeVars(List<Var> data, int length, VarEnum type)
-			{
-				if (data.Count != length)
-				{
-					data.Clear();
-					for (int i = 0; i < length; i++)
-					{
-						var var = new Var
-						{
-							Index = i,
-							Type = type,
-							Text = string.Empty
-						};
-						data.Add(var);
-					}
-				}
-			}
-
-			void CheckDifferences(List<Var> data)
+			void CheckDifferences(VarsCollection data)
 			{
 				for (int i = 0; i < data.Count; i++)
 				{
@@ -317,7 +299,7 @@ namespace VarsViewer
 				Save(vars);
 				Save(cvars);
 
-				void Save(List<Var> data)
+				void Save(VarsCollection data)
 				{
 					foreach (Var var in data)
 					{
