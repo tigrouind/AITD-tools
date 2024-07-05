@@ -1,17 +1,17 @@
-using System;
 using Shared;
 
 namespace VarsViewer
 {
 	public class Var
 	{
-		public string Text;
-		public bool Difference;
-
-		public int Index;
 		public VarEnum Type;
+		public int Index;
+
 		public int Value;
-		public int SaveState; //value set there when using SaveState button
-		public int Time;	//time since last difference
+		public string Text;
+
+		public bool Difference; //value has changed since last time
+		public int Time; //time since last difference
+		public int SaveState; //value copied here after SaveState
 	}
 }
