@@ -1,13 +1,13 @@
-
-using System;
 using System.Collections.Generic;
 
 namespace VarsViewer
 {
 	public static class Sort
 	{
-		static readonly CacheEntryComparer comparer = new CacheEntryComparer();
 		public static SortMode SortMode;
+		static readonly CacheEntryIndexComparer comparerIndex = new CacheEntryIndexComparer();
+		static readonly CacheEntrySlotComparer comparerSlot = new CacheEntrySlotComparer();
+		static readonly CacheEntryRemovedComparer comparerRemoved = new CacheEntryRemovedComparer();
 
 		public static void SortEntries(IEnumerable<Cache> cache)
 		{
@@ -18,21 +18,24 @@ namespace VarsViewer
 					SortEntries(ch);
 				}
 			}
-		}
 
-		static void SortEntries(Cache ch)
-		{
-			switch (SortMode)
+			void SortEntries(Cache ch)
 			{
-				case SortMode.Default:
-				case SortMode.Memory:
-					Tools.InsertionSort(ch.Entries, comparer);
-					break;
+				switch (SortMode)
+				{
+					case SortMode.Default:
+						Tools.InsertionSort(ch.Entries, comparerIndex);
+						break;
 
-				case SortMode.LRU:
-					Tools.InsertionSort(ch.Entries, comparer);
-					SelectionSort(ch.Entries);
-					break;
+					case SortMode.Memory:
+						Tools.InsertionSort(ch.Entries, comparerSlot);
+						break;
+
+					case SortMode.LRU:
+						Tools.InsertionSort(ch.Entries, comparerRemoved);
+						SelectionSort(ch.Entries);
+						break;
+				}
 			}
 		}
 

@@ -54,8 +54,10 @@
   <ItemGroup>
     <Compile Include="Cache\Cache.cs" />
     <Compile Include="Cache\CacheEntry.cs" />
-    <Compile Include="Cache\CacheEntryComparer.cs" />
+    <Compile Include="Cache\Comparer\CacheEntryIndexComparer.cs" />
     <Compile Include="Cache\CacheWorker.cs" />
+    <Compile Include="Cache\Comparer\CacheEntrySlotComparer.cs" />
+    <Compile Include="Cache\Comparer\CacheEntryRemovedComparer.cs" />
     <Compile Include="Console.cs" />
     <Compile Include="IWorker.cs" />
     <Compile Include="Program.cs" />
