@@ -127,6 +127,8 @@ namespace VarsViewer
 
 		static int sizeX = 0;
 		static int sizeY = 0;
+		static bool forceRefresh;
+
 		static readonly IntPtr outputHandle;
 		static readonly IntPtr inputHandle;
 		static CharInfo[] buf = new CharInfo[0];
@@ -219,8 +221,16 @@ namespace VarsViewer
 
 		public static void Flush()
 		{
-			if (CompareBuffers(out SmallRect rect))
+			if (CompareBuffers(out SmallRect rect) || forceRefresh)
 			{
+				if (forceRefresh) //resize
+				{
+					System.Console.Clear(); //clear off screen characters
+					System.Console.SetCursorPosition(1, 0); //fix terminal bug
+					rect = new SmallRect() { Left = 0, Right = (short)(sizeX - 1), Top = 0, Bottom = (short)(sizeY - 1) };
+					forceRefresh = false;
+				}
+
 				WriteConsoleOutput(outputHandle, buf,
 					new Coord { X = (short)sizeX, Y = (short)sizeY },
 					new Coord { X = rect.Left, Y = rect.Top },
@@ -283,6 +293,10 @@ namespace VarsViewer
 						{
 							MouseMove.Invoke(null, position);
 						}
+						break;
+
+					case 4: //resize
+						forceRefresh = true;
 						break;
 				}
 			}
