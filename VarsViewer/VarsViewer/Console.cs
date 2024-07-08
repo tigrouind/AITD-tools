@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
-using Microsoft.Win32.SafeHandles;
 
 namespace VarsViewer
 {
@@ -10,7 +9,7 @@ namespace VarsViewer
 		#region Native
 
 		[DllImport("Kernel32.dll")]
-		static extern SafeFileHandle CreateFile(
+		static extern IntPtr CreateFile(
 			string fileName,
 			[MarshalAs(UnmanagedType.U4)] FileAccess fileAccess,
 			[MarshalAs(UnmanagedType.U4)] FileShare fileShare,
@@ -23,11 +22,11 @@ namespace VarsViewer
 
 		[DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
 		static extern bool WriteConsoleOutput(
-		SafeFileHandle hConsoleOutput,
-		CharInfo[] lpBuffer,
-		Coord dwBufferSize,
-		Coord dwBufferCoord,
-		ref SmallRect lpWriteRegion);
+			IntPtr hConsoleOutput,
+			CharInfo[] lpBuffer,
+			Coord dwBufferSize,
+			Coord dwBufferCoord,
+			ref SmallRect lpWriteRegion);
 
 		[StructLayout(LayoutKind.Sequential)]
 		public struct Coord
@@ -70,13 +69,12 @@ namespace VarsViewer
 		}
 
 		[DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
-		static extern bool ReadConsoleInput(SafeFileHandle hConsoleInput, out InputRecord buffer, int numInputRecords_UseOne, out int numEventsRead);
+		static extern bool ReadConsoleInputEx(IntPtr hConsoleInput, out InputRecord buffer, int numInputRecords_UseOne, out int numEventsRead, ushort wFlags);
+
+		const int CONSOLE_READ_NOWAIT = 0x0002;
 
 		[DllImport("kernel32.dll")]
-		static extern bool GetNumberOfConsoleInputEvents(SafeFileHandle hConsoleInput, out uint numberOfEvents);
-
-		[DllImport("kernel32.dll", SetLastError = true)]
-		static extern bool GetConsoleMode(SafeFileHandle hConsoleHandle, out ConsoleMode lpMode);
+		static extern bool GetNumberOfConsoleInputEvents(IntPtr hConsoleInput, out uint numberOfEvents);
 
 		[StructLayout(LayoutKind.Explicit, CharSet = CharSet.Auto)]
 		struct InputRecord
@@ -107,10 +105,13 @@ namespace VarsViewer
 		}
 
 		[DllImport("Kernel32.dll")]
-		public static extern SafeFileHandle GetStdHandle(int nStdHandle);
+		public static extern IntPtr GetStdHandle(int nStdHandle);
 
 		[DllImport("kernel32.dll")]
-		static extern bool SetConsoleMode(SafeFileHandle hConsoleHandle, ConsoleMode dwMode);
+		static extern bool GetConsoleMode(IntPtr hConsoleHandle, out ConsoleMode lpMode);
+
+		[DllImport("kernel32.dll")]
+		static extern bool SetConsoleMode(IntPtr hConsoleHandle, ConsoleMode dwMode);
 
 		[Flags]
 		private enum ConsoleMode : uint
@@ -126,8 +127,8 @@ namespace VarsViewer
 
 		static int sizeX = 0;
 		static int sizeY = 0;
-		static readonly SafeFileHandle outputHandle;
-		static readonly SafeFileHandle inputHandle;
+		static readonly IntPtr outputHandle;
+		static readonly IntPtr inputHandle;
 		static CharInfo[] buf = new CharInfo[0];
 		static CharInfo[] previousBuf = new CharInfo[0];
 
@@ -256,9 +257,8 @@ namespace VarsViewer
 
 		public static void ProcessEvents()
 		{
-			while (HasEvents())
+			while (ReadConsoleInputEx(inputHandle, out InputRecord ir, 1, out int numEvents, CONSOLE_READ_NOWAIT) && numEvents > 0)
 			{
-				ReadConsoleInput(inputHandle, out InputRecord ir, 1, out int _);
 				switch (ir.eventType)
 				{
 					case 1: //key
@@ -285,12 +285,6 @@ namespace VarsViewer
 						}
 						break;
 				}
-			}
-
-			bool HasEvents()
-			{
-				GetNumberOfConsoleInputEvents(inputHandle, out uint numRead);
-				return numRead > 0;
 			}
 		}
 
