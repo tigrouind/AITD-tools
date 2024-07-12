@@ -37,11 +37,11 @@ namespace TrackDISA
 				return -1;
 			}
 
-			string version = Tools.GetArgument<string>(args, "-version");
+			var version = Tools.GetArgument<GameVersion?>(args, "-version");
 			string outputFile = Tools.GetArgument<string>(args, "-output") ?? "tracks.vb";
 			bool verbose = Tools.HasArgument(args, "-verbose");
 
-			var config = gameConfigs.FirstOrDefault(x => string.Equals(x.Version.ToString(), version, StringComparison.InvariantCultureIgnoreCase));
+			var config = gameConfigs.FirstOrDefault(x => x.Version == version);
 			if (version == null || config == default)
 			{
 				var versions = string.Join("|", gameConfigs.Select(x => x.Version.ToString().ToLowerInvariant()));

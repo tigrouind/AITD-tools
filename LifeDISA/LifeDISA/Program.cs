@@ -38,12 +38,12 @@ namespace LifeDISA
 
 		public static int Main(string[] args)
 		{
-			string version = Shared.Tools.GetArgument<string>(args, "-version");
+			var version = Shared.Tools.GetArgument<GameVersion?>(args, "-version");
 			bool verbose = Shared.Tools.HasArgument(args, "-verbose");
 			bool raw = Shared.Tools.HasArgument(args, "-raw");
 			string outputFile = Shared.Tools.GetArgument<string>(args, "-output") ?? "scripts.vb";
 
-			config = gameConfigs.FirstOrDefault(x => string.Equals(x.Version.ToString(), version, StringComparison.InvariantCultureIgnoreCase));
+			config = gameConfigs.FirstOrDefault(x => x.Version == version);
 			if (version == null || config == default)
 			{
 				var versions = string.Join("|", gameConfigs.Select(x => x.Version.ToString().ToLowerInvariant()));
