@@ -39,6 +39,7 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Background.cs" />
     <Compile Include="Color.cs" />
     <Compile Include="Svg.cs" />
     <Compile Include="MaskUtils.cs" />

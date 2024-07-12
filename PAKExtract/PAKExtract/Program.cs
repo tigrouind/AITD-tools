@@ -1,7 +1,6 @@
 using Shared;
 using System;
 using System.Collections.Generic;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 
@@ -10,7 +9,7 @@ namespace PAKExtract
 	class Program
 	{
 		public static string RootFolder = "GAMEDATA";
-		static readonly DirectBitmap bitmap = new DirectBitmap(320, 200);
+
 		static GameVersion version;
 		static bool raw;
 		static int[] rooms;
@@ -84,12 +83,12 @@ namespace PAKExtract
 				{
 					foreach (var entry in pak)
 					{
-						if ((fileName.StartsWith("CAMERA") || fileName == "ITD_RESS") && IsBackground(entry) && !raw)
+						if ((fileName.StartsWith("CAMERA") || fileName == "ITD_RESS") && Background.IsBackground(entry) && !raw)
 						{
 							var data = entry.Read();
-							GetBackground(data, bitmap.Bits);
+							Background.GetBackground(data);
 							var destPath = Path.Combine(fileName, $"{entry.Index:D8}.png");
-							SaveBitmap(destPath);
+							WriteFile(destPath, Background.SaveBitmap());
 						}
 						else
 						{
@@ -98,65 +97,6 @@ namespace PAKExtract
 						}
 					}
 				}
-			}
-		}
-
-		static bool IsBackground(PakArchiveEntry entry)
-		{
-			switch (entry.UncompressedSize)
-			{
-				case 64000:
-				case 64768:
-				case 64770:
-					return true;
-
-				default:
-					return false;
-			}
-		}
-
-		static void GetBackground(byte[] data, uint[] dest)
-		{
-			switch (data.Length)
-			{
-				case 64000: //AITD1
-					{
-						var pal = Palette.LoadITDPalette(RootFolder);
-						for (int i = 0; i < 64000; i++)
-						{
-							dest[i] = pal[data[i]];
-						}
-						break;
-					}
-
-				case 64768: //AITD2, AITD3, TIME GATE
-					{
-						var pal = Palette.LoadPalette(data, 64000);
-						for (int i = 0; i < 64000; i++)
-						{
-							dest[i] = pal[data[i]];
-						}
-						break;
-					}
-
-				case 64770: //ITD_RESS
-					{
-						var pal = Palette.LoadPalette(data, 2);
-						for (int i = 0; i < 64000; i++)
-						{
-							dest[i] = pal[data[i + 770]];
-						}
-						break;
-					}
-			}
-		}
-
-		static void SaveBitmap(string filePath)
-		{
-			using (var stream = new MemoryStream())
-			{
-				bitmap.Bitmap.Save(stream, ImageFormat.Png);
-				WriteFile(filePath, stream.ToArray());
 			}
 		}
 
@@ -172,10 +112,10 @@ namespace PAKExtract
 
 		static void RenderMasks(PakArchive pak, string folder, int? camID, Func<PakArchive, uint[], IEnumerable<int>> renderMasks)
 		{
-			foreach (var cameraID in renderMasks(pak, bitmap.Bits))
+			foreach (var cameraID in renderMasks(pak, Background.Bitmap.Bits))
 			{
 				var destPath = Path.Combine(folder, $"{camID ?? cameraID:D8}.png");
-				SaveBitmap(destPath);
+				WriteFile(destPath, Background.SaveBitmap());
 			}
 		}
 
