@@ -42,10 +42,10 @@
     <Compile Include="Background.cs" />
     <Compile Include="Color.cs" />
     <Compile Include="Svg.cs" />
-    <Compile Include="MaskUtils.cs" />
-    <Compile Include="MaskAITD2.cs" />
+    <Compile Include="Mask\MaskUtils.cs" />
+    <Compile Include="Mask\MaskAITD2.cs" />
     <Compile Include="DirectBitmap.cs" />
-    <Compile Include="MaskAITD1.cs" />
+    <Compile Include="Mask\MaskAITD1.cs" />
     <Compile Include="Palette.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
