@@ -27,9 +27,9 @@ namespace VarsViewer
 		bool compare;
 		bool ignoreDifferences = true;
 		bool freeze;
+		bool edit;
 
 		Var highlightedCell;
-		Var selectedCell;
 		string inputText;
 		string toolTip;
 
@@ -75,9 +75,9 @@ namespace VarsViewer
 						{
 							var var = vars[i];
 							SetCellColor(var);
-							var text = var == selectedCell && inputText != null ? inputText : var.Text;
+							var text = var == highlightedCell && inputText != null ? inputText : var.Text;
 
-							if (var == selectedCell && inputText == null)
+							if (var == highlightedCell && edit)
 							{
 								Console.Write(new string(' ', Math.Max(0, CELLSIZE - text.Length)));
 								Console.BackgroundColor = ConsoleColor.DarkCyan;
@@ -104,13 +104,9 @@ namespace VarsViewer
 
 				void SetCellColor(Var var)
 				{
-					if (var == selectedCell)
+					if (var == highlightedCell)
 					{
 						(Console.BackgroundColor, Console.ForegroundColor) = (ConsoleColor.DarkGray, ConsoleColor.Gray);
-					}
-					else if (var == highlightedCell)
-					{
-						(Console.BackgroundColor, Console.ForegroundColor) = (var.Difference ? ConsoleColor.DarkRed : ConsoleColor.DarkGray, ConsoleColor.Gray);
 					}
 					else if (var.Difference)
 					{
@@ -264,6 +260,49 @@ namespace VarsViewer
 				case ConsoleKey.Delete:
 					inputText = string.Empty;
 					break;
+
+
+				case ConsoleKey.DownArrow:
+				case ConsoleKey.LeftArrow:
+				case ConsoleKey.UpArrow:
+				case ConsoleKey.RightArrow:
+					if (highlightedCell != null)
+					{
+						int offset = highlightedCell.Index;
+						switch (keyInfo.Key)
+						{
+							case ConsoleKey.DownArrow:
+								offset += 20;
+								break;
+
+							case ConsoleKey.UpArrow:
+								offset -= 20;
+								break;
+
+							case ConsoleKey.LeftArrow:
+								if (offset % 20 != 0)
+								{
+									offset -= 1;
+								}
+								break;
+
+							case ConsoleKey.RightArrow:
+								if (offset % 20 != 19)
+								{
+									offset += 1;
+								}
+								break;
+						}
+
+						var cells = highlightedCell.Type == VarEnum.VARS ? vars : cvars;
+						if (offset >= 0 && offset < cells.Count)
+						{
+							Commit();
+							highlightedCell = cells[offset];
+							StartEdit();
+						}
+					}
+					break;
 			}
 
 			switch (keyInfo.KeyChar)
@@ -313,36 +352,43 @@ namespace VarsViewer
 
 		#region Cell edit
 
+		void StartEdit()
+		{
+			inputText = null;
+			edit = true;
+		}
+
 		void BeginEdit()
 		{
 			if (inputText == null)
 			{
 				inputText = string.Empty;
 			}
+			edit = true;
 		}
 
 		void Abort()
 		{
-			selectedCell = null;
+			inputText = null;
+			edit = false;
 		}
 
 		void Commit()
 		{
-			if (selectedCell != null)
+			if (highlightedCell != null)
 			{
 				if (inputText != null)
 				{
 					int value = 0;
-					if ((inputText == string.Empty || int.TryParse(inputText, out value)) && value != selectedCell.Value)
+					if ((inputText == string.Empty || int.TryParse(inputText, out value)) && value != highlightedCell.Value)
 					{
 						value = Math.Min(value, short.MaxValue);
 						value = Math.Max(value, short.MinValue);
-						Write(selectedCell, (short)value);
+						Write(highlightedCell, (short)value);
 					}
 				}
 
-				selectedCell = null;
-				highlightedCell = null;
+				Abort();
 			}
 
 			void Write(Var var, short value)
@@ -362,7 +408,7 @@ namespace VarsViewer
 
 		void IWorker.MouseMove(int x, int y)
 		{
-			if (TryFindVarAtPosition(x, y, out highlightedCell))
+			if (inputText == null && !edit && TryFindVarAtPosition(x, y, out highlightedCell))
 			{
 				var text = Program.VarParser.GetText(highlightedCell.Type, highlightedCell.Index);
 				if (!string.IsNullOrEmpty(text))
@@ -385,9 +431,9 @@ namespace VarsViewer
 			if (!freeze && !compare)
 			{
 				Commit();
-				if (Program.Process != null && TryFindVarAtPosition(x, y, out selectedCell))
+				if (Program.Process != null && TryFindVarAtPosition(x, y, out highlightedCell))
 				{
-					inputText = null;
+					StartEdit();
 				}
 			}
 		}
