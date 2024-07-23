@@ -10,20 +10,28 @@ namespace PAKExtract
 	{
 		public static string RootFolder = "GAMEDATA";
 
-		static GameVersion version;
-		static bool raw;
-		static int[] rooms;
-		static int rotate;
+		static GameVersion? version;
+		static bool mask, background, svg;
+		static int[] svgrooms;
+		static int svgrotate;
 
-		static void Main(string[] args)
+		static int Main(string[] args)
 		{
-			version = Tools.GetArgument<GameVersion>(args, "-version");
-			raw = Tools.HasArgument(args, "-raw");
-			rooms = (Tools.GetArgument<string>(args, "-rooms") ?? string.Empty)
+			background = Tools.HasArgument(args, "-background");
+			mask = Tools.HasArgument(args, "-mask");
+			svg = Tools.HasArgument(args, "-svg");
+			svgrooms = (Tools.GetArgument<string>(args, "-svgrooms") ?? string.Empty)
 				.Split(',')
 				.Where(x => x != string.Empty)
 				.Select(x => int.Parse(x)).ToArray();
-			rotate = Tools.GetArgument<int>(args, "-rotate");
+			svgrotate = Tools.GetArgument<int>(args, "-svgrotate");
+			version = Tools.GetArgument<GameVersion?>(args, "-version");
+
+			if ((mask || svg) && !version.HasValue)
+			{
+				Console.Error.Write("Version must be specified");
+				return -1;
+			}
 
 			bool foundFile = false;
 			foreach (var arg in args)
@@ -43,9 +51,12 @@ namespace PAKExtract
 				}
 				catch (FileNotFoundException ex)
 				{
-					Console.WriteLine($"{Path.GetFileName(ex.FileName)} not found");
+					Console.Error.Write($"{Path.GetFileName(ex.FileName)} not found");
+					return -1;
 				}
 			}
+
+			return 0;
 		}
 
 		static void ExtractFiles()
@@ -63,38 +74,46 @@ namespace PAKExtract
 
 			using (var pak = new PakArchive(filePath))
 			{
-				if (fileName.StartsWith("ETAGE") && !raw)
+				if (svg && fileName.StartsWith("ETAGE"))
 				{
-					ExportSVG(pak, fileName, rooms, rotate, version);
-					if (version == GameVersion.AITD1 || version == GameVersion.AITD1_FLOPPY || version == GameVersion.AITD1_DEMO)
+					ExportSVG(pak, fileName, svgrooms, svgrotate, version.Value);
+				}
+
+				if (mask)
+				{
+					if (fileName.StartsWith("ETAGE") && (version == GameVersion.AITD1 || version == GameVersion.AITD1_FLOPPY || version == GameVersion.AITD1_DEMO))
 					{
 						RenderMasks(pak, fileName, null, MaskAITD1.RenderMasks);
 					}
+
+					if (fileName.StartsWith("MASK") || fileName.StartsWith("NASK"))
+					{
+						RenderMasks(pak, fileName, null, MaskAITD2.RenderMasks);
+					}
+
+					if (fileName.StartsWith("MK") || fileName.StartsWith("NK"))
+					{
+						RenderMasks(pak, fileName.Substring(0, 4), int.Parse(fileName.Substring(4, 2)), MaskAITD2.RenderMasksTimeGate);
+					}
 				}
-				else if ((fileName.StartsWith("MASK") || fileName.StartsWith("NASK")) && !raw)
+
+				if (background && (fileName.StartsWith("CAMERA") || fileName == "ITD_RESS"))
 				{
-					RenderMasks(pak, fileName, null, MaskAITD2.RenderMasks);
+					foreach (var entry in pak.Where(Background.IsBackground))
+					{
+						var data = entry.Read();
+						Background.GetBackground(data);
+						var destPath = Path.Combine(fileName, $"{entry.Index:D8}.png");
+						WriteFile(destPath, Background.SaveBitmap());
+					}
 				}
-				else if ((fileName.StartsWith("MK") || fileName.StartsWith("NK")) && !raw)
-				{
-					RenderMasks(pak, fileName.Substring(0, 4), int.Parse(fileName.Substring(4, 2)), MaskAITD2.RenderMasksTimeGate);
-				}
-				else
+
+				if (!background && !mask && !svg)
 				{
 					foreach (var entry in pak)
 					{
-						if ((fileName.StartsWith("CAMERA") || fileName == "ITD_RESS") && Background.IsBackground(entry) && !raw)
-						{
-							var data = entry.Read();
-							Background.GetBackground(data);
-							var destPath = Path.Combine(fileName, $"{entry.Index:D8}.png");
-							WriteFile(destPath, Background.SaveBitmap());
-						}
-						else
-						{
-							var destPath = Path.Combine(fileName, $"{entry.Index:D8}.dat");
-							WriteFile(destPath, entry.Read());
-						}
+						var destPath = Path.Combine(fileName, $"{entry.Index:D8}.dat");
+						WriteFile(destPath, entry.Read());
 					}
 				}
 			}
