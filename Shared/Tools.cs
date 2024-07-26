@@ -55,6 +55,31 @@ namespace Shared
 			}
 		}
 
+		public static (int X, int Y, int Z) ReadVector(this byte[] data, int offset)
+		{
+			unchecked
+			{
+				return (
+					ReadShort(data, offset + 0),
+					ReadShort(data, offset + 2),
+					ReadShort(data, offset + 4)
+				);
+			}
+		}
+
+		public static ((int X, int Y, int Z) lower, (int X, int Y, int Z) upper) ReadBoundingBox(this byte[] data, int offset)
+		{
+			return ((
+				data.ReadShort(offset + 0),
+				data.ReadShort(offset + 4),
+				data.ReadShort(offset + 8)
+			),(
+				data.ReadShort(offset + 2),
+				data.ReadShort(offset + 6),
+				data.ReadShort(offset + 10)
+			));
+		}
+
 		#endregion
 
 		#region Write
@@ -122,12 +147,13 @@ namespace Shared
 			if (index >= 0 && index < (args.Length - 1))
 			{
 				Type type = typeof(T);
+				type = Nullable.GetUnderlyingType(type) ?? type;
+
 				string argument = args[index + 1];
 
-				if (type == typeof(int) || type == typeof(int?))
+				if (type == typeof(int))
 				{
-					int value;
-					if (int.TryParse(argument, out value))
+					if (int.TryParse(argument, out int value))
 					{
 						return (T)(object)value;
 					}
@@ -135,6 +161,19 @@ namespace Shared
 				else if (type == typeof(string))
 				{
 					return (T)(object)argument;
+				}
+				else if (type.IsEnum)
+				{
+					var names = Enum.GetNames(type);
+					var values = Enum.GetValues(type);
+
+					foreach (var item in names.Zip(values.Cast<T>(), (x, y) => (Name:x, Value:y)))
+					{
+						if (string.Equals(item.Name, argument, StringComparison.InvariantCultureIgnoreCase))
+						{
+							return item.Value;
+						}
+					}
 				}
 				else
 				{

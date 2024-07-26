@@ -118,14 +118,17 @@ Supported :
 
 ## Command-line arguments : 
 ```
-PAKExtract  [-raw] [-AITD1] [<files>]
+PAKExtract [-raw] [-version VERSION] [-rotate ROTATE] [-rooms ROOMLIST] [<files>]
 ```
 | Argument | Description |
 |-|-|
 | -raw | Extract files in binary data, without extra processing |
-| -AITD1 | Extract overlay masks from ETAGExx.PAK files |
+| -version VERSION | Must be one of the following values:<br>AITD1, AITD1_FLOPPY, AITD1_DEMO<br>AITD2, AITD2_DEMO<br>AITD3<br>JACK<br>TIMEGATE, TIMEGATE_DEMO |
+| -rotate ROTATE | Specify if SVG output should be rotated. Possible values: 0, 90, 180, 270 |
+| -rooms ROOMLIST | A comma separated list that specify which rooms should be exported to SVG |
 | &lt;files&gt; | Specifies a list of one or more PAK files to be extracted. If no not specified, all PAK files in GAMEDATA folder are extracted |
 
-Files that are exported as PNG: 
-- backgrounds (CAMERAxx.PAK and ITD_RESS.PAK)
-- overlay masks (ETAGExx.PAK (AITD1), MASKxx.PAK or NASKxx.PAK (AITD2/3), MKxxxxxx.PAK or NKxxxxxx.PAK (Time Gate)
+The following files are exported in a special way (unless raw parameter is set) : 
+- CAMERAxx.PAK and ITD_RESS.PAK : backgrounds exported as PNG
+- ETAGExx.PAK (AITD1), MASKxx.PAK or NASKxx.PAK (AITD2/3), MKxxxxxx.PAK or NKxxxxxx.PAK (Time Gate) : masks rendered and exported as PNG
+- ETAGExx.PAK : colliders exported as SVG

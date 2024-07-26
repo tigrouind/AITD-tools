@@ -11,12 +11,20 @@ namespace PAKExtract
 	{
 		public static string RootFolder = "GAMEDATA";
 		static readonly DirectBitmap bitmap = new DirectBitmap(320, 200);
-		static bool aitd1, raw;
+		static GameVersion version;
+		static bool raw;
+		static int[] rooms;
+		static int rotate;
 
 		static void Main(string[] args)
 		{
-			aitd1 = Tools.HasArgument(args, "-aitd1");
+			version = Tools.GetArgument<GameVersion>(args, "-version");
 			raw = Tools.HasArgument(args, "-raw");
+			rooms = (Tools.GetArgument<string>(args, "-rooms") ?? string.Empty)
+				.Split(',')
+				.Where(x => x != string.Empty)
+				.Select(x => int.Parse(x)).ToArray();
+			rotate = Tools.GetArgument<int>(args, "-rotate");
 
 			bool foundFile = false;
 			foreach (var arg in args)
@@ -56,9 +64,13 @@ namespace PAKExtract
 
 			using (var pak = new PakArchive(filePath))
 			{
-				if (fileName.StartsWith("ETAGE") && aitd1 && !raw)
+				if (fileName.StartsWith("ETAGE") && !raw)
 				{
-					RenderMasks(pak, fileName, null, MaskAITD1.RenderMasks);
+					ExportSVG(pak, fileName, rooms, rotate, version);
+					if (version == GameVersion.AITD1 || version == GameVersion.AITD1_FLOPPY || version == GameVersion.AITD1_DEMO)
+					{
+						RenderMasks(pak, fileName, null, MaskAITD1.RenderMasks);
+					}
 				}
 				else if ((fileName.StartsWith("MASK") || fileName.StartsWith("NASK")) && !raw)
 				{
@@ -117,7 +129,6 @@ namespace PAKExtract
 						break;
 					}
 
-
 				case 64768: //AITD2, AITD3, TIME GATE
 					{
 						var pal = Palette.LoadPalette(data, 64000);
@@ -127,7 +138,6 @@ namespace PAKExtract
 						}
 						break;
 					}
-
 
 				case 64770: //ITD_RESS
 					{
@@ -167,6 +177,12 @@ namespace PAKExtract
 				var destPath = Path.Combine(folder, $"{camID ?? cameraID:D8}.png");
 				SaveBitmap(destPath);
 			}
+		}
+
+		static void ExportSVG(PakArchive pak, string fileName, int[] rooms, int rotate, GameVersion version)
+		{
+			var data = Svg.Export(pak, rooms, rotate, version);
+			WriteFile(Path.Combine("SVG", Path.GetFileNameWithoutExtension(fileName) + ".svg"), data);
 		}
 	}
 }
