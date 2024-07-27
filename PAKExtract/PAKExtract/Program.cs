@@ -34,12 +34,21 @@ namespace PAKExtract
 			}
 
 			bool foundFile = false;
-			foreach (var arg in args)
+			for (int i = 0; i < args.Length; i++)
 			{
-				if (!arg.StartsWith("-") && File.Exists(arg))
+				var arg = args[i];
+				if (!arg.StartsWith("-") && (i == 0 || !args[i - 1].StartsWith("-")))
 				{
-					ExtractFile(arg);
-					foundFile = true;
+					if (File.Exists(arg))
+					{
+						ExtractFile(arg);
+						foundFile = true;
+					}
+					else
+					{
+						Console.Error.Write($"Cannot find file '{arg}'");
+						return -1;
+					}
 				}
 			}
 
