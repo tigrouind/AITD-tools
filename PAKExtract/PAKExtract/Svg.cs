@@ -99,8 +99,7 @@ namespace PAKExtract
 			byte[] Render()
 			{
 				var (xMin, xMax, yMin, yMax) = result
-					.Select(x => x.Rects.Select(r => (X:x.X + r.X, Y: x.Y + r.Y, r.Width, r.Height)))
-					.SelectMany(x => x)
+					.SelectMany(x => x.Rects.Select(r => (X: x.X + r.X, Y: x.Y + r.Y, r.Width, r.Height)))
 					.Aggregate((xMin: int.MaxValue, xMax: int.MinValue, yMin: int.MaxValue, yMax: int.MinValue),
 						(s, r) => (Math.Min(s.xMin, r.X), Math.Max(s.xMax, r.X + r.Width), Math.Min(s.yMin, r.Y), Math.Max(s.yMax, r.Y + r.Height)));
 
@@ -120,10 +119,10 @@ namespace PAKExtract
 							new XElement(ns + "style",
 								"rect { stroke: black; fill: white; stroke-width: 20; }"),
 							color ? new XElement(ns + "style",
-								"rect { fill:lightgray; }",
-								".floor { fill:darkgray; }",
-								".link { fill:teal; }",
-								".interact { fill:blue; }"
+								@"rect { fill:lightgray; }
+								.floor { fill:darkgray; }
+								.link { fill:teal; }
+								.interact { fill:blue; }"
 							) : null,
 							new XElement(ns + "g",
 								new XAttribute("transform", $"translate({padding} {padding}) scale({scale} {scale}) translate({-xMin} {-yMin})"),
@@ -132,14 +131,16 @@ namespace PAKExtract
 										new XAttribute("id", $"room{room.Index}"),
 										new XAttribute("transform", $"translate({room.X} {room.Y})"),
 										room.Rects.Select(rect =>
-											new XElement(ns + "rect",
+										{
+											var className = GetClassName(rect.Flags);
+											return new XElement(ns + "rect",
 												new XAttribute("x", rect.X),
 												new XAttribute("y", rect.Y),
 												new XAttribute("width", rect.Width),
 												new XAttribute("height", rect.Height),
-												color && (rect.Flags & 14) != 0 ? new XAttribute("class", GetClassName(rect.Flags)) : null
-											)
-										)
+												color && className != null ? new XAttribute("class", className) : null
+											);
+										})
 									)
 								)
 							)

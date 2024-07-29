@@ -120,7 +120,7 @@ Supported :
 ```
 PAKExtract [-background]
            [-mask]
-           [-svg "rotate ROTATE room ROOMLIST color"]
+           [-svg ["rotate ROTATE room ROOMLIST color"]]
            [-version VERSION]
            [<files>]
 ```

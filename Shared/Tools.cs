@@ -167,13 +167,10 @@ namespace Shared
 					var names = Enum.GetNames(type);
 					var values = Enum.GetValues(type);
 
-					foreach (var item in names.Zip(values.Cast<T>(), (x, y) => (Name:x, Value:y)))
-					{
-						if (string.Equals(item.Name, argument, StringComparison.InvariantCultureIgnoreCase))
-						{
-							return item.Value;
-						}
-					}
+					return names.Zip(values.Cast<T>(), (x, y) => (Name: x, Value: y))
+						.Where(x => string.Equals(x.Name, argument, StringComparison.InvariantCultureIgnoreCase))
+						.Select(x => x.Value)
+						.FirstOrDefault();
 				}
 				else
 				{
