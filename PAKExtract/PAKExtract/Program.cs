@@ -11,21 +11,32 @@ namespace PAKExtract
 		public static string RootFolder = "GAMEDATA";
 
 		static GameVersion? version;
-		static bool mask, background, svg;
-		static int[] svgrooms;
-		static int svgrotate;
+		static bool mask, background, svg, svgColor;
+		static int[] svgRooms = new int[0];
+		static int svgRotate;
 
 		static int Main(string[] args)
 		{
 			background = Tools.HasArgument(args, "-background");
 			mask = Tools.HasArgument(args, "-mask");
-			svg = Tools.HasArgument(args, "-svg");
-			svgrooms = (Tools.GetArgument<string>(args, "-svgrooms") ?? string.Empty)
-				.Split(',')
-				.Where(x => x != string.Empty)
-				.Select(x => int.Parse(x)).ToArray();
-			svgrotate = Tools.GetArgument<int>(args, "-svgrotate");
 			version = Tools.GetArgument<GameVersion?>(args, "-version");
+
+			if (Tools.HasArgument(args, "-svg"))
+			{
+				svg = true;
+				string svgArgs = Tools.GetArgument<string>(args, "-svg");
+				if (svgArgs != null && !svgArgs.StartsWith("-"))
+				{
+					var svgParams = svgArgs.Split(' ');
+					svgRooms = (Tools.GetArgument<string>(svgParams, "rooms") ?? string.Empty)
+						.Split(',')
+						.Where(x => x != string.Empty && int.TryParse(x, out _))
+						.Select(x => int.Parse(x))
+						.ToArray();
+					svgRotate = Tools.GetArgument<int>(svgParams, "rotate");
+					svgColor = Tools.HasArgument(svgParams, "color");
+				}
+			}
 
 			if ((mask || svg) && !version.HasValue)
 			{
@@ -85,7 +96,7 @@ namespace PAKExtract
 			{
 				if (svg && fileName.StartsWith("ETAGE"))
 				{
-					ExportSVG(pak, fileName, svgrooms, svgrotate, version.Value);
+					ExportSVG(pak, fileName, svgRooms, svgRotate, version.Value);
 				}
 
 				if (mask)
@@ -149,7 +160,7 @@ namespace PAKExtract
 
 		static void ExportSVG(PakArchive pak, string fileName, int[] rooms, int rotate, GameVersion version)
 		{
-			var data = Svg.Export(pak, rooms, rotate, version);
+			var data = Svg.Export(pak, rooms, rotate, svgColor, version);
 			WriteFile(Path.Combine("SVG", Path.GetFileNameWithoutExtension(fileName) + ".svg"), data);
 		}
 	}

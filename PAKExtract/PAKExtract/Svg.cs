@@ -15,7 +15,7 @@ namespace PAKExtract
 		static readonly int[,] rotateMatrix = new int[,] { { 1, 0, 0, -1 }, { 0, 1, 1, 0 }, { -1, 0, 0, 1 }, { 0, -1, -1, 0 } };
 		static readonly int[] rotateArgs = new int[] { 0, 90, 180, 270 };
 
-		public static byte[] Export(PakArchive pak, int[] rooms, int rotate, GameVersion version)
+		public static byte[] Export(PakArchive pak, int[] rooms, int rotate, bool color, GameVersion version)
 		{
 			var result = new List<(int Index, int X, int Y, List<(int X, int Y, int Width, int Height, int Flags)> Rects)>();
 			int rotateIndex = Array.IndexOf(rotateArgs, rotate);
@@ -118,11 +118,13 @@ namespace PAKExtract
 							new XAttribute("width", Math.Ceiling((xMax - xMin) * scale + padding * 2)),
 							new XAttribute("height", Math.Ceiling((yMax - yMin) * scale + padding * 2)),
 							new XElement(ns + "style",
-								"rect { fill:lightgray; stroke: black; stroke-width: 20; }",
+								"rect { stroke: black; fill: white; stroke-width: 20; }"),
+							color ? new XElement(ns + "style",
+								"rect { fill:lightgray; }",
 								".floor { fill:darkgray; }",
 								".link { fill:teal; }",
 								".interact { fill:blue; }"
-							),
+							) : null,
 							new XElement(ns + "g",
 								new XAttribute("transform", $"translate({padding} {padding}) scale({scale} {scale}) translate({-xMin} {-yMin})"),
 								result.Select(room =>
@@ -135,7 +137,7 @@ namespace PAKExtract
 												new XAttribute("y", rect.Y),
 												new XAttribute("width", rect.Width),
 												new XAttribute("height", rect.Height),
-												(rect.Flags & 14) == 0 ? null : new XAttribute("class", GetClassName(rect.Flags))
+												color && (rect.Flags & 14) != 0 ? new XAttribute("class", GetClassName(rect.Flags)) : null
 											)
 										)
 									)

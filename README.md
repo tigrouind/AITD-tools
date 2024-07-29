@@ -120,16 +120,14 @@ Supported :
 ```
 PAKExtract [-background]
            [-mask]
-           [-svg] [-svgrotate ROTATE] [-svgrooms ROOMLIST]
-		   [-version VERSION]
+           [-svg "rotate ROTATE room ROOMLIST color"]
+           [-version VERSION]
            [<files>]
 ```
 | Argument | Description |
 |-|-|
-| -version VERSION | Must be one of the following values:<br>AITD1, AITD1_FLOPPY, AITD1_DEMO<br>AITD2, AITD2_DEMO<br>AITD3<br>JACK<br>TIMEGATE, TIMEGATE_DEMO |
 | -background | 2D backgrounds are exported as PNG<br>Required: CAMERAxx.PAK, ITD_RESS.PAK |
-| -mask MASK | Background masks are rendered and exported as PNG<br>Required:<br>ETAGExx.PAK (AITD1)<br>MASKxx.PAK, NASKxx.PAK (AITD2/3)<br>MKxxxxxx.PAK, NKxxxxxx.PAK (Time Gate)
-| -svg | Colliders are exported as SVG<br>Required: ETAGExx.PAK
-| -svgrotate ROTATE | Specify if SVG output should be rotated.<br>Possible values: 0, 90, 180, 270 |
-| -svgrooms ROOMLIST | A comma separated list that specify which rooms should be exported to SVG |
+| -mask | Background masks are rendered and exported as PNG<br>Required:<br>ETAGExx.PAK (AITD1)<br>MASKxx.PAK, NASKxx.PAK (AITD2/3)<br>MKxxxxxx.PAK, NKxxxxxx.PAK (Time Gate)
+| -svg | Colliders are exported as SVG<br>Required: ETAGExx.PAK<br>Options:<br>rotate ROTATE : rotate the SVG map. Possible values: 0, 90, 180, 270.<br>room ROOMLIST : A comma separated list that specify which rooms should be exported to SVG.<br>color : Highlight specific room colliders with color. |
+| -version VERSION | Must be one of the following values:<br>AITD1, AITD1_FLOPPY, AITD1_DEMO<br>AITD2, AITD2_DEMO<br>AITD3<br>JACK<br>TIMEGATE, TIMEGATE_DEMO |
 | &lt;files&gt; | A space separated list of one or more PAK files to be extracted. If not specified, all PAK files in GAMEDATA folder are extracted |
