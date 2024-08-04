@@ -125,14 +125,13 @@ namespace VarsViewer
 
 		#endregion
 
-		static int sizeX = 0;
-		static int sizeY = 0;
 		static bool forceRefresh;
 
 		static readonly IntPtr outputHandle;
 		static readonly IntPtr inputHandle;
-		static CharInfo[] buf = new CharInfo[0];
-		static CharInfo[] previousBuf = new CharInfo[0];
+
+		static Buffer<CharInfo> buf = new Buffer<CharInfo>();
+		static Buffer<CharInfo> previousBuf = new Buffer<CharInfo>();
 
 		public static ConsoleColor BackgroundColor = ConsoleColor.Black;
 		public static ConsoleColor ForegroundColor = ConsoleColor.Gray;
@@ -154,50 +153,15 @@ namespace VarsViewer
 		{
 			CursorLeft = 0;
 			CursorTop = 0;
-			Clear(buf);
-		}
-
-		static void Clear(CharInfo[] array)
-		{
-			for (int i = 0; i < array.Length; i++)
-			{
-				array[i] = new CharInfo { Char = new CharUnion { UnicodeChar = ' ' }, Attributes = 0 };
-			}
+			buf.Clear();
 		}
 
 		public static void Write(char value)
 		{
-			EnsureCapacity(Math.Max(sizeX, CursorLeft + 1), Math.Max(sizeY, CursorTop + 1));
 			short color = (short)((int)ForegroundColor | (int)BackgroundColor << 4);
-			buf[CursorTop * sizeX + CursorLeft] = new CharInfo { Char = new CharUnion { UnicodeChar = value }, Attributes = color };
-
+			buf[CursorTop, CursorLeft] = new CharInfo { Char = new CharUnion { UnicodeChar = value }, Attributes = color };
+			previousBuf.EnsureCapacity(CursorLeft, CursorTop);
 			CursorLeft++;
-
-			void EnsureCapacity(int newx, int newy)
-			{
-				if (newx != sizeX || newy != sizeY)
-				{
-					Resize(ref buf);
-					Resize(ref previousBuf);
-
-					sizeX = newx;
-					sizeY = newy;
-				}
-
-				void Resize(ref CharInfo[] array)
-				{
-					if (array.Length < newx * newy)
-					{
-						var oldArray = array;
-						array = new CharInfo[newx * newy];
-						Clear(array);
-						for (int y = 0; y < sizeY; y++)
-						{
-							Array.Copy(oldArray, y * sizeX, array, y * newx, sizeX);
-						}
-					}
-				}
-			}
 		}
 
 		public static void Write(string value)
@@ -227,12 +191,12 @@ namespace VarsViewer
 				{
 					System.Console.Clear(); //clear off screen characters
 					System.Console.SetCursorPosition(1, 0); //fix terminal bug
-					rect = new SmallRect() { Left = 0, Right = (short)(sizeX - 1), Top = 0, Bottom = (short)(sizeY - 1) };
+					rect = new SmallRect() { Left = 0, Right = (short)(buf.Width - 1), Top = 0, Bottom = (short)(buf.Height - 1) };
 					forceRefresh = false;
 				}
 
 				WriteConsoleOutput(outputHandle, buf,
-					new Coord { X = (short)sizeX, Y = (short)sizeY },
+					new Coord { X = (short)buf.Width, Y = (short)buf.Height },
 					new Coord { X = rect.Left, Y = rect.Top },
 					ref rect);
 			}
@@ -246,11 +210,11 @@ namespace VarsViewer
 			bool refresh = false;
 			rect = new SmallRect { Left = short.MaxValue, Top = short.MaxValue, Right = short.MinValue, Bottom = short.MinValue };
 
-			for (short y = 0; y < sizeY; y++)
+			for (short y = 0; y < buf.Height; y++)
 			{
-				for (short x = 0; x < sizeX; x++)
+				for (short x = 0; x < buf.Width; x++)
 				{
-					int i = x + y * sizeX;
+					int i = x + y * buf.Width;
 					if (!buf[i].Equals(previousBuf[i]))
 					{
 						refresh = true;

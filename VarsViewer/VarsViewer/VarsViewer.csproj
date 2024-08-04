@@ -52,6 +52,7 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Buffer.cs" />
     <Compile Include="Cache\Cache.cs" />
     <Compile Include="Cache\CacheEntry.cs" />
     <Compile Include="Cache\Comparer\CacheEntryIndexComparer.cs" />
