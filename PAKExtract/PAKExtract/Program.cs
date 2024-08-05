@@ -1,6 +1,5 @@
 using Shared;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -10,16 +9,13 @@ namespace PAKExtract
 	{
 		public static string RootFolder = "GAMEDATA";
 
-		static GameVersion? version;
-		static bool mask, background, svg, svgColor;
+		static bool background, svg;
 		static int[] svgRooms = new int[0];
 		static int svgRotate;
 
 		static int Main(string[] args)
 		{
 			background = Tools.HasArgument(args, "-background");
-			mask = Tools.HasArgument(args, "-mask");
-			version = Tools.GetArgument<GameVersion?>(args, "-version");
 
 			if (Tools.HasArgument(args, "-svg"))
 			{
@@ -34,14 +30,7 @@ namespace PAKExtract
 						.Select(x => int.Parse(x))
 						.ToArray();
 					svgRotate = Tools.GetArgument<int>(svgParams, "rotate");
-					svgColor = Tools.HasArgument(svgParams, "color");
 				}
-			}
-
-			if ((mask || svg) && !version.HasValue)
-			{
-				Console.Error.Write("Version must be specified");
-				return -1;
 			}
 
 			bool foundFile = false;
@@ -96,25 +85,7 @@ namespace PAKExtract
 			{
 				if (svg && fileName.StartsWith("ETAGE"))
 				{
-					ExportSVG(pak, fileName, svgRooms, svgRotate, version.Value);
-				}
-
-				if (mask)
-				{
-					if (fileName.StartsWith("ETAGE") && (version == GameVersion.AITD1 || version == GameVersion.AITD1_FLOPPY || version == GameVersion.AITD1_DEMO))
-					{
-						RenderMasks(pak, fileName, null, MaskAITD1.RenderMasks);
-					}
-
-					if (fileName.StartsWith("MASK") || fileName.StartsWith("NASK"))
-					{
-						RenderMasks(pak, fileName, null, MaskAITD2.RenderMasks);
-					}
-
-					if (fileName.StartsWith("MK") || fileName.StartsWith("NK"))
-					{
-						RenderMasks(pak, fileName.Substring(0, 4), int.Parse(fileName.Substring(4, 2)), MaskAITD2.RenderMasksTimeGate);
-					}
+					ExportSVG(pak, fileName, svgRooms, svgRotate);
 				}
 
 				if (background && (fileName.StartsWith("CAMERA") || fileName == "ITD_RESS"))
@@ -128,7 +99,7 @@ namespace PAKExtract
 					}
 				}
 
-				if (!background && !mask && !svg)
+				if (!background && !svg)
 				{
 					foreach (var entry in pak)
 					{
@@ -149,18 +120,9 @@ namespace PAKExtract
 			}
 		}
 
-		static void RenderMasks(PakArchive pak, string folder, int? camID, Func<PakArchive, uint[], IEnumerable<int>> renderMasks)
+		static void ExportSVG(PakArchive pak, string fileName, int[] rooms, int rotate)
 		{
-			foreach (var cameraID in renderMasks(pak, Background.Bitmap.Bits))
-			{
-				var destPath = Path.Combine(folder, $"{camID ?? cameraID:D8}.png");
-				WriteFile(destPath, Background.SaveBitmap());
-			}
-		}
-
-		static void ExportSVG(PakArchive pak, string fileName, int[] rooms, int rotate, GameVersion version)
-		{
-			var data = Svg.Export(pak, rooms, rotate, svgColor, version);
+			var data = Svg.Export(pak, rooms, rotate);
 			WriteFile(Path.Combine("SVG", Path.GetFileNameWithoutExtension(fileName) + ".svg"), data);
 		}
 	}

@@ -3,22 +3,17 @@
 This is a disassembler for LIFE scripts in Alone in the Dark series.
 
 ## Supported
-* Alone in the Dark 1 (CD-ROM, floppy, demo)
-* Alone in the Dark 2 (CD-ROM, floppy, demo)
-* Alone in the Dark 3 (CD-ROM, demo)
+* Alone in the Dark 1 / 2 / 3 (CD-ROM, floppy, demo)
 * Jack in the Dark
 * Time Gate: Knight's Chase (CD-ROM, demo)
 
-## Command-line arguments : 
+## Command-line arguments
 ```
-LifeDISA -version VERSION [-raw] [-verbose] [-output FILENAME]
+LifeDISA -version {AITD1|AITD1_FLOPPY|AITD1_DEMO|AITD2|AITD2_DEMO|AITD3|JACK|TIMEGATE|TIMEGATE_DEMO}
+         [-raw]  
+         [-verbose] 
+         [-output FILENAME]
 ```
-| Argument | Description |
-|-|-|
-| -version VERSION | Must be one of the following values:<br>AITD1, AITD1_FLOPPY, AITD1_DEMO<br>AITD2, AITD2_DEMO<br>AITD3<br>JACK<br>TIMEGATE, TIMEGATE_DEMO |
-| -raw | Raw output. Disable IF ELSE and SWITCH CASE statements detection and indentation |
-| -verbose | Display byte information on the left side of the disassembly |
-| -output | Output filename |
 
 ## Instructions 
 
@@ -34,15 +29,12 @@ LifeDISA -version VERSION [-raw] [-verbose] [-output FILENAME]
 ## Supported 
 Same as [LifeDISA](#LifeDISA)
 
-## Command-line arguments : 
+## Command-line arguments
 ```
-TrackDISA -version VERSION [-verbose] [-output FILENAME]
+TrackDISA -version {AITD1|AITD1_FLOPPY|AITD1_DEMO|AITD2|AITD2_DEMO|AITD3|JACK|TIMEGATE|TIMEGATE_DEMO}
+          [-verbose] 
+          [-output FILENAME]
 ```
-| Argument | Description |
-|-|-|
-| -version VERSION | Must be one of the following values:<br>AITD1, AITD1_FLOPPY, AITD1_DEMO<br>AITD2, AITD2_DEMO<br>AITD3<br>JACK<br>TIMEGATE, TIMEGATE_DEMO |
-| -verbose | Display byte information on the left side of the disassembly |
-| -output | Output filename |
 
 ## Instructions  
 
@@ -56,9 +48,11 @@ Current VGA palette is automatically loaded.
 Supported :
 * All DOS games (even non AITD related)
 
-## Command-line arguments : 
+## Command-line arguments
 ```
-MemoryViewer [-screen-width WIDTH] [-screen-height HEIGHT] [-zoom ZOOM]
+MemoryViewer [-screen-width WIDTH]
+             [-screen-height HEIGHT]
+             [-zoom ZOOM]
 ```
 
 ## Commands
@@ -76,7 +70,7 @@ MemoryViewer [-screen-width WIDTH] [-screen-height HEIGHT] [-zoom ZOOM]
 ## Supported
 * Alone in the Dark 1 (CD-ROM, floppy, demo)
 
-## Command-line arguments : 
+## Command-line arguments
 ```
 VarsViewer [-view {vars|cache|actor|object}]
 ```
@@ -116,27 +110,22 @@ VarsViewer [-view {vars|cache|actor|object}]
 
 Extracts files from PAK files.
 
-Supported :
-* Alone in the Dark 1, 2 and 3
-* Jack in the Dark
-* Time Gate: Knight's Chase
+## Supported
+Same as [LifeDISA](#LifeDISA)
 
 ## Instructions  
 - Copy PAK files to GAMEDATA folder
-- Run PAKExtract
+- Run PAKExtract (all PAK files in GAMEDATA folder are extracted)
 
-## Command-line arguments : 
+You can also drag and drop a single file into PAKExtract executable
+
+## Command-line arguments
 ```
 PAKExtract [-background]
-           [-mask]
-           [-svg ["rotate ROTATE room ROOMLIST color"]]
-           [-version VERSION]
+           [-svg "[rotate {0|90|180|270}] [room 1,2,3,...]"]
            [<files>]
 ```
-| Argument | Description |
-|-|-|
-| -background | 2D backgrounds are exported as PNG<br>Required: CAMERAxx.PAK, ITD_RESS.PAK |
-| -mask | Background masks are rendered and exported as PNG<br>Required:<br>ETAGExx.PAK (AITD1)<br>MASKxx.PAK, NASKxx.PAK (AITD2/3)<br>MKxxxxxx.PAK, NKxxxxxx.PAK (Time Gate)
-| -svg | Colliders are exported as SVG<br>Required: ETAGExx.PAK<br>Options:<br>rotate ROTATE : rotate the SVG map. Possible values: 0, 90, 180, 270.<br>room ROOMLIST : A comma separated list that specify which rooms should be exported to SVG.<br>color : Highlight specific room colliders with color. |
-| -version VERSION | Must be one of the following values:<br>AITD1, AITD1_FLOPPY, AITD1_DEMO<br>AITD2, AITD2_DEMO<br>AITD3<br>JACK<br>TIMEGATE, TIMEGATE_DEMO |
-| &lt;files&gt; | A space separated list of one or more PAK files to be extracted. If not specified, all PAK files in GAMEDATA folder are extracted |
+
+## Required files
+- CAMERAxx.PAK, ITD_RESS.PAK (backgrounds as png)
+- ETAGExx.PAK (floor colliders as svg)
