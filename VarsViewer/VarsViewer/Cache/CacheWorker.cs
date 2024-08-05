@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace VarsViewer
 {
@@ -32,7 +31,6 @@ namespace VarsViewer
 		};
 		bool clearCache, showTimestamp;
 		int uniqueId;
-		readonly Regex varsRegex = new Regex(@"^(E\d+|R\d+|-|player)+\s+", RegexOptions.IgnoreCase);
 
 		bool IWorker.ReadMemory()
 		{
@@ -228,21 +226,7 @@ namespace VarsViewer
 			}
 			else
 			{
-				string text = Program.VarParser.GetText(ch.Section, entry.Id);
-				Console.Write("{0,-8}", FormatText(text));
-
-				string FormatText(string value)
-				{
-					value = varsRegex.Replace(value, string.Empty);
-					value = value.ToLowerInvariant().Trim();
-
-					if (value.Length > 8)
-					{
-						return value.Substring(0, 8);
-					}
-
-					return value;
-				}
+				Console.Write("{0,-8}", Program.VarParser.GetText(ch.Section, entry.Id, 8));
 			}
 
 			int entrySize = entry.Size;

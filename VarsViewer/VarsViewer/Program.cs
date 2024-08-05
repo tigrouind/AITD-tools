@@ -10,7 +10,7 @@ namespace VarsViewer
 	class Program
 	{
 		public static readonly byte[] Memory = new byte[640 * 1024];
-		public static readonly VarParser VarParser = new VarParser();
+		public static readonly VarParserForCache VarParser = new VarParserForCache();
 		public static ProcessMemory Process;
 		public static int EntryPoint = -1;
 		public static GameVersion GameVersion;
