@@ -13,9 +13,9 @@ namespace VarsViewer
 		public bool Added;
 		public bool Removed;
 
-		public int TouchedTicks; //time != lasTtime
-		public int Ticks; //last time seen
-		public int StartTicks; //time added
+		public long TouchedTicks; //time != lasTtime
+		public long Ticks; //last time seen
+		public long StartTicks; //time added
 		public int Slot; //for sorting
 		public int Index; //for sorting
 	}

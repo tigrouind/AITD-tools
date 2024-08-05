@@ -1,6 +1,7 @@
 using Shared;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace VarsViewer
@@ -137,7 +138,7 @@ namespace VarsViewer
 				return true;
 			}
 
-			int time = Environment.TickCount;
+			long time = Stopwatch.GetTimestamp();
 
 			bool result = true;
 			if (result &= Program.Process.Read(Program.Memory, gameConfig.VarsAddress + Program.EntryPoint, 4) > 0)
@@ -191,7 +192,7 @@ namespace VarsViewer
 					{
 						if (compare)
 						{
-							var.Time = int.MaxValue;
+							var.Time = long.MaxValue;
 						}
 						else
 						{

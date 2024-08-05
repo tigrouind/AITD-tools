@@ -11,7 +11,7 @@ namespace VarsViewer
 		public string Text;
 
 		public bool Difference; //value has changed since last time
-		public int Time; //time since last difference
+		public long Time; //time since last difference
 		public int SaveState; //value copied here after SaveState
 	}
 }

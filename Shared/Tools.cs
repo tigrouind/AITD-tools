@@ -134,9 +134,9 @@ namespace Shared
 
 		#endregion
 
-		public static TimeSpan GetTimeSpan(int start, int end)
+		public static TimeSpan GetTimeSpan(long start, long end)
 		{
-			return TimeSpan.FromMilliseconds(start - end);
+			return TimeSpan.FromTicks(start - end);
 		}
 
 		#region Arguments

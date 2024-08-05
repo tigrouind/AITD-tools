@@ -1,6 +1,7 @@
 using Shared;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -34,7 +35,7 @@ namespace VarsViewer
 
 		bool IWorker.ReadMemory()
 		{
-			int ticks = Environment.TickCount;
+			long ticks = Stopwatch.GetTimestamp();
 			bool readSuccess = true;
 			foreach (var ch in cache)
 			{
