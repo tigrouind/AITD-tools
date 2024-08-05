@@ -5,7 +5,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using System.Xml;
 using System.Xml.Linq;
 
 namespace PAKExtract
@@ -15,7 +14,7 @@ namespace PAKExtract
 		static readonly int[,] rotateMatrix = new int[,] { { 1, 0, 0, -1 }, { 0, 1, 1, 0 }, { -1, 0, 0, 1 }, { 0, -1, -1, 0 } };
 		static readonly int[] rotateArgs = new int[] { 0, 90, 180, 270 };
 
-		public static byte[] Export(PakArchive pak, int[] rooms, int rotate, bool color, GameVersion version)
+		public static byte[] Export(PakArchive pak, int[] rooms, int rotate)
 		{
 			var result = new List<(int Index, int X, int Y, List<(int X, int Y, int Width, int Height, int Flags)> Rects)>();
 			int rotateIndex = Array.IndexOf(rotateArgs, rotate);
@@ -26,7 +25,10 @@ namespace PAKExtract
 
 			void LoadRooms()
 			{
-				if (version == GameVersion.TIMEGATE)
+				var buffer = pak[0].Read();
+				int maxrooms = buffer.ReadInt(0) / 4;
+
+				if (maxrooms >= 255) //timegate
 				{
 					int currentroom = 0;
 					foreach (var entry in pak)
@@ -41,8 +43,6 @@ namespace PAKExtract
 				}
 				else
 				{
-					var buffer = pak[0].Read();
-					int maxrooms = buffer.ReadInt(0) / 4;
 					for (int currentroom = 0; currentroom < maxrooms; currentroom++)
 					{
 						int roomheader = buffer.ReadInt(currentroom * 4);
@@ -116,29 +116,21 @@ namespace PAKExtract
 						var svg = new XElement(ns + "svg",
 							new XAttribute("width", Math.Ceiling((xMax - xMin) * scale + padding * 2)),
 							new XAttribute("height", Math.Ceiling((yMax - yMin) * scale + padding * 2)),
-							new XElement(ns + "style",
-								"rect { stroke: black; fill: white; stroke-width: 20; }"),
-							color ? new XElement(ns + "style",
-								@"rect { fill:lightgray; }
-								.floor { fill:darkgray; }
-								.link { fill:teal; }
-								.interact { fill:blue; }"
-							) : null,
+							new XElement(ns + "style", "rect { stroke: black; fill: white; fill-opacity: 0.8; stroke-width: 25; } rect.link { stroke: chocolate } "),
 							new XElement(ns + "g",
 								new XAttribute("transform", $"translate({padding} {padding}) scale({scale} {scale}) translate({-xMin} {-yMin})"),
 								result.Select(room =>
 									new XElement(ns + "g",
 										new XAttribute("id", $"room{room.Index}"),
 										new XAttribute("transform", $"translate({room.X} {room.Y})"),
-										room.Rects.Select(rect =>
+										room.Rects.OrderBy(x => (x.Flags & 4) == 0).Select(rect =>
 										{
-											var className = GetClassName(rect.Flags);
 											return new XElement(ns + "rect",
+												(rect.Flags & 4) != 0 ? new XAttribute("class", "link") : null,
 												new XAttribute("x", rect.X),
 												new XAttribute("y", rect.Y),
 												new XAttribute("width", rect.Width),
-												new XAttribute("height", rect.Height),
-												color && className != null ? new XAttribute("class", className) : null
+												new XAttribute("height", rect.Height)
 											);
 										})
 									)
@@ -149,24 +141,6 @@ namespace PAKExtract
 						svg.Save(ms);
 						return ms.ToArray();
 					}
-				}
-
-				string GetClassName(int flags)
-				{
-					if ((flags & 2) != 0)
-					{
-						return "floor";
-					}
-					else if ((flags & 4) != 0)
-					{
-						return "link";
-					}
-					else if ((flags & 8) != 0)
-					{
-						return "interact";
-					}
-
-					return null;
 				}
 			}
 		}
