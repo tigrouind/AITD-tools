@@ -73,7 +73,12 @@ MemoryViewer [-screen-width WIDTH]
 ## Command-line arguments
 ```
 VarsViewer [-view {vars|cache|actor|object}]
+           [-width WIDTH -height HEIGHT]
+		   [-fontsize SIZE]
 ```
+
+Setting console width, height or font size seems to not be supported by Windows 10/11 Terminal.
+You have to use legacy console host.
 
 ## Commands 
 

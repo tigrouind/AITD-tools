@@ -122,6 +122,25 @@ namespace VarsViewer
 		}
 
 		const int STD_INPUT_HANDLE = -10;
+		const int STD_OUTPUT_HANDLE = -11;
+
+		[DllImport("kernel32.dll")]
+		static extern bool SetCurrentConsoleFontEx(IntPtr consoleOutput, bool maximumWindow, ref CONSOLE_FONT_INFO_EX consoleCurrentFontEx);
+
+		[DllImport("kernel32.dll")]
+		static extern bool GetCurrentConsoleFontEx(IntPtr consoleOutput,  bool maximumWindow, ref CONSOLE_FONT_INFO_EX consoleCurrentFontEx);
+
+		[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+		struct CONSOLE_FONT_INFO_EX
+		{
+			public uint cbSize;
+			public uint nFont;
+			public Coord dwFontSize;
+			public int FontFamily;
+			public int FontWeight;
+			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+			public string FaceName;
+		}
 
 		#endregion
 
@@ -181,6 +200,18 @@ namespace VarsViewer
 		{
 			CursorLeft = left;
 			CursorTop = top;
+		}
+
+		public static void SetFontSize(int size)
+		{
+			var font = new CONSOLE_FONT_INFO_EX();
+			font.cbSize = (uint)Marshal.SizeOf(font);
+			var outputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+			if (GetCurrentConsoleFontEx(outputHandle, false, ref font))
+			{
+				font.dwFontSize = new Coord() { X = 0, Y = (short)size };
+				SetCurrentConsoleFontEx(outputHandle, false, ref font);
+			}
 		}
 
 		public static void Flush()
