@@ -34,7 +34,7 @@ namespace VarsViewer
 		string inputText;
 		string toolTip;
 
-		const int CELLSIZE = 5;
+		const int CELLSIZE = 4;
 
 		void IWorker.Render()
 		{
