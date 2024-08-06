@@ -41,8 +41,8 @@ namespace VarsViewer
 		{
 			if (Width < newWidth || Height < newHeight)
 			{
-				newWidth = Math.Max(newWidth, Width);
-				newHeight = Math.Max(newHeight, Height);
+				newWidth = Math.Max(PowerOf2(newWidth), Width);
+				newHeight = Math.Max(PowerOf2(newHeight), Height);
 
 				Resize();
 				Width = newWidth;
@@ -52,17 +52,11 @@ namespace VarsViewer
 			void Resize()
 			{
 				var oldArray = array;
-
-				int newLength = PowerOf2(newWidth * newHeight);
-				if (array.Length < newLength)
-				{
-					array = new T[newLength];
-				}
+				array = new T[newWidth * newHeight];
 
 				for (int row = Height - 1; row >= 0; row--)
 				{
 					Array.Copy(oldArray, row * Width, array, row * newWidth, Width);
-					Array.Clear(array, row * newWidth + Width, newWidth - Width);
 				}
 			}
 
