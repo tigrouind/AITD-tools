@@ -1,0 +1,181 @@
+[
+	{ "name": "Slot", "type": "slot", "offset": 0 },
+	{ "name": "Id", "offset": 0 },
+	{ "name": "Body", "type": "body", "offset": 2 },
+	{ "name": "Flags",
+		"columns":
+		[
+			{ "name": "", "type": "flags", "values": ["anim", "", "", "back", "push", "", "trig", "pick", "fall"], "offset": 4 },
+			{ "name": "", "type": "flags", "offset": 6 }
+		]
+	},
+	{ "name": "BoundingBox",
+		"columns":
+		[
+			{ "name": "X", "type": "zvpos", "offset": 8 },
+			{ "name": "Y", "type": "zvpos", "offset": 12 },
+			{ "name": "Z", "type": "zvpos", "offset": 16 },
+			{ "name": "SX", "type": "zvsize", "offset": 8 },
+			{ "name": "SY", "type": "zvsize", "offset": 12 },
+			{ "name": "SZ", "type": "zvsize", "offset": 16 },
+		]
+	},
+	{ "name": "Screen",
+		"columns":
+		[
+			{ "name": "X0", "offset": 20 },
+			{ "name": "X1", "offset": 22 },
+			{ "name": "Y0", "offset": 24 },
+			{ "name": "Y1", "offset": 26 }
+		]
+	},
+	{ "name": "Room",
+		"columns":
+		[
+			{ "name": "X", "offset": 28 },
+			{ "name": "Y", "offset": 30 },
+			{ "name": "Z", "offset": 32 }
+		]
+	},
+	{ "name": "World",
+		"columns":
+		[
+			{ "name": "X", "offset": 34 },
+			{ "name": "Y", "offset": 36 },
+			{ "name": "Z", "offset": 38 }
+		]
+	},
+	{ "name": "Angle",
+		"columns":
+		[
+			{ "name": "X", "offset": 40 },
+			{ "name": "Y", "offset": 42 },
+			{ "name": "Z", "offset": 44 }
+		]
+	},
+	{ "name": "Room", "type": "room", "offset": 46 },
+	{ "name": "Life",
+		"columns":
+		[
+			{ "name": "", "values": ["floor", "room", "camera"], "offset": 50 },
+			{ "name": "", "type": "life", "offset": 52 }
+		]
+	},
+	{ "name": "Chrono",
+		"columns":
+		[
+			{ "name": "World", "type": "time", "offset": 54 },
+			{ "name": "Room", "type": "time", "offset": 58 },
+		]
+	},
+	{ "name": "Anim",
+		"columns":
+		[
+			{ "name": "Anim", "type": "anim", "offset": 62 },
+			{ "name": "Type", "values": ["once", "repeat", "uninterrupt"], "offset": 64 },
+			{ "name": "Next", "type": "anim", "offset": 66 }
+		]
+	},
+	{ "name": "NewAnim",
+		"columns":
+		[
+			{ "name": "Anim", "type": "anim", "offset": 68  },
+			{ "name": "Type", "values": ["once", "repeat", "uninterrupt"], "offset": 70 },
+			{ "name": "Next", "type": "anim", "offset": 72 }
+		]
+	},
+	{ "name": "KeyFrame",
+		"columns":
+		[
+			{ "offset": 74 },
+			{ "offset": 76 },
+			{ "offset": 78 },
+			{ "offset": 80 }
+		]
+	},
+	{ "name": "Track",
+		"columns":
+		[
+			{ "name": "Mode", "values": ["none", "manual", "follow", "track"], "offset": 82 },
+			{ "name": "Number", "type": "track", "offset": 84 },
+			{ "name": "Pos", "offset": 86 }
+		]
+	},
+	{ "name": "Weight", "offset": 88 },
+	{ "name": "Mod",
+		"columns":
+		[
+			{ "name": "X", "offset": 90 },
+			{ "name": "Y", "offset": 92 },
+			{ "name": "Z", "offset": 94 }
+		]
+	},
+	{ "name": "Fall",
+		"columns":
+		[
+			{ "name": "Old", "offset": 96 },
+			{ "name": "New", "offset": 98 },
+			{ "name": "Param", "offset": 100 },
+			{ "name": "Time", "type": "ushort", "offset": 102 }
+		]
+	},
+	{ "name": "FlagFall", "offset": 104 },
+	{
+		"name": "Angle",
+		"columns":
+		[
+			{ "name": "Old", "offset": 106 },
+			{ "name": "New", "offset": 108 },
+			{ "name": "Param", "offset": 110 },
+			{ "name": "Time", "type": "ushort", "offset": 112 },
+			{ "name": "Dir", "offset": 114 }
+		]
+	},
+	{ "name": "Speed",
+		"columns":
+		[
+			{ "name": "Value", "values": ["idle", "walk", "walk", "walk", "walk", "run"], "offset": 116 },
+			{ "name": "Old", "offset": 118 },
+			{ "name": "New", "offset": 120 },
+			{ "name": "Param", "offset": 122 },
+			{ "name": "Time", "type": "ushort", "offset": 124 }
+		]
+	},
+	{ "name": "Col",
+		"columns":
+		[
+			{ "name": "0", "offset": 126 },
+			{ "name": "1", "offset": 128 },
+			{ "name": "2", "offset": 130 }
+		]
+	},
+	{ "name": "ColBy", "offset": 132 },
+	{ "name": "HardTrig", "offset": 134 },
+	{ "name": "HardCol", "offset": 136 },
+	{
+		"columns":
+		[
+			{ "name": "Hit", "offset": 138 },
+			{ "name": "HitBy", "offset": 140 },
+		]
+	},
+	{ "name": "Action",
+		"columns":
+		[
+			{ "name": "Type", "values": ["none", "pre_hit", "hit", "unknown", "pre_fire", "fire", "pre_throw", "throw", "hit_obj", "during_throw", "pre_hit"], "offset": 142 },
+			{ "name": "Anim", "type": "anim", "offset": 144 },
+			{ "name": "Frame", "offset": 146 },
+			{ "name": "BoxSize", "offset": 148 },
+			{ "name": "HitForce", "offset": 150 },
+			{ "name": "HotPoint", "offset": 152 },
+		]
+	},
+	{ "name": "HotPoint",
+		"columns":
+		[
+			{ "name": "X", "offset": 154 },
+			{ "name": "Y", "offset": 156 },
+			{ "name": "Z", "offset": 158 }
+		]
+	}
+]

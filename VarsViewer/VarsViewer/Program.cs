@@ -17,12 +17,11 @@ namespace VarsViewer
 		static int view;
 		static readonly Stopwatch dosboxTimer = new Stopwatch();
 
-		static readonly IWorker[] workers = new IWorker[] { new VarsWorker(), new CacheWorker() };
+		static readonly IWorker[] workers = new IWorker[] { new VarsWorker(), new CacheWorker(), new ActorWorker(0), new ActorWorker(1) };
 		static IWorker worker => workers[view];
 
 		public static void Main(string[] args)
 		{
-			System.Console.Title = "AITD vars viewer";
 			ParseArguments();
 
 			Directory.CreateDirectory("GAMEDATA");
@@ -65,7 +64,7 @@ namespace VarsViewer
 			void ParseArguments()
 			{
 				string viewArgument = Shared.Tools.GetArgument<string>(args, "-view") ?? "vars";
-				int view = Array.IndexOf(new string[] { "vars", "cache" }, viewArgument);
+				int view = Array.IndexOf(new string[] { "vars", "cache", "actors", "objects" }, viewArgument);
 				SetView(Math.Max(0, view));
 			}
 
@@ -81,6 +80,8 @@ namespace VarsViewer
 
 						case ConsoleKey.F1:
 						case ConsoleKey.F2:
+						case ConsoleKey.F3:
+						case ConsoleKey.F4:
 							SetView(keyInfo.Key - ConsoleKey.F1);
 							break;
 
@@ -159,6 +160,7 @@ namespace VarsViewer
 		{
 			Program.view = view;
 			Console.MouseInput = worker.UseMouse;
+			System.Console.Title = $"AITD {new string[] { "vars", "cache", "actors", "objects" }[view]} viewer";
 		}
 	}
 }

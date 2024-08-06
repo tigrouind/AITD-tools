@@ -78,7 +78,7 @@ MemoryViewer [-screen-width WIDTH] [-screen-height HEIGHT] [-zoom ZOOM]
 
 ## Command-line arguments : 
 ```
-VarsViewer [-view {vars|cache}]
+VarsViewer [-view {vars|cache|actor|object}]
 ```
 
 ## Commands 
@@ -87,6 +87,8 @@ VarsViewer [-view {vars|cache}]
 | :-: | - |
 | <kbd>F1</kbd> | vars view
 | <kbd>F2</kbd> | cache view
+| <kbd>F4</kbd> | actor view
+| <kbd>F3</kbd> | object view
 | <kbd>control</kbd> + <kbd>mouse wheel</kbd> | zoom in/out
 
 ## Commands (vars)
@@ -102,6 +104,13 @@ VarsViewer [-view {vars|cache}]
 | <kbd>s</kbd> | change sort mode (default, memory, lru)
 | <kbd>space</kbd> | display cache entries timestamp / name
 | <kbd>F5</kbd> | clear all cache entries
+
+## Commands (actor/object)
+| Key | Description |
+| :-: | - |
+| <kbd>space</kbd> | show/hide inactive rows
+| <kbd>page up</kbd> / <kbd>page down</kbd> | scroll
+| <kbd>F5</kbd> | force display refresh
 
 # PAKExtract
 

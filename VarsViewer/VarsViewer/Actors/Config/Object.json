@@ -1,0 +1,64 @@
+[
+	{ "name": "Id", "type": "slot", "offset": 0 },
+	{ "name": "Slot", "offset": 0 },
+	{ "name": "Body", "type": "body", "offset": 2 },
+	{ "name": "Flags", "type": "flags", "values": ["anim", "", "", "back", "push", "", "trig", "pick", "fall"], "offset": 4 },
+	{ "name": "ZVType", "values": ["none", "normal", "cube", "rot", "collider"], "offset": 6 },
+	{ "name": "Found",
+		"columns":
+		[
+			{ "name": "Body", "type": "body", "offset": 8 },
+			{ "name": "Name", "offset": 10 },
+			{ "name": "Flag", "type": "flags", "values": ["use", "eat", "read", "reload", "fight", "jump", "open", "close", "push", "throw", "drop"], "offset": 12 },
+			{ "name": "Life", "type": "life", "offset": 14 }
+		]
+	},
+	{ "name": "Room",
+		"columns":
+		[
+			{ "name": "X", "offset": 16 },
+			{ "name": "Y", "offset": 18 },
+			{ "name": "Z", "offset": 20 },
+		]
+	},
+	{ "name": "Angle",
+		"columns":
+		[
+			{ "name": "X", "offset": 22 },
+			{ "name": "Y", "offset": 24 },
+			{ "name": "Z", "offset": 26 }
+		]
+	},
+	{ "name": "Room", "type": "room", "offset": 28 },
+	{ "name": "Life",
+		"columns":
+		[
+			{ "name": "", "values": ["floor", "room", "camera"], "offset": 32 },
+			{ "name": "", "type": "life", "offset": 34 }
+		]
+	},
+
+	{ "name": "FloorTrigger",
+		"columns":
+		[
+			{ "name": "Inventory", "offset": 36 },
+		]
+	},
+	{ "name": "Anim",
+		"columns":
+		[
+			{ "name": "Anim", "type": "anim", "offset": 38 },
+			{ "name": "Keyframe", "offset": 40 },
+			{ "name": "Type", "values": ["once", "repeat", "uninterrupt"], "offset": 42 },
+			{ "name": "Next", "offset": 44 },
+		]
+	},
+	{ "name": "Track",
+		"columns":
+		[
+			{ "name": "Mode", "values": ["none", "manual", "follow", "track"], "offset": 46 },
+			{ "name": "Number/Time", "type": "ushort", "offset": 48 }
+		]
+	},
+	{ "name": "Weight", "offset": 50 },
+]

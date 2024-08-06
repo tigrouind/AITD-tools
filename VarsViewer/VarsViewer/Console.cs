@@ -160,7 +160,7 @@ namespace VarsViewer
 		{
 			short color = (short)((int)ForegroundColor | (int)BackgroundColor << 4);
 			buf[CursorTop, CursorLeft] = new CharInfo { Char = new CharUnion { UnicodeChar = value }, Attributes = color };
-			previousBuf.EnsureCapacity(CursorLeft, CursorTop);
+			previousBuf.EnsureCapacity(CursorLeft + 1, CursorTop + 1);
 			CursorLeft++;
 		}
 
