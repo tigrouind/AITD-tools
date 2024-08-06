@@ -25,6 +25,7 @@ if exist C:\MinGW\bin\gcc.exe (
  ".\MemoryViewer\MemoryViewer\bin\Release\SDL2_image.dll" ^
  ".\TrackDISA\TrackDISA\bin\Release\*.exe" ^
  ".\VarsViewer\VarsViewer\bin\Release\*.exe" ^
+ ".\VarsViewer\VarsViewer\bin\Release\Newtonsoft.Json.dll" ^
  ".\PAKExtract\PAKExtract\bin\Release\*.exe" ^
  ".\Shared\bin\Release\Shared.dll" ^
  ".\UnPAK\bin\Release\Unpak.dll" ^

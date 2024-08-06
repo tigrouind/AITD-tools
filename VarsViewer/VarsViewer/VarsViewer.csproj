@@ -49,16 +49,23 @@
     <StartAction>Project</StartAction>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Buffer.cs" />
+    <Compile Include="Actors\Actor.cs" />
+    <Compile Include="Actors\ActorWorker.cs" />
     <Compile Include="Cache\Cache.cs" />
     <Compile Include="Cache\CacheEntry.cs" />
     <Compile Include="Cache\Comparer\CacheEntryIndexComparer.cs" />
     <Compile Include="Cache\CacheWorker.cs" />
     <Compile Include="Cache\Comparer\CacheEntrySlotComparer.cs" />
     <Compile Include="Cache\Comparer\CacheEntryRemovedComparer.cs" />
+    <Compile Include="Actors\Column.cs" />
+    <Compile Include="ColumnType.cs" />
     <Compile Include="Console.cs" />
     <Compile Include="IWorker.cs" />
     <Compile Include="Program.cs" />
@@ -72,6 +79,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <EmbeddedResource Include="Actors\Config\Actor.json" />
+    <EmbeddedResource Include="Actors\Config\Object.json" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Shared\Shared.csproj">
