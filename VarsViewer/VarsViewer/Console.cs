@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 
 namespace VarsViewer
 {
@@ -123,6 +124,26 @@ namespace VarsViewer
 
 		const int STD_INPUT_HANDLE = -10;
 
+		[DllImport("user32.dll")]
+		static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, uint uFlags);
+
+		const int SWP_NOMOVE = 0x0002;
+
+		[DllImport("user32.dll")]
+		static extern IntPtr GetForegroundWindow();
+
+		[DllImport("user32.dll")]
+		static extern bool GetWindowRect(IntPtr hwnd, out Rect lpRect);
+
+		[StructLayout(LayoutKind.Sequential)]
+		public struct Rect
+		{
+			public int Left;
+			public int Top;
+			public int Right;
+			public int Bottom;
+		}
+
 		#endregion
 
 		static bool forceRefresh;
@@ -154,6 +175,27 @@ namespace VarsViewer
 			CursorLeft = 0;
 			CursorTop = 0;
 			buf.Clear();
+		}
+
+		public static void SetWindowSize(int width, int height)
+		{
+			var hwnd = GetForegroundWindow();
+			if (width == 0 || height == 0)
+			{
+				GetWindowRect(hwnd, out Rect rect);
+
+				if (width == 0)
+				{
+					width = rect.Right - rect.Left;
+				}
+
+				if (height == 0)
+				{
+					height = rect.Bottom - rect.Top;
+				}
+			}
+
+			SetWindowPos(hwnd, IntPtr.Zero, 0, 0, width, height, SWP_NOMOVE);
 		}
 
 		public static void Write(char value)

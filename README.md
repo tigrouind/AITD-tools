@@ -73,6 +73,8 @@ MemoryViewer [-screen-width WIDTH]
 ## Command-line arguments
 ```
 VarsViewer [-view {vars|cache|actor|object}]
+           [-width WIDTH]
+           [-height HEIGHT]
 ```
 
 ## Commands 

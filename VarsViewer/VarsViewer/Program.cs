@@ -66,6 +66,13 @@ namespace VarsViewer
 				string viewArgument = Shared.Tools.GetArgument<string>(args, "-view") ?? "vars";
 				int view = Array.IndexOf(new string[] { "vars", "cache", "actors", "objects" }, viewArgument);
 				SetView(Math.Max(0, view));
+
+				int width = Shared.Tools.GetArgument<int>(args, "-width");
+				int height = Shared.Tools.GetArgument<int>(args, "-height");
+				if (width > 0 || height > 0)
+				{
+					Console.SetWindowSize(width, height);
+				}
 			}
 
 			void SetupConsole()
