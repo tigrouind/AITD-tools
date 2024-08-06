@@ -5,10 +5,10 @@ namespace VarsViewer
 	public class Buffer<T>
 	{
 		T[] array = new T[0];
-		public static implicit operator T[](Buffer<T> x) => x.array;
+		public T[] AsArray() => array;
 
-		public int Width;
-		public int Height;
+		public int Width { private set; get; }
+		public int Height { private set; get; }
 
 		public void Clear()
 		{
@@ -29,34 +29,26 @@ namespace VarsViewer
 			}
 		}
 
-		public T this[int i]
+		public void EnsureCapacity(int width, int height)
 		{
-			get
+			if (Width < width || Height < height)
 			{
-				return array[i];
-			}
-		}
-
-		public void EnsureCapacity(int newWidth, int newHeight)
-		{
-			if (Width < newWidth || Height < newHeight)
-			{
-				newWidth = Math.Max(PowerOf2(newWidth), Width);
-				newHeight = Math.Max(PowerOf2(newHeight), Height);
+				width = Math.Max(PowerOf2(width), Width);
+				height = Math.Max(PowerOf2(height), Height);
 
 				Resize();
-				Width = newWidth;
-				Height = newHeight;
+				Width = width;
+				Height = height;
 			}
 
 			void Resize()
 			{
 				var oldArray = array;
-				array = new T[newWidth * newHeight];
+				array = new T[width * height];
 
 				for (int row = Height - 1; row >= 0; row--)
 				{
-					Array.Copy(oldArray, row * Width, array, row * newWidth, Width);
+					Array.Copy(oldArray, row * Width, array, row * width, Width);
 				}
 			}
 

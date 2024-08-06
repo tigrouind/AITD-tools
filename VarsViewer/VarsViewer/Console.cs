@@ -29,14 +29,14 @@ namespace VarsViewer
 			ref SmallRect lpWriteRegion);
 
 		[StructLayout(LayoutKind.Sequential)]
-		public struct Coord
+		struct Coord
 		{
 			public short X;
 			public short Y;
 		};
 
 		[StructLayout(LayoutKind.Explicit, CharSet = CharSet.Unicode)]
-		public struct CharUnion : IEquatable<CharUnion>
+		struct CharUnion : IEquatable<CharUnion>
 		{
 			[FieldOffset(0)] public char UnicodeChar;
 			[FieldOffset(0)] public byte AsciiChar;
@@ -48,7 +48,7 @@ namespace VarsViewer
 		}
 
 		[StructLayout(LayoutKind.Explicit)]
-		public struct CharInfo : IEquatable<CharInfo>
+		struct CharInfo : IEquatable<CharInfo>
 		{
 			[FieldOffset(0)] public CharUnion Char;
 			[FieldOffset(2)] public short Attributes;
@@ -105,7 +105,7 @@ namespace VarsViewer
 		}
 
 		[DllImport("Kernel32.dll")]
-		public static extern IntPtr GetStdHandle(int nStdHandle);
+		static extern IntPtr GetStdHandle(int nStdHandle);
 
 		[DllImport("kernel32.dll")]
 		static extern bool GetConsoleMode(IntPtr hConsoleHandle, out ConsoleMode lpMode);
@@ -114,7 +114,7 @@ namespace VarsViewer
 		static extern bool SetConsoleMode(IntPtr hConsoleHandle, ConsoleMode dwMode);
 
 		[Flags]
-		private enum ConsoleMode : uint
+		enum ConsoleMode : uint
 		{
 			ENABLE_WINDOW_INPUT = 0x0008,
 			ENABLE_MOUSE_INPUT = 0x0010,
@@ -195,7 +195,7 @@ namespace VarsViewer
 					forceRefresh = false;
 				}
 
-				WriteConsoleOutput(outputHandle, buf,
+				WriteConsoleOutput(outputHandle, buf.AsArray(),
 					new Coord { X = (short)buf.Width, Y = (short)buf.Height },
 					new Coord { X = rect.Left, Y = rect.Top },
 					ref rect);
@@ -214,8 +214,7 @@ namespace VarsViewer
 			{
 				for (short x = 0; x < buf.Width; x++)
 				{
-					int i = x + y * buf.Width;
-					if (!buf[i].Equals(previousBuf[i]))
+					if (!buf[y, x].Equals(previousBuf[y, x]))
 					{
 						refresh = true;
 						rect.Left = Math.Min(rect.Left, x);
