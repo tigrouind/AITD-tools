@@ -300,7 +300,6 @@ namespace VarsViewer
 						{
 							Commit();
 							highlightedCell = cells[offset];
-							StartEdit();
 						}
 					}
 					break;
