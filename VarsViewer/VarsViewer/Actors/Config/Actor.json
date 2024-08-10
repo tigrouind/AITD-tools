@@ -1,12 +1,13 @@
 [
-	{ "name": "Slot", "type": "slot", "offset": 0 },
+	{ "name": "#", "type": "slot", "offset": 0 },
 	{ "name": "Id", "offset": 0 },
 	{ "name": "Body", "type": "body", "offset": 2 },
 	{ "name": "Flags",
 		"columns":
 		[
-			{ "name": "", "type": "flags", "values": ["anim", "", "", "back", "push", "", "trig", "pick", "fall"], "offset": 4 },
-			{ "name": "", "type": "flags", "offset": 6 }
+			{ "type": "flags", "values": {"1": "anim", "8": "back", "16": "push", "64": "trig", "128": "pick", "256": "fall"}, "offset": 4 },
+			{ "type": "next" },
+			{ "values": {"0": "N", "1": "Y"}, "offset": 6 }
 		]
 	},
 	{ "name": "BoundingBox",
@@ -15,34 +16,32 @@
 			{ "name": "X", "type": "zvpos", "offset": 8 },
 			{ "name": "Y", "type": "zvpos", "offset": 12 },
 			{ "name": "Z", "type": "zvpos", "offset": 16 },
-			{ "name": "SX", "type": "zvsize", "offset": 8 },
-			{ "name": "SY", "type": "zvsize", "offset": 12 },
-			{ "name": "SZ", "type": "zvsize", "offset": 16 },
+			{ "type": "next" },
+			{ "type": "zvsize", "offset": 8 },
+			{ "type": "zvsize", "offset": 12 },
+			{ "type": "zvsize", "offset": 16 },
 		]
 	},
 	{ "name": "Screen",
 		"columns":
 		[
-			{ "name": "X0", "offset": 20 },
-			{ "name": "X1", "offset": 22 },
-			{ "name": "Y0", "offset": 24 },
-			{ "name": "Y1", "offset": 26 }
+			{ "name": "X", "offset": 20 },
+			{ "name": "Y", "offset": 24 },
+			{ "type": "next" },
+			{ "offset": 22 },
+			{ "offset": 26 }
 		]
 	},
-	{ "name": "Room",
+	{ "name": "Room/World",
 		"columns":
 		[
 			{ "name": "X", "offset": 28 },
 			{ "name": "Y", "offset": 30 },
-			{ "name": "Z", "offset": 32 }
-		]
-	},
-	{ "name": "World",
-		"columns":
-		[
-			{ "name": "X", "offset": 34 },
-			{ "name": "Y", "offset": 36 },
-			{ "name": "Z", "offset": 38 }
+			{ "name": "Z", "offset": 32 },
+			{ "type": "next" },
+			{ "offset": 34 },
+			{ "offset": 36 },
+			{ "offset": 38 }
 		]
 	},
 	{ "name": "Angle",
@@ -57,47 +56,45 @@
 	{ "name": "Life",
 		"columns":
 		[
-			{ "name": "", "values": ["floor", "room", "camera"], "offset": 50 },
-			{ "name": "", "type": "life", "offset": 52 }
+			{ "name": "Mode", "type": "life", "offset": 52 },
+			{ "type": "next" },
+			{ "values": {"0": "floor", "1": "room", "2": "camera"}, "offset": 50 }
 		]
 	},
-	{ "name": "Chrono",
+	{ "name": "World",
 		"columns":
 		[
-			{ "name": "World", "type": "time", "offset": 54 },
-			{ "name": "Room", "type": "time", "offset": 58 },
+			{ "name": "Room", "type": "time", "offset": 54 },
+			{ "type": "next" },
+			{ "type": "time", "offset": 58 },
 		]
 	},
-	{ "name": "Anim",
+	{ "name": "Anim/NewAnim",
 		"columns":
 		[
 			{ "name": "Anim", "type": "anim", "offset": 62 },
-			{ "name": "Type", "values": ["once", "repeat", "uninterrupt"], "offset": 64 },
-			{ "name": "Next", "type": "anim", "offset": 66 }
-		]
-	},
-	{ "name": "NewAnim",
-		"columns":
-		[
+			{ "name": "Type", "values": {"0": "once", "1": "repeat", "2": "uninter"}, "offset": 64 },
+			{ "name": "Next", "type": "anim", "offset": 66 },
+			{ "type": "next" },
 			{ "name": "Anim", "type": "anim", "offset": 68  },
-			{ "name": "Type", "values": ["once", "repeat", "uninterrupt"], "offset": 70 },
+			{ "name": "Type", "values": {"0": "once", "1": "repeat", "2": "uninter"}, "offset": 70 },
 			{ "name": "Next", "type": "anim", "offset": 72 }
 		]
 	},
-	{ "name": "KeyFrame",
-		"columns":
-		[
-			{ "offset": 74 },
+	{ "name": "Key",
+		"columns": [
+			{ "name": "F", "offset": 74 },
+			{ "name": "E", "offset": 78 },
+			{ "type": "next" },
 			{ "offset": 76 },
-			{ "offset": 78 },
 			{ "offset": 80 }
 		]
 	},
 	{ "name": "Track",
 		"columns":
 		[
-			{ "name": "Mode", "values": ["none", "manual", "follow", "track"], "offset": 82 },
 			{ "name": "Number", "type": "track", "offset": 84 },
+			{ "name": "Mode", "values": {"0": "none", "1": "manual", "2": "follow", "3": "track"}, "offset": 82 },
 			{ "name": "Pos", "offset": 86 }
 		]
 	},
@@ -110,69 +107,66 @@
 			{ "name": "Z", "offset": 94 }
 		]
 	},
-	{ "name": "Fall",
+	{ "name": "Angle/Fall/Speed",
 		"columns":
 		[
-			{ "name": "Old", "offset": 96 },
-			{ "name": "New", "offset": 98 },
-			{ "name": "Param", "offset": 100 },
-			{ "name": "Time", "type": "ushort", "offset": 102 }
-		]
-	},
-	{ "name": "FlagFall", "offset": 104 },
-	{
-		"name": "Angle",
-		"columns":
-		[
+			{ "values": {"-1": "▼", "32767": "▼", "1": "▲"}, "offset": 114 },
 			{ "name": "Old", "offset": 106 },
 			{ "name": "New", "offset": 108 },
 			{ "name": "Param", "offset": 110 },
 			{ "name": "Time", "type": "ushort", "offset": 112 },
-			{ "name": "Dir", "offset": 114 }
-		]
-	},
-	{ "name": "Speed",
-		"columns":
-		[
-			{ "name": "Value", "values": ["idle", "walk", "walk", "walk", "walk", "run"], "offset": 116 },
+			{ "type": "next" },
+			{ "values": {"0": "N", "1": "Y"}, "offset": 104 },
+			{ "name": "Old", "offset": 96 },
+			{ "name": "New", "offset": 98 },
+			{ "name": "Param", "offset": 100 },
+			{ "name": "Time", "type": "ushort", "offset": 102 },
+			{ "type": "next" },
+			{ "type": "filler" },
 			{ "name": "Old", "offset": 118 },
 			{ "name": "New", "offset": 120 },
 			{ "name": "Param", "offset": 122 },
 			{ "name": "Time", "type": "ushort", "offset": 124 }
 		]
 	},
+	{ "name": "Speed", "values": {"-1": "back" ,"0": "idle", "1": "walk", "2": "walk", "3": "walk", "4": "walk", "5": "run"}, "offset": 116 },
 	{ "name": "Col",
 		"columns":
 		[
 			{ "name": "0", "offset": 126 },
 			{ "name": "1", "offset": 128 },
-			{ "name": "2", "offset": 130 }
+			{ "name": "2", "offset": 130 },
+			{ "name": "By", "offset": 132 },
 		]
 	},
-	{ "name": "ColBy", "offset": 132 },
-	{ "name": "HardTrig", "offset": 134 },
-	{ "name": "HardCol", "offset": 136 },
-	{
+	{ "name": "Hard",
 		"columns":
 		[
-			{ "name": "Hit", "offset": 138 },
-			{ "name": "HitBy", "offset": 140 },
+			{ "name": "Trig", "offset": 134 },
+			{ "name": "Col", "offset": 136 },
+		]
+	},
+	{ "name": "Hit",
+		"columns":
+		[
+			{ "name": "", "offset": 138 },
+			{ "name": "By", "offset": 140 }
 		]
 	},
 	{ "name": "Action",
 		"columns":
 		[
-			{ "name": "Type", "values": ["none", "pre_hit", "hit", "unknown", "pre_fire", "fire", "pre_throw", "throw", "hit_obj", "during_throw", "pre_hit"], "offset": 142 },
+			{ "name": "Type", "values": {"0": "none", "1": "pre_hit", "2": "hit", "3": "unknown", "4": "pre_fire", "5": "fire", "6": "pre_throw", "7": "throw", "8": "hit_obj", "9": "during_throw", "10": "pre_hit"}, "offset": 142 },
 			{ "name": "Anim", "type": "anim", "offset": 144 },
 			{ "name": "Frame", "offset": 146 },
-			{ "name": "BoxSize", "offset": 148 },
-			{ "name": "HitForce", "offset": 150 },
-			{ "name": "HotPoint", "offset": 152 },
+			{ "name": "Box", "offset": 148 },
+			{ "name": "Hit", "offset": 150 },
 		]
 	},
 	{ "name": "HotPoint",
 		"columns":
 		[
+			{ "offset": 152 },
 			{ "name": "X", "offset": 154 },
 			{ "name": "Y", "offset": 156 },
 			{ "name": "Z", "offset": 158 }

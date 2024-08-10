@@ -55,6 +55,7 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Actors\ColumnType.cs" />
     <Compile Include="Buffer.cs" />
     <Compile Include="Actors\Actor.cs" />
     <Compile Include="Actors\ActorWorker.cs" />
@@ -65,7 +66,6 @@
     <Compile Include="Cache\Comparer\CacheEntrySlotComparer.cs" />
     <Compile Include="Cache\Comparer\CacheEntryRemovedComparer.cs" />
     <Compile Include="Actors\Column.cs" />
-    <Compile Include="ColumnType.cs" />
     <Compile Include="Console.cs" />
     <Compile Include="IWorker.cs" />
     <Compile Include="Program.cs" />

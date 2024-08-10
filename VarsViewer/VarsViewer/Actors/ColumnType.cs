@@ -3,10 +3,12 @@
 	public enum ColumnType
 	{
 		DEFAULT,
+		FILLER,
 
 		SLOT,
 		ZVPOS,
 		ZVSIZE,
+		NEXT,
 
 		BODY,
 		LIFE,

@@ -2,6 +2,7 @@ using Newtonsoft.Json;
 using Shared;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -25,7 +26,7 @@ namespace VarsViewer
 		readonly int view;
 		int scroll;
 		bool showAll;
-		int GridHeight => System.Console.WindowHeight - 2;
+		bool fullMode;
 		readonly List<Column> config = new List<Column>();
 
 		public ActorWorker(int view)
@@ -62,10 +63,13 @@ namespace VarsViewer
 
 		void IWorker.Render()
 		{
+			int rowsCount = 0;
+			var timeStamp = Stopwatch.GetTimestamp();
 			(int rows, int columns) = cellConfig;
 
 			if (Program.EntryPoint != -1)
 			{
+				HideColumns();
 				ReadActors();
 				ResizeColumns();
 			}
@@ -85,36 +89,75 @@ namespace VarsViewer
 
 				uint timer = Program.Memory.ReadUnsignedInt(Program.EntryPoint + 0x19D12);
 
-				int row = 0;
-				int offset = 0;
-				int height = GridHeight;
+				int page = 0;
+				int height = System.Console.WindowHeight - 2;
 
-				for (int i = 0; i < rows && row < height; i++)
+				for (int i = 0; i < rows; i++)
 				{
 					int col = 0;
+					int maxRow = 0;
 
 					int startAddress = address + i * columns * 2;
 					int id = Program.Memory.ReadShort(startAddress);
 
-					if ((id != -1 || showAll) && offset++ >= scroll)
+					if (id != -1 || showAll)
 					{
 						foreach (var group in config)
 						{
+							int startRow = rowsCount;
+							int startCol = col;
+
 							foreach (var column in group.Columns)
 							{
+								switch (column.Type)
+								{
+									case ColumnType.FILLER:
+										col++;
+										continue;
+
+									case ColumnType.NEXT:
+										col = startCol;
+										rowsCount++;
+										continue;
+								}
+
 								var text = FormatField(column, startAddress, i);
-								cells[row, col] = (text, id != -1 ? ConsoleColor.Gray : ConsoleColor.DarkGray);
+								if (page == scroll)
+								{
+									cells[rowsCount, col] = (text, id != -1 ? ConsoleColor.Gray : ConsoleColor.DarkGray);
+								}
 
 								if (text != null)
 								{
-									column.Width = Math.Max(text.Length, column.Width);
-									column.Visible |= true;
-									group.Visible |= true;
+									if (page == scroll)
+									{
+										var subCol = group.Columns[col - startCol];
+										subCol.Width = Math.Max(text.Length, subCol.Width);
+										subCol.Timer = timeStamp;
+										subCol.Visible |= true;
+										group.Visible |= true;
+									}
+
+									maxRow = Math.Max(maxRow, rowsCount);
 								}
 								col++;
 							}
+
+							rowsCount = startRow;
 						}
-						row++;
+
+						rowsCount = maxRow + 1;
+
+						if (rowsCount >= height)
+						{
+							if (page == scroll)
+							{
+								break;
+							}
+
+							rowsCount = 0;
+							page++;
+						}
 					}
 				}
 
@@ -174,7 +217,7 @@ namespace VarsViewer
 						case ColumnType.ROOM:
 							if (value != 0 && value != -1)
 							{
-								return $"E{value}R{next:D2}";
+								return $"E{value}R{next}";
 							}
 							break;
 
@@ -215,34 +258,32 @@ namespace VarsViewer
 						case ColumnType.FLAGS:
 							if (value != 0 && value != -1)
 							{
-								if (column.Values != null)
+								if (column.Values != null && fullMode)
 								{
-									return string.Join(" ", column.Values
-										.Select((Name, Index) => (Name, Index))
-										.Where(x => (value & 1 << x.Index) != 0 && !string.IsNullOrEmpty(x.Name))
-										.Select(x => x.Name));
+									return string.Join("|", column.Values
+										.Where(x => (value & x.Key) != 0 && !string.IsNullOrEmpty(x.Value))
+										.Select(x => x.Value));
 								}
-								else
+
+								unchecked
 								{
-									unchecked
-									{
-										return $"{(ushort)value:X}";
-									}
+									return $"{(ushort)value:X}";
 								}
 							}
 							break;
 
 						default:
-							if (value != 0 && value != -1)
+							if (value != 0)
 							{
 								if (column.Values != null)
 								{
-									if (value >= 0 && value < column.Values.Length)
+									if (column.Values.TryGetValue(value, out string name) && (fullMode || (name != null && name.Length == 1)))
 									{
-										return column.Values[value];
+										return name;
 									}
 								}
-								else
+
+								if (value != -1)
 								{
 									return value.ToString();
 								}
@@ -254,14 +295,51 @@ namespace VarsViewer
 
 					string FormatVar(VarEnum varType)
 					{
-						if (value != 0 && value != -1)
+						if (value != 0 && value != -1 && value != -2)
 						{
-							string name = Program.VarParser.GetText(varType, value, 8);
-							if (name.Length > 6) name = name.Substring(0, 6);
-							return $"{value} {name,-6}";
+							if (fullMode)
+							{
+								string name = Program.VarParser.GetText(varType, value, 8);
+								if (!string.IsNullOrEmpty(name))
+								{
+									if (name.Length > 6) name = name.Substring(0, 6).Trim().Replace(" ", "_");
+									return $"{value}:{name,-6}";
+								}
+							}
+
+							return value.ToString();
 						}
 
 						return null;
+					}
+				}
+			}
+
+			void HideColumns()
+			{
+				foreach (var group in config)
+				{
+					foreach (var column in group.Columns)
+					{
+						var elapsed = TimeSpan.FromTicks(timeStamp - column.Timer);
+						if (column.Visible && elapsed > TimeSpan.FromMilliseconds(100) && elapsed < TimeSpan.FromSeconds(5))
+						{
+							return; //more columns to be hidden soon
+						}
+					}
+				}
+
+				foreach (var group in config)
+				{
+					foreach (var column in group.Columns)
+					{
+						var elapsed = TimeSpan.FromTicks(timeStamp - column.Timer);
+						if (column.Visible && elapsed > TimeSpan.FromSeconds(5))
+						{
+							column.Visible = false;
+							column.Width = 0;
+							group.Visible = group.Columns.Any(x => x.Visible);
+						}
 					}
 				}
 			}
@@ -270,20 +348,42 @@ namespace VarsViewer
 			{
 				foreach (var group in config.Where(x => x.Visible))
 				{
-					//make columns large enough to contain label
-					group.Width = Math.Max(group.Width, (group.Name ?? "").Length);
-					foreach (var col in group.Columns.Where(x => x.Visible))
+					if (fullMode)
 					{
-						col.Width = Math.Max((col.Name ?? "").Length, col.Width);
+						FitLabel();
 					}
 
-					//make sure group column is large enough to contain childs
-					int childWidth = group.Columns.Where(x => x.Visible).Sum(x => x.Width + 1) - 1;
-					group.Width = Math.Max(group.Width, childWidth);
+					FitChilds();
 
-					if (group.Width > childWidth) //enlarge first child column if needed
+					void FitLabel()
 					{
-						group.Columns.First(x => x.Visible).Width += group.Width - childWidth;
+						//make columns large enough to contain label
+						group.Width = (group.Name ?? "").Length;
+						foreach (var col in group.Columns
+							.TakeWhile(x => x.Type != ColumnType.NEXT)
+							.Where(x => x.Visible))
+						{
+							col.Width = Math.Max((col.Name ?? "").Length, col.Width);
+						}
+					}
+
+					void FitChilds()
+					{
+						//make sure group column is large enough to contain childs
+						int childWidth = group.Columns
+							.TakeWhile(x => x.Type != ColumnType.NEXT)
+							.Where(x => x.Visible)
+							.Sum(x => x.Width + 1) - 1;
+
+						group.Width = Math.Max(fullMode ? group.Width : 0, childWidth);
+
+						foreach (var col in group.Columns)
+						{
+							col.ExtraWidth = 0;
+						}
+
+						//enlarge first child column if needed
+						group.Columns.First(x => x.Visible).ExtraWidth = group.Width - childWidth;
 					}
 				}
 			}
@@ -296,7 +396,7 @@ namespace VarsViewer
 				//header (groups)
 				foreach (var group in config.Where(x => x.Visible))
 				{
-					Console.Write(PadBoth(group.Name ?? "", group.Width));
+					Console.Write(PadBoth(SubString(group.Name ?? "", group.Width), group.Width));
 					Console.CursorLeft++;
 				}
 
@@ -307,15 +407,17 @@ namespace VarsViewer
 				foreach (var group in config.Where(x => x.Visible))
 				{
 					bool first = true;
-					foreach (var col in group.Columns.Where(x => x.Visible))
+					foreach (var col in group.Columns
+						.TakeWhile(x => x.Type != ColumnType.NEXT)
+						.Where(x => x.Visible))
 					{
 						if (!first)
 						{
-							Console.Write(" ");
+							Console.Write("|");
 						}
 
 						first = false;
-						Console.Write(PadBoth(col.Name ?? "", col.Width));
+						Console.Write(PadBoth(SubString(col.Name ?? "", col.Width + col.ExtraWidth), col.Width + col.ExtraWidth));
 					}
 
 					Console.CursorLeft++;
@@ -325,21 +427,21 @@ namespace VarsViewer
 				Console.CursorTop++;
 				Console.BackgroundColor = ConsoleColor.Black;
 
-				for (int row = 0; row < cells.Height; row++)
+				for (int row = 0; row < rowsCount; row++)
 				{
 					Console.CursorLeft = 0;
 
 					int col = 0;
 					foreach (var group in config)
 					{
-						foreach (var column in group.Columns)
+						foreach (var column in group.Columns
+							.TakeWhile(x => x.Type != ColumnType.NEXT))
 						{
 							if (column.Visible)
 							{
 								var cell = cells[row, col];
 								Console.ForegroundColor = cell.Color;
-								int width = column.Width;
-								Console.Write((cell.Text ?? "").PadLeft(width));
+								Console.Write((cell.Text ?? "").PadLeft(column.Width + column.ExtraWidth));
 								Console.CursorLeft++;
 							}
 
@@ -349,6 +451,16 @@ namespace VarsViewer
 
 					Console.CursorTop++;
 				}
+			}
+
+			string SubString(string text, int length)
+			{
+				if (text.Length > length)
+				{
+					return text.Substring(0, length);
+				}
+
+				return text;
 			}
 
 			string PadBoth(string text, int length)
@@ -375,13 +487,12 @@ namespace VarsViewer
 			{
 				case ConsoleKey.PageDown:
 					ClearTab();
-					scroll += GridHeight;
+					scroll++;
 					break;
 
 				case ConsoleKey.PageUp:
 					ClearTab();
-					scroll -= GridHeight;
-					scroll = Math.Max(scroll, 0);
+					scroll = Math.Max(scroll - 1, 0);
 					break;
 
 				case ConsoleKey.Spacebar:
@@ -392,6 +503,11 @@ namespace VarsViewer
 
 				case ConsoleKey.F5:
 					ClearTab();
+					break;
+
+				case ConsoleKey.Tab:
+					ClearTab();
+					fullMode = !fullMode;
 					break;
 			}
 
