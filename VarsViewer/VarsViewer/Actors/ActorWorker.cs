@@ -181,11 +181,18 @@ namespace VarsViewer
 						case ColumnType.TIME:
 							if (value != 0)
 							{
-								long time = (timer - (long)value32) / 60;
-								if (time > 0)
+								if (Program.GameVersion == GameVersion.AITD1)
 								{
-									return $"{time / 60}:{time % 60:D2}";
+									long time = (timer - (long)value32) / 60;
+									if (time > 0)
+									{
+										return $"{time / 60}:{time % 60:D2}";
+									}
+
+									return null;
 								}
+
+								return (value32 / 60).ToString();
 							}
 							break;
 
