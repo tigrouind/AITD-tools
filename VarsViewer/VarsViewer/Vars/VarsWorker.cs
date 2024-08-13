@@ -57,7 +57,7 @@ namespace VarsViewer
 					for (int i = 0; i < 20; i++)
 					{
 						Console.SetCursorPosition((i + 1) * cellSize, posY);
-						Console.Write(i.ToString().PadLeft(cellSize));
+						Console.Write(Tools.PadBoth(i.ToString(), cellSize));
 					}
 
 					for (int i = 0; i < rows; i++)
@@ -78,18 +78,25 @@ namespace VarsViewer
 							var var = vars[i];
 							SetCellColor(var);
 							var text = var == highlightedCell && inputText != null ? inputText : var.Text;
+							int center = (cellSize - text.Length) / 2;
 
 							if (var == highlightedCell && edit)
 							{
-								Console.Write(new string(' ', Math.Max(0, cellSize - text.Length)));
+								Console.Write(new string(' ', Math.Max(0, center)));
 								Console.BackgroundColor = ConsoleColor.DarkCyan;
 							}
 							else
 							{
-								text = text.PadLeft(cellSize);
+								text = Tools.PadBoth(text, cellSize);
 							}
 
 							Console.Write(Tools.SubString(text, cellSize, true));
+
+							if (var == highlightedCell && edit)
+							{
+								SetCellColor(var);
+								Console.Write(new string(' ', Math.Max(0, cellSize - center - text.Length)));
+							}
 						}
 						else
 						{

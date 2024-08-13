@@ -302,7 +302,7 @@ namespace VarsViewer
 								string name = Tools.SubString(Program.VarParser.GetText(varType, value), 6).Trim().Replace(" ", "_");
 								if (!string.IsNullOrEmpty(name))
 								{
-									return $"{value}:{name,-6}";
+									return $"{value}:{name}";
 								}
 							}
 
@@ -395,7 +395,7 @@ namespace VarsViewer
 				//header (groups)
 				foreach (var group in config.Where(x => x.Visible))
 				{
-					Console.Write(PadBoth(Tools.SubString(group.Name ?? "", group.Width), group.Width));
+					Console.Write(Tools.PadBoth(Tools.SubString(group.Name ?? "", group.Width), group.Width));
 					Console.CursorLeft++;
 				}
 
@@ -416,7 +416,7 @@ namespace VarsViewer
 						}
 
 						first = false;
-						Console.Write(PadBoth(Tools.SubString(col.Name ?? "", col.Width + col.ExtraWidth), col.Width + col.ExtraWidth));
+						Console.Write(Tools.PadBoth(Tools.SubString(col.Name ?? "", col.Width + col.ExtraWidth), col.Width + col.ExtraWidth));
 					}
 
 					Console.CursorLeft++;
@@ -440,7 +440,7 @@ namespace VarsViewer
 							{
 								var cell = cells[row, col];
 								Console.ForegroundColor = cell.Color;
-								Console.Write((cell.Text ?? "").PadLeft(column.Width + column.ExtraWidth));
+								Console.Write(Tools.PadBoth(cell.Text ?? "", column.Width + column.ExtraWidth));
 								Console.CursorLeft++;
 							}
 
@@ -450,13 +450,6 @@ namespace VarsViewer
 
 					Console.CursorTop++;
 				}
-			}
-
-			string PadBoth(string text, int length)
-			{
-				int spaces = length - text.Length;
-				int padLeft = spaces / 2 + text.Length;
-				return text.PadLeft(padLeft).PadRight(length);
 			}
 		}
 

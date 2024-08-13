@@ -28,6 +28,13 @@ namespace VarsViewer
 			return text;
 		}
 
+		public static string PadBoth(string text, int length)
+		{
+			int spaces = length - text.Length;
+			int padLeft = spaces / 2 + text.Length;
+			return text.PadLeft(padLeft).PadRight(length);
+		}
+
 		public static bool StringEquals(byte[] data, int index, int count, string value)
 		{
 			if (value == null)
