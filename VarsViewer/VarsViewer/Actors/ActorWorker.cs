@@ -299,10 +299,9 @@ namespace VarsViewer
 						{
 							if (fullMode)
 							{
-								string name = Program.VarParser.GetText(varType, value, 8);
+								string name = Tools.SubString(Program.VarParser.GetText(varType, value), 6).Trim().Replace(" ", "_");
 								if (!string.IsNullOrEmpty(name))
 								{
-									if (name.Length > 6) name = name.Substring(0, 6).Trim().Replace(" ", "_");
 									return $"{value}:{name,-6}";
 								}
 							}
@@ -396,7 +395,7 @@ namespace VarsViewer
 				//header (groups)
 				foreach (var group in config.Where(x => x.Visible))
 				{
-					Console.Write(PadBoth(SubString(group.Name ?? "", group.Width), group.Width));
+					Console.Write(PadBoth(Tools.SubString(group.Name ?? "", group.Width), group.Width));
 					Console.CursorLeft++;
 				}
 
@@ -417,7 +416,7 @@ namespace VarsViewer
 						}
 
 						first = false;
-						Console.Write(PadBoth(SubString(col.Name ?? "", col.Width + col.ExtraWidth), col.Width + col.ExtraWidth));
+						Console.Write(PadBoth(Tools.SubString(col.Name ?? "", col.Width + col.ExtraWidth), col.Width + col.ExtraWidth));
 					}
 
 					Console.CursorLeft++;
@@ -451,16 +450,6 @@ namespace VarsViewer
 
 					Console.CursorTop++;
 				}
-			}
-
-			string SubString(string text, int length)
-			{
-				if (text.Length > length)
-				{
-					return text.Substring(0, length);
-				}
-
-				return text;
 			}
 
 			string PadBoth(string text, int length)

@@ -11,6 +11,23 @@ namespace VarsViewer
 			return (dividend + (divisor / 2)) / divisor;
 		}
 
+		public static string SubString(string text, int length, bool ellipsis = false)
+		{
+			if (text.Length > length)
+			{
+				if (ellipsis)
+				{
+					return text.Substring(0, length - 1) + "…";
+				}
+				else
+				{
+					return text.Substring(0, length);
+				}
+			}
+
+			return text;
+		}
+
 		public static bool StringEquals(byte[] data, int index, int count, string value)
 		{
 			if (value == null)

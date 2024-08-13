@@ -227,7 +227,7 @@ namespace VarsViewer
 			}
 			else
 			{
-				Console.Write("{0,-8}", Program.VarParser.GetText(ch.Section, entry.Id, 8));
+				Console.Write("{0,-8}", Tools.SubString(Program.VarParser.GetText(ch.Section, entry.Id), 8));
 			}
 
 			int entrySize = entry.Size;

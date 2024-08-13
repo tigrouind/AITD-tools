@@ -88,7 +88,7 @@ namespace VarsViewer
 								text = text.PadLeft(CELLSIZE);
 							}
 
-							Console.Write(text.Length > CELLSIZE ? (text.Substring(0, CELLSIZE - 1) + "…") : text);
+							Console.Write(Tools.SubString(text, CELLSIZE, true));
 						}
 						else
 						{
