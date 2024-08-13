@@ -34,10 +34,11 @@ namespace VarsViewer
 		string inputText;
 		string toolTip;
 
-		const int CELLSIZE = 5;
+		int cellSize;
 
 		void IWorker.Render()
 		{
+			cellSize = Math.Max(3, Math.Min(System.Console.WindowWidth / 21, 7));
 			RenderTab(vars, 11, 0);
 			RenderTab(cvars, 1, 12);
 			RenderToolTip();
@@ -52,17 +53,17 @@ namespace VarsViewer
 					SetHeaderColor();
 
 					Console.SetCursorPosition(0, posY);
-					Console.Write(new string(' ', CELLSIZE));
+					Console.Write(new string(' ', cellSize));
 					for (int i = 0; i < 20; i++)
 					{
-						Console.SetCursorPosition((i + 1) * CELLSIZE, posY);
-						Console.Write(i.ToString().PadLeft(CELLSIZE));
+						Console.SetCursorPosition((i + 1) * cellSize, posY);
+						Console.Write(i.ToString().PadLeft(cellSize));
 					}
 
 					for (int i = 0; i < rows; i++)
 					{
 						Console.SetCursorPosition(0, i + 1 + posY);
-						Console.Write((i * 20).ToString().PadLeft(CELLSIZE));
+						Console.Write((i * 20).ToString().PadLeft(cellSize));
 					}
 				}
 
@@ -70,7 +71,7 @@ namespace VarsViewer
 				{
 					for (int i = 0; i < rows * 20; i++)
 					{
-						Console.SetCursorPosition((i % 20 + 1) * CELLSIZE, i / 20 + 1 + posY);
+						Console.SetCursorPosition((i % 20 + 1) * cellSize, i / 20 + 1 + posY);
 
 						if (i < vars.Count)
 						{
@@ -80,20 +81,20 @@ namespace VarsViewer
 
 							if (var == highlightedCell && edit)
 							{
-								Console.Write(new string(' ', Math.Max(0, CELLSIZE - text.Length)));
+								Console.Write(new string(' ', Math.Max(0, cellSize - text.Length)));
 								Console.BackgroundColor = ConsoleColor.DarkCyan;
 							}
 							else
 							{
-								text = text.PadLeft(CELLSIZE);
+								text = text.PadLeft(cellSize);
 							}
 
-							Console.Write(Tools.SubString(text, CELLSIZE, true));
+							Console.Write(Tools.SubString(text, cellSize, true));
 						}
 						else
 						{
 							SetHeaderColor();
-							Console.Write(new string(' ', CELLSIZE));
+							Console.Write(new string(' ', cellSize));
 						}
 					}
 				}
@@ -127,6 +128,15 @@ namespace VarsViewer
 					(Console.BackgroundColor, Console.ForegroundColor) = (ConsoleColor.DarkGreen, ConsoleColor.Gray);
 					Console.SetCursorPosition(0, 14);
 					Console.Write(toolTip);
+
+					if (highlightedCell != null)
+					{
+						if (highlightedCell.Text.Length > cellSize)
+						{
+							Console.SetCursorPosition(cellSize * 21 - highlightedCell.Text.Length, 14);
+							Console.Write(highlightedCell.Text);
+						}
+					}
 				}
 			}
 		}
@@ -441,7 +451,7 @@ namespace VarsViewer
 		bool TryFindVarAtPosition(int x, int y, out Var result)
 		{
 			result = vars.Concat(cvars)
-				.Where(c => Intersect(GetPosition(c), CELLSIZE, 1))
+				.Where(c => Intersect(GetPosition(c), cellSize, 1))
 				.FirstOrDefault();
 
 			return result != null;
@@ -456,7 +466,7 @@ namespace VarsViewer
 				int cellx = var.Index % 20;
 				int celly = var.Index / 20;
 				int rowIndex = var.Type == VarEnum.VARS ? 1 : 13;
-				return ((cellx + 1) * CELLSIZE, celly + rowIndex);
+				return ((cellx + 1) * cellSize, celly + rowIndex);
 			}
 		}
 
