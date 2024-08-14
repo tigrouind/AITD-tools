@@ -1,4 +1,4 @@
-﻿namespace VarsViewer
+namespace VarsViewer
 {
 	public enum ColumnType
 	{
@@ -15,6 +15,7 @@
 		TRACK,
 		ANIM,
 
+		ANGLE,
 		ROOM,
 		TIME,
 		USHORT,

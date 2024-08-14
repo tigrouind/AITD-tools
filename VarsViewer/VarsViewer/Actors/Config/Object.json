@@ -1,18 +1,7 @@
 [
 	{ "name": "Id", "type": "slot", "offset": 0 },
-	{ "name": "#", "offset": 0 },
-	{ "name": "Body", "type": "body", "offset": 2 },
 	{ "name": "Flags", "type": "flags", "values": {"1": "anim", "8": "back", "16": "push", "64": "trig", "128": "pick", "256": "fall"}, "offset": 4 },
-	{ "name": "ZVType", "values": {"0": "none", "1": "normal", "2": "cube", "3": "rot", "4": "collider"}, "offset": 6 },
-	{ "name": "Found",
-		"columns":
-		[
-			{ "name": "Body", "type": "body", "offset": 8 },
-			{ "name": "Name", "offset": 10 },
-			{ "name": "Flag", "type": "flags", "values": {"1": "use", "2": "eat", "4": "read", "8": "reload", "16": "fight", "32": "jump", "64": "open", "128": "close", "256": "push", "512": "throw", "1024": "drop"}, "offset": 12 },
-			{ "name": "Life", "type": "life", "offset": 14 }
-		]
-	},
+	{ "name": "Room", "type": "room", "offset": 28 },
 	{ "name": "Room",
 		"columns":
 		[
@@ -21,6 +10,7 @@
 			{ "name": "Z", "offset": 20 }
 		]
 	},
+	{ "name": "ZVType", "values": {"0": "none", "1": "normal", "2": "cube", "3": "rot", "4": "collider"}, "offset": 6 },
 	{ "name": "Angle",
 		"columns":
 		[
@@ -29,7 +19,6 @@
 			{ "name": "Z", "offset": 26 }
 		]
 	},
-	{ "name": "Room", "type": "room", "offset": 28 },
 	{ "name": "Life",
 		"columns":
 		[
@@ -37,8 +26,7 @@
 			{ "name": "Mode", "values": {"0": "floor", "1": "room", "2": "camera"}, "offset": 32 }
 		]
 	},
-
-	{ "name": "FloorTrg/Inv", "offset": 36 },
+	{ "name": "Body", "type": "body", "offset": 2 },
 	{ "name": "Anim",
 		"columns":
 		[
@@ -55,5 +43,16 @@
 			{ "name": "Mode", "values": {"0": "none", "1": "manual", "2": "follow", "3": "track"}, "offset": 46 }
 		]
 	},
-	{ "name": "Weight", "offset": 50 }
+	{ "name": "Found",
+		"columns":
+		[
+			{ "name": "Body", "type": "body", "offset": 8 },
+			{ "name": "Name", "offset": 10 },
+			{ "name": "Flag", "type": "flags", "values": {"1": "use", "2": "eat", "4": "read", "8": "reload", "16": "fight", "32": "jump", "64": "open", "128": "close", "256": "push", "512": "throw", "1024": "drop"}, "offset": 12 },
+			{ "name": "Life", "type": "life", "offset": 14 }
+		]
+	},
+	{ "name": "FloorTrg/Inv", "offset": 36 },
+	{ "name": "Weight", "offset": 50 },
+	{ "name": "Slot", "offset": 0 }
 ]
