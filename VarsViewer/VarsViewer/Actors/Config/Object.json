@@ -39,7 +39,7 @@
 	{ "name": "Track",
 		"columns":
 		[
-			{ "name": "Num/Time", "type": "ushort", "offset": 48 },
+			{ "name": "Num/Time", "type": "time3", "offset": 48 },
 			{ "name": "Mode", "values": {"0": "none", "1": "manual", "2": "follow", "3": "track"}, "offset": 46 }
 		]
 	},

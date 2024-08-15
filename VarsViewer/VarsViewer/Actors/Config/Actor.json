@@ -104,17 +104,17 @@
 			{ "name": "Old", "offset": 106 },
 			{ "name": "New", "offset": 108 },
 			{ "name": "Param", "offset": 110 },
-			{ "name": "Time", "type": "ushort", "offset": 112 },
+			{ "name": "Time", "type": "time2", "offset": 112 },
 			{ "type": "next" },
 			{ "name": "Old", "offset": 96 },
 			{ "name": "New", "offset": 98 },
 			{ "name": "Param", "offset": 100 },
-			{ "name": "Time", "type": "ushort", "offset": 102 },
+			{ "name": "Time", "type": "time2", "offset": 102 },
 			{ "type": "next" },
 			{ "name": "Old", "offset": 118 },
 			{ "name": "New", "offset": 120 },
 			{ "name": "Param", "offset": 122 },
-			{ "name": "Time", "type": "ushort", "offset": 124 }
+			{ "name": "Time", "type": "time2", "offset": 124 }
 		]
 	},
 	{ "name": "2DBox",

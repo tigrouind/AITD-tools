@@ -87,7 +87,8 @@ namespace VarsViewer
 					return;
 				}
 
-				uint timer = Program.Memory.ReadUnsignedInt(Program.EntryPoint + 0x19D12);
+				uint timer1 = Program.Memory.ReadUnsignedInt(Program.EntryPoint + 0x19D12);
+				ushort timer2 = Program.Memory.ReadUnsignedShort(Program.EntryPoint + 0x242E0);
 
 				int page = 0;
 				int height = System.Console.WindowHeight - 2;
@@ -179,9 +180,10 @@ namespace VarsViewer
 				string FormatField(Column column, int startAddress, int i)
 				{
 					int pos = column.Offset;
-					int value = Program.Memory.ReadShort(startAddress + pos);
-					int next = Program.Memory.ReadShort(startAddress + (pos + 2));
-					uint value32 = Program.Memory.ReadUnsignedInt(startAddress + pos);
+					var value32 = Program.Memory.ReadUnsignedInt(startAddress + pos);
+					var value = unchecked((short)value32);
+					var next = unchecked((short)(value32 >> 16));
+					var uValue = unchecked((ushort)value32);
 
 					switch (column.Type)
 					{
@@ -229,36 +231,45 @@ namespace VarsViewer
 							break;
 
 						case ColumnType.TIME:
+							if (value != 0 && Program.GameVersion == GameVersion.AITD1)
+							{
+								var elapsed = (timer1 - (long)value32) / 60;
+								if (elapsed > 0)
+								{
+									return $"{elapsed / 60}:{elapsed % 60:D2}";
+								}
+							}
+							break;
+
+						case ColumnType.TIME2:
+							if (value != 0 && Program.GameVersion == GameVersion.AITD1)
+							{
+								var elapsed = timer2 - uValue;
+								if (elapsed > 0 && elapsed < 60)
+								{
+									return elapsed.ToString();
+								}
+							}
+							break;
+
+						case ColumnType.TIME3:
 							if (value != 0)
 							{
-								if (Program.GameVersion == GameVersion.AITD1)
+								if (uValue > 60)
 								{
-									long time = (timer - (long)value32) / 60;
-									if (time > 0)
+									if (Program.GameVersion == GameVersion.AITD1)
 									{
-										return $"{time / 60}:{time % 60:D2}";
+										var elapsed = unchecked((ushort)timer1) - uValue;
+										if (elapsed > 0 && elapsed < 300)
+										{
+											return elapsed.ToString();
+										}
 									}
 
 									return null;
 								}
 
-								return (value32 / 60).ToString();
-							}
-							break;
-
-						case ColumnType.USHORT:
-							if (value != 0 && value != -1)
-							{
-								unchecked
-								{
-									if ((ushort)value > 60)
-									{
-										long time = (ushort)value / 60;
-										return $"{time / 60}:{time % 60:D2}";
-									}
-
-									return value.ToString();
-								}
+								return FormatVar(VarEnum.TRACKS);
 							}
 							break;
 

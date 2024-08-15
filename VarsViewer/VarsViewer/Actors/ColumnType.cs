@@ -18,7 +18,8 @@ namespace VarsViewer
 		ANGLE,
 		ROOM,
 		TIME,
-		USHORT,
+		TIME2,
+		TIME3,
 		FLAGS
 	}
 }
