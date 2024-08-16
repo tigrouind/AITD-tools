@@ -19,6 +19,7 @@ if exist C:\MinGW\bin\gcc.exe (
 
 "%PROGRAMFILES%\7-Zip\7z" a -tzip "AITD-tools.zip" ^
  ".\LifeDISA\LifeDISA\bin\Release\*.exe" ^
+ ".\LifeDISA\LifeDISA\bin\Release\GAMEDATA\vars.txt" ^
  ".\MemoryViewer\MemoryViewer\bin\Release\*.exe" ^
  ".\MemoryViewer\MemoryViewer\bin\Release\SDL.dll" ^
  ".\MemoryViewer\MemoryViewer\bin\Release\SDL2.dll" ^
@@ -30,4 +31,7 @@ if exist C:\MinGW\bin\gcc.exe (
  ".\Shared\bin\Release\Shared.dll" ^
  ".\UnPAK\bin\Release\Unpak.dll" ^
  "-mx=9"
+if %ERRORLEVEL% NEQ 0 pause
+ 
+"%PROGRAMFILES%\7-Zip\7z" rn "AITD-tools.zip" "vars.txt" "GAMEDATA\vars.txt"
 if %ERRORLEVEL% NEQ 0 pause
