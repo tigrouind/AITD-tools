@@ -13,9 +13,9 @@ namespace VarsViewer
 	{
 		bool IWorker.UseMouse => false;
 
-		(int ActorAddress, int ObjectAddress) gameConfig => gameConfigs[Program.GameVersion];
-		(int Rows, int Columns) cellConfig => view == 0 ? (50, 80) : (Program.GameVersion == GameVersion.AITD1_DEMO ? 18 : 292, 26);
-		readonly Dictionary<GameVersion, (int, int)> gameConfigs = new Dictionary<GameVersion, (int, int)>
+		(int Rows, int Columns) CellConfig => view == 0 ? (50, 80) : (Program.GameVersion == GameVersion.AITD1_DEMO ? 18 : 292, 26);
+		static (int ActorAddress, int ObjectAddress) GameConfig => gameConfigs[Program.GameVersion];
+		static readonly Dictionary<GameVersion, (int, int)> gameConfigs = new Dictionary<GameVersion, (int, int)>
 		{
 			{ GameVersion.AITD1,        (0x220CE, 0x2400E) },
 			{ GameVersion.AITD1_FLOPPY, (0x20542, 0x18BF0) },
@@ -25,8 +25,8 @@ namespace VarsViewer
 		readonly Buffer<(string Text, ConsoleColor Color)> cells = new Buffer<(string, ConsoleColor)>();
 		readonly int view;
 		int scroll;
-		bool showAll;
-		bool fullMode;
+		static bool showAll;
+		static bool fullMode;
 		readonly List<Column> config = new List<Column>();
 
 		public ActorWorker(int view)
@@ -65,7 +65,7 @@ namespace VarsViewer
 		{
 			int rowsCount = 0;
 			var timeStamp = Stopwatch.GetTimestamp();
-			(int rows, int columns) = cellConfig;
+			(int rows, int columns) = CellConfig;
 
 			if (Program.EntryPoint != -1)
 			{
@@ -167,10 +167,10 @@ namespace VarsViewer
 					switch (view)
 					{
 						case 0: //actors
-							return gameConfig.ActorAddress + Program.EntryPoint;
+							return GameConfig.ActorAddress + Program.EntryPoint;
 
 						case 1: //objects
-							return Program.Memory.ReadFarPointer(gameConfig.ObjectAddress + Program.EntryPoint);
+							return Program.Memory.ReadFarPointer(GameConfig.ObjectAddress + Program.EntryPoint);
 
 						default:
 							throw new NotSupportedException();
