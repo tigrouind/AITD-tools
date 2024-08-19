@@ -12,7 +12,7 @@ namespace VarsViewer
 		public static readonly byte[] Memory = new byte[640 * 1024];
 		public static readonly VarParserForCache VarParser = new VarParserForCache();
 		public static ProcessMemory Process;
-		public static int EntryPoint = -1;
+		public static int EntryPoint;
 		public static GameVersion GameVersion;
 		static int view;
 		static readonly Stopwatch dosboxTimer = new Stopwatch();
@@ -36,12 +36,11 @@ namespace VarsViewer
 				if (Process == null && (!dosboxTimer.IsRunning || dosboxTimer.Elapsed > TimeSpan.FromSeconds(1)))
 				{
 					SearchDosBox();
+					if (Process != null)
+					{
+						SearchEntryPoint();
+					}
 					dosboxTimer.Restart();
-				}
-
-				if (Process != null && EntryPoint == -1)
-				{
-					SearchEntryPoint();
 				}
 
 				Console.ProcessEvents();
@@ -158,7 +157,6 @@ namespace VarsViewer
 
 		static void CloseReader()
 		{
-			EntryPoint = -1;
 			Process.Close();
 			Process = null;
 		}

@@ -26,6 +26,7 @@ namespace VarsViewer
 		readonly int view;
 		int scroll;
 		static bool showAll;
+		static bool freeze;
 		static bool fullMode;
 		readonly List<Column> config = new List<Column>();
 
@@ -90,13 +91,9 @@ namespace VarsViewer
 			var timeStamp = Stopwatch.GetTimestamp();
 			(int rows, int columns) = CellConfig;
 
-			if (Program.EntryPoint != -1)
-			{
-				HideColumns();
-				ReadActors();
-				ResizeColumns();
-			}
-
+			HideColumns();
+			ReadActors();
+			ResizeColumns();
 			OutputToConsole();
 
 			void ReadActors()
@@ -412,7 +409,7 @@ namespace VarsViewer
 			void OutputToConsole()
 			{
 				Console.SetCursorPosition(0, 0);
-				(Console.BackgroundColor, Console.ForegroundColor) = (ConsoleColor.DarkGray, ConsoleColor.Black);
+				(Console.BackgroundColor, Console.ForegroundColor) = (freeze ? ConsoleColor.Blue : ConsoleColor.DarkGray, ConsoleColor.Black);
 
 				//header (groups)
 				foreach (var group in config.Where(x => x.Visible))
@@ -475,7 +472,7 @@ namespace VarsViewer
 
 		bool IWorker.ReadMemory()
 		{
-			if (Program.Process.Read(Program.Memory, 0, 640 * 1024) == 0)
+			if (!freeze && Program.Process.Read(Program.Memory, 0, 640 * 1024) == 0)
 			{
 				return false;
 			}
@@ -510,6 +507,10 @@ namespace VarsViewer
 				case ConsoleKey.Tab:
 					ClearTab();
 					fullMode = !fullMode;
+					break;
+
+				case ConsoleKey.F:
+					freeze = !freeze;
 					break;
 			}
 
