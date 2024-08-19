@@ -233,7 +233,7 @@ namespace VarsViewer
 							return FormatVar(VarEnum.ANIMS);
 
 						case ColumnType.ANGLE:
-							return $"{Math.Floor(value * 360.0f / 1024.0f)}";
+							return $"{Math.Floor((value + 1024) % 1024 * 360.0f / 1024.0f)}";
 
 						case ColumnType.ROOM:
 							if (value != -1)

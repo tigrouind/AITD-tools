@@ -158,8 +158,8 @@
 			{
 				"columns":
 				[
-					{ "name": "Old", "offset": 106, "condition": 110 },
-					{ "name": "New", "offset": 108, "condition": 110 },
+					{ "name": "Old", "offset": 106, "condition": 110, "type":"angle" },
+					{ "name": "New", "offset": 108, "condition": 110, "type":"angle" },
 					{ "name": "Param", "offset": 110 },
 					{ "name": "Time", "type": "time2", "offset": 112, "condition": 110 }
 				],
