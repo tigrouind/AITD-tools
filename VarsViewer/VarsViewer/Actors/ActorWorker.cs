@@ -29,6 +29,7 @@ namespace VarsViewer
 		static bool freeze;
 		static bool fullMode;
 		readonly List<Column> config = new List<Column>();
+		readonly Stopwatch refreshStopwatch = Stopwatch.StartNew();
 
 		public ActorWorker(int view)
 		{
@@ -91,7 +92,12 @@ namespace VarsViewer
 			var timeStamp = Stopwatch.GetTimestamp();
 			(int rows, int columns) = CellConfig;
 
-			HideColumns();
+			if (refreshStopwatch.Elapsed > TimeSpan.FromSeconds(5))
+			{
+				refreshStopwatch.Restart();
+				HideColumns();
+			}
+
 			ReadActors();
 			ResizeColumns();
 			OutputToConsole();
@@ -341,20 +347,7 @@ namespace VarsViewer
 				{
 					foreach (var column in group.Columns[0].Columns)
 					{
-						var elapsed = TimeSpan.FromTicks(timeStamp - column.Timer);
-						if (column.Visible && elapsed > TimeSpan.FromMilliseconds(100) && elapsed < TimeSpan.FromSeconds(5))
-						{
-							return; //more columns to be hidden soon
-						}
-					}
-				}
-
-				foreach (var group in config)
-				{
-					foreach (var column in group.Columns[0].Columns)
-					{
-						var elapsed = TimeSpan.FromTicks(timeStamp - column.Timer);
-						if (column.Visible && elapsed > TimeSpan.FromSeconds(5))
+						if (column.Visible && TimeSpan.FromTicks(timeStamp - column.Timer) > TimeSpan.FromSeconds(20))
 						{
 							column.Visible = false;
 							column.Width = 0;
