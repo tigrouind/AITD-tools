@@ -108,7 +108,6 @@ VarsViewer [-view {vars|cache|actor|object}]
 | <kbd>space</kbd> | show/hide inactive actors/objects
 | <kbd>page up</kbd> / <kbd>page down</kbd> | scroll
 | <kbd>tab</kbd> | compact/full view
-| <kbd>F5</kbd> | force display refresh
 
 # PAKExtract
 

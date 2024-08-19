@@ -500,10 +500,6 @@ namespace VarsViewer
 					showAll = !showAll;
 					break;
 
-				case ConsoleKey.F5:
-					ClearTab();
-					break;
-
 				case ConsoleKey.Tab:
 					ClearTab();
 					fullMode = !fullMode;
