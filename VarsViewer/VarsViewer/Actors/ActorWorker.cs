@@ -200,6 +200,15 @@ namespace VarsViewer
 						return null;
 					}
 
+					if (column.Condition != 0)
+					{
+						int otherValue = Program.Memory.ReadShort(startAddress + column.Condition);
+						if (otherValue == -1 || otherValue == 0)
+						{
+							return null;
+						}
+					}
+
 					switch (column.Type)
 					{
 						case ColumnType.SLOT:

@@ -11,6 +11,7 @@ namespace VarsViewer
 		public Column[] Columns;
 		public IDictionary<int, string> Values;
 		public bool IncludeZero;
+		public int Condition;
 
 		public int Width;
 		public int ExtraWidth;

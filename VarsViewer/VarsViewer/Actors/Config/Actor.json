@@ -70,17 +70,17 @@
 	{ "name": "Angle",
 		"columns":
 		[
-			{ "name": "X", "type": "angle", "offset": 40 },
-			{ "name": "Dir", "values": {"-1": "▼", "32767": "▼", "1": "▲"}, "offset": 114 },
-			{ "name": "Y", "type": "angle", "offset": 42 },
-			{ "name": "Z", "type": "angle", "offset": 44 }
+			{ "name": "X", "type": "angle", "offset": 40, "condition": 2 },
+			{ "name": "Dir", "values": {"-1": "▼", "32767": "▼", "1": "▲"}, "offset": 114, "condition": 2 },
+			{ "name": "Y", "type": "angle", "offset": 42, "condition": 2 },
+			{ "name": "Z", "type": "angle", "offset": 44, "condition": 2 }
 		]
 	},
 	{ "name": "",
 		"columns":
 		[
 			{ "name": "Life", "type": "life", "offset": 52, "includeZero": true },
-			{ "name": "Mode", "values": {"0": "floor", "1": "room", "2": "camera"}, "offset": 50, "includeZero": true }
+			{ "name": "Mode", "values": {"0": "floor", "1": "room", "2": "camera"}, "offset": 50, "includeZero": true, "condition": 52 }
 		]
 	},
 	{ "name": "Body", "type": "body", "offset": 2, "includeZero": true },
@@ -91,7 +91,7 @@
 				"columns":
 				[
 					{ "name": "Anim", "type": "anim", "offset": 62, "includeZero": true },
-					{ "name": "Type", "values": {"0": "once", "1": "repeat", "2": "uninter"}, "offset": 64, "includeZero": true },
+					{ "name": "Type", "values": {"0": "once", "1": "repeat", "2": "uninter"}, "offset": 64, "includeZero": true, "condition": 62 },
 					{ "name": "Next", "type": "anim", "offset": 66 }
 				],
 			},
@@ -100,7 +100,7 @@
 				[
 
 					{ "name": "Anim", "type": "anim", "offset": 68  },
-					{ "name": "Type", "values": {"0": "once", "1": "repeat", "2": "uninter"}, "offset": 70 },
+					{ "name": "Type", "values": {"0": "once", "1": "repeat", "2": "uninter"}, "offset": 70, "condition": 68 },
 					{ "name": "Next", "type": "anim", "offset": 72 }
 				]
 			}
@@ -112,15 +112,15 @@
 			{
 				"columns":
 				[
-					{ "name": "Frame", "offset": 74, "includeZero": true },
-					{ "name": "End", "offset": 78 }
+					{ "name": "Frame", "offset": 74, "includeZero": true, "condition": 62 },
+					{ "name": "End", "offset": 78, "condition": 62 }
 				]
 			},
 			{
 				"columns":
 				[
-					{ "name": "Total", "offset": 76 },
-					{ "name": "End", "offset": 80 }
+					{ "name": "Total", "offset": 76, "condition": 62 },
+					{ "name": "End", "offset": 80, "condition": 62 }
 				]
 			}
 		]
@@ -149,7 +149,7 @@
 		[
 			{ "name": "Number", "type": "track", "offset": 84, "includeZero": true },
 			{ "name": "Mode", "values": {"0": "none", "1": "manual", "2": "follow", "3": "track"}, "offset": 82 },
-			{ "name": "Pos", "offset": 86 }
+			{ "name": "Pos", "offset": 86, "condition": 84 }
 		]
 	},
 	{ "name": "Angle/Fall/Speed",
@@ -158,28 +158,28 @@
 			{
 				"columns":
 				[
-					{ "name": "Old", "offset": 106 },
-					{ "name": "New", "offset": 108 },
+					{ "name": "Old", "offset": 106, "condition": 110 },
+					{ "name": "New", "offset": 108, "condition": 110 },
 					{ "name": "Param", "offset": 110 },
-					{ "name": "Time", "type": "time2", "offset": 112 }
+					{ "name": "Time", "type": "time2", "offset": 112, "condition": 110 }
 				],
 			},
 			{
 				"columns":
 				[
-					{ "name": "Old", "offset": 96 },
-					{ "name": "New", "offset": 98 },
+					{ "name": "Old", "offset": 96, "condition": 100 },
+					{ "name": "New", "offset": 98, "condition": 100 },
 					{ "name": "Param", "offset": 100 },
-					{ "name": "Time", "type": "time2", "offset": 102 }
+					{ "name": "Time", "type": "time2", "offset": 102, "condition": 100 }
 				],
 			},
 			{
 				"columns":
 				[
-					{ "name": "Old", "offset": 118 },
-					{ "name": "New", "offset": 120 },
+					{ "name": "Old", "offset": 118, "condition": 122 },
+					{ "name": "New", "offset": 120, "condition": 122 },
 					{ "name": "Param", "offset": 122 },
-					{ "name": "Time", "type": "time2", "offset": 124 }
+					{ "name": "Time", "type": "time2", "offset": 124, "condition": 122 }
 				]
 			}
 		]
@@ -207,20 +207,20 @@
 	{ "name": "Action",
 		"columns":
 		[
-			{ "name": "Anim", "type": "anim", "offset": 144 },
+			{ "name": "Anim", "type": "anim", "offset": 144, "condition": 142 },
 			{ "name": "Type", "values": {"0": "none", "1": "pre_hit", "2": "hit", "3": "unknown", "4": "pre_fire", "5": "fire", "6": "pre_throw", "7": "throw", "8": "hit_obj", "9": "during_throw", "10": "pre_hit"}, "offset": 142 },
-			{ "name": "Frame", "offset": 146 },
-			{ "name": "Force", "offset": 150 }
+			{ "name": "Frame", "offset": 146, "condition": 142 },
+			{ "name": "Force", "offset": 150, "condition": 142 }
 		]
 	},
 	{ "name": "HitBox",
 		"columns":
 		[
-			{ "name": "Id", "offset": 152 },
-			{ "name": "Size", "offset": 148 },
-			{ "name": "X", "offset": 154 },
-			{ "name": "Y", "offset": 156 },
-			{ "name": "Z", "offset": 158 }
+			{ "name": "Id", "offset": 152, "condition": 142 },
+			{ "name": "Size", "offset": 148, "condition": 142 },
+			{ "name": "X", "offset": 154, "condition": 142 },
+			{ "name": "Y", "offset": 156, "condition": 142 },
+			{ "name": "Z", "offset": 158, "condition": 142 }
 		]
 	},
 	{ "name": "Hit",
