@@ -15,7 +15,7 @@ namespace VarsViewer
 		{
 			if (text.Length > length)
 			{
-				if (ellipsis)
+				if (ellipsis && length > 1)
 				{
 					return text.Substring(0, length - 1) + "…";
 				}

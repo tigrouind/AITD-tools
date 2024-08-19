@@ -414,7 +414,7 @@ namespace VarsViewer
 				//header (groups)
 				foreach (var group in config.Where(x => x.Visible))
 				{
-					Console.Write(Tools.PadBoth(Tools.SubString(group.Name ?? "", group.Width), group.Width));
+					Console.Write(Tools.PadBoth(Tools.SubString(group.Name ?? "", group.Width, true), group.Width));
 					Console.CursorLeft++;
 				}
 
@@ -434,7 +434,7 @@ namespace VarsViewer
 						}
 
 						first = false;
-						Console.Write(Tools.PadBoth(Tools.SubString(col.Name ?? "", col.Width + col.ExtraWidth), col.Width + col.ExtraWidth));
+						Console.Write(Tools.PadBoth(Tools.SubString(col.Name ?? "", col.Width + col.ExtraWidth, true), col.Width + col.ExtraWidth));
 					}
 
 					Console.CursorLeft++;
