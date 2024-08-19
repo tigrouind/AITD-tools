@@ -14,10 +14,10 @@ namespace VarsViewer
 		public static ProcessMemory Process;
 		public static int EntryPoint;
 		public static GameVersion GameVersion;
-		static int view;
 		static readonly Stopwatch dosboxTimer = new Stopwatch();
 
-		static readonly IWorker[] workers = new IWorker[] { new VarsWorker(), new CacheWorker(), new ActorWorker(0), new ActorWorker(1) };
+		static readonly IWorker[] workers = new IWorker[] { new VarsWorker(), new CacheWorker(), new ActorWorker() };
+		static int view, subview;
 		static IWorker worker => workers[view];
 
 		public static void Main(string[] args)
@@ -54,7 +54,7 @@ namespace VarsViewer
 				}
 
 				Console.Clear();
-				worker.Render();
+				worker.Render(subview);
 				Console.Flush();
 
 				Thread.Sleep(15);
@@ -163,7 +163,8 @@ namespace VarsViewer
 
 		static void SetView(int view)
 		{
-			Program.view = view;
+			Program.view = view == 3 ? 2 : view;
+			Program.subview = view == 3 ? 1 : 0;
 			Console.MouseInput = worker.UseMouse;
 			System.Console.Title = $"AITD {new string[] { "vars", "cache", "actors", "objects" }[view]} viewer";
 		}

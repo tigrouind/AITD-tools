@@ -13,7 +13,9 @@ namespace VarsViewer
 	{
 		bool IWorker.UseMouse => false;
 
-		(int Rows, int Columns) CellConfig => view == 0 ? (50, 80) : (Program.GameVersion == GameVersion.AITD1_DEMO ? 18 : 292, 26);
+		int GetAddress(int view) => view == 0 ? GameConfig.ActorAddress + Program.EntryPoint : Program.Memory.ReadFarPointer(GameConfig.ObjectAddress + Program.EntryPoint);
+		(int Rows, int Columns) CellConfig(int view) => view == 0 ? (50, 80) : (Program.GameVersion == GameVersion.AITD1_DEMO ? 18 : 292, 26);
+
 		static (int ActorAddress, int ObjectAddress) GameConfig => gameConfigs[Program.GameVersion];
 		static readonly Dictionary<GameVersion, (int, int)> gameConfigs = new Dictionary<GameVersion, (int, int)>
 		{
@@ -23,24 +25,21 @@ namespace VarsViewer
 		};
 
 		readonly Buffer<(string Text, ConsoleColor Color)> cells = new Buffer<(string, ConsoleColor)>();
-		readonly int view;
 		int scroll;
-		static bool showAll;
-		static bool freeze;
-		static bool fullMode;
-		readonly List<Column> config = new List<Column>();
+		bool showAll, freeze, fullMode;
+		readonly List<Column>[] configs = new List<Column>[2];
 		readonly Stopwatch refreshStopwatch = Stopwatch.StartNew();
 
-		public ActorWorker(int view)
+		public ActorWorker()
 		{
-			this.view = view;
+			configs[0] = LoadConfig("Actor.json");
+			configs[1] = LoadConfig("Object.json");
 
-			LoadConfig();
-
-			void LoadConfig()
+			List<Column> LoadConfig(string fileName)
 			{
+				var config = new List<Column>();
 				var assembly = Assembly.GetExecutingAssembly();
-				string ressourceName = $"VarsViewer.Actors.Config.{(view == 0 ? "Actor.json" : "Object.json")}";
+				string ressourceName = $"VarsViewer.Actors.Config.{fileName}";
 				using (var stream = assembly.GetManifestResourceStream(ressourceName))
 				using (var reader = new StreamReader(stream))
 				{
@@ -83,14 +82,17 @@ namespace VarsViewer
 						}
 					}
 				}
+
+				return config;
 			}
 		}
 
-		void IWorker.Render()
+		void IWorker.Render(int view)
 		{
 			int rowsCount = 0;
 			var timeStamp = Stopwatch.GetTimestamp();
-			(int rows, int columns) = CellConfig;
+			(int rows, int columns) = CellConfig(view);
+			var config = configs[view];
 
 			if (refreshStopwatch.Elapsed > TimeSpan.FromSeconds(5))
 			{
@@ -105,7 +107,7 @@ namespace VarsViewer
 			void ReadActors()
 			{
 				cells.Clear();
-				int address = GetAddress();
+				int address = GetAddress(view);
 
 				if (Enumerable.Range(0, rows)
 					.All(x => Program.Memory.ReadShort(address + x * columns * 2) == 0)) //are actors initialized ?
@@ -182,21 +184,6 @@ namespace VarsViewer
 							rowsCount = 0;
 							page++;
 						}
-					}
-				}
-
-				int GetAddress()
-				{
-					switch (view)
-					{
-						case 0: //actors
-							return GameConfig.ActorAddress + Program.EntryPoint;
-
-						case 1: //objects
-							return Program.Memory.ReadFarPointer(GameConfig.ObjectAddress + Program.EntryPoint);
-
-						default:
-							throw new NotSupportedException();
 					}
 				}
 
@@ -506,7 +493,7 @@ namespace VarsViewer
 			void ClearTab()
 			{
 				cells.Clear();
-				foreach (var group in config)
+				foreach (var group in configs.SelectMany(x => x))
 				{
 					group.Width = 0;
 					group.Visible = false;
