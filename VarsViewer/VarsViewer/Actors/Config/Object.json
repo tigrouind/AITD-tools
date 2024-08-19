@@ -1,13 +1,13 @@
 [
 	{ "name": "Id", "type": "slot", "offset": 0 },
 	{ "name": "Flags", "type": "flags", "values": {"1": "anim", "8": "back", "16": "push", "64": "trig", "128": "pick", "256": "fall"}, "offset": 4 },
-	{ "name": "Room", "type": "room", "offset": 28 },
+	{ "name": "Room", "type": "room", "offset": 28, "includeZero": true },
 	{ "name": "Room",
 		"columns":
 		[
-			{ "name": "X", "offset": 16 },
+			{ "name": "X", "offset": 16, "includeZero": true },
 			{ "name": "Y", "offset": 18 },
-			{ "name": "Z", "offset": 20 }
+			{ "name": "Z", "offset": 20, "includeZero": true }
 		]
 	},
 	{ "name": "ZVType", "values": {"0": "none", "1": "normal", "2": "cube", "3": "rot", "4": "collider"}, "offset": 6 },
@@ -19,27 +19,27 @@
 			{ "name": "Z", "offset": 26 }
 		]
 	},
-	{ "name": "Life",
+	{ "name": "",
 		"columns":
 		[
-			{ "type": "life", "offset": 34 },
-			{ "name": "Mode", "values": {"0": "floor", "1": "room", "2": "camera"}, "offset": 32 }
+			{ "name": "Life", "type": "life", "offset": 34, "includeZero": true },
+			{ "name": "Mode", "values": {"0": "floor", "1": "room", "2": "camera"}, "offset": 32, "includeZero": true }
 		]
 	},
-	{ "name": "Body", "type": "body", "offset": 2 },
+	{ "name": "Body", "type": "body", "offset": 2, "includeZero": true },
 	{ "name": "Anim",
 		"columns":
 		[
-			{ "name": "Anim", "type": "anim", "offset": 38 },
+			{ "name": "Anim", "type": "anim", "offset": 38, "includeZero": true },
 			{ "name": "Key", "offset": 40 },
-			{ "name": "Type", "values": {"0": "once", "1": "repeat", "2": "uninterrupt"}, "offset": 42 },
+			{ "name": "Type", "values": {"0": "once", "1": "repeat", "2": "uninterrupt"}, "offset": 42, "includeZero": true },
 			{ "name": "Next", "offset": 44 }
 		]
 	},
 	{ "name": "Track",
 		"columns":
 		[
-			{ "name": "Num/Time", "type": "time3", "offset": 48 },
+			{ "name": "Num/Time", "type": "time3", "offset": 48, "includeZero": true },
 			{ "name": "Mode", "values": {"0": "none", "1": "manual", "2": "follow", "3": "track"}, "offset": 46 }
 		]
 	},

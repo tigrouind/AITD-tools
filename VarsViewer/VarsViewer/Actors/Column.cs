@@ -10,6 +10,7 @@ namespace VarsViewer
 		public int Offset;
 		public Column[] Columns;
 		public IDictionary<int, string> Values;
+		public bool IncludeZero;
 
 		public int Width;
 		public int ExtraWidth;

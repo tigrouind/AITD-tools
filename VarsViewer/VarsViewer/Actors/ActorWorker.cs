@@ -48,17 +48,21 @@ namespace VarsViewer
 					});
 				}
 
-				foreach (var column in config)
+				for (int i = 0; i < config.Count; i++)
 				{
+					var column = config[i];
 					if (column.Columns == null)
 					{
-						column.Columns = new Column[]
+						config[i] = new Column
 						{
-							new Column
+							Columns = new Column[]
 							{
-								Columns = new Column[]
+								new Column
 								{
-									new Column() { Type = column.Type, Values = column.Values, Offset = column.Offset }
+									Columns = new Column[]
+									{
+										column
+									}
 								}
 							}
 						};
@@ -201,24 +205,21 @@ namespace VarsViewer
 					var next = unchecked((short)(value32 >> 16));
 					var uValue = unchecked((ushort)value32);
 
+					if (value == 0 && !column.IncludeZero)
+					{
+						return null;
+					}
+
 					switch (column.Type)
 					{
 						case ColumnType.SLOT:
 							return i.ToString();
 
 						case ColumnType.ZVPOS:
-							if ((value + next) != 0)
-							{
-								return $"{(value + next) / 2}";
-							}
-							break;
+							return $"{(value + next) / 2}";
 
 						case ColumnType.ZVSIZE:
-							if ((next - value) != 0)
-							{
-								return $"{next - value}";
-							}
-							break;
+							return $"{next - value}";
 
 						case ColumnType.BODY:
 							return FormatVar(VarEnum.BODYS);
@@ -233,21 +234,17 @@ namespace VarsViewer
 							return FormatVar(VarEnum.ANIMS);
 
 						case ColumnType.ANGLE:
-							if (value != 0)
-							{
-								return $"{Math.Floor(value * 360.0f / 1024.0f)}";
-							}
-							break;
+							return $"{Math.Floor(value * 360.0f / 1024.0f)}";
 
 						case ColumnType.ROOM:
-							if (value != 0 && value != -1)
+							if (value != -1)
 							{
 								return $"E{value}R{next}";
 							}
 							break;
 
 						case ColumnType.TIME:
-							if (value != 0 && Program.GameVersion == GameVersion.AITD1)
+							if (Program.GameVersion == GameVersion.AITD1)
 							{
 								var elapsed = (timer1 - (long)value32) / 60;
 								if (elapsed > 0)
@@ -258,7 +255,7 @@ namespace VarsViewer
 							break;
 
 						case ColumnType.TIME2:
-							if (value != 0 && Program.GameVersion == GameVersion.AITD1)
+							if (Program.GameVersion == GameVersion.AITD1)
 							{
 								var elapsed = timer2 - uValue;
 								if (elapsed > 0 && elapsed < 60)
@@ -269,28 +266,24 @@ namespace VarsViewer
 							break;
 
 						case ColumnType.TIME3:
-							if (value != 0)
+							if (uValue > 60)
 							{
-								if (uValue > 60)
+								if (Program.GameVersion == GameVersion.AITD1)
 								{
-									if (Program.GameVersion == GameVersion.AITD1)
+									var elapsed = unchecked((ushort)timer1) - uValue;
+									if (elapsed > 0 && elapsed < 300)
 									{
-										var elapsed = unchecked((ushort)timer1) - uValue;
-										if (elapsed > 0 && elapsed < 300)
-										{
-											return elapsed.ToString();
-										}
+										return elapsed.ToString();
 									}
-
-									return null;
 								}
 
-								return FormatVar(VarEnum.TRACKS);
+								return null;
 							}
-							break;
+
+							return FormatVar(VarEnum.TRACKS);
 
 						case ColumnType.FLAGS:
-							if (value != 0 && value != -1)
+							if (value != -1)
 							{
 								if (column.Values != null && fullMode)
 								{
@@ -307,20 +300,17 @@ namespace VarsViewer
 							break;
 
 						default:
-							if (value != 0)
+							if (column.Values != null)
 							{
-								if (column.Values != null)
+								if (column.Values.TryGetValue(value, out string name) && (fullMode || (name != null && name.Length == 1)))
 								{
-									if (column.Values.TryGetValue(value, out string name) && (fullMode || (name != null && name.Length == 1)))
-									{
-										return name;
-									}
+									return name;
 								}
+							}
 
-								if (value != -1)
-								{
-									return value.ToString();
-								}
+							if (value != -1)
+							{
+								return value.ToString();
 							}
 							break;
 					}
@@ -329,7 +319,7 @@ namespace VarsViewer
 
 					string FormatVar(VarEnum varType)
 					{
-						if (value != 0 && value != -1 && value != -2)
+						if (value != -1 && value != -2)
 						{
 							if (fullMode)
 							{
