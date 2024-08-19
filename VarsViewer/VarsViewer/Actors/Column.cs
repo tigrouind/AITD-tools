@@ -1,4 +1,4 @@
-﻿
+
 using System.Collections.Generic;
 
 namespace VarsViewer
@@ -7,12 +7,13 @@ namespace VarsViewer
 	{
 		public string Name;
 		public ColumnType Type;
+		public int Offset;
+		public Column[] Columns;
+		public IDictionary<int, string> Values;
+
 		public int Width;
 		public int ExtraWidth;
 		public bool Visible;
 		public long Timer;
-		public int Offset;
-		public IDictionary<int, string> Values;
-		public Column[] Columns;
 	}
 }

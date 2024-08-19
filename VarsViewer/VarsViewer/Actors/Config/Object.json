@@ -33,7 +33,7 @@
 			{ "name": "Anim", "type": "anim", "offset": 38 },
 			{ "name": "Key", "offset": 40 },
 			{ "name": "Type", "values": {"0": "once", "1": "repeat", "2": "uninterrupt"}, "offset": 42 },
-			{ "name": "Next", "offset": 44 },
+			{ "name": "Next", "offset": 44 }
 		]
 	},
 	{ "name": "Track",
