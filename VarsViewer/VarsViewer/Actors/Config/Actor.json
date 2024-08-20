@@ -158,28 +158,26 @@
 			{
 				"columns":
 				[
-					{ "name": "Old", "offset": 106, "condition": 110, "type":"angle" },
-					{ "name": "New", "offset": 108, "condition": 110, "type":"angle" },
-					{ "name": "Param", "offset": 110 },
-					{ "name": "Time", "type": "time2", "offset": 112, "condition": 110 }
+					{ "name": "Offset", "offset": 106, "condition": 110, "type":"zvsize", "includeZero": true },
+					{ "name": "Time", "type": "time2", "offset": 112, "condition": 110 },
+					{ "name": "Param", "offset": 110 }
 				],
 			},
 			{
 				"columns":
 				[
-					{ "name": "Old", "offset": 96, "condition": 100 },
-					{ "name": "New", "offset": 98, "condition": 100 },
-					{ "name": "Param", "offset": 100 },
-					{ "name": "Time", "type": "time2", "offset": 102, "condition": 100 }
+					{ "name": "Offset", "offset": 96, "condition": 100, "type":"zvsize", "includeZero": true  },
+					{ "name": "Time", "type": "time2", "offset": 102, "condition": 100 },
+					{ "name": "Param", "offset": 100 }
 				],
 			},
 			{
 				"columns":
 				[
-					{ "name": "Old", "offset": 118, "condition": 122 },
-					{ "name": "New", "offset": 120, "condition": 122 },
-					{ "name": "Param", "offset": 122 },
-					{ "name": "Time", "type": "time2", "offset": 124, "condition": 122 }
+					{ "name": "Offset", "offset": 118, "condition": 122, "type":"zvsize", "includeZero": true, "condition": 142 },
+					{ "name": "Time", "type": "time2", "offset": 124, "condition": 142 },
+					{ "name": "Param", "offset": 122, "condition": 142 }
+
 				]
 			}
 		]
