@@ -126,9 +126,6 @@ namespace VarsViewer
 				uint timer1 = Program.Memory.ReadUnsignedInt(Program.EntryPoint + 0x19D12);
 				ushort timer2 = Program.Memory.ReadUnsignedShort(Program.EntryPoint + 0x242E0);
 
-				int page = 0;
-				int height = System.Console.WindowHeight - 2;
-
 				for (int i = 0; i < rows; i++)
 				{
 					int col = 0;
@@ -152,21 +149,15 @@ namespace VarsViewer
 								{
 									var text = FormatField(column, startAddress, i);
 
-									if (page == scroll)
-									{
-										cells[rowsCount, col] = (text, id != -1 ? ConsoleColor.Gray : ConsoleColor.DarkGray);
-									}
+									cells[rowsCount, col] = (text, id != -1 ? ConsoleColor.Gray : ConsoleColor.DarkGray);
 
 									if (text != null)
 									{
-										if (page == scroll)
-										{
-											var headerCol = group.Columns[0].Columns[col - startCol];
-											headerCol.Width = Math.Max(text.Length, headerCol.Width);
-											headerCol.Timer = timeStamp;
-											headerCol.Visible |= true;
-											group.Visible |= true;
-										}
+										var headerCol = group.Columns[0].Columns[col - startCol];
+										headerCol.Width = Math.Max(text.Length, headerCol.Width);
+										headerCol.Timer = timeStamp;
+										headerCol.Visible |= true;
+										group.Visible |= true;
 
 										maxRow = Math.Max(maxRow, rowsCount);
 									}
@@ -181,17 +172,6 @@ namespace VarsViewer
 						}
 
 						rowsCount = maxRow + 1;
-
-						if (rowsCount >= height)
-						{
-							if (page == scroll)
-							{
-								break;
-							}
-
-							rowsCount = 0;
-							page++;
-						}
 					}
 				}
 
@@ -440,8 +420,9 @@ namespace VarsViewer
 				//body
 				Console.CursorTop++;
 				Console.BackgroundColor = ConsoleColor.Black;
+				int height = System.Console.WindowHeight - 2;
 
-				for (int row = 0; row < rowsCount; row++)
+				for (int row = 0; row < Math.Min(height, rowsCount - scroll); row++)
 				{
 					Console.CursorLeft = 0;
 
@@ -452,7 +433,7 @@ namespace VarsViewer
 						{
 							if (column.Visible)
 							{
-								var cell = cells[row, col];
+								var cell = cells[row + scroll, col];
 								Console.ForegroundColor = cell.Color;
 								Console.Write(Tools.PadBoth(cell.Text ?? "", column.Width + column.ExtraWidth));
 								Console.CursorLeft++;
@@ -483,12 +464,16 @@ namespace VarsViewer
 			{
 				case ConsoleKey.PageDown:
 					ClearTab();
-					scroll++;
+					scroll += System.Console.WindowHeight - 2;
 					break;
 
 				case ConsoleKey.PageUp:
-					ClearTab();
-					scroll = Math.Max(scroll - 1, 0);
+					if (scroll > 0)
+					{
+						ClearTab();
+						scroll -= System.Console.WindowHeight - 2;
+						scroll = Math.Max(0, scroll);
+					}
 					break;
 
 				case ConsoleKey.Spacebar:
