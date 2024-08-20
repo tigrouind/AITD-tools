@@ -37,53 +37,61 @@ namespace VarsViewer
 
 			List<Column> LoadConfig(string fileName)
 			{
-				var config = new List<Column>();
-				var assembly = Assembly.GetExecutingAssembly();
-				string ressourceName = $"VarsViewer.Actors.Config.{fileName}";
-				using (var stream = assembly.GetManifestResourceStream(ressourceName))
-				using (var reader = new StreamReader(stream))
+				var config = LoadJSON();
+				Populate();
+				return config;
+
+				List<Column> LoadJSON()
 				{
-					JsonConvert.PopulateObject(reader.ReadToEnd(), config, new JsonSerializerSettings
+					var assembly = Assembly.GetExecutingAssembly();
+					string ressourceName = $"VarsViewer.Actors.Config.{fileName}";
+					using (var stream = assembly.GetManifestResourceStream(ressourceName))
+					using (var reader = new StreamReader(stream))
 					{
-						DefaultValueHandling = DefaultValueHandling.Populate
-					});
+						return JsonConvert.DeserializeObject<List<Column>>(reader.ReadToEnd(), new JsonSerializerSettings
+						{
+							DefaultValueHandling = DefaultValueHandling.Populate,
+							MissingMemberHandling = MissingMemberHandling.Error
+						});
+					}
 				}
 
-				for (int i = 0; i < config.Count; i++)
+				void Populate()
 				{
-					var column = config[i];
-					if (column.Columns == null)
+					for (int i = 0; i < config.Count; i++)
 					{
-						config[i] = new Column
+						var column = config[i];
+						if (column.Columns == null)
 						{
-							Columns = new Column[]
+							config[i] = new Column
 							{
-								new Column
+								Columns = new Column[]
 								{
-									Columns = new Column[]
+									new Column
 									{
-										column
+										Columns = new Column[]
+										{
+											column
+										}
 									}
-								}
-							}
-						};
-					}
-					else
-					{
-						if (column.Columns.All(x => x.Columns == null))
-						{
-							column.Columns = new Column[]
-							{
-								new Column
-								{
-									Columns = column.Columns
 								}
 							};
 						}
+						else
+						{
+							if (column.Columns.All(x => x.Columns == null))
+							{
+								column.Columns = new Column[]
+								{
+									new Column
+									{
+										Columns = column.Columns
+									}
+								};
+							}
+						}
 					}
 				}
-
-				return config;
 			}
 		}
 
@@ -153,10 +161,10 @@ namespace VarsViewer
 									{
 										if (page == scroll)
 										{
-											var subCol = group.Columns[0].Columns[col - startCol];
-											subCol.Width = Math.Max(text.Length, subCol.Width);
-											subCol.Timer = timeStamp;
-											subCol.Visible |= true;
+											var headerCol = group.Columns[0].Columns[col - startCol];
+											headerCol.Width = Math.Max(text.Length, headerCol.Width);
+											headerCol.Timer = timeStamp;
+											headerCol.Visible |= true;
 											group.Visible |= true;
 										}
 
