@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace VarsViewer
 {
@@ -29,11 +30,14 @@ namespace VarsViewer
 		bool showAll, freeze, fullMode;
 		readonly List<Column>[] configs = new List<Column>[2];
 		readonly Stopwatch refreshStopwatch = Stopwatch.StartNew();
+		Dictionary<int, string> namesByIndex;
 
 		public ActorWorker()
 		{
 			configs[0] = LoadConfig("Actor.json");
 			configs[1] = LoadConfig("Object.json");
+			namesByIndex = Language.Load();
+
 
 			List<Column> LoadConfig(string fileName)
 			{
@@ -219,6 +223,20 @@ namespace VarsViewer
 
 						case ColumnType.ANIM:
 							return FormatVar(VarEnum.ANIMS);
+
+						case ColumnType.NAME:
+							if (value != -1)
+							{
+								if (fullMode && namesByIndex.TryGetValue(value, out string name))
+								{
+									name = Regex.Replace(name, "^(an?|the) ", string.Empty, RegexOptions.IgnoreCase).Trim();
+									name = Tools.SubString(name, 6).Trim().ToLowerInvariant().Replace(" ", "_");
+									return $"{value}:{name}";
+								}
+
+								return value.ToString();
+							}
+							break;
 
 						case ColumnType.ANGLE:
 							return $"{Math.Floor((value + 1024) % 1024 * 360.0f / 1024.0f)}";

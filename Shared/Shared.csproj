@@ -52,6 +52,7 @@
     <Compile Include="DosBox.cs" />
     <Compile Include="DosMCB.cs" />
     <Compile Include="GameVersion.cs" />
+    <Compile Include="Language.cs" />
     <Compile Include="PakArchiveEntry.cs" />
     <Compile Include="PakArchive.cs" />
     <Compile Include="ProcessMemory.cs" />

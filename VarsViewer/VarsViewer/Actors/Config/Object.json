@@ -47,7 +47,7 @@
 		"columns":
 		[
 			{ "name": "Body", "type": "body", "offset": 8 },
-			{ "name": "Name", "offset": 10 },
+			{ "name": "Name", "offset": 10, "type": "name" },
 			{ "name": "Flag", "type": "flags", "values": {"1": "use", "2": "eat", "4": "read", "8": "reload", "16": "fight", "32": "jump", "64": "open", "128": "close", "256": "push", "512": "throw", "1024": "drop"}, "offset": 12 },
 			{ "name": "Life", "type": "life", "offset": 14 }
 		]

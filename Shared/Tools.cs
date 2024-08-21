@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace Shared
 {
@@ -137,6 +140,19 @@ namespace Shared
 		public static TimeSpan GetTimeSpan(long start, long end)
 		{
 			return TimeSpan.FromTicks(start - end);
+		}
+
+		public static IEnumerable<string> ReadLines(byte[] buffer, Encoding encoding)
+		{
+			using (var stream = new MemoryStream(buffer))
+			using (var reader = new StreamReader(stream, encoding))
+			{
+				string line;
+				while ((line = reader.ReadLine()) != null)
+				{
+					yield return line;
+				}
+			}
 		}
 
 		#region Arguments

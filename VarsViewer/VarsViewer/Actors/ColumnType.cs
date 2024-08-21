@@ -12,6 +12,7 @@ namespace VarsViewer
 		LIFE,
 		TRACK,
 		ANIM,
+		NAME,
 
 		ANGLE,
 		ROOM,

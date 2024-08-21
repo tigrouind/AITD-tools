@@ -13,7 +13,7 @@ namespace LifeDISA
 		static byte[] allBytes;
 
 		static readonly Dictionary<int, string> objectsByIndex = new Dictionary<int, string>();
-		static readonly Dictionary<int, string> namesByIndex = new Dictionary<int, string>();
+		static Dictionary<int, string> namesByIndex;
 
 		static (GameVersion Version, LifeEnum[] LifeMacro, EvalEnum[] EvalMacro, int Offset) config;
 		static readonly LinkedList<Instruction> nodes = new LinkedList<Instruction>();
@@ -38,10 +38,10 @@ namespace LifeDISA
 
 		public static int Main(string[] args)
 		{
-			var version = Shared.Tools.GetArgument<GameVersion?>(args, "-version");
-			bool verbose = Shared.Tools.HasArgument(args, "-verbose");
-			bool raw = Shared.Tools.HasArgument(args, "-raw");
-			string outputFile = Shared.Tools.GetArgument<string>(args, "-output") ?? "scripts.vb";
+			var version = Tools.GetArgument<GameVersion?>(args, "-version");
+			bool verbose = Tools.HasArgument(args, "-verbose");
+			bool raw = Tools.HasArgument(args, "-raw");
+			string outputFile = Tools.GetArgument<string>(args, "-output") ?? "scripts.vb";
 
 			config = gameConfigs.FirstOrDefault(x => x.Version == version);
 			if (version == null || config == default)
@@ -81,28 +81,7 @@ namespace LifeDISA
 				}
 			}
 
-			//dump names
-			var languagePakFiles = new [] {	"ENGLISH.PAK", "FRANCAIS.PAK", "DEUTSCH.PAK", "ESPAGNOL.PAK", "ITALIANO.PAK", "USA.PAK" };
-			string languageFile = languagePakFiles
-				.Select(x => Path.Combine("GAMEDATA", x))
-				.FirstOrDefault(File.Exists);
-
-			if (languageFile != null)
-			{
-				byte[] buffer;
-				using (var pak = new PakArchive(languageFile))
-				{
-					buffer = pak[0].Read();
-				}
-
-				foreach (var item in Tools.ReadLines(buffer, Encoding.GetEncoding(850))
-					.Where(x => x.Contains(":"))
-					.Select(x => x.Split(':'))
-					.Where(x => x[1] != string.Empty))
-				{
-					namesByIndex[int.Parse(item[0].TrimStart('@'))] = item[1];
-				}
-			}
+			namesByIndex = Language.Load();
 
 			if (File.Exists(@"GAMEDATA\OBJETS.ITD"))
 			{
