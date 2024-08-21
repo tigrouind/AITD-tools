@@ -52,7 +52,12 @@
 			{ "name": "Life", "type": "life", "offset": 14 }
 		]
 	},
-	{ "name": "FloorTrg/Inv", "offset": 36 },
+	{ "name": "FloorLife",
+		"columns":
+		[
+			{ "name": "InventoryVar", "offset": 36 },
+		]
+	},
 	{ "name": "Weight", "offset": 50 },
 	{ "name": "Slot", "offset": 0 }
 ]

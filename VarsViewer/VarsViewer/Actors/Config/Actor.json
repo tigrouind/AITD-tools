@@ -149,7 +149,7 @@
 		[
 			{ "name": "Number", "type": "track", "offset": 84, "includeZero": true },
 			{ "name": "Mode", "values": {"0": "none", "1": "manual", "2": "follow", "3": "track"}, "offset": 82 },
-			{ "name": "Pos", "offset": 86, "condition": 84 }
+			{ "name": "Mark", "offset": 86, "condition": 84 }
 		]
 	},
 	{ "name": "Angle/Fall/Speed",
@@ -244,6 +244,11 @@
 			{ "name": "Col", "offset": 136 }
 		]
 	},
-	{ "name": "Weight/Track", "offset": 88 },
+	{ "name": "Weight",
+		"columns":
+		[
+			{ "name": "TrackPos", "offset": 88 }
+		]
+	},
 	{ "name": "Slot", "type": "slot", "offset": 0 }
 ]
