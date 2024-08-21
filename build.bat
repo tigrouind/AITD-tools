@@ -18,16 +18,15 @@ if exist C:\MinGW\bin\gcc.exe (
 ) 
 
 "%PROGRAMFILES%\7-Zip\7z" a -tzip "AITD-tools.zip" ^
- ".\LifeDISA\LifeDISA\bin\Release\*.exe" ^
+ ".\LifeDISA\LifeDISA\bin\Release\LifeDISA.exe" ^
  ".\LifeDISA\LifeDISA\bin\Release\GAMEDATA\vars.txt" ^
- ".\MemoryViewer\MemoryViewer\bin\Release\*.exe" ^
+ ".\MemoryViewer\MemoryViewer\bin\Release\MemoryViewer.exe" ^
  ".\MemoryViewer\MemoryViewer\bin\Release\SDL.dll" ^
  ".\MemoryViewer\MemoryViewer\bin\Release\SDL2.dll" ^
- ".\MemoryViewer\MemoryViewer\bin\Release\SDL2_image.dll" ^
- ".\TrackDISA\TrackDISA\bin\Release\*.exe" ^
- ".\VarsViewer\VarsViewer\bin\Release\*.exe" ^
+ ".\TrackDISA\TrackDISA\bin\Release\TrackDISA.exe" ^
+ ".\VarsViewer\VarsViewer\bin\Release\VarsViewer.exe" ^
  ".\VarsViewer\VarsViewer\bin\Release\Newtonsoft.Json.dll" ^
- ".\PAKExtract\PAKExtract\bin\Release\*.exe" ^
+ ".\PAKExtract\PAKExtract\bin\Release\PAKExtract.exe" ^
  ".\Shared\bin\Release\Shared.dll" ^
  ".\UnPAK\bin\Release\Unpak.dll" ^
  "-mx=9"
