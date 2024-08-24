@@ -1,6 +1,6 @@
 [
 	{ "name": "Id", "type": "slot", "offset": 0 },
-	{ "name": "Flags", "type": "flags", "values": {"1": "anim", "8": "back", "16": "push", "64": "trig", "128": "pick", "256": "fall"}, "offset": 4 },
+	{ "name": "Flags", "type": "flags", "values": {"1": "anim", "4": "draw", "8": "back", "16": "push", "64": "trig", "128": "pick", "256": "fall"}, "offset": 4 },
 	{ "name": "Room", "type": "room", "offset": 28, "includeZero": true },
 	{ "name": "Room",
 		"columns":
