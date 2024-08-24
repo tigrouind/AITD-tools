@@ -4,7 +4,7 @@ namespace VarsViewer
 {
 	public interface IWorker
 	{
-		void Render(int view);
+		void Render();
 		bool ReadMemory();
 		void KeyDown(ConsoleKeyInfo keyInfo);
 		void MouseMove(int x, int y);

@@ -6,16 +6,16 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text.RegularExpressions;
+using VarsViewer.Actors;
 
 namespace VarsViewer
 {
 	public class ActorWorker : IWorker
 	{
 		bool IWorker.UseMouse => false;
-
-		int GetAddress(int view) => view == 0 ? GameConfig.ActorAddress + Program.EntryPoint : Program.Memory.ReadFarPointer(GameConfig.ObjectAddress + Program.EntryPoint);
-		(int Rows, int Columns) CellConfig(int view) => view == 0 ? (50, 80) : (Program.GameVersion == GameVersion.AITD1_DEMO ? 18 : 292, 26);
+		readonly Func<int> getAddress;
+		(int Rows, int Columns) cellConfig;
+		readonly List<Column> config;
 
 		static (int ActorAddress, int ObjectAddress) GameConfig => gameConfigs[Program.GameVersion];
 		static readonly Dictionary<GameVersion, (int, int)> gameConfigs = new Dictionary<GameVersion, (int, int)>
@@ -25,19 +25,33 @@ namespace VarsViewer
 			{ GameVersion.AITD1_DEMO,   (0x2050A, 0x18BB8) },
 		};
 
-		readonly Buffer<(string Text, ConsoleColor Color)> cells = new Buffer<(string, ConsoleColor)>();
+		readonly Buffer<(ConsoleColor, ConsoleColor)> rowColor = new Buffer<(ConsoleColor, ConsoleColor)>();
+		readonly Buffer<string> cells = new Buffer<string>();
+
+		readonly Actor[] actors;
 		int scroll;
-		bool showAll, freeze, fullMode;
-		readonly List<Column>[] configs = new List<Column>[2];
-		readonly Stopwatch refreshStopwatch = Stopwatch.StartNew();
-		Dictionary<int, string> namesByIndex;
+		bool showAll, fullMode;
+		static bool freeze;
+		long timeStamp, refreshTime;
 
-		public ActorWorker()
+		public ActorWorker(int view)
 		{
-			configs[0] = LoadConfig("Actor.json");
-			configs[1] = LoadConfig("Object.json");
-			namesByIndex = Language.Load();
+			switch (view)
+			{
+				case 0:
+					config = LoadConfig("Actor.json");
+					getAddress = () => GameConfig.ActorAddress + Program.EntryPoint;
+					cellConfig = (50, 80);
+					break;
 
+				case 1:
+					config = LoadConfig("Object.json");
+					getAddress = () => Program.Memory.ReadFarPointer(GameConfig.ObjectAddress + Program.EntryPoint);
+					cellConfig = (Program.GameVersion == GameVersion.AITD1_DEMO ? 18 : 292, 26);
+					break;
+			}
+
+			actors = new Actor[cellConfig.Rows];
 
 			List<Column> LoadConfig(string fileName)
 			{
@@ -99,47 +113,126 @@ namespace VarsViewer
 			}
 		}
 
-		void IWorker.Render(int view)
+		void IWorker.Render()
 		{
 			int rowsCount = 0;
-			var timeStamp = Stopwatch.GetTimestamp();
-			(int rows, int columns) = CellConfig(view);
-			var config = configs[view];
-
-			if (refreshStopwatch.Elapsed > TimeSpan.FromSeconds(5))
+			if (!freeze)
 			{
-				refreshStopwatch.Restart();
+				timeStamp = Stopwatch.GetTimestamp();
+			}
+
+			(int rows, int columns) = cellConfig;
+
+			if (TimeSpan.FromTicks(timeStamp - refreshTime) > TimeSpan.FromSeconds(5))
+			{
+				refreshTime = timeStamp;
 				HideColumns();
 			}
 
-			ReadActors();
+			if (ReadActors())
+			{
+				WriteCells();
+			}
+
 			ResizeColumns();
 			OutputToConsole();
 
-			void ReadActors()
+			bool ReadActors()
 			{
-				cells.Clear();
-				int address = GetAddress(view);
+				int address = getAddress();
 
 				if (Enumerable.Range(0, rows)
 					.All(x => Program.Memory.ReadShort(address + x * columns * 2) == 0)) //are actors initialized ?
 				{
-					return;
+					return false;
 				}
 
-				uint timer1 = Program.Memory.ReadUnsignedInt(Program.EntryPoint + 0x19D12);
-				ushort timer2 = Program.Memory.ReadUnsignedShort(Program.EntryPoint + 0x242E0);
+				FieldFormatter.Timer1 = Program.Memory.ReadUnsignedInt(Program.EntryPoint + 0x19D12);
+				FieldFormatter.Timer2 = Program.Memory.ReadUnsignedShort(Program.EntryPoint + 0x242E0);
+				FieldFormatter.FullMode = fullMode;
 
+				for (int i = 0; i < rows; i++)
+				{
+					int startAddress = address + i * columns * 2;
+					int id = Program.Memory.ReadShort(startAddress);
+					var actor = actors[i];
+
+					if (actor == null)
+					{
+						actor = new Actor
+						{
+							Id = -1,
+							Values = new byte[columns * 2]
+						};
+						actors[i] = actor;
+					}
+
+					if ((actor.Id == -1 && id != -1) || actor.Id != id) //created
+					{
+						actor.CreationTime = timeStamp;
+						actor.DeletionTime = 0;
+						actor.UpdateTime = 0;
+					}
+
+					if (actor.Id != -1 && id == -1) //deleted
+					{
+						actor.DeletionTime = timeStamp;
+						actor.CreationTime = 0;
+						actor.UpdateTime = 0;
+					}
+
+					if (id != -1 && actor.Id == id)
+					{
+						for (int j = 0; j < actor.Values.Length; j++)
+						{
+							if (Program.Memory[j + startAddress] != actor.Values[j])
+							{
+								actor.UpdateTime = timeStamp;
+								break;
+							}
+						}
+					}
+
+					actor.Id = id;
+					Array.Copy(Program.Memory, startAddress, actor.Values, 0, actor.Values.Length);
+				}
+
+				return true;
+			}
+
+			void WriteCells()
+			{
+				cells.Clear();
 				for (int i = 0; i < rows; i++)
 				{
 					int col = 0;
 					int maxRow = 0;
 
-					int startAddress = address + i * columns * 2;
-					int id = Program.Memory.ReadShort(startAddress);
+					Actor actor = actors[i];
+					var deleted = Shared.Tools.GetTimeSpan(timeStamp, actor.DeletionTime) < TimeSpan.FromSeconds(2);
+					var added = Shared.Tools.GetTimeSpan(timeStamp, actor.CreationTime) < TimeSpan.FromSeconds(2);
+					var updated = Shared.Tools.GetTimeSpan(timeStamp, actor.UpdateTime) < TimeSpan.FromSeconds(1);
 
-					if (id != -1 || showAll)
+					if (actor != null && (actor.Id != -1 || showAll || deleted))
 					{
+						(ConsoleColor, ConsoleColor) color;
+						if (deleted)
+						{
+							color = (ConsoleColor.DarkGray, ConsoleColor.Black); //removed
+						}
+						else if (added)
+						{
+							color = (ConsoleColor.DarkGreen, ConsoleColor.Black); //added
+						}
+						else if (updated)
+						{
+							color = (ConsoleColor.Black, ConsoleColor.DarkYellow); //updated
+						}
+						else
+						{
+							color = (ConsoleColor.Black, actor.Id != -1 ? ConsoleColor.Gray : ConsoleColor.DarkGray);
+						}
+
 						foreach (var group in config)
 						{
 							int startRow = rowsCount;
@@ -148,12 +241,12 @@ namespace VarsViewer
 							foreach (var colGroup in group.Columns)
 							{
 								col = startCol;
+								rowColor[0, rowsCount] = color;
 
 								foreach (var column in colGroup.Columns)
 								{
-									var text = FormatField(column, startAddress, i);
-
-									cells[rowsCount, col] = (text, id != -1 ? ConsoleColor.Gray : ConsoleColor.DarkGray);
+									var text = FieldFormatter.Format(actor.Values, column, i);
+									cells[rowsCount, col] = text;
 
 									if (text != null)
 									{
@@ -176,169 +269,6 @@ namespace VarsViewer
 						}
 
 						rowsCount = maxRow + 1;
-					}
-				}
-
-				string FormatField(Column column, int startAddress, int i)
-				{
-					int pos = column.Offset;
-					var value32 = Program.Memory.ReadUnsignedInt(startAddress + pos);
-					var value = unchecked((short)value32);
-					var next = unchecked((short)(value32 >> 16));
-					var uValue = unchecked((ushort)value32);
-
-					if (value == 0 && !column.IncludeZero)
-					{
-						return null;
-					}
-
-					if (column.Condition != 0)
-					{
-						int otherValue = Program.Memory.ReadShort(startAddress + column.Condition);
-						if (otherValue == -1 || otherValue == 0)
-						{
-							return null;
-						}
-					}
-
-					switch (column.Type)
-					{
-						case ColumnType.SLOT:
-							return i.ToString();
-
-						case ColumnType.ZVPOS:
-							return $"{(value + next) / 2}";
-
-						case ColumnType.ZVSIZE:
-							return $"{next - value}";
-
-						case ColumnType.BODY:
-							return FormatVar(VarEnum.BODYS);
-
-						case ColumnType.LIFE:
-							return FormatVar(VarEnum.LIFES);
-
-						case ColumnType.TRACK:
-							return FormatVar(VarEnum.TRACKS);
-
-						case ColumnType.ANIM:
-							return FormatVar(VarEnum.ANIMS);
-
-						case ColumnType.NAME:
-							if (value != -1)
-							{
-								if (fullMode && namesByIndex.TryGetValue(value, out string name))
-								{
-									name = Regex.Replace(name, "^(an?|the) ", string.Empty, RegexOptions.IgnoreCase).Trim();
-									name = Tools.SubString(name, 6).Trim().ToLowerInvariant().Replace(" ", "_");
-									return $"{value}:{name}";
-								}
-
-								return value.ToString();
-							}
-							break;
-
-						case ColumnType.ANGLE:
-							return $"{Math.Floor((value + 1024) % 1024 * 360.0f / 1024.0f)}";
-
-						case ColumnType.ROOM:
-							if (value != -1)
-							{
-								return $"E{value}R{next}";
-							}
-							break;
-
-						case ColumnType.TIME:
-							if (Program.GameVersion == GameVersion.AITD1)
-							{
-								var elapsed = (timer1 - (long)value32) / 60;
-								if (elapsed > 0)
-								{
-									return $"{elapsed / 60}:{elapsed % 60:D2}";
-								}
-							}
-							break;
-
-						case ColumnType.TIME2:
-							if (Program.GameVersion == GameVersion.AITD1)
-							{
-								var elapsed = timer2 - uValue;
-								if (elapsed > 0 && elapsed < 60)
-								{
-									return elapsed.ToString();
-								}
-							}
-							break;
-
-						case ColumnType.TIME3:
-							if (uValue > 60)
-							{
-								if (Program.GameVersion == GameVersion.AITD1)
-								{
-									var elapsed = unchecked((ushort)timer1) - uValue;
-									if (elapsed > 0 && elapsed < 300)
-									{
-										return elapsed.ToString();
-									}
-								}
-
-								return null;
-							}
-
-							return FormatVar(VarEnum.TRACKS);
-
-						case ColumnType.FLAGS:
-							if (value != -1)
-							{
-								if (column.Values != null && fullMode)
-								{
-									return string.Join("|", column.Values
-										.Where(x => (value & x.Key) != 0 && !string.IsNullOrEmpty(x.Value))
-										.Select(x => x.Value));
-								}
-
-								unchecked
-								{
-									return $"{(ushort)value:X}";
-								}
-							}
-							break;
-
-						default:
-							if (column.Values != null)
-							{
-								if (column.Values.TryGetValue(value, out string name) && (fullMode || (name != null && name.Length == 1)))
-								{
-									return name;
-								}
-							}
-
-							if (value != -1)
-							{
-								return value.ToString();
-							}
-							break;
-					}
-
-					return null;
-
-					string FormatVar(VarEnum varType)
-					{
-						if (value != -1 && value != -2)
-						{
-							if (fullMode)
-							{
-								string name = Tools.SubString(Program.VarParser.GetText(varType, value), 6).Trim().Replace(" ", "_");
-								if (!string.IsNullOrEmpty(name))
-								{
-									return $"{value}:{name}";
-								}
-							}
-
-							return value.ToString();
-						}
-
-						return null;
 					}
 				}
 			}
@@ -437,12 +367,12 @@ namespace VarsViewer
 
 				//body
 				Console.CursorTop++;
-				Console.BackgroundColor = ConsoleColor.Black;
 				int height = System.Console.WindowHeight - 2;
 
 				for (int row = 0; row < Math.Min(height, rowsCount - scroll); row++)
 				{
 					Console.CursorLeft = 0;
+					(Console.BackgroundColor, Console.ForegroundColor) = rowColor[0, row + scroll];
 
 					int col = 0;
 					foreach (var group in config)
@@ -451,10 +381,9 @@ namespace VarsViewer
 						{
 							if (column.Visible)
 							{
-								var cell = cells[row + scroll, col];
-								Console.ForegroundColor = cell.Color;
-								Console.Write(Tools.PadBoth(cell.Text ?? "", column.Width + column.ExtraWidth));
-								Console.CursorLeft++;
+								if (col > 0) Console.Write(' ');
+								var text = cells[row + scroll, col];
+								Console.Write(Tools.PadBoth(text ?? "", column.Width + column.ExtraWidth));
 							}
 
 							col++;
@@ -513,7 +442,7 @@ namespace VarsViewer
 			void ClearTab()
 			{
 				cells.Clear();
-				foreach (var group in configs.SelectMany(x => x))
+				foreach (var group in config)
 				{
 					group.Width = 0;
 					group.Visible = false;

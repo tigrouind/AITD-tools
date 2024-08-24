@@ -36,7 +36,7 @@ namespace VarsViewer
 
 		int cellSize;
 
-		void IWorker.Render(int view)
+		void IWorker.Render()
 		{
 			cellSize = Math.Max(3, Math.Min(System.Console.WindowWidth / 21, 7));
 			RenderTab(vars, 11, 0);

@@ -290,7 +290,7 @@ namespace VarsViewer
 			}
 		}
 
-		void IWorker.Render(int view)
+		void IWorker.Render()
 		{
 			int column = 0;
 			foreach (var ch in cache)

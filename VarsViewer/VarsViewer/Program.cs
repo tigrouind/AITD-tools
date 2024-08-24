@@ -16,9 +16,9 @@ namespace VarsViewer
 		public static GameVersion GameVersion;
 		static readonly Stopwatch dosboxTimer = new Stopwatch();
 
-		static readonly IWorker[] workers = new IWorker[] { new VarsWorker(), new CacheWorker(), new ActorWorker() };
-		static int view, subview;
-		static IWorker worker => workers[view];
+		static readonly IWorker[] workers = new IWorker[] { new VarsWorker(), new CacheWorker(), new ActorWorker(0), new ActorWorker(1) };
+		static int view = -1;
+		static IWorker Worker => workers[view];
 
 		public static void Main(string[] args)
 		{
@@ -47,14 +47,14 @@ namespace VarsViewer
 
 				if (Process != null)
 				{
-					if (!worker.ReadMemory())
+					if (!Worker.ReadMemory())
 					{
 						CloseReader();
 					}
 				}
 
 				Console.Clear();
-				worker.Render(subview);
+				Worker.Render();
 				Console.Flush();
 
 				Thread.Sleep(15);
@@ -92,7 +92,7 @@ namespace VarsViewer
 							break;
 
 						default:
-							worker.KeyDown(keyInfo);
+							Worker.KeyDown(keyInfo);
 							break;
 					}
 				};
@@ -102,19 +102,19 @@ namespace VarsViewer
 					switch (keyInfo.Key)
 					{
 						case (ConsoleKey)17: //control
-							Console.MouseInput = worker.UseMouse;
+							Console.MouseInput = Worker.UseMouse;
 							break;
 					}
 				};
 
 				Console.MouseDown += (sender, position) =>
 				{
-					worker.MouseDown(position.x, position.y);
+					Worker.MouseDown(position.x, position.y);
 				};
 
 				Console.MouseMove += (sender, position) =>
 				{
-					worker.MouseMove(position.x, position.y);
+					Worker.MouseMove(position.x, position.y);
 				};
 			}
 		}
@@ -163,10 +163,12 @@ namespace VarsViewer
 
 		static void SetView(int view)
 		{
-			Program.view = view == 3 ? 2 : view;
-			Program.subview = view == 3 ? 1 : 0;
-			Console.MouseInput = worker.UseMouse;
-			System.Console.Title = $"AITD {new string[] { "vars", "cache", "actors", "objects" }[view]} viewer";
+			if (Program.view != view)
+			{
+				Program.view = view;
+				Console.MouseInput = Worker.UseMouse;
+				System.Console.Title = $"AITD {new string[] { "vars", "cache", "actors", "objects" }[view]} viewer";
+			}
 		}
 	}
 }

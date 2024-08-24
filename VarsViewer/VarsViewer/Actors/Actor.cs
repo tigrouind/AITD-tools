@@ -1,10 +1,11 @@
-﻿
-namespace VarsViewer
+﻿namespace VarsViewer
 {
 	public class Actor
 	{
-		public int Index;
 		public int Id;
-		public int[] Values;
+		public byte[] Values;
+		public long CreationTime;
+		public long DeletionTime;
+		public long UpdateTime;
 	}
 }
