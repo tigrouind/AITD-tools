@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -11,6 +12,7 @@ namespace VarsViewer
 	{
 		public static readonly byte[] Memory = new byte[640 * 1024];
 		public static readonly VarParserForCache VarParser = new VarParserForCache();
+		public static readonly Language Language = new Language();
 		public static ProcessMemory Process;
 		public static int EntryPoint;
 		public static GameVersion GameVersion;
@@ -29,6 +31,8 @@ namespace VarsViewer
 			{
 				VarParser.Load("GAMEDATA/vars.txt", VarEnum.SOUNDS, VarEnum.LIFES, VarEnum.BODYS, VarEnum.ANIMS, VarEnum.TRACKS, VarEnum.MUSIC, VarEnum.VARS, VarEnum.CVARS);
 			}
+			Language.Load();
+
 			SetupConsole();
 
 			while (true)

@@ -5,9 +5,11 @@ using System.Text;
 
 namespace Shared
 {
-	public static class Language
+	public class Language
 	{
-		public static Dictionary<int, string> Load()
+		readonly Dictionary<int, string> namesByIndex = new Dictionary<int, string>();
+
+		public void Load()
 		{
 			var languagePakFiles = new[] { "ENGLISH.PAK", "FRANCAIS.PAK", "DEUTSCH.PAK", "ESPAGNOL.PAK", "ITALIANO.PAK", "USA.PAK" };
 			string languageFile = languagePakFiles
@@ -22,14 +24,24 @@ namespace Shared
 					buffer = pak[0].Read();
 				}
 
-				return Tools.ReadLines(buffer, Encoding.GetEncoding(850))
+				foreach (var (Index, Name) in Tools.ReadLines(buffer, Encoding.GetEncoding(850))
 					.Where(x => x.Contains(":"))
 					.Select(x => x.Split(':'))
 					.Where(x => x[1] != string.Empty)
-					.ToDictionary(x => int.Parse(x[0].TrimStart('@')), x => x[1]);
-			}
+					.Select(x => (Index: int.Parse(x[0].TrimStart('@')), Name: x[1])))
+				{
+					string name = string.Join("_", Name.ToLowerInvariant()
+						.Split(new char[] { ' ', '\'' })
+						.Where(x => x != "an" && x != "a"));
 
-			return default;
+					namesByIndex.Add(Index, name);
+				}
+			}
+		}
+
+		public bool TryGetValue(int index, out string name)
+		{
+			return namesByIndex.TryGetValue(index, out name);
 		}
 	}
 }

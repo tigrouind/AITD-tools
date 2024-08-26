@@ -1,6 +1,5 @@
 using Shared;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -8,18 +7,11 @@ namespace VarsViewer.Actors
 {
 	public static class FieldFormatter
 	{
-		static readonly Dictionary<int, string> namesByIndex;
-
 		public static uint Timer1;
 
 		public static ushort Timer2;
 
 		public static bool FullMode;
-
-		static FieldFormatter()
-		{
-			namesByIndex = Language.Load();
-		}
 
 		public static string Format(byte[] memory, Column column, int i)
 		{
@@ -74,11 +66,9 @@ namespace VarsViewer.Actors
 				case ColumnType.NAME:
 					if (value != -1)
 					{
-						if (FullMode && namesByIndex.TryGetValue(value, out string name))
+						if (FullMode && Program.Language.TryGetValue(value, out string name))
 						{
-							name = Regex.Replace(name, "^(an?|the) ", string.Empty, RegexOptions.IgnoreCase).Trim();
-							name = Tools.SubString(name, 6).Trim().ToLowerInvariant().Replace(" ", "_");
-							return $"{value}:{name}";
+							return $"{value}:{Tools.SubString(name, 6).TrimEnd('_')}";
 						}
 
 						return value.ToString();

@@ -13,7 +13,7 @@ namespace LifeDISA
 		static byte[] allBytes;
 
 		static readonly Dictionary<int, string> objectsByIndex = new Dictionary<int, string>();
-		static Dictionary<int, string> namesByIndex;
+		static readonly Language language = new Language();
 
 		static (GameVersion Version, LifeEnum[] LifeMacro, EvalEnum[] EvalMacro, int Offset) config;
 		static readonly LinkedList<Instruction> nodes = new LinkedList<Instruction>();
@@ -81,7 +81,7 @@ namespace LifeDISA
 				}
 			}
 
-			namesByIndex = Language.Load();
+			language.Load();
 
 			if (File.Exists(@"GAMEDATA\OBJETS.ITD"))
 			{
@@ -101,10 +101,9 @@ namespace LifeDISA
 					if (string.IsNullOrEmpty(name))
 					{
 						int index = allBytes.ReadShort(n + 10);
-						if (index != -1 && index != 0 && namesByIndex.TryGetValue(index, out name))
+						if (index != -1 && index != 0)
 						{
-							name = name.ToLowerInvariant();
-							name = string.Join("_", name.Split(new char[] { ' ', '\'' }).Where(x => x != "an" && x != "a").ToArray());
+							language.TryGetValue(index, out name);
 						}
 					}
 
@@ -898,7 +897,7 @@ namespace LifeDISA
 
 		static string GetMessage(int index)
 		{
-			if (namesByIndex.TryGetValue(index, out string text))
+			if (language.TryGetValue(index, out string text))
 			{
 				return "\"" + text + "\"";
 			}
