@@ -132,7 +132,7 @@ namespace VarsViewer
 			{
 				if (toolTip != null)
 				{
-					(Console.BackgroundColor, Console.ForegroundColor) = (ConsoleColor.DarkGreen, ConsoleColor.Gray);
+					(Console.BackgroundColor, Console.ForegroundColor) = (ConsoleColor.DarkGreen, ConsoleColor.Black);
 					Console.SetCursorPosition(0, 14);
 					Console.Write(toolTip);
 
@@ -272,7 +272,14 @@ namespace VarsViewer
 					break;
 
 				case ConsoleKey.Escape:
-					Abort();
+					if (edit)
+					{
+						Abort();
+					}
+					else
+					{
+						highlightedCell = null;
+					}
 					break;
 
 				case ConsoleKey.Delete:
@@ -286,15 +293,30 @@ namespace VarsViewer
 				case ConsoleKey.RightArrow:
 					if (highlightedCell != null)
 					{
+						var cells = highlightedCell.Type == VarEnum.VARS ? vars : cvars;
 						int offset = highlightedCell.Index;
 						switch (keyInfo.Key)
 						{
 							case ConsoleKey.DownArrow:
 								offset += 20;
+
+								if (offset >= vars.Count && highlightedCell.Type == VarEnum.VARS)
+								{
+									offset %= 20;
+									cells = cvars;
+								}
 								break;
 
 							case ConsoleKey.UpArrow:
 								offset -= 20;
+
+								if (offset < 0 && highlightedCell.Type == VarEnum.CVARS)
+								{
+									int x = (offset + 20) % 20;
+									int y = (vars.Count - 1 - x ) / 20;
+									offset = x + y * 20;
+									cells = vars;
+								}
 								break;
 
 							case ConsoleKey.LeftArrow:
@@ -312,12 +334,17 @@ namespace VarsViewer
 								break;
 						}
 
-						var cells = highlightedCell.Type == VarEnum.VARS ? vars : cvars;
 						if (offset >= 0 && offset < cells.Count)
 						{
 							Commit();
 							highlightedCell = cells[offset];
+							SetToolTip();
 						}
+					}
+					else
+					{
+						highlightedCell = vars[0];
+						SetToolTip();
 					}
 					break;
 			}
@@ -425,7 +452,17 @@ namespace VarsViewer
 
 		void IWorker.MouseMove(int x, int y)
 		{
-			if (inputText == null && !edit && TryFindVarAtPosition(x, y, out highlightedCell))
+			if (inputText == null && !edit)
+			{
+				TryFindVarAtPosition(x, y, out highlightedCell);
+			}
+
+			SetToolTip();
+		}
+
+		void SetToolTip()
+		{
+			if (highlightedCell != null)
 			{
 				var text = Program.VarParser.GetText(highlightedCell.Type, highlightedCell.Index);
 				if (!string.IsNullOrEmpty(text))
