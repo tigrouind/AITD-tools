@@ -7,5 +7,9 @@
 		public long CreationTime;
 		public long DeletionTime;
 		public long UpdateTime;
+
+		public bool Created;
+		public bool Updated;
+		public bool Deleted;
 	}
 }

@@ -19,8 +19,7 @@ namespace VarsViewer
 		static readonly Stopwatch dosboxTimer = new Stopwatch();
 
 		static readonly IWorker[] workers = new IWorker[] { new VarsWorker(), new CacheWorker(), new ActorWorker(0), new ActorWorker(1) };
-		static int view = -1;
-		static IWorker Worker => workers[view];
+		static IWorker worker;
 
 		public static void Main(string[] args)
 		{
@@ -51,14 +50,14 @@ namespace VarsViewer
 
 				if (Process != null)
 				{
-					if (!Worker.ReadMemory())
+					if (!worker.ReadMemory())
 					{
 						CloseReader();
 					}
 				}
 
 				Console.Clear();
-				Worker.Render();
+				worker.Render();
 				Console.Flush();
 
 				Thread.Sleep(15);
@@ -96,7 +95,7 @@ namespace VarsViewer
 							break;
 
 						default:
-							Worker.KeyDown(keyInfo);
+							worker.KeyDown(keyInfo);
 							break;
 					}
 				};
@@ -106,19 +105,19 @@ namespace VarsViewer
 					switch (keyInfo.Key)
 					{
 						case (ConsoleKey)17: //control
-							Console.MouseInput = Worker.UseMouse;
+							Console.MouseInput = worker.UseMouse;
 							break;
 					}
 				};
 
 				Console.MouseDown += (sender, position) =>
 				{
-					Worker.MouseDown(position.x, position.y);
+					worker.MouseDown(position.x, position.y);
 				};
 
 				Console.MouseMove += (sender, position) =>
 				{
-					Worker.MouseMove(position.x, position.y);
+					worker.MouseMove(position.x, position.y);
 				};
 			}
 		}
@@ -167,10 +166,10 @@ namespace VarsViewer
 
 		static void SetView(int view)
 		{
-			if (Program.view != view)
+			if (worker != workers[view])
 			{
-				Program.view = view;
-				Console.MouseInput = Worker.UseMouse;
+				worker = workers[view];
+				Console.MouseInput = worker.UseMouse;
 				System.Console.Title = $"AITD {new string[] { "vars", "cache", "actors", "objects" }[view]} viewer";
 			}
 		}

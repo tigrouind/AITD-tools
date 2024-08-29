@@ -14,7 +14,7 @@ namespace VarsViewer
 	{
 		bool IWorker.UseMouse => false;
 		readonly Func<int> getAddress;
-		(int Rows, int Columns) cellConfig;
+		readonly (int Rows, int Columns) cellConfig;
 		readonly List<Column> config;
 
 		static (int ActorAddress, int ObjectAddress) GameConfig => gameConfigs[Program.GameVersion];
@@ -52,6 +52,14 @@ namespace VarsViewer
 			}
 
 			actors = new Actor[cellConfig.Rows];
+			for (int i = 0; i < actors.Length; i++)
+			{
+				actors[i] = new Actor
+				{
+					Id = -1,
+					Values = new byte[cellConfig.Columns * 2]
+				};
+			}
 
 			List<Column> LoadConfig(string fileName)
 			{
@@ -116,11 +124,6 @@ namespace VarsViewer
 		void IWorker.Render()
 		{
 			int rowsCount = 0;
-			if (!freeze)
-			{
-				timeStamp = Stopwatch.GetTimestamp();
-			}
-
 			(int rows, int columns) = cellConfig;
 
 			if (TimeSpan.FromTicks(timeStamp - refreshTime) > TimeSpan.FromSeconds(5))
@@ -129,76 +132,9 @@ namespace VarsViewer
 				HideColumns();
 			}
 
-			if (ReadActors())
-			{
-				WriteCells();
-			}
-
+			WriteCells();
 			ResizeColumns();
 			OutputToConsole();
-
-			bool ReadActors()
-			{
-				int address = getAddress();
-
-				if (Enumerable.Range(0, rows)
-					.All(x => Program.Memory.ReadShort(address + x * columns * 2) == 0)) //are actors initialized ?
-				{
-					return false;
-				}
-
-				FieldFormatter.Timer1 = Program.Memory.ReadUnsignedInt(Program.EntryPoint + 0x19D12);
-				FieldFormatter.Timer2 = Program.Memory.ReadUnsignedShort(Program.EntryPoint + 0x242E0);
-				FieldFormatter.FullMode = fullMode;
-
-				for (int i = 0; i < rows; i++)
-				{
-					int startAddress = address + i * columns * 2;
-					int id = Program.Memory.ReadShort(startAddress);
-					var actor = actors[i];
-
-					if (actor == null)
-					{
-						actor = new Actor
-						{
-							Id = -1,
-							Values = new byte[columns * 2]
-						};
-						actors[i] = actor;
-					}
-
-					if ((actor.Id == -1 && id != -1) || actor.Id != id) //created
-					{
-						actor.CreationTime = timeStamp;
-						actor.DeletionTime = 0;
-						actor.UpdateTime = 0;
-					}
-
-					if (actor.Id != -1 && id == -1) //deleted
-					{
-						actor.DeletionTime = timeStamp;
-						actor.CreationTime = 0;
-						actor.UpdateTime = 0;
-					}
-
-					if (id != -1 && actor.Id == id)
-					{
-						for (int j = 0; j < actor.Values.Length; j++)
-						{
-							if (Program.Memory[j + startAddress] != actor.Values[j])
-							{
-								actor.UpdateTime = timeStamp;
-								break;
-							}
-						}
-					}
-
-					actor.Id = id;
-					Array.Copy(Program.Memory, startAddress, actor.Values, 0, actor.Values.Length);
-				}
-
-				return true;
-			}
 
 			void WriteCells()
 			{
@@ -209,24 +145,20 @@ namespace VarsViewer
 					int maxRow = 0;
 
 					Actor actor = actors[i];
-					var deleted = Shared.Tools.GetTimeSpan(timeStamp, actor.DeletionTime) < TimeSpan.FromSeconds(2);
-					var added = Shared.Tools.GetTimeSpan(timeStamp, actor.CreationTime) < TimeSpan.FromSeconds(2);
-					var updated = Shared.Tools.GetTimeSpan(timeStamp, actor.UpdateTime) < TimeSpan.FromSeconds(1);
-
-					if (actor != null && (actor.Id != -1 || showAll || deleted))
+					if (actor.Id != -1 || showAll || actor.Deleted)
 					{
 						(ConsoleColor, ConsoleColor) color;
-						if (deleted)
+						if (actor.Deleted)
 						{
-							color = (ConsoleColor.DarkGray, ConsoleColor.Black); //removed
+							color = (ConsoleColor.DarkGray, ConsoleColor.Black);
 						}
-						else if (added)
+						else if (actor.Created)
 						{
-							color = (ConsoleColor.DarkGreen, ConsoleColor.Black); //added
+							color = (ConsoleColor.DarkGreen, ConsoleColor.Black);
 						}
-						else if (updated)
+						else if (actor.Updated)
 						{
-							color = (ConsoleColor.Black, ConsoleColor.DarkYellow); //updated
+							color = (ConsoleColor.Black, ConsoleColor.DarkYellow);
 						}
 						else
 						{
@@ -397,9 +329,80 @@ namespace VarsViewer
 
 		bool IWorker.ReadMemory()
 		{
-			if (!freeze && Program.Process.Read(Program.Memory, 0, 640 * 1024) == 0)
+			if (!freeze)
 			{
-				return false;
+				if (Program.Process.Read(Program.Memory, 0, 640 * 1024) == 0)
+				{
+					return false;
+				}
+
+				timeStamp = Stopwatch.GetTimestamp();
+				ReadActors();
+			}
+
+			void ReadActors()
+			{
+				(int rows, int columns) = cellConfig;
+				int address = getAddress();
+
+				if (Enumerable.Range(0, rows)
+					.All(x => Program.Memory.ReadShort(address + x * columns * 2) == 0)) //are actors initialized ?
+				{
+					ClearTab();
+					foreach (var actor in actors)
+					{
+						actor.Id = -1;
+						actor.Created = false;
+						actor.Deleted = false;
+						actor.Updated = false;
+						Array.Clear(actor.Values, 0, actor.Values.Length);
+					}
+					return;
+				}
+
+				FieldFormatter.Timer1 = Program.Memory.ReadUnsignedInt(Program.EntryPoint + 0x19D12);
+				FieldFormatter.Timer2 = Program.Memory.ReadUnsignedShort(Program.EntryPoint + 0x242E0);
+				FieldFormatter.FullMode = fullMode;
+
+				for (int i = 0; i < rows; i++)
+				{
+					int startAddress = address + i * columns * 2;
+					int id = Program.Memory.ReadShort(startAddress);
+					var actor = actors[i];
+
+					if ((actor.Id == -1 && id != -1) || actor.Id != id) //created
+					{
+						actor.CreationTime = timeStamp;
+						actor.DeletionTime = 0;
+						actor.UpdateTime = 0;
+					}
+
+					if (actor.Id != -1 && id == -1) //deleted
+					{
+						actor.DeletionTime = timeStamp;
+						actor.CreationTime = 0;
+						actor.UpdateTime = 0;
+					}
+
+					if (id != -1 && actor.Id == id)
+					{
+						for (int j = 0; j < actor.Values.Length; j++)
+						{
+							if (Program.Memory[j + startAddress] != actor.Values[j])
+							{
+								actor.UpdateTime = timeStamp;
+								break;
+							}
+						}
+					}
+
+					actor.Id = id;
+					actor.Deleted = Shared.Tools.GetTimeSpan(timeStamp, actor.DeletionTime) < TimeSpan.FromSeconds(2);
+					actor.Created = Shared.Tools.GetTimeSpan(timeStamp, actor.CreationTime) < TimeSpan.FromSeconds(2);
+					actor.Updated = Shared.Tools.GetTimeSpan(timeStamp, actor.UpdateTime) < TimeSpan.FromSeconds(1);
+
+					Array.Copy(Program.Memory, startAddress, actor.Values, 0, actor.Values.Length);
+				}
 			}
 
 			return true;
@@ -438,19 +441,19 @@ namespace VarsViewer
 					freeze = !freeze;
 					break;
 			}
+		}
 
-			void ClearTab()
+		void ClearTab()
+		{
+			cells.Clear();
+			foreach (var group in config)
 			{
-				cells.Clear();
-				foreach (var group in config)
+				group.Width = 0;
+				group.Visible = false;
+				foreach (var col in group.Columns[0].Columns)
 				{
-					group.Width = 0;
-					group.Visible = false;
-					foreach (var col in group.Columns[0].Columns)
-					{
-						col.Width = 0;
-						col.Visible = false;
-					}
+					col.Width = 0;
+					col.Visible = false;
 				}
 			}
 		}
