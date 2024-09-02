@@ -52,7 +52,7 @@ namespace Shared
 
 		public ProcessMemory(int processId)
 		{
-			this.processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION, false, processId);
+			processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION, false, processId);
 		}
 
 		~ProcessMemory()
@@ -67,10 +67,9 @@ namespace Shared
 				throw new ArgumentOutOfRangeException();
 			}
 
-			IntPtr bytesRead;
 			fixed (byte* ptr = buffer)
 			{
-				if (ReadProcessMemory(processHandle, new IntPtr(BaseAddress + address), new IntPtr((void*)(ptr + offset)), count, out bytesRead))
+				if (ReadProcessMemory(processHandle, new IntPtr(BaseAddress + address), new IntPtr(ptr + offset), count, out IntPtr bytesRead))
 				{
 					return (long)bytesRead;
 				}
@@ -85,8 +84,7 @@ namespace Shared
 				throw new ArgumentOutOfRangeException();
 			}
 
-			IntPtr bytesWritten;
-			if (WriteProcessMemory(processHandle, new IntPtr(BaseAddress + offset), buffer, count, out bytesWritten))
+			if (WriteProcessMemory(processHandle, new IntPtr(BaseAddress + offset), buffer, count, out IntPtr bytesWritten))
 			{
 				return (long)bytesWritten;
 			}
@@ -125,11 +123,10 @@ namespace Shared
 
 		IEnumerable<MEMORY_BASIC_INFORMATION> GetMemoryRegions(long min_address = 0, long max_address = 0x7FFFFFFF)
 		{
-			MEMORY_BASIC_INFORMATION mem_info;
 
 			//scan process memory regions
 			while (min_address < max_address
-				&& VirtualQueryEx(processHandle, (IntPtr)min_address, out mem_info, (uint)Marshal.SizeOf(typeof(MEMORY_BASIC_INFORMATION))) > 0)
+				&& VirtualQueryEx(processHandle, (IntPtr)min_address, out MEMORY_BASIC_INFORMATION mem_info, (uint)Marshal.SizeOf(typeof(MEMORY_BASIC_INFORMATION))) > 0)
 			{
 				yield return mem_info;
 
@@ -150,8 +147,7 @@ namespace Shared
 					long readPosition = (long)mem_info.BaseAddress;
 					int bytesToRead = (int)mem_info.RegionSize;
 
-					IntPtr bytesRead;
-					while (bytesToRead > 0 && ReadProcessMemory(processHandle, new IntPtr(readPosition), buffer, Math.Min(buffer.Length, bytesToRead), out bytesRead))
+					while (bytesToRead > 0 && ReadProcessMemory(processHandle, new IntPtr(readPosition), buffer, Math.Min(buffer.Length, bytesToRead), out IntPtr bytesRead))
 					{
 						//search bytes pattern
 						int index = searchFunction(buffer);

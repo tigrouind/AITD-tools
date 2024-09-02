@@ -8,7 +8,7 @@ namespace VarsViewer
 {
 	public class VarsWorker : IWorker
 	{
-		(int VarsAddress, int CvarAddress) gameConfig => gameConfigs[Program.GameVersion];
+		(int VarsAddress, int CvarAddress) GameConfig => gameConfigs[Program.GameVersion];
 
 		bool IWorker.UseMouse => true;
 
@@ -158,7 +158,7 @@ namespace VarsViewer
 			long time = Stopwatch.GetTimestamp();
 
 			bool result = true;
-			if (result &= Program.Process.Read(Program.Memory, gameConfig.VarsAddress + Program.EntryPoint, 4) > 0)
+			if (result &= Program.Process.Read(Program.Memory, GameConfig.VarsAddress + Program.EntryPoint, 4) > 0)
 			{
 				varsPointer = Program.Memory.ReadFarPointer(0);
 				if (varsPointer == 0)
@@ -176,7 +176,7 @@ namespace VarsViewer
 			}
 
 			cvars.Count = 16;
-			if (result &= Program.Process.Read(Program.Memory, gameConfig.CvarAddress + Program.EntryPoint, cvars.Count * 2) > 0)
+			if (result &= Program.Process.Read(Program.Memory, GameConfig.CvarAddress + Program.EntryPoint, cvars.Count * 2) > 0)
 			{
 				CheckDifferences(cvars);
 			}
@@ -439,7 +439,7 @@ namespace VarsViewer
 			{
 				if (Program.Process != null)
 				{
-					int memoryAddress = var.Type == VarEnum.VARS ? varsPointer : gameConfig.CvarAddress + Program.EntryPoint;
+					int memoryAddress = var.Type == VarEnum.VARS ? varsPointer : GameConfig.CvarAddress + Program.EntryPoint;
 					Program.Memory.Write(value, 0);
 					Program.Process.Write(Program.Memory, memoryAddress + var.Index * 2, 2);
 				}

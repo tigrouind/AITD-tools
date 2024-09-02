@@ -11,7 +11,7 @@ namespace VarsViewer
 	{
 		bool IWorker.UseMouse => false;
 
-		int[] gameConfig => gameConfigs[Program.GameVersion];
+		int[] GameConfig => gameConfigs[Program.GameVersion];
 		readonly Dictionary<GameVersion, int[]> gameConfigs = new Dictionary<GameVersion, int[]>
 		{
 			// ListSamp / ListLife / ListBody / ListAnim / ListTrak / ListMus / _MEMORY_
@@ -20,7 +20,7 @@ namespace VarsViewer
 			{ GameVersion.AITD1_DEMO,   new [] { 0x20506, 0x20464, 0x2045C, 0x20460, 0x20472, 0x20476, 0x20500 } },
 		};
 
-		IEnumerable<Cache> cache => Program.GameVersion == GameVersion.AITD1 ? cacheConfig.Where(x => x.Section != VarEnum.MUSIC) : cacheConfig;
+		IEnumerable<Cache> Cache => Program.GameVersion == GameVersion.AITD1 ? cacheConfig.Where(x => x.Section != VarEnum.MUSIC) : cacheConfig;
 		readonly Cache[] cacheConfig = {
 			new Cache(0, VarEnum.SOUNDS),
 			new Cache(1, VarEnum.LIFES),
@@ -37,9 +37,9 @@ namespace VarsViewer
 		{
 			long ticks = Stopwatch.GetTimestamp();
 			bool readSuccess = true;
-			foreach (var ch in cache)
+			foreach (var ch in Cache)
 			{
-				if (readSuccess &= Program.Process.Read(Program.Memory, Program.EntryPoint + gameConfig[ch.Index], 4) > 0)
+				if (readSuccess &= Program.Process.Read(Program.Memory, Program.EntryPoint + GameConfig[ch.Index], 4) > 0)
 				{
 					int cachePointer = Program.Memory.ReadFarPointer(0);
 					if (cachePointer != 0 && (readSuccess &= Program.Process.Read(Program.Memory, cachePointer - 16, 4096) > 0))
@@ -75,7 +75,7 @@ namespace VarsViewer
 
 			if (Sort.SortMode != SortMode.Default)
 			{
-				Sort.SortEntries(cache);
+				Sort.SortEntries(Cache);
 			}
 
 			return true;
@@ -177,7 +177,7 @@ namespace VarsViewer
 
 				case ConsoleKey.S:
 					Sort.SortMode = (SortMode)(((int)Sort.SortMode + 1) % 3);
-					Sort.SortEntries(cache);
+					Sort.SortEntries(Cache);
 					break;
 			}
 		}
@@ -293,7 +293,7 @@ namespace VarsViewer
 		void IWorker.Render()
 		{
 			int column = 0;
-			foreach (var ch in cache)
+			foreach (var ch in Cache)
 			{
 				if (ch.Name != null)
 				{
