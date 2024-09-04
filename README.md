@@ -50,8 +50,8 @@ Supported :
 
 ## Command-line arguments
 ```
-MemoryViewer [-screen-width WIDTH]
-             [-screen-height HEIGHT]
+MemoryViewer [-width WIDTH]
+             [-height HEIGHT]
              [-zoom ZOOM]
 ```
 
