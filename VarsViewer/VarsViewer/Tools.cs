@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace VarsViewer
 {
@@ -33,42 +31,6 @@ namespace VarsViewer
 			int spaces = length - text.Length;
 			int padLeft = spaces / 2 + text.Length;
 			return text.PadLeft(padLeft).PadRight(length);
-		}
-
-		public static bool StringEquals(byte[] data, int index, int count, string value)
-		{
-			if (value == null)
-			{
-				return false;
-			}
-
-			if (GetByteCount(data, index, count) != value.Length)
-			{
-				return false;
-			}
-
-			for (int i = 0 ; i < Math.Min(value.Length, count); i++)
-			{
-				if (data[index + i] != value[i])
-				{
-					return false;
-				}
-			}
-
-			return true;
-		}
-
-		static int GetByteCount(byte[] data, int index, int count)
-		{
-			for (int i = 0 ; i < count ; i++)
-			{
-				if (data[index + i] == 0)
-				{
-					return i;
-				}
-			}
-
-			return count;
 		}
 
 		public static void InsertionSort<T>(LinkedList<T> list, IComparer<T> comparer)

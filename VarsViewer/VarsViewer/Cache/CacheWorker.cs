@@ -82,11 +82,7 @@ namespace VarsViewer
 
 			void UpdateCache(Cache ch, int offset)
 			{
-				if (!Tools.StringEquals(Program.Memory, offset, 8, ch.Name))
-				{
-					ch.Name = Encoding.ASCII.GetString(Program.Memory, offset, 8);
-				}
-
+				ch.Name = Encoding.ASCII.GetString(Program.Memory, offset, 8);
 				ch.MaxFreeData = Program.Memory.ReadUnsignedShort(offset + 10);
 				ch.SizeFreeData = Program.Memory.ReadUnsignedShort(offset + 12);
 				ch.NumMaxEntry = Program.Memory.ReadUnsignedShort(offset + 14);
