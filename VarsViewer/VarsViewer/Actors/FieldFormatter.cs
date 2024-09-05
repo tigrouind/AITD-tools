@@ -1,7 +1,6 @@
 using Shared;
 using System;
 using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace VarsViewer.Actors
 {
@@ -12,6 +11,36 @@ namespace VarsViewer.Actors
 		public static ushort Timer2;
 
 		public static bool FullMode;
+
+		public static int GetSize(Column column)
+		{
+			switch (column.Type)
+			{
+				case ColumnType.ZVPOS:
+				case ColumnType.ZVSIZE:
+				case ColumnType.ROOM:
+				case ColumnType.TIME:
+					return 4;
+
+				case ColumnType.BODY:
+				case ColumnType.LIFE:
+				case ColumnType.TRACK:
+				case ColumnType.ANIM:
+				case ColumnType.NAME:
+				case ColumnType.ANGLE:
+				case ColumnType.FLAGS:
+				case ColumnType.TIME2:
+				case ColumnType.TIME3:
+				case ColumnType.DEFAULT:
+					return 2;
+
+				case ColumnType.SLOT:
+					return 0;
+
+				default:
+					throw new NotImplementedException();
+			}
+		}
 
 		public static string Format(byte[] memory, Column column, int i)
 		{
@@ -147,7 +176,7 @@ namespace VarsViewer.Actors
 					}
 					break;
 
-				default:
+				case ColumnType.DEFAULT:
 					if (column.Values != null)
 					{
 						if (column.Values.TryGetValue(value, out string name) && (FullMode || (name != null && name.Length == 1)))
@@ -161,6 +190,9 @@ namespace VarsViewer.Actors
 						return value.ToString();
 					}
 					break;
+
+				default:
+					throw new NotImplementedException();
 			}
 
 			return null;

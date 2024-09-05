@@ -4,12 +4,13 @@
 	{
 		public int Id;
 		public byte[] Values;
+
 		public long CreationTime;
 		public long DeletionTime;
-		public long UpdateTime;
+		public long[] UpdateTime;
 
 		public bool Created;
-		public bool Updated;
 		public bool Deleted;
+		public bool[] Updated;
 	}
 }

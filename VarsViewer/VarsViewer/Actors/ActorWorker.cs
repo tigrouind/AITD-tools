@@ -25,8 +25,8 @@ namespace VarsViewer
 			{ GameVersion.AITD1_DEMO,   (0x2050A, 0x18BB8) },
 		};
 
-		readonly Buffer<(ConsoleColor, ConsoleColor)> rowColor = new Buffer<(ConsoleColor, ConsoleColor)>();
-		readonly Buffer<string> cells = new Buffer<string>();
+		readonly Buffer<(ConsoleColor Background, ConsoleColor Foreground)> rowColor = new Buffer<(ConsoleColor, ConsoleColor)>();
+		readonly Buffer<(string Text, ConsoleColor Color)> cells = new Buffer<(string, ConsoleColor)>();
 
 		readonly Actor[] actors;
 		int scroll;
@@ -57,7 +57,9 @@ namespace VarsViewer
 				actors[i] = new Actor
 				{
 					Id = -1,
-					Values = new byte[cellConfig.Columns * 2]
+					Values = new byte[cellConfig.Columns * 2],
+					Updated = new bool[cellConfig.Columns],
+					UpdateTime = new long[cellConfig.Columns],
 				};
 			}
 
@@ -156,10 +158,6 @@ namespace VarsViewer
 						{
 							color = (ConsoleColor.DarkGreen, ConsoleColor.Black);
 						}
-						else if (actor.Updated)
-						{
-							color = (ConsoleColor.Black, ConsoleColor.DarkYellow);
-						}
 						else
 						{
 							color = (ConsoleColor.Black, actor.Id != -1 ? ConsoleColor.Gray : ConsoleColor.DarkGray);
@@ -178,7 +176,7 @@ namespace VarsViewer
 								foreach (var column in colGroup.Columns)
 								{
 									var text = FieldFormatter.Format(actor.Values, column, i);
-									cells[rowsCount, col] = text;
+									cells[rowsCount, col] = (text, FieldFormatter.GetSize(column) != 0 && actor.Updated[column.Offset / 2] ? ConsoleColor.DarkYellow : ConsoleColor.Black);
 
 									if (text != null)
 									{
@@ -304,7 +302,8 @@ namespace VarsViewer
 				for (int row = 0; row < Math.Min(height, rowsCount - scroll); row++)
 				{
 					Console.CursorLeft = 0;
-					(Console.BackgroundColor, Console.ForegroundColor) = rowColor[0, row + scroll];
+					var rowColor = this.rowColor[0, row + scroll];
+					Console.BackgroundColor = rowColor.Background;
 
 					int col = 0;
 					foreach (var group in config)
@@ -313,9 +312,19 @@ namespace VarsViewer
 						{
 							if (column.Visible)
 							{
+								var cell = cells[row + scroll, col];
 								if (col > 0) Console.Write(' ');
-								var text = cells[row + scroll, col];
-								Console.Write(Tools.PadBoth(text ?? "", column.Width + column.ExtraWidth));
+
+								if (cell.Color != ConsoleColor.Black && rowColor.Background == ConsoleColor.Black)
+								{
+									Console.ForegroundColor = cell.Color;
+								}
+								else
+								{
+									Console.ForegroundColor = rowColor.Foreground;
+								}
+
+								Console.Write(Tools.PadBoth(cell.Text ?? "", column.Width + column.ExtraWidth));
 							}
 
 							col++;
@@ -354,7 +363,7 @@ namespace VarsViewer
 						actor.Id = -1;
 						actor.Created = false;
 						actor.Deleted = false;
-						actor.Updated = false;
+						Array.Clear(actor.Updated, 0, actor.Updated.Length);
 						Array.Clear(actor.Values, 0, actor.Values.Length);
 					}
 					return;
@@ -374,32 +383,49 @@ namespace VarsViewer
 					{
 						actor.CreationTime = timeStamp;
 						actor.DeletionTime = 0;
-						actor.UpdateTime = 0;
+						Array.Clear(actor.UpdateTime, 0, actor.UpdateTime.Length);
 					}
 
 					if (actor.Id != -1 && id == -1) //deleted
 					{
 						actor.DeletionTime = timeStamp;
 						actor.CreationTime = 0;
-						actor.UpdateTime = 0;
+						Array.Clear(actor.UpdateTime, 0, actor.UpdateTime.Length);
 					}
 
-					if (id != -1 && actor.Id == id)
+					if ((id != -1 || showAll) && actor.Id == id) //compare
 					{
-						for (int j = 0; j < actor.Values.Length; j++)
+						foreach (var column in config
+							.SelectMany(x => x.Columns)
+							.SelectMany(x => x.Columns))
 						{
-							if (Program.Memory[j + startAddress] != actor.Values[j])
+							switch (FieldFormatter.GetSize(column))
 							{
-								actor.UpdateTime = timeStamp;
-								break;
+								case 2:
+									if (Program.Memory.ReadShort(startAddress + column.Offset) != actor.Values.ReadShort(column.Offset))
+									{
+										actor.UpdateTime[column.Offset / 2] = timeStamp;
+									}
+									break;
+
+								case 4:
+									if (Program.Memory.ReadInt(startAddress + column.Offset) != actor.Values.ReadInt(column.Offset))
+									{
+										actor.UpdateTime[column.Offset / 2] = timeStamp;
+									}
+									break;
 							}
 						}
 					}
 
 					actor.Id = id;
+
+					for (int j = 0; j < actor.UpdateTime.Length; j++)
+					{
+						actor.Updated[j] = Shared.Tools.GetTimeSpan(timeStamp, actor.UpdateTime[j]) < TimeSpan.FromSeconds(2);
+					}
 					actor.Deleted = Shared.Tools.GetTimeSpan(timeStamp, actor.DeletionTime) < TimeSpan.FromSeconds(2);
 					actor.Created = Shared.Tools.GetTimeSpan(timeStamp, actor.CreationTime) < TimeSpan.FromSeconds(2);
-					actor.Updated = Shared.Tools.GetTimeSpan(timeStamp, actor.UpdateTime) < TimeSpan.FromSeconds(1);
 
 					Array.Copy(Program.Memory, startAddress, actor.Values, 0, actor.Values.Length);
 				}
