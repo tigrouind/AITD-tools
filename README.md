@@ -86,11 +86,12 @@ VarsViewer [-view {vars|cache|actor|object}]
 | <kbd>F4</kbd> | actor view
 | <kbd>F3</kbd> | object view
 | <kbd>control</kbd> + <kbd>mouse wheel</kbd> | zoom in/out
+| <kbd>f</kbd> | freeze capture
 
 ## Commands (vars)
 | Key | Description |
 | :-: | - |
-| <kbd>f</kbd> | freeze capture
+
 | <kbd>s</kbd> | save state
 | <kbd>c</kbd> | compare current state with saved state
 
@@ -104,7 +105,6 @@ VarsViewer [-view {vars|cache|actor|object}]
 ## Commands (actor/object)
 | Key | Description |
 | :-: | - |
-| <kbd>f</kbd> | freeze capture
 | <kbd>space</kbd> | show/hide inactive actors/objects
 | <kbd>page up</kbd> / <kbd>page down</kbd> | scroll
 | <kbd>tab</kbd> | compact/full view

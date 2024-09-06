@@ -33,31 +33,23 @@ namespace VarsViewer
 		bool clearCache, showTimestamp;
 		int uniqueId;
 
-		bool IWorker.ReadMemory()
+		void IWorker.ReadMemory()
 		{
 			long ticks = Stopwatch.GetTimestamp();
-			bool readSuccess = true;
 			foreach (var ch in Cache)
 			{
-				if (readSuccess &= Program.Process.Read(Program.Memory, Program.EntryPoint + GameConfig[ch.Index], 4) > 0)
+				int cachePointer = Program.Memory.ReadFarPointer(Program.EntryPoint + GameConfig[ch.Index]);
+				if (cachePointer != 0)
 				{
-					int cachePointer = Program.Memory.ReadFarPointer(0);
-					if (cachePointer != 0 && (readSuccess &= Program.Process.Read(Program.Memory, cachePointer - 16, 4096) > 0))
+					DosMCB block = DosBox.ReadMCB(Program.Memory, cachePointer - 16);
+					if ((block.Tag == 0x4D || block.Tag == 0x5A) && block.Owner != 0 && block.Size < 4096) //block is still allocated
 					{
-						DosMCB block = DosBox.ReadMCB(Program.Memory, 0);
-						if ((block.Tag == 0x4D || block.Tag == 0x5A) && block.Owner != 0 && block.Size < 4096) //block is still allocated
-						{
-							UpdateCache(ch, 16);
-							UpdateEntries(ch);
+						UpdateCache(ch, cachePointer);
+						UpdateEntries(ch);
 
-							if (clearCache)
-							{
-								ClearCache(ch, cachePointer);
-							}
-						}
-						else
+						if (clearCache)
 						{
-							ch.Name = null;
+							ClearCache(ch, cachePointer);
 						}
 					}
 					else
@@ -65,20 +57,18 @@ namespace VarsViewer
 						ch.Name = null;
 					}
 				}
+				else
+				{
+					ch.Name = null;
+				}
 			}
 
 			clearCache = false;
-			if (!readSuccess)
-			{
-				return false;
-			}
 
 			if (Sort.SortMode != SortMode.Default)
 			{
 				Sort.SortEntries(Cache);
 			}
-
-			return true;
 
 			void UpdateCache(Cache ch, int offset)
 			{
@@ -238,17 +228,23 @@ namespace VarsViewer
 		void RenderCache(Cache ch, int column)
 		{
 			(Console.BackgroundColor, Console.ForegroundColor) = (ConsoleColor.Black, ConsoleColor.Gray);
+			if (Program.Freeze)
+			{
+				(Console.BackgroundColor, Console.ForegroundColor) = (Console.ForegroundColor, Console.BackgroundColor);
+			}
 
 			Console.SetCursorPosition(column * 19 + 5, 0);
 			Console.Write(ch.Name);
 
+			Console.SetCursorPosition(column * 19 + 14, 0);
+			(Console.BackgroundColor, Console.ForegroundColor) = (ConsoleColor.Black, ConsoleColor.Gray);			
 			switch (Sort.SortMode)
 			{
 				case SortMode.Memory:
-					Console.Write(" ▼mem");
+					Console.Write("▼mem");
 					break;
 				case SortMode.LRU:
-					Console.Write(" ▼lru");
+					Console.Write("▼lru");
 					break;
 			}
 

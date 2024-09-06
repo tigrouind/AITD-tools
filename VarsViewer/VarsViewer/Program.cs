@@ -17,6 +17,7 @@ namespace VarsViewer
 		public static int EntryPoint;
 		public static GameVersion GameVersion;
 		static readonly Stopwatch dosboxTimer = new Stopwatch();
+		public static bool Freeze;
 
 		static readonly IWorker[] workers = new IWorker[] { new VarsWorker(), new CacheWorker(), new ActorWorker(0), new ActorWorker(1) };
 		static IWorker worker;
@@ -48,9 +49,13 @@ namespace VarsViewer
 
 				Console.ProcessEvents();
 
-				if (Process != null)
+				if (Process != null && !Freeze)
 				{
-					if (!worker.ReadMemory())
+					if (Process.Read(Memory, 0, 640 * 1024) != 0)
+					{
+						worker.ReadMemory();
+					}
+					else
 					{
 						CloseReader();
 					}
@@ -92,6 +97,10 @@ namespace VarsViewer
 						case ConsoleKey.F3:
 						case ConsoleKey.F4:
 							SetView(keyInfo.Key - ConsoleKey.F1);
+							break;
+
+						case ConsoleKey.F:
+							Freeze = !Freeze;
 							break;
 
 						default:

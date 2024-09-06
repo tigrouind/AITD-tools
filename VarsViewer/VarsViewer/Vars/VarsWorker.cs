@@ -27,7 +27,6 @@ namespace VarsViewer
 
 		bool compare;
 		bool ignoreDifferences = true;
-		bool freeze;
 		bool edit;
 
 		Var highlightedCell;
@@ -108,7 +107,7 @@ namespace VarsViewer
 
 				void SetHeaderColor()
 				{
-					(Console.BackgroundColor, Console.ForegroundColor) = (freeze ? ConsoleColor.Blue : ConsoleColor.DarkGray, ConsoleColor.Black);
+					(Console.BackgroundColor, Console.ForegroundColor) = (Program.Freeze ? ConsoleColor.Blue : ConsoleColor.DarkGray, ConsoleColor.Black);
 				}
 
 				void SetCellColor(Var var)
@@ -148,44 +147,27 @@ namespace VarsViewer
 			}
 		}
 
-		bool IWorker.ReadMemory()
+		void IWorker.ReadMemory()
 		{
-			if (freeze)
-			{
-				return true;
-			}
-
 			long time = Stopwatch.GetTimestamp();
 
-			bool result = true;
-			if (result &= Program.Process.Read(Program.Memory, GameConfig.VarsAddress + Program.EntryPoint, 4) > 0)
+			varsPointer = Program.Memory.ReadFarPointer(GameConfig.VarsAddress + Program.EntryPoint);
+			if (varsPointer == 0)
 			{
-				varsPointer = Program.Memory.ReadFarPointer(0);
-				if (varsPointer == 0)
-				{
-					vars.Count = 0;
-				}
-				else
-				{
-					vars.Count = Program.GameVersion == GameVersion.AITD1_DEMO ? 22 : 207;
-					if (result &= Program.Process.Read(Program.Memory, varsPointer, vars.Count * 2) > 0)
-					{
-						CheckDifferences(vars);
-					}
-				}
+				vars.Count = 0;
+			}
+			else
+			{
+				vars.Count = Program.GameVersion == GameVersion.AITD1_DEMO ? 22 : 207;
+				CheckDifferences(varsPointer, vars);
 			}
 
+			CheckDifferences(GameConfig.CvarAddress + Program.EntryPoint, cvars);
 			cvars.Count = 16;
-			if (result &= Program.Process.Read(Program.Memory, GameConfig.CvarAddress + Program.EntryPoint, cvars.Count * 2) > 0)
-			{
-				CheckDifferences(cvars);
-			}
 
 			ignoreDifferences = false;
 
-			return result;
-
-			void CheckDifferences(VarsCollection data)
+			void CheckDifferences(int address, VarsCollection data)
 			{
 				for (int i = 0; i < data.Count; i++)
 				{
@@ -198,7 +180,7 @@ namespace VarsViewer
 					}
 					else
 					{
-						value = Program.Memory.ReadShort(i * 2 + 0);
+						value = Program.Memory.ReadShort(address + i * 2 + 0);
 					}
 
 					if (ignoreDifferences)
@@ -248,11 +230,6 @@ namespace VarsViewer
 						compare = !compare;
 						ignoreDifferences = !compare;
 					}
-					break;
-
-				case ConsoleKey.F:
-					Abort();
-					freeze = !freeze;
 					break;
 
 				case ConsoleKey.S:
@@ -482,7 +459,7 @@ namespace VarsViewer
 
 		void IWorker.MouseDown(int x, int y)
 		{
-			if (!freeze && !compare)
+			if (!Program.Freeze && !compare)
 			{
 				Commit();
 				if (Program.Process != null && TryFindVarAtPosition(x, y, out highlightedCell))

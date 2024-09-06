@@ -31,7 +31,6 @@ namespace VarsViewer
 		readonly Actor[] actors;
 		int scroll;
 		bool showAll, fullMode;
-		static bool freeze;
 		long timeStamp, refreshTime;
 
 		public ActorWorker(int view)
@@ -264,7 +263,7 @@ namespace VarsViewer
 			void OutputToConsole()
 			{
 				Console.SetCursorPosition(0, 0);
-				(Console.BackgroundColor, Console.ForegroundColor) = (freeze ? ConsoleColor.Blue : ConsoleColor.DarkGray, ConsoleColor.Black);
+				(Console.BackgroundColor, Console.ForegroundColor) = (Program.Freeze ? ConsoleColor.Blue : ConsoleColor.DarkGray, ConsoleColor.Black);
 
 				//header (groups)
 				foreach (var group in config.Where(x => x.Visible))
@@ -336,18 +335,10 @@ namespace VarsViewer
 			}
 		}
 
-		bool IWorker.ReadMemory()
+		void IWorker.ReadMemory()
 		{
-			if (!freeze)
-			{
-				if (Program.Process.Read(Program.Memory, 0, 640 * 1024) == 0)
-				{
-					return false;
-				}
-
-				timeStamp = Stopwatch.GetTimestamp();
-				ReadActors();
-			}
+			timeStamp = Stopwatch.GetTimestamp();
+			ReadActors();
 
 			void ReadActors()
 			{
@@ -429,8 +420,6 @@ namespace VarsViewer
 					Array.Copy(Program.Memory, startAddress, actor.Values, 0, actor.Values.Length);
 				}
 			}
-
-			return true;
 		}
 
 		void IWorker.KeyDown(ConsoleKeyInfo key)
@@ -460,10 +449,6 @@ namespace VarsViewer
 				case ConsoleKey.Tab:
 					ClearTab();
 					fullMode = !fullMode;
-					break;
-
-				case ConsoleKey.F:
-					freeze = !freeze;
 					break;
 			}
 		}
