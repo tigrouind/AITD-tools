@@ -10,8 +10,6 @@ namespace VarsViewer.Actors
 
 		public static ushort Timer2;
 
-		public static bool FullMode;
-
 		public static int GetSize(Column column)
 		{
 			switch (column.Type)
@@ -42,7 +40,7 @@ namespace VarsViewer.Actors
 			}
 		}
 
-		public static string Format(byte[] memory, Column column, int i)
+		public static string Format(byte[] memory, Column column, int i, bool fullMode)
 		{
 			if (column.Type == ColumnType.SLOT)
 			{
@@ -95,7 +93,7 @@ namespace VarsViewer.Actors
 				case ColumnType.NAME:
 					if (value != -1)
 					{
-						if (FullMode && Program.Language.TryGetValue(value, out string name))
+						if (fullMode && Program.Language.TryGetValue(value, out string name))
 						{
 							return $"{value}:{Tools.SubString(name, 6).TrimEnd('_')}";
 						}
@@ -162,7 +160,7 @@ namespace VarsViewer.Actors
 				case ColumnType.FLAGS:
 					if (value != -1)
 					{
-						if (column.Values != null && FullMode)
+						if (column.Values != null && fullMode)
 						{
 							return string.Join("|", column.Values
 								.Where(x => (value & x.Key) != 0 && !string.IsNullOrEmpty(x.Value))
@@ -179,7 +177,7 @@ namespace VarsViewer.Actors
 				case ColumnType.DEFAULT:
 					if (column.Values != null)
 					{
-						if (column.Values.TryGetValue(value, out string name) && (FullMode || (name != null && name.Length == 1)))
+						if (column.Values.TryGetValue(value, out string name) && (fullMode || (name != null && name.Length == 1)))
 						{
 							return name;
 						}
@@ -201,7 +199,7 @@ namespace VarsViewer.Actors
 			{
 				if (value != -1 && value != -2)
 				{
-					if (FullMode)
+					if (fullMode)
 					{
 						string name = Tools.SubString(Program.VarParser.GetText(varType, value), 6).Trim().Replace(" ", "_");
 						if (!string.IsNullOrEmpty(name))

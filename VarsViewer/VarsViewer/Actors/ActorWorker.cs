@@ -175,7 +175,7 @@ namespace VarsViewer
 
 								foreach (var column in colGroup.Columns)
 								{
-									var text = FieldFormatter.Format(actor.Values, column, i);
+									var text = FieldFormatter.Format(actor.Values, column, i, fullMode);
 									cells[rowsCount, col] = (text, FieldFormatter.GetSize(column) != 0 && actor.Updated[column.Offset / 2] ? ConsoleColor.DarkYellow : ConsoleColor.Black);
 
 									if (text != null)
@@ -371,7 +371,6 @@ namespace VarsViewer
 
 				FieldFormatter.Timer1 = Program.Memory.ReadUnsignedInt(Program.EntryPoint + 0x19D12);
 				FieldFormatter.Timer2 = Program.Memory.ReadUnsignedShort(Program.EntryPoint + 0x242E0);
-				FieldFormatter.FullMode = fullMode;
 
 				for (int i = 0; i < rows; i++)
 				{
