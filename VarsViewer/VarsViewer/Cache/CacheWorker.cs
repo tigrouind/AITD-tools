@@ -39,7 +39,7 @@ namespace VarsViewer
 			foreach (var ch in Cache)
 			{
 				int cachePointer = Program.Memory.ReadFarPointer(Program.EntryPoint + GameConfig[ch.Index]);
-				if (cachePointer != 0)
+				if (cachePointer != 0 && cachePointer < Program.Memory.Length) //should never happen, unless game crashes
 				{
 					DosMCB block = DosBox.ReadMCB(Program.Memory, cachePointer - 16);
 					if ((block.Tag == 0x4D || block.Tag == 0x5A) && block.Owner != 0 && block.Size < 4096) //block is still allocated
@@ -237,7 +237,7 @@ namespace VarsViewer
 			Console.Write(ch.Name);
 
 			Console.SetCursorPosition(column * 19 + 14, 0);
-			(Console.BackgroundColor, Console.ForegroundColor) = (ConsoleColor.Black, ConsoleColor.Gray);			
+			(Console.BackgroundColor, Console.ForegroundColor) = (ConsoleColor.Black, ConsoleColor.Gray);
 			switch (Sort.SortMode)
 			{
 				case SortMode.Memory:

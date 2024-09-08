@@ -13,7 +13,7 @@ namespace VarsViewer
 	public class ActorWorker : IWorker
 	{
 		bool IWorker.UseMouse => false;
-		readonly Func<int> getAddress;
+		readonly Func<int> getActorAddress;
 		readonly (int Rows, int Columns) cellConfig;
 		readonly List<Column> config;
 
@@ -39,13 +39,13 @@ namespace VarsViewer
 			{
 				case 0:
 					config = LoadConfig("Actor.json");
-					getAddress = () => GameConfig.ActorAddress + Program.EntryPoint;
+					getActorAddress = () => GameConfig.ActorAddress + Program.EntryPoint;
 					cellConfig = (50, 80);
 					break;
 
 				case 1:
 					config = LoadConfig("Object.json");
-					getAddress = () => Program.Memory.ReadFarPointer(GameConfig.ObjectAddress + Program.EntryPoint);
+					getActorAddress = () => Program.Memory.ReadFarPointer(GameConfig.ObjectAddress + Program.EntryPoint);
 					cellConfig = (Program.GameVersion == GameVersion.AITD1_DEMO ? 18 : 292, 26);
 					break;
 			}
@@ -343,10 +343,15 @@ namespace VarsViewer
 			void ReadActors()
 			{
 				(int rows, int columns) = cellConfig;
-				int address = getAddress();
+				int actorPointer = getActorAddress();
+
+				if ((actorPointer + rows * columns * 2) >= Program.Memory.Length) //should never happen, unless game crashes
+				{
+					return;
+				}
 
 				if (Enumerable.Range(0, rows)
-					.All(x => Program.Memory.ReadShort(address + x * columns * 2) == 0)) //are actors initialized ?
+					.All(x => Program.Memory.ReadShort(actorPointer + x * columns * 2) == 0)) //are actors initialized ?
 				{
 					ClearTab();
 					foreach (var actor in actors)
@@ -365,7 +370,7 @@ namespace VarsViewer
 
 				for (int i = 0; i < rows; i++)
 				{
-					int startAddress = address + i * columns * 2;
+					int startAddress = actorPointer + i * columns * 2;
 					int id = Program.Memory.ReadShort(startAddress);
 					var actor = actors[i];
 

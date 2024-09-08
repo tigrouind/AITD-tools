@@ -156,7 +156,7 @@ namespace VarsViewer
 			{
 				vars.Count = 0;
 			}
-			else
+			else if ((varsPointer + vars.Count * 2) < Program.Memory.Length) //should never happen, unless game crashes
 			{
 				vars.Count = Program.GameVersion == GameVersion.AITD1_DEMO ? 22 : 207;
 				CheckDifferences(varsPointer, vars);
