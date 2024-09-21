@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 
 namespace VarsViewer
 {
@@ -9,14 +8,16 @@ namespace VarsViewer
 	{
 		#region Native
 
+		#region Output
+
 		[DllImport("Kernel32.dll")]
 		static extern IntPtr CreateFile(
 			string fileName,
-			[MarshalAs(UnmanagedType.U4)] FileAccess fileAccess,
-			[MarshalAs(UnmanagedType.U4)] FileShare fileShare,
+			FileAccess fileAccess,
+			FileShare fileShare,
 			IntPtr securityAttributes,
-			[MarshalAs(UnmanagedType.U4)] FileMode creationDisposition,
-			[MarshalAs(UnmanagedType.U4)] FileAttributes flags,
+			FileMode creationDisposition,
+			FileAttributes flags,
 			IntPtr template);
 
 		const uint GENERIC_WRITE = 0x40000000;
@@ -69,13 +70,19 @@ namespace VarsViewer
 			public short Bottom;
 		}
 
+		#endregion
+
+		#region Input
+
+		[DllImport("Kernel32.dll")]
+		static extern IntPtr GetStdHandle(int nStdHandle);
+
+		const int STD_INPUT_HANDLE = -10;
+
 		[DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
 		static extern bool ReadConsoleInputEx(IntPtr hConsoleInput, out InputRecord buffer, int numInputRecords_UseOne, out int numEventsRead, ushort wFlags);
 
 		const int CONSOLE_READ_NOWAIT = 0x0002;
-
-		[DllImport("kernel32.dll")]
-		static extern bool GetNumberOfConsoleInputEvents(IntPtr hConsoleInput, out uint numberOfEvents);
 
 		[StructLayout(LayoutKind.Explicit, CharSet = CharSet.Auto)]
 		struct InputRecord
@@ -105,8 +112,9 @@ namespace VarsViewer
 			public uint eventFlags;
 		}
 
-		[DllImport("Kernel32.dll")]
-		static extern IntPtr GetStdHandle(int nStdHandle);
+		#endregion
+
+		#region ConsoleMode
 
 		[DllImport("kernel32.dll")]
 		static extern bool GetConsoleMode(IntPtr hConsoleHandle, out ConsoleMode lpMode);
@@ -122,7 +130,9 @@ namespace VarsViewer
 			ENABLE_QUICK_EDIT_MODE = 0x0040
 		}
 
-		const int STD_INPUT_HANDLE = -10;
+		#endregion
+
+		#region WindowPos
 
 		[DllImport("user32.dll")]
 		static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, uint uFlags);
@@ -143,6 +153,8 @@ namespace VarsViewer
 			public int Right;
 			public int Bottom;
 		}
+
+		#endregion
 
 		#endregion
 
