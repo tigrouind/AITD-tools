@@ -1,5 +1,6 @@
 using Shared;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -43,7 +44,18 @@ namespace PAKExtract
 				{
 					if (File.Exists(arg))
 					{
-						ExtractFile(arg);
+						if (Tools.HasArgument(args, "-update"))
+						{
+							var updateArgs = Tools.GetArgument<string>(args, "-update");
+							var updateParam = updateArgs.Split(' ');
+							string inputFile = updateParam[0];
+							int index = int.Parse(updateParam[1]);
+							return UpdateFile(arg, inputFile, index);
+						}
+						else
+						{
+							ExtractFile(arg);
+						}
 						foundFile = true;
 					}
 					else
@@ -77,6 +89,21 @@ namespace PAKExtract
 			{
 				ExtractFile(filePath);
 			}
+		}
+
+		static int UpdateFile(string filePath, string inputFile, int index)
+		{
+			var entries = PakArchive.Load(filePath);
+			if (index < 0 || index > entries.Length)
+			{
+				Console.Error.Write($"Invalid entry index {index} for {Path.GetFileName(filePath)}");
+				return -1;
+			}
+
+			entries[index].Write(File.ReadAllBytes(inputFile));
+			PakArchive.Save(filePath, entries);
+			Console.WriteLine($"Entry {index} in {Path.GetFileName(filePath)} updated");
+			return 0;
 		}
 
 		static void ExtractFile(string filePath)

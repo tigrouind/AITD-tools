@@ -7,13 +7,24 @@ namespace Shared
 		public int UncompressedSize;
 		public byte CompressionType;
 
+		internal byte[] Extra;
+		internal byte[] Data;
 		internal PakArchive Archive;
 		internal byte CompressionFlags;
-		internal int Offset;
+		internal byte[] Offset;
 
 		public byte[] Read()
 		{
 			return Archive.GetData(this);
+		}
+
+		public void Write(byte[] data)
+		{
+			Data = data;
+			CompressedSize = data.Length;
+			UncompressedSize = data.Length;
+			CompressionType = 0;
+			CompressionFlags = 0;
 		}
 	}
 }

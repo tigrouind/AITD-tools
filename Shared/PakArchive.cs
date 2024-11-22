@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace Shared
@@ -47,7 +48,7 @@ namespace Shared
 
 		internal byte[] GetData(PakArchiveEntry entry)
 		{
-			stream.Seek(offsets[entry.Index] + entry.Offset + 16, SeekOrigin.Begin);
+			stream.Seek(offsets[entry.Index] + entry.Offset.Length + entry.Extra.Length + 16, SeekOrigin.Begin);
 
 			var result = new byte[entry.UncompressedSize];
 			switch (entry.CompressionType)
@@ -82,6 +83,14 @@ namespace Shared
 			return result;
 		}
 
+		internal byte[] GetRawData(PakArchiveEntry entry)
+		{
+			stream.Seek(offsets[entry.Index] + entry.Offset.Length + entry.Extra.Length + 16, SeekOrigin.Begin);
+			var result = new byte[entry.CompressedSize];
+			stream.Read(result, 0, entry.CompressedSize);
+			return result;
+		}
+
 		public int Count
 		{
 			get
@@ -111,6 +120,54 @@ namespace Shared
 			return GetEnumerator();
 		}
 
+		public static PakArchiveEntry[] Load(string filePath)
+		{
+			using (var pak = new PakArchive(filePath))
+			{
+				var entries = pak.ToArray();
+				foreach (var entry in entries)
+				{
+					entry.Data = pak.GetRawData(entry);
+				}
+				return entries;
+			}
+		}
+
+		public static void Save(string filePath, ICollection<PakArchiveEntry> entries)
+		{
+			using (var writer = new BinaryWriter(File.Open(filePath, FileMode.Create)))
+			{
+				int offset = 4 + entries.Count * 4;
+				writer.Seek(4, SeekOrigin.Begin);
+				foreach (var entry in entries)
+				{
+					writer.Write(offset);
+					offset += 16;
+					offset += entry.Extra.Length;
+					offset += entry.Offset.Length;
+					offset += entry.CompressedSize;
+				}
+
+				foreach (var entry in entries)
+				{
+					WriteEntry(writer, entry);
+					writer.Write(entry.Data);
+				}
+			}
+
+			void WriteEntry(BinaryWriter writer, PakArchiveEntry entry)
+			{
+				writer.Write(entry.Extra.Length == 0 ? 0 : entry.Extra.Length + 4);
+				writer.Write(entry.Extra);
+				writer.Write(entry.CompressedSize);
+				writer.Write(entry.UncompressedSize);
+				writer.Write(entry.CompressionType);
+				writer.Write(entry.CompressionFlags);
+				writer.Write((ushort)entry.Offset.Length);
+				writer.Write(entry.Offset);
+			}
+		}
+
 		PakArchiveEntry GetEntry(int index)
 		{
 			var entry = new PakArchiveEntry() { Archive = this, Index = index };
@@ -118,17 +175,13 @@ namespace Shared
 			stream.Seek(offsets[entry.Index], SeekOrigin.Begin);
 
 			int skip = reader.ReadInt32();
-			if (skip != 0)
-			{
-				reader.ReadBytes(skip - 4);
-				skip -= 4;
-			}
-
+			entry.Extra = skip != 0 ? reader.ReadBytes(skip - 4) : Array.Empty<byte>(); //used in AITD3/masks (contains several 4 bytes data offsets)
 			entry.CompressedSize = reader.ReadInt32();
 			entry.UncompressedSize = reader.ReadInt32();
 			entry.CompressionType = reader.ReadByte();
 			entry.CompressionFlags = reader.ReadByte();
-			entry.Offset = reader.ReadUInt16() + skip;
+			int offset = reader.ReadUInt16();
+			entry.Offset = reader.ReadBytes(offset); //usually 16 bytes, unused PKZip 1.10 header
 
 			return entry;
 		}

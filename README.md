@@ -126,6 +126,7 @@ You can also drag and drop a single file into PAKExtract executable
 ```
 PAKExtract [-background]
            [-preview]
+		   [-update "input_file entry_index"] 
            [-svg "[rotate {0|90|180|270}] [room 1,2,3,...]"]
            [<files>]
 ```
