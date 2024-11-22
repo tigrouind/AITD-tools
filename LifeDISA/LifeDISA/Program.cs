@@ -358,7 +358,7 @@ namespace LifeDISA
 					ins.Add(vars.GetText(VarEnum.BODYS, Evalvar()));
 					break;
 
-				case LifeEnum.SAMPLE_THEN:
+				case LifeEnum.SOUND_THEN:
 					if (config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3 || config.Version == GameVersion.TIMEGATE || config.Version == GameVersion.TIMEGATE_DEMO)
 					{
 						ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
@@ -423,7 +423,7 @@ namespace LifeDISA
 					ins.Add(vars.GetText(VarEnum.SPECIAL, GetParam()));
 					break;
 
-				case LifeEnum.STOP_SAMPLE:
+				case LifeEnum.STOP_SOUND:
 					if (config.Version == GameVersion.TIMEGATE || config.Version == GameVersion.TIMEGATE_DEMO)
 					{
 						ins.Add(GetParam());
@@ -604,7 +604,7 @@ namespace LifeDISA
 					}
 					break;
 
-				case LifeEnum.SET_VOLUME_SAMPLE:
+				case LifeEnum.SET_VOLUME_SOUND:
 					ins.Add(GetParam());
 					ins.Add(GetParam());
 					break;
@@ -730,7 +730,7 @@ namespace LifeDISA
 					ins.Add(GetParam());
 					break;
 
-				case LifeEnum.REP_SAMPLE:
+				case LifeEnum.REP_SOUND:
 					if (config.Version == GameVersion.AITD2 || config.Version == GameVersion.AITD3 || config.Version == GameVersion.TIMEGATE_DEMO)
 					{
 						ins.Add(vars.GetText(VarEnum.SOUNDS, GetParam()));
@@ -742,7 +742,7 @@ namespace LifeDISA
 					ins.Add(GetParam());
 					break;
 
-				case LifeEnum.DEF_SEQUENCE_SAMPLE:
+				case LifeEnum.DEF_SEQUENCE_SOUND:
 					pos = GetParam() * 4 + pos;
 					break;
 
@@ -762,7 +762,7 @@ namespace LifeDISA
 					ins.Add(GetParam());
 					break;
 
-				case LifeEnum.ANIM_SAMPLE:
+				case LifeEnum.ANIM_SOUND:
 					ins.Add(vars.GetText(VarEnum.SOUNDS, Evalvar()));
 					ins.Add(vars.GetText(VarEnum.ANIMS, GetParam()));
 					ins.Add(GetParam());
