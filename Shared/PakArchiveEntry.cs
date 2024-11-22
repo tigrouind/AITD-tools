@@ -5,10 +5,10 @@ namespace Shared
 		public int Index;
 		public int CompressedSize;
 		public int UncompressedSize;
+		public byte CompressionType;
 
 		internal PakArchive Archive;
 		internal byte CompressionFlags;
-		internal byte CompressionType;
 		internal int Offset;
 
 		public byte[] Read()

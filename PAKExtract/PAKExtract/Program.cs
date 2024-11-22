@@ -12,10 +12,12 @@ namespace PAKExtract
 		static bool background, svg;
 		static int[] svgRooms = new int[0];
 		static int svgRotate;
+		static bool preview;
 
 		static int Main(string[] args)
 		{
 			background = Tools.HasArgument(args, "-background");
+			preview = Tools.HasArgument(args, "-preview");
 
 			if (Tools.HasArgument(args, "-svg"))
 			{
@@ -83,28 +85,42 @@ namespace PAKExtract
 
 			using (var pak = new PakArchive(filePath))
 			{
-				if (svg && fileName.StartsWith("ETAGE"))
+				if (preview)
 				{
-					ExportSVG(pak, fileName, svgRooms, svgRotate);
-				}
-
-				if (background && (fileName.StartsWith("CAMERA") || fileName == "ITD_RESS"))
-				{
-					foreach (var entry in pak.Where(Background.IsBackground))
-					{
-						var data = entry.Read();
-						Background.GetBackground(data);
-						var destPath = Path.Combine(fileName, $"{entry.Index:D8}.png");
-						WriteFile(destPath, Background.SaveBitmap());
-					}
-				}
-
-				if (!background && !svg)
-				{
+					Console.WriteLine(Path.GetFileName(filePath));
+					Console.WriteLine($"Entry\tCSize\tUSize\tCType");
+					Console.WriteLine("------------------------------");
 					foreach (var entry in pak)
 					{
-						var destPath = Path.Combine(fileName, $"{entry.Index:D8}.dat");
-						WriteFile(destPath, entry.Read());
+						Console.WriteLine($"{entry.Index,3}\t{entry.CompressedSize,5}\t{entry.UncompressedSize,5}\t{entry.CompressionType}");
+					}
+					Console.WriteLine();
+				}
+				else
+				{
+					if (svg && fileName.StartsWith("ETAGE"))
+					{
+						ExportSVG(pak, fileName, svgRooms, svgRotate);
+					}
+
+					if (background && (fileName.StartsWith("CAMERA") || fileName == "ITD_RESS"))
+					{
+						foreach (var entry in pak.Where(Background.IsBackground))
+						{
+							var data = entry.Read();
+							Background.GetBackground(data);
+							var destPath = Path.Combine(fileName, $"{entry.Index:D8}.png");
+							WriteFile(destPath, Background.SaveBitmap());
+						}
+					}
+
+					if (!background && !svg)
+					{
+						foreach (var entry in pak)
+						{
+							var destPath = Path.Combine(fileName, $"{entry.Index:D8}.dat");
+							WriteFile(destPath, entry.Read());
+						}
 					}
 				}
 			}
