@@ -14,7 +14,7 @@ namespace PAKExtract
 		static readonly int[,] rotateMatrix = new int[,] { { 1, 0, 0, -1 }, { 0, 1, 1, 0 }, { -1, 0, 0, 1 }, { 0, -1, -1, 0 } };
 		static readonly int[] rotateArgs = new int[] { 0, 90, 180, 270 };
 
-		public static byte[] Export(PakArchive pak, int[] rooms, int rotate)
+		public static byte[] Export(string directory, int[] rooms, int rotate)
 		{
 			var result = new List<(int Index, int X, int Y, List<(int X, int Y, int Width, int Height, int Flags)> Rects)>();
 			int rotateIndex = Array.IndexOf(rotateArgs, rotate);
@@ -25,17 +25,18 @@ namespace PAKExtract
 
 			void LoadRooms()
 			{
-				var buffer = pak[0].Read();
+				var firstFile = Directory.EnumerateFiles(directory, "*.*").First();
+				var buffer = File.ReadAllBytes(firstFile);
 				int maxrooms = buffer.ReadInt(0) / 4;
 
 				if (maxrooms >= 255) //timegate
 				{
 					int currentroom = 0;
-					foreach (var entry in pak)
+					foreach (var filePath in Directory.EnumerateFiles(directory, "*.*"))
 					{
 						if (!rooms.Any() || rooms.Contains(currentroom))
 						{
-							LoadRoom(entry.Read(), 0, entry.Index);
+							LoadRoom(File.ReadAllBytes(firstFile), 0, currentroom);
 						}
 
 						currentroom++;

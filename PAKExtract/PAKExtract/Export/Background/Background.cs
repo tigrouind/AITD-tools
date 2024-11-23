@@ -1,5 +1,4 @@
-﻿using Shared;
-using System.Drawing.Imaging;
+﻿using System.Drawing.Imaging;
 using System.IO;
 
 namespace PAKExtract
@@ -8,9 +7,9 @@ namespace PAKExtract
 	{
 		public static readonly DirectBitmap Bitmap = new DirectBitmap(320, 200);
 
-		public static bool IsBackground(PakArchiveEntry entry)
+		public static bool IsBackground(long size)
 		{
-			switch (entry.UncompressedSize)
+			switch (size)
 			{
 				case 64000:
 				case 64768:

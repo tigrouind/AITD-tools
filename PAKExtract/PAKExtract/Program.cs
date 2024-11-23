@@ -1,6 +1,5 @@
 using Shared;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -9,33 +8,22 @@ namespace PAKExtract
 	class Program
 	{
 		public static string RootFolder = "GAMEDATA";
-
-		static bool background, svg;
-		static int[] svgRooms = new int[0];
-		static int svgRotate;
 		static bool preview;
 
 		static int Main(string[] args)
 		{
-			background = Tools.HasArgument(args, "-background");
-			preview = Tools.HasArgument(args, "-preview");
-
-			if (Tools.HasArgument(args, "-svg"))
+			if (Tools.HasArgument(args, "-background"))
 			{
-				svg = true;
-				string svgArgs = Tools.GetArgument<string>(args, "-svg");
-				if (svgArgs != null && !svgArgs.StartsWith("-"))
-				{
-					var svgParams = svgArgs.Split(' ');
-					svgRooms = (Tools.GetArgument<string>(svgParams, "rooms") ?? string.Empty)
-						.Split(',')
-						.Where(x => x != string.Empty && int.TryParse(x, out _))
-						.Select(x => int.Parse(x))
-						.ToArray();
-					svgRotate = Tools.GetArgument<int>(svgParams, "rotate");
-				}
+				Export.ExportBackground();
+				return 0;
+			}
+			else if (Tools.HasArgument(args, "-svg"))
+			{
+				Export.ExportSvg(args);
+				return 0;
 			}
 
+			preview = Tools.HasArgument(args, "-preview");
 			bool foundFile = false;
 			for (int i = 0; i < args.Length; i++)
 			{
@@ -114,46 +102,32 @@ namespace PAKExtract
 			{
 				if (preview)
 				{
-					Console.WriteLine(Path.GetFileName(filePath));
-					Console.WriteLine($"Entry\tCSize\tUSize\tCType");
-					Console.WriteLine("------------------------------");
-					foreach (var entry in pak)
-					{
-						Console.WriteLine($"{entry.Index,3}\t{entry.CompressedSize,5}\t{entry.UncompressedSize,5}\t{entry.CompressionType}");
-					}
-					Console.WriteLine();
+					ArchiveInfo(pak, filePath);
 				}
 				else
 				{
-					if (svg && fileName.StartsWith("ETAGE"))
+					foreach (var entry in pak)
 					{
-						ExportSVG(pak, fileName, svgRooms, svgRotate);
-					}
-
-					if (background && (fileName.StartsWith("CAMERA") || fileName == "ITD_RESS"))
-					{
-						foreach (var entry in pak.Where(Background.IsBackground))
-						{
-							var data = entry.Read();
-							Background.GetBackground(data);
-							var destPath = Path.Combine(fileName, $"{entry.Index:D8}.png");
-							WriteFile(destPath, Background.SaveBitmap());
-						}
-					}
-
-					if (!background && !svg)
-					{
-						foreach (var entry in pak)
-						{
-							var destPath = Path.Combine(fileName, $"{entry.Index:D8}.dat");
-							WriteFile(destPath, entry.Read());
-						}
+						var destPath = Path.Combine(fileName, $"{entry.Index:D8}.dat");
+						WriteFile(destPath, entry.Read());
 					}
 				}
 			}
 		}
 
-		static void WriteFile(string filePath, byte[] data)
+		static void ArchiveInfo(PakArchive pak, string filePath)
+		{
+			Console.WriteLine(Path.GetFileName(filePath));
+			Console.WriteLine($"Entry\tCSize\tUSize\tCType");
+			Console.WriteLine("------------------------------");
+			foreach (var entry in pak)
+			{
+				Console.WriteLine($"{entry.Index,3}\t{entry.CompressedSize,5}\t{entry.UncompressedSize,5}\t{entry.CompressionType}");
+			}
+			Console.WriteLine();
+		}
+
+		public static void WriteFile(string filePath, byte[] data)
 		{
 			if (!File.Exists(filePath) || data.Length != new FileInfo(filePath).Length || !Enumerable.SequenceEqual(File.ReadAllBytes(filePath), data))
 			{
@@ -161,12 +135,6 @@ namespace PAKExtract
 				Directory.CreateDirectory(Path.GetDirectoryName(filePath));
 				File.WriteAllBytes(filePath, data);
 			}
-		}
-
-		static void ExportSVG(PakArchive pak, string fileName, int[] rooms, int rotate)
-		{
-			var data = Svg.Export(pak, rooms, rotate);
-			WriteFile(Path.Combine("SVG", Path.GetFileNameWithoutExtension(fileName) + ".svg"), data);
 		}
 	}
 }

@@ -119,6 +119,7 @@ Same as [LifeDISA](#LifeDISA)
 ## Instructions  
 - Copy PAK files to GAMEDATA folder
 - Run PAKExtract (all PAK files in GAMEDATA folder are extracted)
+- Export backgrounds or floors as SVG (optional)
 
 You can also drag and drop a single file into PAKExtract executable
 

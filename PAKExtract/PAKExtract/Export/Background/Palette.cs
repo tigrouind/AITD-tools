@@ -15,15 +15,12 @@ namespace PAKExtract
 			if (!paletteLoaded)
 			{
 				paletteLoaded = true;
-				using (var pak = new PakArchive(Path.Combine(RootFolder, "ITD_RESS.PAK")))
+				foreach (var filePath in Directory.GetFiles("ITD_RESS").Reverse())
 				{
-					foreach (var entry in pak.Reverse())
+					if (new FileInfo(filePath).Length == 768)
 					{
-						if (entry.UncompressedSize == 768)
-						{
-							LoadPalette(entry.Read(), 0, paletteITD);
-							break;
-						}
+						LoadPalette(File.ReadAllBytes(filePath), 0, paletteITD);
+						break;
 					}
 				}
 			}
