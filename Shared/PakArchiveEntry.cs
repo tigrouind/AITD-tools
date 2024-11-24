@@ -11,7 +11,7 @@ namespace Shared
 		internal byte[] Data;
 		internal PakArchive Archive;
 		internal byte CompressionFlags;
-		internal byte[] Offset;
+		internal ushort Offset;
 
 		public byte[] Read()
 		{

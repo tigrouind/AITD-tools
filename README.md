@@ -122,7 +122,7 @@ Same as [LifeDISA](#LifeDISA)
 ## Instructions  
 - Copy PAK files to GAMEDATA folder
 - Run PAKExtract (all PAK files in GAMEDATA folder are extracted)
-- Export backgrounds or floors as SVG (optional)
+- Export backgrounds as PNG, floors as SVG or update entries in the archive (optional)
 
 You can also drag and drop a single file into PAKExtract executable
 
@@ -130,7 +130,7 @@ You can also drag and drop a single file into PAKExtract executable
 ```
 PAKExtract [-background]
            [-preview]
-		   [-update "input_file entry_index"] 
+		   [-update] 
            [-svg "[rotate {0|90|180|270}] [room 1,2,3,...]"]
            [<files>]
 ```

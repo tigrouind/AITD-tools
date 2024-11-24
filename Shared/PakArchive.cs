@@ -48,7 +48,7 @@ namespace Shared
 
 		internal byte[] GetData(PakArchiveEntry entry)
 		{
-			stream.Seek(offsets[entry.Index] + entry.Offset.Length + entry.Extra.Length + 16, SeekOrigin.Begin);
+			stream.Seek(offsets[entry.Index] + entry.Offset + entry.Extra.Length + 16, SeekOrigin.Begin);
 
 			var result = new byte[entry.UncompressedSize];
 			switch (entry.CompressionType)
@@ -85,7 +85,7 @@ namespace Shared
 
 		internal byte[] GetRawData(PakArchiveEntry entry)
 		{
-			stream.Seek(offsets[entry.Index] + entry.Offset.Length + entry.Extra.Length + 16, SeekOrigin.Begin);
+			stream.Seek(offsets[entry.Index] + entry.Offset + entry.Extra.Length + 16, SeekOrigin.Begin);
 			var result = new byte[entry.CompressedSize];
 			stream.Read(result, 0, entry.CompressedSize);
 			return result;
@@ -144,7 +144,6 @@ namespace Shared
 					writer.Write(offset);
 					offset += 16;
 					offset += entry.Extra.Length;
-					offset += entry.Offset.Length;
 					offset += entry.CompressedSize;
 				}
 
@@ -163,15 +162,16 @@ namespace Shared
 				writer.Write(entry.UncompressedSize);
 				writer.Write(entry.CompressionType);
 				writer.Write(entry.CompressionFlags);
-				writer.Write((ushort)entry.Offset.Length);
-				writer.Write(entry.Offset);
+				writer.Write((ushort)0);
 			}
 		}
 
 		PakArchiveEntry GetEntry(int index)
 		{
-			var entry = new PakArchiveEntry() { Archive = this, Index = index };
+			//before this entry : might contains first 16 bytes of PKZip 1.0 header (skipped by the game)
+			//after this entry: might contains end of PKZip header (skipped by offset field)
 
+			var entry = new PakArchiveEntry() { Archive = this, Index = index };
 			stream.Seek(offsets[entry.Index], SeekOrigin.Begin);
 
 			int skip = reader.ReadInt32();
@@ -180,8 +180,7 @@ namespace Shared
 			entry.UncompressedSize = reader.ReadInt32();
 			entry.CompressionType = reader.ReadByte();
 			entry.CompressionFlags = reader.ReadByte();
-			int offset = reader.ReadUInt16();
-			entry.Offset = reader.ReadBytes(offset); //usually 16 bytes, unused PKZip 1.10 header
+			entry.Offset = reader.ReadUInt16();
 
 			return entry;
 		}

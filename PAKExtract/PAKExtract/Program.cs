@@ -1,5 +1,6 @@
 using Shared;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -8,23 +9,46 @@ namespace PAKExtract
 	class Program
 	{
 		public static string RootFolder = "GAMEDATA";
-		static bool preview;
 
 		static int Main(string[] args)
 		{
 			if (Tools.HasArgument(args, "-background"))
 			{
 				Export.ExportBackground();
-				return 0;
 			}
 			else if (Tools.HasArgument(args, "-svg"))
 			{
 				Export.ExportSvg(args);
-				return 0;
+			}
+			else if (Tools.HasArgument(args, "-update"))
+			{
+				UpdateEntries(args);
+			}
+			else
+			{
+				var preview = Tools.HasArgument(args, "-preview");
+
+				var files = GetFiles(args).ToList();
+				if (!files.Any())
+				{
+					Directory.CreateDirectory(RootFolder);
+					foreach (var filePath in Directory.GetFiles(RootFolder, "*.PAK", SearchOption.TopDirectoryOnly))
+					{
+						files.Add(filePath);
+					}
+				}
+
+				foreach (var file in files)
+				{
+					ExtractFile(file, preview);
+				}
 			}
 
-			preview = Tools.HasArgument(args, "-preview");
-			bool foundFile = false;
+			return 0;
+		}
+
+		static IEnumerable<string> GetFiles(string[] args)
+		{
 			for (int i = 0; i < args.Length; i++)
 			{
 				var arg = args[i];
@@ -32,72 +56,18 @@ namespace PAKExtract
 				{
 					if (File.Exists(arg))
 					{
-						if (Tools.HasArgument(args, "-update"))
-						{
-							var updateArgs = Tools.GetArgument<string>(args, "-update");
-							var updateParam = updateArgs.Split(' ');
-							string inputFile = updateParam[0];
-							int index = int.Parse(updateParam[1]);
-							return UpdateFile(arg, inputFile, index);
-						}
-						else
-						{
-							ExtractFile(arg);
-						}
-						foundFile = true;
+						yield return arg;
 					}
 					else
 					{
-						Console.Error.Write($"Cannot find file '{arg}'");
-						return -1;
+						throw new FileNotFoundException($"Cannot find file '{arg}'");
 					}
 				}
 			}
-
-			if (!foundFile)
-			{
-				try
-				{
-					ExtractFiles();
-				}
-				catch (FileNotFoundException ex)
-				{
-					Console.Error.Write($"{Path.GetFileName(ex.FileName)} not found");
-					return -1;
-				}
-			}
-
-			return 0;
 		}
 
-		static void ExtractFiles()
+		static void ExtractFile(string filePath, bool preview)
 		{
-			Directory.CreateDirectory(RootFolder);
-			foreach (var filePath in Directory.GetFiles(RootFolder, "*.PAK", SearchOption.TopDirectoryOnly))
-			{
-				ExtractFile(filePath);
-			}
-		}
-
-		static int UpdateFile(string filePath, string inputFile, int index)
-		{
-			var entries = PakArchive.Load(filePath);
-			if (index < 0 || index > entries.Length)
-			{
-				Console.Error.Write($"Invalid entry index {index} for {Path.GetFileName(filePath)}");
-				return -1;
-			}
-
-			entries[index].Write(File.ReadAllBytes(inputFile));
-			PakArchive.Save(filePath, entries);
-			Console.WriteLine($"Entry {index} in {Path.GetFileName(filePath)} updated");
-			return 0;
-		}
-
-		static void ExtractFile(string filePath)
-		{
-			string fileName = Path.GetFileNameWithoutExtension(filePath);
-
 			using (var pak = new PakArchive(filePath))
 			{
 				if (preview)
@@ -108,7 +78,7 @@ namespace PAKExtract
 				{
 					foreach (var entry in pak)
 					{
-						var destPath = Path.Combine(fileName, $"{entry.Index:D8}.dat");
+						var destPath = Path.Combine(Path.GetFileNameWithoutExtension(filePath), $"{entry.Index:D8}.dat");
 						WriteFile(destPath, entry.Read());
 					}
 				}
@@ -136,5 +106,35 @@ namespace PAKExtract
 				File.WriteAllBytes(filePath, data);
 			}
 		}
+
+		static int UpdateEntries(string[] args)
+		{
+			var files = GetFiles(args).ToArray();
+			foreach (var pakFile in files)
+			{
+				var directory = Path.GetFileNameWithoutExtension(pakFile);
+				if (Directory.Exists(directory))
+				{
+					var entries = PakArchive.Load(pakFile);
+					foreach (var file in Directory.GetFiles(directory, "*.*"))
+					{
+						int index = int.Parse(Path.GetFileNameWithoutExtension(file));
+						if (index < 0 || index > entries.Length)
+						{
+							Console.Error.Write($"Invalid entry index {index} for {Path.GetFileName(pakFile)}");
+							return -1;
+						}
+
+						entries[index].Write(File.ReadAllBytes(file));
+						Console.WriteLine($"{Path.GetFileName(pakFile)} entry {index} updated");
+					}
+
+					PakArchive.Save(pakFile, entries);
+				}
+			}
+
+			return 0;
+		}
+
 	}
 }
