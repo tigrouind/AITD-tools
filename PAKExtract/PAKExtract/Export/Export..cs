@@ -12,7 +12,7 @@ namespace PAKExtract
 			{
 				if (Path.GetFileName(directory).StartsWith("CAMERA") || Path.GetFileName(directory) == "ITD_RESS")
 				{
-					foreach (var filePath in Directory.GetFiles(directory, @"*.*", SearchOption.TopDirectoryOnly))
+					foreach (var filePath in Directory.EnumerateFiles(directory, @"*.*", SearchOption.TopDirectoryOnly))
 					{
 						if (Background.IsBackground(new FileInfo(filePath).Length))
 						{
