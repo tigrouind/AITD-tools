@@ -26,7 +26,7 @@ namespace PAKExtract
 			}
 			else
 			{
-				var preview = Tools.HasArgument(args, "-preview");
+				var preview = Tools.HasArgument(args, "-info");
 
 				var files = GetFiles(args).ToList();
 				if (!files.Any())
@@ -52,15 +52,22 @@ namespace PAKExtract
 			for (int i = 0; i < args.Length; i++)
 			{
 				var arg = args[i];
-				if (!arg.StartsWith("-") && (i == 0 || !args[i - 1].StartsWith("-")))
+				if (!arg.StartsWith("-"))
 				{
-					if (File.Exists(arg))
+					if (Directory.Exists(arg))
+					{
+						foreach (var filePath in Directory.GetFiles(arg, "*.PAK", SearchOption.TopDirectoryOnly))
+						{
+							yield return filePath;
+						}
+					}
+					else if (File.Exists(arg))
 					{
 						yield return arg;
 					}
 					else
 					{
-						throw new FileNotFoundException($"Cannot find file '{arg}'");
+						throw new FileNotFoundException($"Cannot find file or folder '{arg}'");
 					}
 				}
 			}
@@ -87,12 +94,12 @@ namespace PAKExtract
 
 		static void ArchiveInfo(PakArchive pak, string filePath)
 		{
+			var compressType = new[] { "-", "INFLA", "", "", "DEFLA" };
 			Console.WriteLine(Path.GetFileName(filePath));
-			Console.WriteLine($"Entry\tCSize\tUSize\tCType");
-			Console.WriteLine("------------------------------");
+			Console.WriteLine($"Entry\tSize\tCSize\tCType\tExtra");
 			foreach (var entry in pak)
 			{
-				Console.WriteLine($"{entry.Index,3}\t{entry.CompressedSize,5}\t{entry.UncompressedSize,5}\t{entry.CompressionType}");
+				Console.WriteLine($"{entry.Index,5}\t{entry.UncompressedSize,5}\t{(entry.CompressedSize != entry.UncompressedSize ? entry.CompressedSize.ToString() : "-"),5}\t{compressType[entry.CompressionType],5}\t{string.Join(" ", Enumerable.Range(0, entry.Extra.Length / 4).Select(x => entry.Extra.ReadInt(x * 4)))}");
 			}
 			Console.WriteLine();
 		}
@@ -119,7 +126,7 @@ namespace PAKExtract
 					foreach (var file in Directory.GetFiles(directory, "*.*"))
 					{
 						int index = int.Parse(Path.GetFileNameWithoutExtension(file));
-						if (index < 0 || index > entries.Length)
+						if (index < 0 || index >= entries.Length)
 						{
 							Console.Error.Write($"Invalid entry index {index} for {Path.GetFileName(pakFile)}");
 							return -1;
