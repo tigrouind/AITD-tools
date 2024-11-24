@@ -26,21 +26,46 @@ namespace PAKExtract
 			}
 			else
 			{
-				var preview = Tools.HasArgument(args, "-preview");
+				var preview = Tools.HasArgument(args, "-info");
 
 				var files = GetFiles(args).ToList();
 				if (!files.Any())
 				{
 					Directory.CreateDirectory(RootFolder);
-					foreach (var filePath in Directory.GetFiles(RootFolder, "*.PAK", SearchOption.TopDirectoryOnly))
+					foreach (var filePath in Directory.EnumerateFiles(RootFolder, "*.PAK", SearchOption.TopDirectoryOnly))
 					{
 						files.Add(filePath);
 					}
 				}
 
+				var compressType = new[] { "-", "INFLATE", "", "", "DEFLATE" };
+				if (preview)
+				{
+					Console.WriteLine("     PAK Entry   CType   CSize   USize Extra");
+				}
+
 				foreach (var file in files)
 				{
-					ExtractFile(file, preview);
+					using (var pak = new PakArchive(file))
+					{
+						foreach (var entry in pak)
+						{
+							if (preview)
+							{
+								Console.WriteLine($"{Path.GetFileNameWithoutExtension(file),8} " +
+									$"{entry.Index,5} " +
+									$"{(entry.CompressionType >= 0 && entry.CompressionType <= 4 ? compressType[entry.CompressionType] : entry.CompressionType.ToString()),7} " +
+									$"{(entry.CompressionType != 0 ? entry.CompressedSize.ToString() : "-"),7} " +
+									$"{entry.UncompressedSize,7} " +
+									$"{string.Join(" ", Enumerable.Range(0, entry.Extra.Length / 4).Select(x => entry.Extra.ReadInt(x * 4)))}");
+							}
+							else
+							{
+								var destPath = Path.Combine(Path.GetFileNameWithoutExtension(file), $"{entry.Index:D8}.dat");
+								WriteFile(destPath, entry.Read());
+							}
+						}
+					}
 				}
 			}
 
@@ -49,52 +74,24 @@ namespace PAKExtract
 
 		static IEnumerable<string> GetFiles(string[] args)
 		{
-			for (int i = 0; i < args.Length; i++)
+			foreach (var arg in args.Where(x => !x.StartsWith("-")))
 			{
-				var arg = args[i];
-				if (!arg.StartsWith("-") && (i == 0 || !args[i - 1].StartsWith("-")))
+				if (Directory.Exists(arg))
 				{
-					if (File.Exists(arg))
+					foreach (var filePath in Directory.EnumerateFiles(arg, "*.PAK", SearchOption.TopDirectoryOnly))
 					{
-						yield return arg;
-					}
-					else
-					{
-						throw new FileNotFoundException($"Cannot find file '{arg}'");
+						yield return filePath;
 					}
 				}
-			}
-		}
-
-		static void ExtractFile(string filePath, bool preview)
-		{
-			using (var pak = new PakArchive(filePath))
-			{
-				if (preview)
+				else if (File.Exists(arg))
 				{
-					ArchiveInfo(pak, filePath);
+					yield return arg;
 				}
 				else
 				{
-					foreach (var entry in pak)
-					{
-						var destPath = Path.Combine(Path.GetFileNameWithoutExtension(filePath), $"{entry.Index:D8}.dat");
-						WriteFile(destPath, entry.Read());
-					}
+					throw new FileNotFoundException($"Cannot find file or folder '{arg}'");
 				}
 			}
-		}
-
-		static void ArchiveInfo(PakArchive pak, string filePath)
-		{
-			Console.WriteLine(Path.GetFileName(filePath));
-			Console.WriteLine($"Entry\tCSize\tUSize\tCType");
-			Console.WriteLine("------------------------------");
-			foreach (var entry in pak)
-			{
-				Console.WriteLine($"{entry.Index,3}\t{entry.CompressedSize,5}\t{entry.UncompressedSize,5}\t{entry.CompressionType}");
-			}
-			Console.WriteLine();
 		}
 
 		public static void WriteFile(string filePath, byte[] data)
@@ -116,10 +113,10 @@ namespace PAKExtract
 				if (Directory.Exists(directory))
 				{
 					var entries = PakArchive.Load(pakFile);
-					foreach (var file in Directory.GetFiles(directory, "*.*"))
+					foreach (var file in Directory.EnumerateFiles(directory, "*.*"))
 					{
 						int index = int.Parse(Path.GetFileNameWithoutExtension(file));
-						if (index < 0 || index > entries.Length)
+						if (index < 0 || index >= entries.Length)
 						{
 							Console.Error.Write($"Invalid entry index {index} for {Path.GetFileName(pakFile)}");
 							return -1;

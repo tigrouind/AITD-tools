@@ -15,7 +15,7 @@ namespace PAKExtract
 			if (!paletteLoaded)
 			{
 				paletteLoaded = true;
-				foreach (var filePath in Directory.GetFiles("ITD_RESS").Reverse())
+				foreach (var filePath in Directory.EnumerateFiles("ITD_RESS").Reverse())
 				{
 					if (new FileInfo(filePath).Length == 768)
 					{

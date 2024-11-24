@@ -175,7 +175,8 @@ namespace Shared
 			stream.Seek(offsets[entry.Index], SeekOrigin.Begin);
 
 			int skip = reader.ReadInt32();
-			entry.Extra = skip != 0 ? reader.ReadBytes(skip - 4) : Array.Empty<byte>(); //used in AITD3/masks (contains several 4 bytes data offsets)
+			//used in AITD2/3 masks (contains several 32-bit integers, all multiple of 4)
+			entry.Extra = skip != 0 ? reader.ReadBytes(skip - 4) : Array.Empty<byte>();
 			entry.CompressedSize = reader.ReadInt32();
 			entry.UncompressedSize = reader.ReadInt32();
 			entry.CompressionType = reader.ReadByte();

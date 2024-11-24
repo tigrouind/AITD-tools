@@ -6,8 +6,8 @@ namespace Shared
 		public int CompressedSize;
 		public int UncompressedSize;
 		public byte CompressionType;
+		public byte[] Extra;
 
-		internal byte[] Extra;
 		internal byte[] Data;
 		internal PakArchive Archive;
 		internal byte CompressionFlags;
