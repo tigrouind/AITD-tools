@@ -1,62 +1,37 @@
 [
 	{ "name": "Id", "offset": 0 },
-	{ "name": "",
+	{ "name": "Flags",
 		"columns": [
-			{
-				"columns":
-				[
-					{ "name": "Flags", "type": "flags", "values": {"1": "anim", "4": "draw", "8": "back", "16": "push", "32": "special", "64": "trig", "128": "pick", "256": "fall"}, "offset": 4 }
-				]
-			},
-			{
-				"columns":
-				[
-					{ "values": {"0": "N", "1": "Y"}, "offset": 6 }
-				]
-			}
+			{ "type": "flags", "values": {"1": "anim", "4": "draw", "8": "back", "16": "push", "32": "special", "64": "trig", "128": "pick", "256": "fall"}, "offset": 4 },
+			{ "name": "Col", "values": {"0": "N", "1": "Y"}, "offset": 6 }
 		]
 	},
 	{ "name": "Room", "type": "room", "offset": 46, "includeZero": true },
-	{ "name": "Room/World",
+	{ "name": "Room",
 		"columns":
 		[
-			{
-				"columns":
-				[
-					{ "name": "X", "offset": 28, "includeZero": true },
-					{ "name": "Y", "offset": 30 },
-					{ "name": "Z", "offset": 32, "includeZero": true }
-				]
-			},
-			{
-				"columns":
-				[
-					{ "name": "SX", "offset": 34, "includeZero": true },
-					{ "name": "SY", "offset": 36 },
-					{ "name": "SZ", "offset": 38, "includeZero": true }
-				]
-			}
+			{ "name": "X", "offset": 28, "includeZero": true },
+			{ "name": "Y", "offset": 30 },
+			{ "name": "Z", "offset": 32, "includeZero": true }
+		]
+	},
+	{ "name": "World",
+		"columns":
+		[
+			{ "name": "X", "offset": 34, "includeZero": true },
+			{ "name": "Y", "offset": 36 },
+			{ "name": "Z", "offset": 38, "includeZero": true }
 		]
 	},
 	{ "name": "ZV",
 		"columns":
 		[
-			{
-				"columns":
-				[
-					{ "name": "X", "type": "zvpos", "offset": 8, "includeZero": true },
-					{ "name": "Y", "type": "zvpos", "offset": 12, "includeZero": true },
-					{ "name": "Z", "type": "zvpos", "offset": 16, "includeZero": true }
-				]
-			},
-			{
-				"columns":
-				[
-					{ "name": "SX", "type": "zvsize", "offset": 8, "includeZero": true },
-					{ "name": "SY", "type": "zvsize", "offset": 12, "includeZero": true },
-					{ "name": "SZ", "type": "zvsize", "offset": 16, "includeZero": true }
-				]
-			}
+			{ "name": "X", "type": "zvpos", "offset": 8, "includeZero": true },
+			{ "name": "Y", "type": "zvpos", "offset": 12, "includeZero": true },
+			{ "name": "Z", "type": "zvpos", "offset": 16, "includeZero": true },
+			{ "name": "SX", "type": "zvsize", "offset": 8, "includeZero": true },
+			{ "name": "SY", "type": "zvsize", "offset": 12, "includeZero": true },
+			{ "name": "SZ", "type": "zvsize", "offset": 16, "includeZero": true }
 		]
 	},
 	{ "name": "Mod",
@@ -76,53 +51,37 @@
 			{ "name": "Z", "type": "angle", "offset": 44, "condition": 2 }
 		]
 	},
-	{ "name": "",
+	{ "name": "Life",
 		"columns":
 		[
-			{ "name": "Life", "type": "life", "offset": 52, "includeZero": true },
+			{ "type": "life", "offset": 52, "includeZero": true },
 			{ "name": "Mode", "values": {"0": "floor", "1": "room", "2": "camera"}, "offset": 50, "includeZero": true, "condition": 52 }
 		]
 	},
 	{ "name": "Body", "type": "body", "offset": 2, "includeZero": true },
-	{ "name": "Anim/NewAnim",
+	{ "name": "Anim",
 		"columns":
 		[
-			{
-				"columns":
-				[
-					{ "name": "Anim", "type": "anim", "offset": 62, "includeZero": true },
-					{ "name": "Type", "values": {"0": "once", "1": "repeat", "2": "uninter"}, "offset": 64, "includeZero": true, "condition": 62 },
-					{ "name": "Next", "type": "anim", "offset": 66 }
-				],
-			},
-			{
-				"columns":
-				[
-
-					{ "name": "Anim", "type": "anim", "offset": 68  },
-					{ "name": "Type", "values": {"0": "once", "1": "repeat", "2": "uninter"}, "offset": 70, "condition": 68 },
-					{ "name": "Next", "type": "anim", "offset": 72 }
-				]
-			}
-		]
+			{ "type": "anim", "offset": 62, "includeZero": true },
+			{ "name": "Type", "values": {"0": "once", "1": "repeat", "2": "uninter"}, "offset": 64, "includeZero": true, "condition": 62 },
+			{ "name": "Next", "type": "anim", "offset": 66 }
+		],
+	},
+	{ "name": "NewAnim",
+		"columns":
+		[
+			{ "name": "Anim", "type": "anim", "offset": 68  },
+			{ "name": "Type", "values": {"0": "once", "1": "repeat", "2": "uninter"}, "offset": 70, "condition": 68 },
+			{ "name": "Next", "type": "anim", "offset": 72 }
+		],
 	},
 	{ "name": "Key",
 		"columns":
 		[
-			{
-				"columns":
-				[
-					{ "name": "Frame", "offset": 74, "includeZero": true, "condition": 62 },
-					{ "name": "End", "offset": 78, "condition": 62 }
-				]
-			},
-			{
-				"columns":
-				[
-					{ "name": "Total", "offset": 76, "condition": 62 },
-					{ "name": "End", "offset": 80, "condition": 62 }
-				]
-			}
+			{ "name": "Frame", "offset": 74, "includeZero": true, "condition": 62 },
+			{ "name": "Total", "offset": 76, "condition": 62 },
+			{ "name": "End", "offset": 78, "condition": 62 },
+			{ "name": "End", "offset": 80, "condition": 62 }
 		]
 	},
 	{ "name": "Speed", "values": {"-1": "back" ,"0": "idle", "1": "walk", "2": "walk", "3": "walk", "4": "walk", "5": "run"}, "offset": 116 },
@@ -130,18 +89,8 @@
 	{ "name": "Chrono",
 		"columns":
 		[
-			{
-				"columns":
-				[
-					{ "name": "Room", "type": "time", "offset": 54 }
-				],
-			},
-			{
-				"columns":
-				[
-					{ "type": "time", "offset": 58 }
-				]
-			}
+			{ "name": "Room", "type": "time", "offset": 54 },
+			{ "type": "time", "offset": 58 }
 		]
 	},
 	{ "name": "Track",
@@ -152,53 +101,37 @@
 			{ "name": "Mark", "offset": 86, "condition": 84 }
 		]
 	},
-	{ "name": "Angle/Fall/Speed",
+	{ "name": "Angle",
 		"columns":
 		[
-			{
-				"columns":
-				[
-					{ "name": "Offset", "offset": 106, "condition": 110, "type":"zvsize", "includeZero": true },
-					{ "name": "Time", "type": "time2", "offset": 112, "condition": 110 },
-					{ "name": "Param", "offset": 110 }
-				],
-			},
-			{
-				"columns":
-				[
-					{ "name": "Offset", "offset": 96, "condition": 100, "type":"zvsize", "includeZero": true  },
-					{ "name": "Time", "type": "time2", "offset": 102, "condition": 100 },
-					{ "name": "Param", "offset": 100 }
-				],
-			},
-			{
-				"columns":
-				[
-					{ "name": "Offset", "offset": 118, "condition": 122, "type":"zvsize", "includeZero": true, "condition": 142 },
-					{ "name": "Time", "type": "time2", "offset": 124, "condition": 142 },
-					{ "name": "Param", "offset": 122, "condition": 142 }
-
-				]
-			}
+			{ "name": "Offset", "offset": 106, "condition": 110, "type":"zvsize", "includeZero": true },
+			{ "name": "Time", "type": "time2", "offset": 112, "condition": 110 },
+			{ "name": "Param", "offset": 110 }
+		]
+	},
+	{ "name": "Fall",
+		"columns":
+		[
+			{ "name": "Offset", "offset": 96, "condition": 100, "type":"zvsize", "includeZero": true  },
+			{ "name": "Time", "type": "time2", "offset": 102, "condition": 100 },
+			{ "name": "Param", "offset": 100 },
+		]
+	},
+	{ "name": "Speed",
+		"columns":
+		[
+			{ "name": "Offset", "offset": 118, "condition": 122, "type":"zvsize", "includeZero": true, "condition": 142 },
+			{ "name": "Time", "type": "time2", "offset": 124, "condition": 142 },
+			{ "name": "Param", "offset": 122, "condition": 142 }
 		]
 	},
 	{ "name": "2DBox",
 		"columns":
 		[
-			{
-				"columns":
-				[
-					{ "name": "X", "offset": 20, "includeZero": true },
-					{ "name": "Y", "offset": 24, "includeZero": true }
-				]
-			},
-			{
-				"columns":
-				[
-					{ "name": "SX", "offset": 22, "includeZero": true },
-					{ "name": "SY", "offset": 26, "includeZero": true }
-				]
-			}
+			{ "name": "X", "offset": 20, "includeZero": true },
+			{ "name": "Y", "offset": 24, "includeZero": true },
+			{ "name": "SX", "offset": 22, "includeZero": true },
+			{ "name": "SY", "offset": 26, "includeZero": true }
 		]
 	},
 
@@ -224,7 +157,7 @@
 	{ "name": "Hit",
 		"columns":
 		[
-			{ "name": "", "offset": 138 },
+			{ "offset": 138 },
 			{ "name": "By", "offset": 140 }
 		]
 	},

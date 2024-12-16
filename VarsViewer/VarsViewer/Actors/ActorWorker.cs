@@ -94,28 +94,9 @@ namespace VarsViewer
 							{
 								Columns = new Column[]
 								{
-									new Column
-									{
-										Columns = new Column[]
-										{
-											column
-										}
-									}
+									column
 								}
 							};
-						}
-						else
-						{
-							if (column.Columns.All(x => x.Columns == null))
-							{
-								column.Columns = new Column[]
-								{
-									new Column
-									{
-										Columns = column.Columns
-									}
-								};
-							}
 						}
 					}
 				}
@@ -124,7 +105,7 @@ namespace VarsViewer
 
 		void IWorker.Render()
 		{
-			int rowsCount = 0;
+			int rowCount = 0;
 			(int rows, int columns) = cellConfig;
 
 			if (TimeSpan.FromTicks(timeStamp - refreshTime) > TimeSpan.FromSeconds(5))
@@ -143,7 +124,6 @@ namespace VarsViewer
 				for (int i = 0; i < rows; i++)
 				{
 					int col = 0;
-					int maxRow = 0;
 
 					Actor actor = actors[i];
 					if (actor.Id != -1 || showAll || actor.Deleted)
@@ -164,40 +144,26 @@ namespace VarsViewer
 
 						foreach (var group in config)
 						{
-							int startRow = rowsCount;
-							int startCol = col;
-
-							foreach (var colGroup in group.Columns)
+							foreach (var column in group.Columns)
 							{
-								col = startCol;
-								rowColor[0, rowsCount] = color;
+								rowColor[rowCount] = color;
 
-								foreach (var column in colGroup.Columns)
+								var text = FieldFormatter.Format(actor.Values, column, i, fullMode);
+								cells[rowCount, col] = (text, FieldFormatter.GetSize(column) != 0 && actor.Updated[column.Offset / 2] ? ConsoleColor.DarkYellow : ConsoleColor.Black);
+
+								if (text != null)
 								{
-									var text = FieldFormatter.Format(actor.Values, column, i, fullMode);
-									cells[rowsCount, col] = (text, FieldFormatter.GetSize(column) != 0 && actor.Updated[column.Offset / 2] ? ConsoleColor.DarkYellow : ConsoleColor.Black);
-
-									if (text != null)
-									{
-										var headerCol = group.Columns[0].Columns[col - startCol];
-										headerCol.Width = Math.Max(text.Length, headerCol.Width);
-										headerCol.Timer = timeStamp;
-										headerCol.Visible |= true;
-										group.Visible |= true;
-
-										maxRow = Math.Max(maxRow, rowsCount);
-									}
-
-									col++;
+									column.Width = Math.Max(text.Length, column.Width);
+									column.Timer = timeStamp;
+									column.Visible = true;
+									group.Visible = true;
 								}
 
-								rowsCount++;
+								col++;
 							}
-
-							rowsCount = startRow;
 						}
 
-						rowsCount = maxRow + 1;
+						rowCount++;
 					}
 				}
 			}
@@ -206,13 +172,13 @@ namespace VarsViewer
 			{
 				foreach (var group in config)
 				{
-					foreach (var column in group.Columns[0].Columns)
+					foreach (var column in group.Columns)
 					{
 						if (column.Visible && TimeSpan.FromTicks(timeStamp - column.Timer) > TimeSpan.FromSeconds(20))
 						{
 							column.Visible = false;
 							column.Width = 0;
-							group.Visible = group.Columns[0].Columns.Any(x => x.Visible);
+							group.Visible = group.Columns.Any(x => x.Visible);
 						}
 					}
 				}
@@ -233,7 +199,7 @@ namespace VarsViewer
 					{
 						//make columns large enough to contain label
 						group.Width = (group.Name ?? "").Length;
-						foreach (var col in group.Columns[0].Columns
+						foreach (var col in group.Columns
 							.Where(x => x.Visible))
 						{
 							col.Width = Math.Max((col.Name ?? "").Length, col.Width);
@@ -243,19 +209,19 @@ namespace VarsViewer
 					void FitChilds()
 					{
 						//make sure group column is large enough to contain childs
-						int childWidth = group.Columns[0].Columns
+						int childWidth = group.Columns
 							.Where(x => x.Visible)
 							.Sum(x => x.Width + 1) - 1;
 
 						group.Width = Math.Max(fullMode ? group.Width : 0, childWidth);
 
-						foreach (var col in group.Columns[0].Columns)
+						foreach (var col in group.Columns)
 						{
 							col.ExtraWidth = 0;
 						}
 
 						//enlarge first child column if needed
-						group.Columns[0].Columns.First(x => x.Visible).ExtraWidth = group.Width - childWidth;
+						group.Columns.First(x => x.Visible).ExtraWidth = group.Width - childWidth;
 					}
 				}
 			}
@@ -279,8 +245,7 @@ namespace VarsViewer
 				foreach (var group in config.Where(x => x.Visible))
 				{
 					bool first = true;
-					foreach (var col in group.Columns[0].Columns
-						.Where(x => x.Visible))
+					foreach (var col in group.Columns.Where(x => x.Visible))
 					{
 						if (!first)
 						{
@@ -298,16 +263,16 @@ namespace VarsViewer
 				Console.CursorTop++;
 				int height = System.Console.WindowHeight - 2;
 
-				for (int row = 0; row < Math.Min(height, rowsCount - scroll); row++)
+				for (int row = 0; row < Math.Min(height, rowCount - scroll); row++)
 				{
 					Console.CursorLeft = 0;
-					var rowColor = this.rowColor[0, row + scroll];
+					var rowColor = this.rowColor[row + scroll];
 					Console.BackgroundColor = rowColor.Background;
 
 					int col = 0;
 					foreach (var group in config)
 					{
-						foreach (var column in group.Columns[0].Columns)
+						foreach (var column in group.Columns)
 						{
 							if (column.Visible)
 							{
@@ -391,7 +356,6 @@ namespace VarsViewer
 					if ((id != -1 || showAll) && actor.Id == id) //compare
 					{
 						foreach (var column in config
-							.SelectMany(x => x.Columns)
 							.SelectMany(x => x.Columns))
 						{
 							switch (FieldFormatter.GetSize(column))
@@ -465,7 +429,7 @@ namespace VarsViewer
 			{
 				group.Width = 0;
 				group.Visible = false;
-				foreach (var col in group.Columns[0].Columns)
+				foreach (var col in group.Columns)
 				{
 					col.Width = 0;
 					col.Visible = false;

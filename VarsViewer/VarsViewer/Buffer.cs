@@ -17,16 +17,19 @@ namespace VarsViewer
 
 		public T this[int y, int x]
 		{
-			get
-			{
-				return array[y * Width + x];
-			}
+			get => array[y * Width + x];
 
 			set
 			{
 				EnsureCapacity(x + 1, y + 1);
 				array[y * Width + x] = value;
 			}
+		}
+
+		public T this[int x]
+		{
+			get => this[0, x];
+			set => this[0, x] = value;
 		}
 
 		public void EnsureCapacity(int width, int height)

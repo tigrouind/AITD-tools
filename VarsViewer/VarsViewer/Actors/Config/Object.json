@@ -19,10 +19,10 @@
 			{ "name": "Z", "offset": 26 }
 		]
 	},
-	{ "name": "",
+	{ "name": "Life",
 		"columns":
 		[
-			{ "name": "Life", "type": "life", "offset": 34, "includeZero": true },
+			{ "type": "life", "offset": 34, "includeZero": true },
 			{ "name": "Mode", "values": {"0": "floor", "1": "room", "2": "camera"}, "offset": 32, "includeZero": true, "condition": 34 }
 		]
 	},
@@ -30,7 +30,7 @@
 	{ "name": "Anim",
 		"columns":
 		[
-			{ "name": "Anim", "type": "anim", "offset": 38, "includeZero": true },
+			{ "type": "anim", "offset": 38, "includeZero": true },
 			{ "name": "Key", "offset": 40, "condition": 38 },
 			{ "name": "Type", "values": {"0": "once", "1": "repeat", "2": "uninterrupt"}, "offset": 42, "includeZero": true, "condition": 38 },
 			{ "name": "Next", "offset": 44 }
