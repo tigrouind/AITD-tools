@@ -12,7 +12,7 @@ namespace VarsViewer
 {
 	public class ActorWorker : IWorker
 	{
-		bool IWorker.UseMouse => false;
+		bool IWorker.UseMouse => true;
 		readonly Func<int> getActorAddress;
 		readonly (int Rows, int Columns) cellConfig;
 		readonly List<Column> config;
@@ -32,6 +32,8 @@ namespace VarsViewer
 		int scroll;
 		bool showAll, fullMode;
 		long timeStamp, refreshTime;
+		string tooltip;
+		int selectedRow;
 
 		public ActorWorker(int view)
 		{
@@ -151,12 +153,15 @@ namespace VarsViewer
 								var text = FieldFormatter.Format(actor.Values, column, i, fullMode);
 								cells[rowCount, col] = (text, FieldFormatter.GetSize(column) != 0 && actor.Updated[column.Offset / 2] ? ConsoleColor.DarkYellow : ConsoleColor.Black);
 
-								if (text != null)
+								if (text != null && !column.Hidden)
 								{
 									column.Width = Math.Max(text.Length, column.Width);
 									column.Timer = timeStamp;
 									column.Visible = true;
-									group.Visible = true;
+									if (!group.Hidden)
+									{
+										group.Visible = true;
+									}
 								}
 
 								col++;
@@ -221,7 +226,11 @@ namespace VarsViewer
 						}
 
 						//enlarge first child column if needed
-						group.Columns.First(x => x.Visible).ExtraWidth = group.Width - childWidth;
+						var first = group.Columns.FirstOrDefault(x => x.Visible);
+						if (first != null)
+						{
+							first.ExtraWidth = group.Width - childWidth;
+						}
 					}
 				}
 			}
@@ -261,23 +270,26 @@ namespace VarsViewer
 
 				//body
 				Console.CursorTop++;
-				int height = System.Console.WindowHeight - 2;
+				int height = Console.WindowHeight - 2;
+				int totalWidth = config.Where(x => x.Visible).Sum(x => x.Width + 1) - 1;
 
 				for (int row = 0; row < Math.Min(height, rowCount - scroll); row++)
 				{
 					Console.CursorLeft = 0;
-					var rowColor = this.rowColor[row + scroll];
+					(ConsoleColor Background, ConsoleColor Foreground) rowColor = row == selectedRow ? (ConsoleColor.DarkGray, ConsoleColor.Black) : this.rowColor[row + scroll];
 					Console.BackgroundColor = rowColor.Background;
 
 					int col = 0;
+					bool anyColumn = false;
 					foreach (var group in config)
 					{
 						foreach (var column in group.Columns)
 						{
-							if (column.Visible)
+							if (group.Visible && column.Visible)
 							{
 								var cell = cells[row + scroll, col];
-								if (col > 0) Console.Write(' ');
+								if (anyColumn) Console.Write(' ');
+								anyColumn = true;
 
 								if (cell.Color != ConsoleColor.Black && rowColor.Background == ConsoleColor.Black)
 								{
@@ -296,6 +308,14 @@ namespace VarsViewer
 					}
 
 					Console.CursorTop++;
+				}
+
+				if (tooltip != null)
+				{
+					Console.CursorLeft = 0;
+					Console.CursorTop = Math.Min(Math.Min(height, rowCount - scroll) + 2, Console.WindowHeight - 1);
+					(Console.BackgroundColor, Console.ForegroundColor) = (ConsoleColor.DarkGreen, ConsoleColor.Black);
+					Console.Write(tooltip);
 				}
 			}
 		}
@@ -391,21 +411,32 @@ namespace VarsViewer
 			}
 		}
 
+		int RowCount => actors.Count(actor => actor.Id != -1 || showAll || actor.Deleted);
+
 		void IWorker.KeyDown(ConsoleKeyInfo key)
 		{
 			switch (key.Key)
 			{
 				case ConsoleKey.PageDown:
-					ClearTab();
-					scroll += System.Console.WindowHeight - 2;
+					{
+						int height = Console.WindowHeight - 2;
+						if (height > 0)
+						{
+							scroll += height;
+							scroll = Math.Min(scroll, RowCount / height * height); //do not scroll more that needed
+						}
+					}
 					break;
 
 				case ConsoleKey.PageUp:
 					if (scroll > 0)
 					{
-						ClearTab();
-						scroll -= System.Console.WindowHeight - 2;
-						scroll = Math.Max(0, scroll);
+						int height = Console.WindowHeight - 2;
+						if (height > 0)
+						{
+							scroll -= height;
+							scroll = Math.Max(0, scroll);
+						}
 					}
 					break;
 
@@ -419,6 +450,87 @@ namespace VarsViewer
 					ClearTab();
 					fullMode = !fullMode;
 					break;
+
+				case ConsoleKey.R:
+					foreach (var group in config)
+					{
+						group.Hidden = false;
+						foreach (var col in group.Columns)
+						{
+							col.Hidden = false;
+						}
+					}
+					break;
+
+				case ConsoleKey.UpArrow:
+					selectedRow = Math.Max(0, selectedRow - 1);
+					break;
+
+				case ConsoleKey.DownArrow:
+					selectedRow = Math.Min(RowCount - scroll - 1, selectedRow + 1);
+					break;
+
+				case ConsoleKey.Escape:
+					selectedRow = -1;
+					break;
+			}
+		}
+
+		void IWorker.MouseMove(int x, int y)
+		{
+			int totalWidth = config.Where(c => c.Visible).Sum(c => c.Width + 1) - 1;
+
+			if (x < totalWidth)
+			{
+				selectedRow = y - 2;
+			}
+			else
+			{
+				selectedRow = -1;
+			}
+
+			if (!fullMode && x < totalWidth && y < (RowCount - scroll + 2) && TryFindColumn(x, 1, out (Column group, Column column) result))
+			{
+				tooltip = string.Join(".", (new string[] { result.group.Name, result.column.Name }).Where(c => c != null));
+			}
+			else
+			{
+				tooltip = null;
+			}
+		}
+
+		void IWorker.MouseDown(int x, int y)
+		{
+			if (TryFindColumn(x, y, out (Column group, Column column) result))
+			{
+				if (result.column != null)
+				{
+					result.column.Hidden = true;
+					result.column.Visible = false;
+
+					if (result.group.Columns.All(c => c.Hidden))
+					{
+						result.group.Hidden = true;
+						result.group.Visible = false;
+					}
+				}
+				else
+				{
+					result.group.Hidden = true;
+					result.group.Visible = false;
+				}
+			}
+		}
+
+		void IWorker.MouseWheel(int delta)
+		{
+			if (delta > 0)
+			{
+				((IWorker)this).KeyDown(new ConsoleKeyInfo((char)0, ConsoleKey.PageUp, false, false, false));
+			}
+			else
+			{
+				((IWorker)this).KeyDown(new ConsoleKeyInfo((char)0, ConsoleKey.PageDown, false, false, false));
 			}
 		}
 
@@ -437,12 +549,43 @@ namespace VarsViewer
 			}
 		}
 
-		void IWorker.MouseMove(int x, int y)
+		bool TryFindColumn(int x, int y, out (Column group, Column col) result)
 		{
-		}
+			int width = 0;
+			switch (y)
+			{
+				case 0:
+					foreach (var group in config.Where(c => c.Visible))
+					{
+						if (x >= width && x < (width + group.Width))
+						{
+							result = (group, null);
+							return true;
+						}
 
-		void IWorker.MouseDown(int x, int y)
-		{
+						width += group.Width + 1;
+					}
+					break;
+
+				case 1:
+					foreach (var group in config.Where(c => c.Visible))
+					{
+						foreach (var column in group.Columns.Where(c => c.Visible))
+						{
+							if (x >= width && x < (width + column.Width))
+							{
+								result = (group, column);
+								return true;
+							}
+
+							width += column.Width + 1;
+						}
+					}
+					break;
+			}
+
+			result = (null, null);
+			return false;
 		}
 	}
 }

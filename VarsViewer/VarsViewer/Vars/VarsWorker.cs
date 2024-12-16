@@ -37,7 +37,7 @@ namespace VarsViewer
 
 		void IWorker.Render()
 		{
-			cellSize = Math.Max(3, Math.Min(System.Console.WindowWidth / 21, 7));
+			cellSize = Math.Max(3, Math.Min(Console.WindowWidth / 21, 7));
 			RenderTab(vars, 11, 0);
 			RenderTab(cvars, 1, 12);
 			RenderToolTip();
@@ -489,6 +489,10 @@ namespace VarsViewer
 				int rowIndex = var.Type == VarEnum.VARS ? 1 : 13;
 				return ((cellx + 1) * cellSize, celly + rowIndex);
 			}
+		}
+
+		void IWorker.MouseWheel(int delta)
+		{
 		}
 
 		#endregion

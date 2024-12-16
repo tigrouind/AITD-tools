@@ -128,6 +128,11 @@ namespace VarsViewer
 				{
 					worker.MouseMove(position.x, position.y);
 				};
+
+				Console.MouseWheel += (sender, delta) =>
+				{
+					worker.MouseWheel(delta);
+				};
 			}
 		}
 

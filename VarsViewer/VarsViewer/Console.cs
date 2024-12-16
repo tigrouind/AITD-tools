@@ -90,6 +90,7 @@ namespace VarsViewer
 			[FieldOffset(0)] public ushort eventType;
 			[FieldOffset(4)] public KeyEventRecord keyEvent;
 			[FieldOffset(4)] public MouseEventRecord mouseEvent;
+			[FieldOffset(4)] public Coord windowBufferSizeEvent;
 		}
 
 		[StructLayout(LayoutKind.Explicit, CharSet = CharSet.Auto)]
@@ -170,16 +171,20 @@ namespace VarsViewer
 		public static ConsoleColor ForegroundColor = ConsoleColor.Gray;
 		public static int CursorLeft;
 		public static int CursorTop;
+		public static int WindowWidth, WindowHeight;
 
 		public static event EventHandler<ConsoleKeyInfo> KeyDown;
 		public static event EventHandler<ConsoleKeyInfo> KeyUp;
 		public static event EventHandler<(int x, int y)> MouseMove;
 		public static event EventHandler<(int x, int y)> MouseDown;
+		public static event EventHandler<int> MouseWheel;
 
 		static Console()
 		{
 			outputHandle = CreateFile("CONOUT$", (FileAccess)GENERIC_WRITE, FileShare.Write, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
 			inputHandle = GetStdHandle(STD_INPUT_HANDLE);
+			WindowWidth = System.Console.WindowWidth;
+			WindowHeight = System.Console.WindowHeight;
 		}
 
 		public static void Clear()
@@ -302,18 +307,24 @@ namespace VarsViewer
 
 					case 2: //mouse
 						var position = (ir.mouseEvent.mousePosition.X, ir.mouseEvent.mousePosition.Y);
-						if (ir.mouseEvent.buttonState != 0 && ir.mouseEvent.eventFlags == 0)
-						{
-							MouseDown.Invoke(null, position);
-						}
-						else
+						if (ir.mouseEvent.eventFlags == 1)
 						{
 							MouseMove.Invoke(null, position);
+						}
+						else if (ir.mouseEvent.eventFlags == 4)
+						{
+							MouseWheel.Invoke(null, (ir.mouseEvent.buttonState & 0x80000000) != 0 ? -1 : 1);
+						}
+						else if (ir.mouseEvent.buttonState != 0)
+						{
+							MouseDown.Invoke(null, position);
 						}
 						break;
 
 					case 4: //resize
 						forceRefresh = true;
+						WindowWidth = ir.windowBufferSizeEvent.X;
+						WindowHeight = ir.windowBufferSizeEvent.Y;
 						break;
 				}
 			}

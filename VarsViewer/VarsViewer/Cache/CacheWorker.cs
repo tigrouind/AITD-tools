@@ -303,5 +303,9 @@ namespace VarsViewer
 		void IWorker.MouseDown(int x, int y)
 		{
 		}
+
+		void IWorker.MouseWheel(int delta)
+		{
+		}
 	}
 }
