@@ -17,5 +17,6 @@ namespace VarsViewer
 		public int ExtraWidth;
 		public bool Visible;
 		public long Timer;
+		public bool Hidden;
 	}
 }

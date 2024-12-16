@@ -175,6 +175,7 @@ namespace VarsViewer
 		public static event EventHandler<ConsoleKeyInfo> KeyUp;
 		public static event EventHandler<(int x, int y)> MouseMove;
 		public static event EventHandler<(int x, int y)> MouseDown;
+		public static event EventHandler<int> MouseWheel;
 
 		static Console()
 		{
@@ -302,13 +303,17 @@ namespace VarsViewer
 
 					case 2: //mouse
 						var position = (ir.mouseEvent.mousePosition.X, ir.mouseEvent.mousePosition.Y);
-						if (ir.mouseEvent.buttonState != 0 && ir.mouseEvent.eventFlags == 0)
-						{
-							MouseDown.Invoke(null, position);
-						}
-						else
+						if (ir.mouseEvent.eventFlags == 1)
 						{
 							MouseMove.Invoke(null, position);
+						}
+						else if (ir.mouseEvent.eventFlags == 4)
+						{
+							MouseWheel.Invoke(null, (ir.mouseEvent.buttonState & 0x80000000) != 0 ? -1 : 1);
+						}
+						else if (ir.mouseEvent.buttonState != 0)
+						{
+							MouseDown.Invoke(null, position);
 						}
 						break;
 

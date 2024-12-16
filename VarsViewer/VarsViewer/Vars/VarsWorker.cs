@@ -491,6 +491,10 @@ namespace VarsViewer
 			}
 		}
 
+		void IWorker.MouseWheel(int delta)
+		{
+		}
+
 		#endregion
 	}
 }
