@@ -121,23 +121,24 @@ Extracts files from PAK files.
 ## Supported
 Same as [LifeDISA](#LifeDISA)
 
-## Instructions  
+## Instructions
 - Copy PAK files to GAMEDATA folder
-- Run PAKExtract (all PAK files in GAMEDATA folder are extracted)
-- Export backgrounds as PNG, floors as SVG or update entries in the archive (optional)
+- Run PAKExtract : all PAK files in GAMEDATA folder are extracted
 
-You can also drop files or folders into PAKExtract executable
+You can also drop files or folders into PAKExtract executable.
 
 ## Command-line arguments
 ```
 PAKExtract [-background]
            [-svg "[rotate {0|90|180|270}] [room 1,2,3,...]"]
-		   [-info]
-		   [-update]
+           [-info]
+           [-update]
            [<files>]
-		   [<folders>]
+           [<folders>]
 ```
 
-## Required files
-- Backgrounds: CAMERAxx.PAK, ITD_RESS.PAK 
-- Svg: ETAGExx.PAK 
+## Extra features
+- Converting backgrounds as PNG files. Extract PAK files (CAMERAxx, ITD_RESS) then run PAKEXtract again (with related command line argument).
+- Rendering floors as SVG files. Extract PAK files (ETAGExx) then run PAKEXtract again (with related command line argument).
+- Displaying archive information (eg: compressed size, flags, ...) without extracting any file.
+- Updating entries in the archive. First, extract some files, edit them, then run PAKExtract again.
