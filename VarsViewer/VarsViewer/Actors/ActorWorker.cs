@@ -276,8 +276,8 @@ namespace VarsViewer
 				for (int row = 0; row < Math.Min(height, rowCount - scroll); row++)
 				{
 					Console.CursorLeft = 0;
-					(ConsoleColor Background, ConsoleColor Foreground) rowColor = row == selectedRow ? (ConsoleColor.DarkGray, ConsoleColor.Black) : this.rowColor[row + scroll];
-					Console.BackgroundColor = rowColor.Background;
+					(ConsoleColor Background, ConsoleColor Foreground) = row == selectedRow ? (ConsoleColor.DarkGray, ConsoleColor.Black) : rowColor[row + scroll];
+					Console.BackgroundColor = Background;
 
 					int col = 0;
 					bool anyColumn = false;
@@ -291,13 +291,13 @@ namespace VarsViewer
 								if (anyColumn) Console.Write(' ');
 								anyColumn = true;
 
-								if (cell.Color != ConsoleColor.Black && rowColor.Background == ConsoleColor.Black)
+								if (cell.Color != ConsoleColor.Black && Background == ConsoleColor.Black)
 								{
 									Console.ForegroundColor = cell.Color;
 								}
 								else
 								{
-									Console.ForegroundColor = rowColor.Foreground;
+									Console.ForegroundColor = Foreground;
 								}
 
 								Console.Write(Tools.PadBoth(cell.Text ?? "", column.Width + column.ExtraWidth));
