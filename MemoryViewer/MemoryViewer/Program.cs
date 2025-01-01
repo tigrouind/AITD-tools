@@ -1,7 +1,5 @@
 using System;
-using System.IO;
 using System.Linq;
-using System.Reflection;
 using SDL2;
 using Shared;
 
@@ -13,23 +11,29 @@ namespace MemoryViewer
 		const int RESY = 60;
 		const int SCREENS = 40;
 
-		static int winx, winy, zoom;
 		static readonly bool[] needRefresh = new bool[SCREENS];
 		static bool mustClearScreen;
 		static bool needPaletteUpdate;
 		static bool[] needPaletteUpdate256 = new bool[256];
 		static int offset;
+		static int zoom, width, height;
 
-		public static int Main(string[] args)
+		static int Main(string[] args)
 		{
-			winx = Tools.GetArgument<int?>(args, "-width") ?? 640;
-			winy = Tools.GetArgument<int?>(args, "-height") ?? 480;
-			zoom = Tools.GetArgument<int?>(args, "-zoom") ?? 2;
+			return Tools.ParseArguments<Program>(args);
+		}
+
+		#pragma warning disable 0028
+		static int Main(int width = 640, int height = 480, int zoom = 2)
+		{
+			Program.zoom = zoom;
+			Program.height = height;
+			Program.width = width;
 
 			//init SDL
 			SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
 
-			IntPtr window = SDL.SDL_CreateWindow("AITD memory viewer", SDL.SDL_WINDOWPOS_UNDEFINED, SDL.SDL_WINDOWPOS_UNDEFINED, winx, winy, SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
+			IntPtr window = SDL.SDL_CreateWindow("AITD memory viewer", SDL.SDL_WINDOWPOS_UNDEFINED, SDL.SDL_WINDOWPOS_UNDEFINED, width, height, SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
 			IntPtr renderer = SDL.SDL_CreateRenderer(window, -1, SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL.SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC);
 			//IntPtr renderer = SDL.SDL_CreateRenderer(window, -1, SDL.SDL_RendererFlags.SDL_RENDERER_SOFTWARE);
 
@@ -136,8 +140,8 @@ namespace MemoryViewer
 							switch (sdlEvent.window.windowEvent)
 							{
 								case SDL.SDL_WindowEventID.SDL_WINDOWEVENT_RESIZED:
-									winx = sdlEvent.window.data1;
-									winy = sdlEvent.window.data2;
+									width = sdlEvent.window.data1;
+									height = sdlEvent.window.data2;
 									SetRefreshState(true);
 									break;
 
@@ -237,8 +241,8 @@ namespace MemoryViewer
 				}
 
 				//render
-				int tm = (winx + RESX * zoom - 1) / (RESX * zoom);
-				int tn = (winy + RESY * zoom - 1) / (RESY * zoom);
+				int tm = (width + RESX * zoom - 1) / (RESX * zoom);
+				int tn = (height + RESY * zoom - 1) / (RESY * zoom);
 
 				SDL.SDL_SetTextureBlendMode(texture, SDL.SDL_BlendMode.SDL_BLENDMODE_NONE);
 				Render(renderer, texture, tm, tn, pixels);
@@ -437,7 +441,7 @@ namespace MemoryViewer
 					}
 				}
 
-				skip += RESX * (winy / zoom);
+				skip += RESX * (height / zoom);
 			}
 		}
 

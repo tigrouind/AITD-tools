@@ -157,49 +157,115 @@ namespace Shared
 
 		#region Arguments
 
-		public static T GetArgument<T>(string[] args, string name)
+		public static int ParseArguments<T>(string[] args)
 		{
-			int index = Array.FindIndex(args, x => x.Equals(name, StringComparison.InvariantCultureIgnoreCase));
-			if (index >= 0 && index < (args.Length - 1))
+			var method = typeof(T)
+				.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
+				.Where(x => x.Name == "Main")
+				.Select(x => (Method: x, Parameters: x.GetParameters()))
+				.FirstOrDefault(x => !(x.Parameters.Length == 1 && x.Parameters[0].ParameterType == typeof(string[])));
+
+			if (method == default)
 			{
-				Type type = typeof(T);
-				type = Nullable.GetUnderlyingType(type) ?? type;
-
-				string argument = args[index + 1];
-
-				if (type == typeof(int))
-				{
-					if (int.TryParse(argument, out int value))
-					{
-						return (T)(object)value;
-					}
-				}
-				else if (type == typeof(string))
-				{
-					return (T)(object)argument;
-				}
-				else if (type.IsEnum)
-				{
-					var names = Enum.GetNames(type);
-					var values = Enum.GetValues(type);
-
-					return names.Zip(values.Cast<T>(), (x, y) => (Name: x, Value: y))
-						.Where(x => string.Equals(x.Name, argument, StringComparison.InvariantCultureIgnoreCase))
-						.Select(x => x.Value)
-						.FirstOrDefault();
-				}
-				else
-				{
-					throw new NotSupportedException(type.ToString());
-				}
+				throw new Exception("No suitable Main() method found");
 			}
 
-			return default;
+			var arguments = GetArguments(args, method
+					.Parameters
+					.ToDictionary(x => "-" + x.Name, x => x.ParameterType, StringComparer.InvariantCultureIgnoreCase))
+				.Append((Name: "-args", Value:args))
+				.ToDictionary(x => x.Name, x => x.Value, StringComparer.InvariantCultureIgnoreCase);
+
+			var values = method.Parameters
+				.Select(x => arguments.TryGetValue("-" + x.Name, out object value) ? value :
+					(x.DefaultValue == DBNull.Value ? GetDefaultValue(x.ParameterType) : x.DefaultValue))
+				.ToArray();
+
+			return (int)method.Method.Invoke(null, values);
+
+			object GetDefaultValue(Type type)
+			{
+				return type.IsValueType ? Activator.CreateInstance(type) : null;
+			}
 		}
 
-		public static bool HasArgument(string[] args, string name)
+		static IEnumerable<(string Name, object Value)> GetArguments(string[] args, Dictionary<string, Type> nameToType)
 		{
-			return args.Contains(name, StringComparer.InvariantCultureIgnoreCase);
+			for (int i = 0; i < args.Length; i++)
+			{
+				string arg = args[i];
+				if (nameToType.TryGetValue(arg, out Type paramType))
+				{
+					if (paramType == typeof(bool))
+					{
+						yield return (arg, true);
+					}
+					else if (paramType == typeof(string))
+					{
+						if (i + 1 < args.Length)
+						{
+							yield return (arg, args[i + 1]);
+							i++;
+						}
+					}
+					else if (paramType == typeof(int))
+					{
+						if (i + 1 < args.Length)
+						{
+							if (int.TryParse(args[i + 1], out int value))
+							{
+								yield return (arg, value);
+								i++;
+							}
+						}
+					}
+					else if (paramType == typeof(int[]))
+					{
+						if (i + 1 < args.Length)
+						{
+							var value = args[i + 1].Split(',')
+								.Select(x => x != string.Empty && int.TryParse(x, out int intValue) ? (int?)intValue : null)
+								.Where(x => x.HasValue)
+								.Select(x => x.Value)
+								.ToArray();
+
+							yield return (arg, value);
+							i++;
+						}
+					}
+					else if (paramType.IsClass)
+					{
+						var otherArgs = args.Skip(i + 1).TakeWhile(x => x.IndexOf("-") == -1).ToArray();
+						var fields = paramType.GetFields();
+
+						var instance = Activator.CreateInstance(paramType);
+						foreach (var item in GetArguments(otherArgs, fields.ToDictionary(x => x.Name, x => x.FieldType, StringComparer.InvariantCultureIgnoreCase))
+							.Join(fields, x => x.Name, x => x.Name, (x, y) => (Field: y, x.Value), StringComparer.InvariantCultureIgnoreCase))
+						{
+							item.Field.SetValue(instance, item.Value);
+						}
+
+						yield return (arg, instance);
+						i += otherArgs.Length;
+					}
+					else if (paramType.IsEnum)
+					{
+						if (i + 1 < args.Length)
+						{
+							var names = Enum.GetNames(paramType);
+							var values = Enum.GetValues(paramType);
+
+							var value = names.Zip(values.Cast<Enum>(), (x, y) => (Name: x, Value: y))
+								.Where(x => string.Equals(x.Name, args[i + 1], StringComparison.InvariantCultureIgnoreCase))
+								.Select(x => x.Value)
+								.FirstOrDefault();
+
+							yield return (arg, value);
+							i++;
+						}
+					}
+				}
+			}
 		}
 
 		#endregion

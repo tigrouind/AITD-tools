@@ -12,22 +12,26 @@ namespace PAKExtract
 
 		static int Main(string[] args)
 		{
-			if (Tools.HasArgument(args, "-background"))
+			return Tools.ParseArguments<Program>(args);
+		}
+
+		#pragma warning disable 0028
+		static int Main(string[] args, bool background, SvgInfo svg, bool update, bool info)
+		{
+			if (background)
 			{
 				Export.ExportBackground();
 			}
-			else if (Tools.HasArgument(args, "-svg"))
+			else if (svg != null)
 			{
-				Export.ExportSvg(args);
+				Export.ExportSvg(svg);
 			}
-			else if (Tools.HasArgument(args, "-update"))
+			else if (update)
 			{
 				UpdateEntries(args);
 			}
 			else
 			{
-				var preview = Tools.HasArgument(args, "-info");
-
 				var files = GetFiles(args).ToList();
 				if (!files.Any())
 				{
@@ -39,7 +43,7 @@ namespace PAKExtract
 				}
 
 				var compressType = new[] { "-", "INFLATE", "", "", "DEFLATE" };
-				if (preview)
+				if (info)
 				{
 					Console.WriteLine("     PAK Entry   CType   CSize   USize Extra");
 				}
@@ -50,7 +54,7 @@ namespace PAKExtract
 					{
 						foreach (var entry in pak)
 						{
-							if (preview)
+							if (info)
 							{
 								Console.WriteLine($"{Path.GetFileNameWithoutExtension(file),8} " +
 									$"{entry.Index,5} " +

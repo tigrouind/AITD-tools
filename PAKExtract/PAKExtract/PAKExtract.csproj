@@ -39,6 +39,7 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="SvgInfo.cs" />
     <Compile Include="Export\Background\Background.cs" />
     <Compile Include="Export\Export..cs" />
     <Compile Include="Export\Svg.cs" />

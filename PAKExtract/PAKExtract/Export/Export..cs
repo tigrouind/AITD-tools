@@ -26,28 +26,13 @@ namespace PAKExtract
 			}
 		}
 
-		public static void ExportSvg(string[] args)
+		public static void ExportSvg(SvgInfo svg)
 		{
-			int rotate = 0;
-			var rooms = new int[0];
-
-			string svgArgs = Tools.GetArgument<string>(args, "-svg");
-			if (svgArgs != null && !svgArgs.StartsWith("-"))
-			{
-				var svgParams = svgArgs.Split(' ');
-				rooms = (Tools.GetArgument<string>(svgParams, "rooms") ?? string.Empty)
-					.Split(',')
-					.Where(x => x != string.Empty && int.TryParse(x, out _))
-					.Select(x => int.Parse(x))
-					.ToArray();
-				rotate = Tools.GetArgument<int>(svgParams, "rotate");
-			}
-
 			foreach (var directory in Directory.GetDirectories("."))
 			{
 				if (Path.GetFileName(directory).StartsWith("ETAGE"))
 				{
-					var data = Svg.Export(directory, rooms, rotate);
+					var data = Svg.Export(directory, svg.Room, svg.Rotate);
 					Program.WriteFile(Path.Combine("SVG", Path.GetFileNameWithoutExtension(directory) + ".svg"), data);
 				}
 			}

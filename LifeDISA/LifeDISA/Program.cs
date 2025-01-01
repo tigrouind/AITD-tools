@@ -36,13 +36,14 @@ namespace LifeDISA
 			(GameVersion.TIMEGATE_DEMO, MacroTable.LifeB, MacroTable.EvalB, 54)
 		};
 
-		public static int Main(string[] args)
+		static int Main(string[] args)
 		{
-			var version = Tools.GetArgument<GameVersion?>(args, "-version");
-			bool verbose = Tools.HasArgument(args, "-verbose");
-			bool raw = Tools.HasArgument(args, "-raw");
-			string outputFile = Tools.GetArgument<string>(args, "-output") ?? "scripts.vb";
+			return Tools.ParseArguments<Program>(args);
+		}
 
+		#pragma warning disable 0028
+		static int Main(bool raw, bool verbose, GameVersion? version, string output = "scripts.vb")
+		{
 			config = gameConfigs.FirstOrDefault(x => x.Version == version);
 			if (version == null || config == default)
 			{
@@ -123,7 +124,7 @@ namespace LifeDISA
 				}
 			}
 
-			using (var writer = new Writer(outputFile))
+			using (var writer = new Writer(output))
 			using (var pak = new PakArchive(@"GAMEDATA\LISTLIFE.PAK"))
 			{
 				//dump all
