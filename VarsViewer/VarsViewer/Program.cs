@@ -19,7 +19,12 @@ namespace VarsViewer
 		static readonly Stopwatch dosboxTimer = new Stopwatch();
 		public static bool Freeze;
 
-		static readonly IWorker[] workers = new IWorker[] { new VarsWorker(), new CacheWorker(), new ActorWorker(0), new ActorWorker(1) };
+		static readonly Lazy<IWorker>[] workers = new Lazy<IWorker>[] {
+			new Lazy<IWorker>(() => new VarsWorker()),
+			new Lazy<IWorker>(() => new CacheWorker()),
+			new Lazy<IWorker>(() => new ActorWorker(0)),
+			new Lazy<IWorker>(() => new ActorWorker(1))
+		};
 		static IWorker worker;
 
 		public static void Main(string[] args)
@@ -180,12 +185,9 @@ namespace VarsViewer
 
 		static void SetView(int view)
 		{
-			if (worker != workers[view])
-			{
-				worker = workers[view];
-				Console.MouseInput = worker.UseMouse;
-				System.Console.Title = $"AITD {new string[] { "vars", "cache", "actors", "objects" }[view]} viewer";
-			}
+			worker = workers[view].Value;
+			Console.MouseInput = worker.UseMouse;
+			System.Console.Title = $"AITD {new string[] { "vars", "cache", "actors", "objects" }[view]} viewer";
 		}
 	}
 }
