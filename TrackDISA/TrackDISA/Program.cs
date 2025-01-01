@@ -23,7 +23,12 @@ namespace TrackDISA
 			(GameVersion.TIMEGATE_DEMO, MacroTable.TrackB)
 		};
 
-		public static int Main(string[] args)
+		static int Main(string[] args)
+		{
+			return (int)CommandLine.ParseAndInvoke(args, new Func<GameVersion?, bool, string, int>(Run));
+		}
+
+		static int Run(GameVersion? version, bool verbose, string output = "tracks.vb")
 		{
 			Directory.CreateDirectory("GAMEDATA");
 
@@ -37,19 +42,15 @@ namespace TrackDISA
 				return -1;
 			}
 
-			var version = Tools.GetArgument<GameVersion?>(args, "-version");
-			string outputFile = Tools.GetArgument<string>(args, "-output") ?? "tracks.vb";
-			bool verbose = Tools.HasArgument(args, "-verbose");
-
 			var config = gameConfigs.FirstOrDefault(x => x.Version == version);
 			if (version == null || config == default)
 			{
 				var versions = string.Join("|", gameConfigs.Select(x => x.Version.ToString().ToLowerInvariant()));
-				Console.WriteLine($"Usage: TrackDISA -version {{{versions}}} [-output]");
+				Console.WriteLine($"Usage: TrackDISA -version {{{versions}}} [-output] [-verbose]");
 				return -1;
 			}
 
-			using (var writer = new StreamWriter(outputFile))
+			using (var writer = new StreamWriter(output))
 			using (var pak = new PakArchive(@"GAMEDATA\LISTTRAK.PAK"))
 			{
 				foreach (var entry in pak)

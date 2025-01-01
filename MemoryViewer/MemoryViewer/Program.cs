@@ -1,7 +1,5 @@
 using System;
-using System.IO;
 using System.Linq;
-using System.Reflection;
 using SDL2;
 using Shared;
 
@@ -13,23 +11,23 @@ namespace MemoryViewer
 		const int RESY = 60;
 		const int SCREENS = 40;
 
-		static int winx, winy, zoom;
 		static readonly bool[] needRefresh = new bool[SCREENS];
 		static bool mustClearScreen;
 		static bool needPaletteUpdate;
 		static bool[] needPaletteUpdate256 = new bool[256];
 		static int offset;
 
-		public static int Main(string[] args)
+		static int Main(string[] args)
 		{
-			winx = Tools.GetArgument<int?>(args, "-width") ?? 640;
-			winy = Tools.GetArgument<int?>(args, "-height") ?? 480;
-			zoom = Tools.GetArgument<int?>(args, "-zoom") ?? 2;
+			return (int)CommandLine.ParseAndInvoke(args, new Func<int, int, int, int>(Run));
+		}
 
+		static int Run(int width = 640, int height = 480, int zoom = 2)
+		{
 			//init SDL
 			SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
 
-			IntPtr window = SDL.SDL_CreateWindow("AITD memory viewer", SDL.SDL_WINDOWPOS_UNDEFINED, SDL.SDL_WINDOWPOS_UNDEFINED, winx, winy, SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
+			IntPtr window = SDL.SDL_CreateWindow("AITD memory viewer", SDL.SDL_WINDOWPOS_UNDEFINED, SDL.SDL_WINDOWPOS_UNDEFINED, width, height, SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
 			IntPtr renderer = SDL.SDL_CreateRenderer(window, -1, SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL.SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC);
 			//IntPtr renderer = SDL.SDL_CreateRenderer(window, -1, SDL.SDL_RendererFlags.SDL_RENDERER_SOFTWARE);
 
@@ -66,11 +64,11 @@ namespace MemoryViewer
 							{
 								if (sdlEvent.wheel.y > 0)
 								{
-									SetZoom(zoom + 1);
+									SetZoom(ref zoom, zoom + 1);
 								}
 								else if (sdlEvent.wheel.y < 0)
 								{
-									SetZoom(zoom - 1);
+									SetZoom(ref zoom, zoom - 1);
 								}
 							}
 							break;
@@ -110,7 +108,7 @@ namespace MemoryViewer
 								case SDL.SDL_Keycode.SDLK_KP_PLUS:
 									if (control)
 									{
-										SetZoom(zoom + 1);
+										SetZoom(ref zoom, zoom + 1);
 									}
 									break;
 
@@ -118,7 +116,7 @@ namespace MemoryViewer
 								case SDL.SDL_Keycode.SDLK_KP_MINUS:
 									if (control)
 									{
-										SetZoom(zoom - 1);
+										SetZoom(ref zoom, zoom - 1);
 									}
 									break;
 
@@ -126,7 +124,7 @@ namespace MemoryViewer
 								case SDL.SDL_Keycode.SDLK_KP_0:
 									if (control)
 									{
-										SetZoom(2);
+										SetZoom(ref zoom, 2);
 									}
 									break;
 							}
@@ -136,8 +134,8 @@ namespace MemoryViewer
 							switch (sdlEvent.window.windowEvent)
 							{
 								case SDL.SDL_WindowEventID.SDL_WINDOWEVENT_RESIZED:
-									winx = sdlEvent.window.data1;
-									winy = sdlEvent.window.data2;
+									width = sdlEvent.window.data1;
+									height = sdlEvent.window.data2;
 									SetRefreshState(true);
 									break;
 
@@ -237,16 +235,16 @@ namespace MemoryViewer
 				}
 
 				//render
-				int tm = (winx + RESX * zoom - 1) / (RESX * zoom);
-				int tn = (winy + RESY * zoom - 1) / (RESY * zoom);
+				int tm = (width + RESX * zoom - 1) / (RESX * zoom);
+				int tn = (height + RESY * zoom - 1) / (RESY * zoom);
 
 				SDL.SDL_SetTextureBlendMode(texture, SDL.SDL_BlendMode.SDL_BLENDMODE_NONE);
-				Render(renderer, texture, tm, tn, pixels);
+				Render(renderer, texture, tm, tn, pixels, zoom, height);
 
 				if (mcb)
 				{
 					SDL.SDL_SetTextureBlendMode(texture, SDL.SDL_BlendMode.SDL_BLENDMODE_BLEND);
-					Render(renderer, texture, tm, tn, mcbPixels);
+					Render(renderer, texture, tm, tn, mcbPixels, zoom, height);
 				}
 
 				SDL.SDL_RenderPresent(renderer);
@@ -387,7 +385,7 @@ namespace MemoryViewer
 			}
 		}
 
-		static unsafe void Render(IntPtr renderer, IntPtr texture, int tm, int tn, uint[] pixels)
+		static unsafe void Render(IntPtr renderer, IntPtr texture, int tm, int tn, uint[] pixels, int zoom, int height)
 		{
 			SDL.SDL_Rect textureRect = new SDL.SDL_Rect
 			{
@@ -437,7 +435,7 @@ namespace MemoryViewer
 					}
 				}
 
-				skip += RESX * (winy / zoom);
+				skip += RESX * (height / zoom);
 			}
 		}
 
@@ -458,7 +456,7 @@ namespace MemoryViewer
 			SetRefreshState(true);
 		}
 
-		static void SetZoom(int newZoom)
+		static void SetZoom(ref int zoom, int newZoom)
 		{
 			if (newZoom != zoom && newZoom >= 1 && newZoom <= 8)
 			{

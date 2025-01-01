@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 
 namespace Shared
@@ -154,54 +155,5 @@ namespace Shared
 				}
 			}
 		}
-
-		#region Arguments
-
-		public static T GetArgument<T>(string[] args, string name)
-		{
-			int index = Array.FindIndex(args, x => x.Equals(name, StringComparison.InvariantCultureIgnoreCase));
-			if (index >= 0 && index < (args.Length - 1))
-			{
-				Type type = typeof(T);
-				type = Nullable.GetUnderlyingType(type) ?? type;
-
-				string argument = args[index + 1];
-
-				if (type == typeof(int))
-				{
-					if (int.TryParse(argument, out int value))
-					{
-						return (T)(object)value;
-					}
-				}
-				else if (type == typeof(string))
-				{
-					return (T)(object)argument;
-				}
-				else if (type.IsEnum)
-				{
-					var names = Enum.GetNames(type);
-					var values = Enum.GetValues(type);
-
-					return names.Zip(values.Cast<T>(), (x, y) => (Name: x, Value: y))
-						.Where(x => string.Equals(x.Name, argument, StringComparison.InvariantCultureIgnoreCase))
-						.Select(x => x.Value)
-						.FirstOrDefault();
-				}
-				else
-				{
-					throw new NotSupportedException(type.ToString());
-				}
-			}
-
-			return default;
-		}
-
-		public static bool HasArgument(string[] args, string name)
-		{
-			return args.Contains(name, StringComparer.InvariantCultureIgnoreCase);
-		}
-
-		#endregion
 	}
 }

@@ -78,6 +78,7 @@
     <Compile Include="Vars\Vars.cs" />
     <Compile Include="Vars\VarsCollection.cs" />
     <Compile Include="Vars\VarsWorker.cs" />
+    <Compile Include="View.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

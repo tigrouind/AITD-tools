@@ -28,7 +28,12 @@ namespace VarsViewer
 		};
 		static IWorker worker;
 
-		public static void Main(string[] args)
+		static void Main(string[] args)
+		{
+			CommandLine.ParseAndInvoke(args, new Action<int, int, View>(Run));
+		}
+
+		static void Run(int width, int height, View view)
 		{
 			ParseArguments();
 
@@ -76,12 +81,7 @@ namespace VarsViewer
 
 			void ParseArguments()
 			{
-				string viewArgument = Shared.Tools.GetArgument<string>(args, "-view") ?? "vars";
-				int view = Array.IndexOf(new string[] { "vars", "cache", "actors", "objects" }, viewArgument);
-				SetView(Math.Max(0, view));
-
-				int width = Shared.Tools.GetArgument<int>(args, "-width");
-				int height = Shared.Tools.GetArgument<int>(args, "-height");
+				SetView(view);
 				if (width > 0 || height > 0)
 				{
 					Console.GetWindowSize(out int currentWidth, out int currentHeight);
@@ -103,7 +103,7 @@ namespace VarsViewer
 						case ConsoleKey.F2:
 						case ConsoleKey.F3:
 						case ConsoleKey.F4:
-							SetView(keyInfo.Key - ConsoleKey.F1);
+							SetView((View)(keyInfo.Key - ConsoleKey.F1));
 							break;
 
 						case ConsoleKey.F:
@@ -189,11 +189,11 @@ namespace VarsViewer
 			Process = null;
 		}
 
-		static void SetView(int view)
+		static void SetView(View view)
 		{
-			worker = workers[view].Value;
+			worker = workers[(int)view].Value;
 			Console.MouseInput = worker.UseMouse;
-			System.Console.Title = $"AITD {new string[] { "vars", "cache", "actors", "objects" }[view]} viewer";
+			System.Console.Title = $"AITD {view.ToString().ToLowerInvariant()} viewer";
 		}
 	}
 }

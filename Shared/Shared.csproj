@@ -49,6 +49,7 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CommandLine.cs" />
     <Compile Include="DosBox.cs" />
     <Compile Include="DosMCB.cs" />
     <Compile Include="GameVersion.cs" />
