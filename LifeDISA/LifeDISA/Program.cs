@@ -38,11 +38,10 @@ namespace LifeDISA
 
 		static int Main(string[] args)
 		{
-			return Tools.ParseArguments<Program>(args);
+			return Tools.ParseArgumentsAndInvoke(args, () => Run(false, false, null, null));
 		}
 
-		#pragma warning disable 0028
-		static int Main(bool raw, bool verbose, GameVersion? version, string output = "scripts.vb")
+		static int Run(bool raw, bool verbose, GameVersion? version, string output = "scripts.vb")
 		{
 			config = gameConfigs.FirstOrDefault(x => x.Version == version);
 			if (version == null || config == default)

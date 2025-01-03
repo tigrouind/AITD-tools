@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 
 namespace Shared
@@ -157,36 +158,32 @@ namespace Shared
 
 		#region Arguments
 
-		public static int ParseArguments<T>(string[] args)
+		public static void ParseArgumentsAndInvoke(string[] args, Expression<Action> action)
 		{
-			var method = typeof(T)
-				.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
-				.Where(x => x.Name == "Main")
-				.Select(x => (Method: x, Parameters: x.GetParameters()))
-				.FirstOrDefault(x => !(x.Parameters.Length == 1 && x.Parameters[0].ParameterType == typeof(string[])));
+			ParseArgumentsAndInvoke(args, (MethodCallExpression)action.Body);
+		}
 
-			if (method == default)
-			{
-				throw new Exception("No suitable Main() method found");
-			}
+		public static int ParseArgumentsAndInvoke(string[] args, Expression<Func<int>> func)
+		{
+			return (int)ParseArgumentsAndInvoke(args, (MethodCallExpression)func.Body);
+		}
 
-			var arguments = GetArguments(args, method
-					.Parameters
+		static object ParseArgumentsAndInvoke(string[] args, MethodCallExpression methodCall)
+		{
+			var parameters = methodCall.Method.GetParameters();
+
+			var arguments = GetArguments(args, parameters
 					.ToDictionary(x => "-" + x.Name, x => x.ParameterType, StringComparer.InvariantCultureIgnoreCase))
-				.Append((Name: "-args", Value:args))
+					.Append(("-args", args))
 				.ToDictionary(x => x.Name, x => x.Value, StringComparer.InvariantCultureIgnoreCase);
 
-			var values = method.Parameters
-				.Select(x => arguments.TryGetValue("-" + x.Name, out object value) ? value :
-					(x.DefaultValue == DBNull.Value ? GetDefaultValue(x.ParameterType) : x.DefaultValue))
+			var values = parameters
+				.Zip(methodCall.Arguments, (x, y) => (Parameter:x, Argument: y))
+				.Select(x => arguments.TryGetValue("-" + x.Parameter.Name, out object value) ? value :
+					(x.Parameter.DefaultValue == DBNull.Value ? ((ConstantExpression)x.Argument).Value : x.Parameter.DefaultValue))
 				.ToArray();
 
-			return (int)method.Method.Invoke(null, values);
-
-			object GetDefaultValue(Type type)
-			{
-				return type.IsValueType ? Activator.CreateInstance(type) : null;
-			}
+			return methodCall.Method.Invoke(null, values);
 		}
 
 		static IEnumerable<(string Name, object Value)> GetArguments(string[] args, Dictionary<string, Type> nameToType)

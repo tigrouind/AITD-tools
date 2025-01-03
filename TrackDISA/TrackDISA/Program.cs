@@ -25,11 +25,10 @@ namespace TrackDISA
 
 		static int Main(string[] args)
 		{
-			return Tools.ParseArguments<Program>(args);
+			return Tools.ParseArgumentsAndInvoke(args, () => Run(null, false, null));
 		}
 
-		#pragma warning disable 0028
-		static int Main(GameVersion? version, bool verbose, string output = "tracks.vb")
+		static int Run(GameVersion? version, bool verbose, string output = "tracks.vb")
 		{
 			Directory.CreateDirectory("GAMEDATA");
 

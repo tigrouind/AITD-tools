@@ -12,11 +12,10 @@ namespace PAKExtract
 
 		static int Main(string[] args)
 		{
-			return Tools.ParseArguments<Program>(args);
+			return Tools.ParseArgumentsAndInvoke(args, () => Run(null, false, null, false, false));
 		}
 
-		#pragma warning disable 0028
-		static int Main(string[] args, bool background, SvgInfo svg, bool update, bool info)
+		static int Run(string[] args, bool background, SvgInfo svg, bool update, bool info)
 		{
 			if (background)
 			{

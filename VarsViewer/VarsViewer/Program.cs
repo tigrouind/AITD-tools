@@ -29,11 +29,10 @@ namespace VarsViewer
 
 		static void Main(string[] args)
 		{
-			Shared.Tools.ParseArguments<Program>(args);
+			Shared.Tools.ParseArgumentsAndInvoke(args, () => Run(0, 0, View.VARS));
 		}
 
-		#pragma warning disable 0028
-		static void Main(int width, int height, View view)
+		static void Run(int width, int height, View view)
 		{
 			ParseArguments();
 

@@ -20,11 +20,10 @@ namespace MemoryViewer
 
 		static int Main(string[] args)
 		{
-			return Tools.ParseArguments<Program>(args);
+			return Tools.ParseArgumentsAndInvoke(args, () => Run(0, 0, 0));
 		}
 
-		#pragma warning disable 0028
-		static int Main(int width = 640, int height = 480, int zoom = 2)
+		static int Run(int width = 640, int height = 480, int zoom = 2)
 		{
 			Program.zoom = zoom;
 			Program.height = height;
