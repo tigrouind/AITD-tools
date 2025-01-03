@@ -20,7 +20,7 @@ namespace MemoryViewer
 
 		static int Main(string[] args)
 		{
-			return Tools.ParseArgumentsAndInvoke(args, () => Run(0, 0, 0));
+			return CommandLine.ParseAndInvoke(args, () => Run(0, 0, 0));
 		}
 
 		static int Run(int width = 640, int height = 480, int zoom = 2)

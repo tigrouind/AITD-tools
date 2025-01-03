@@ -30,7 +30,7 @@ namespace VarsViewer
 
 		static void Main(string[] args)
 		{
-			Shared.Tools.ParseArgumentsAndInvoke(args, () => Run(0, 0, View.VARS));
+			CommandLine.ParseAndInvoke(args, () => Run(0, 0, View.VARS));
 		}
 
 		static void Run(int width, int height, View view)

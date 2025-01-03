@@ -12,7 +12,7 @@ namespace PAKExtract
 
 		static int Main(string[] args)
 		{
-			return Tools.ParseArgumentsAndInvoke(args, () => Run(null, false, null, false, false));
+			return CommandLine.ParseAndInvoke(args, () => Run(null, false, null, false, false));
 		}
 
 		static int Run(string[] args, bool background, SvgInfo svg, bool update, bool info)

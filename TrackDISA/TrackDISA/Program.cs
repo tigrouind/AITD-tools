@@ -25,7 +25,7 @@ namespace TrackDISA
 
 		static int Main(string[] args)
 		{
-			return Tools.ParseArgumentsAndInvoke(args, () => Run(null, false, null));
+			return CommandLine.ParseAndInvoke(args, () => Run(null, false, null));
 		}
 
 		static int Run(GameVersion? version, bool verbose, string output = "tracks.vb")
