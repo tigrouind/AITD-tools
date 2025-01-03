@@ -18,6 +18,7 @@ namespace VarsViewer
 		public static GameVersion GameVersion;
 		static readonly Stopwatch dosboxTimer = new Stopwatch();
 		public static bool Freeze;
+		static bool quit;
 
 		static readonly Lazy<IWorker>[] workers = new Lazy<IWorker>[] {
 			new Lazy<IWorker>(() => new VarsWorker()),
@@ -40,7 +41,7 @@ namespace VarsViewer
 
 			SetupConsole();
 
-			while (true)
+			while (!quit)
 			{
 				if (Process == null && (!dosboxTimer.IsRunning || dosboxTimer.Elapsed > TimeSpan.FromSeconds(1)))
 				{
@@ -106,6 +107,10 @@ namespace VarsViewer
 
 						case ConsoleKey.F:
 							Freeze = !Freeze;
+							break;
+
+						case ConsoleKey.Escape:
+							quit = true;
 							break;
 
 						default:
