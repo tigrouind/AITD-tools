@@ -140,8 +140,13 @@ namespace VarsViewer
 
 		const int SWP_NOMOVE = 0x0002;
 
+		[DllImport("kernel32.dll")]
+		static extern IntPtr GetConsoleWindow();
+
 		[DllImport("user32.dll")]
-		static extern IntPtr GetForegroundWindow();
+		static extern IntPtr GetWindow(IntPtr hWnd, uint uCmd);
+
+		const int GW_OWNER = 4;
 
 		[DllImport("user32.dll")]
 		static extern bool GetWindowRect(IntPtr hwnd, out Rect lpRect);
@@ -196,23 +201,31 @@ namespace VarsViewer
 
 		public static void SetWindowSize(int width, int height)
 		{
-			var hwnd = GetForegroundWindow();
-			if (width == 0 || height == 0)
+			var hwnd = GetConsoleHandle();
+			if (!SetWindowPos(hwnd, IntPtr.Zero, 0, 0, width, height, SWP_NOMOVE))
 			{
-				GetWindowRect(hwnd, out Rect rect);
+				throw new InvalidOperationException();
+			}
+		}
 
-				if (width == 0)
-				{
-					width = rect.Right - rect.Left;
-				}
-
-				if (height == 0)
-				{
-					height = rect.Bottom - rect.Top;
-				}
+		public static void GetWindowSize(out int width, out int height)
+		{
+			var hwnd = GetConsoleHandle();
+			if (!GetWindowRect(hwnd, out Rect rect))
+			{
+				throw new InvalidOperationException();
 			}
 
-			SetWindowPos(hwnd, IntPtr.Zero, 0, 0, width, height, SWP_NOMOVE);
+			width = rect.Right - rect.Left;
+			height = rect.Bottom - rect.Top;
+		}
+
+		static IntPtr GetConsoleHandle()
+		{
+			var hwnd = GetConsoleWindow(); //works with legacy console host
+			var owner = GetWindow(hwnd, GW_OWNER); //needed for new Windows Terminal
+			if (owner != IntPtr.Zero) return owner;
+			return hwnd;
 		}
 
 		public static void Write(char value)

@@ -84,7 +84,8 @@ namespace VarsViewer
 				int height = Shared.Tools.GetArgument<int>(args, "-height");
 				if (width > 0 || height > 0)
 				{
-					Console.SetWindowSize(width, height);
+					Console.GetWindowSize(out int currentWidth, out int currentHeight);
+					Console.SetWindowSize(width == 0 ? currentWidth : width, height == 0 ? currentHeight : height);
 				}
 			}
 
