@@ -9,12 +9,15 @@ namespace MemoryViewer
 	{
 		const int RESX = 320;
 		const int RESY = 60;
-		const int SCREENS = 40;
+
+		const int DOS_CONV = 640 * 1024;
+		const int EMS = 64000;
+		const int SCREENS = (DOS_CONV + EMS + RESX * RESY - 1) / (RESX * RESY) + 1; //round up + one extra screen for left over between columns
 
 		static readonly bool[] needRefresh = new bool[SCREENS];
 		static bool mustClearScreen;
 		static bool needPaletteUpdate;
-		static bool[] needPaletteUpdate256 = new bool[256];
+		static readonly bool[] needPaletteUpdate256 = new bool[256];
 		static int offset;
 
 		static int Main(string[] args)
@@ -83,7 +86,7 @@ namespace MemoryViewer
 									break;
 
 								case SDL.SDL_Keycode.SDLK_PAGEDOWN:
-									if (offset < (16384 / 640 - 1))
+									if (offset < MAXOFFSET)
 									{
 										if (offset == 0)
 										{
@@ -197,8 +200,8 @@ namespace MemoryViewer
 				{
 					//DOS conventional memory (640KB)
 					//EMS memory (64000B) (skip 64KB (HMA) + 128KB (VCPI))
-					if (!(process.Read(pixelData, offset * 640 * 1024, 640 * 1024) > 0 &&
-						(offset != 0 || process.Read(pixelData, (1024 + 192) * 1024, 64000, 640 * 1024) > 0)))
+					if (!(process.Read(pixelData, offset * DOS_CONV, DOS_CONV) > 0 &&
+						(offset != 0 || process.Read(pixelData, (1024 + 192) * 1024, EMS, DOS_CONV) > 0)))
 					{
 						process.Close();
 						process = null;
@@ -465,5 +468,7 @@ namespace MemoryViewer
 				SetRefreshState(true);
 			}
 		}
+			const int MAXOFFSET = (16 * 1024 * 1024 - DOS_CONV) / DOS_CONV; //16MB
+
 	}
 }
