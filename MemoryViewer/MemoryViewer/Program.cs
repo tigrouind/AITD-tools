@@ -53,8 +53,7 @@ namespace MemoryViewer
 
 			while (!quit)
 			{
-				SDL.SDL_Event sdlEvent;
-				while (SDL.SDL_PollEvent(out sdlEvent) != 0 && !quit)
+				while (SDL.SDL_PollEvent(out SDL.SDL_Event sdlEvent) != 0 && !quit)
 				{
 					switch (sdlEvent.type)
 					{
@@ -74,6 +73,24 @@ namespace MemoryViewer
 									SetZoom(ref zoom, zoom - 1);
 								}
 							}
+							else
+							{
+								if (sdlEvent.wheel.y > 0)
+								{
+									if (offset > 0)
+									{
+										offset--;
+									}
+
+								}
+								else if (sdlEvent.wheel.y < 0)
+								{
+									if (offset < MAXOFFSET)
+									{
+										offset++;
+									}
+								}
+							}
 							break;
 
 						case SDL.SDL_EventType.SDL_KEYDOWN:
@@ -88,10 +105,6 @@ namespace MemoryViewer
 								case SDL.SDL_Keycode.SDLK_PAGEDOWN:
 									if (offset < MAXOFFSET)
 									{
-										if (offset == 0)
-										{
-											ClearAll(pixelData, oldPixelData, pixels, mcbPixels);
-										}
 										offset++;
 									}
 									break;
@@ -201,7 +214,7 @@ namespace MemoryViewer
 					//DOS conventional memory (640KB)
 					//EMS memory (64000B) (skip 64KB (HMA) + 128KB (VCPI))
 					if (!(process.Read(pixelData, offset * DOS_CONV, DOS_CONV) > 0 &&
-						(offset != 0 || process.Read(pixelData, (1024 + 192) * 1024, EMS, DOS_CONV) > 0)))
+						process.Read(pixelData, (1024 + 192) * 1024, EMS, DOS_CONV) > 0))
 					{
 						process.Close();
 						process = null;

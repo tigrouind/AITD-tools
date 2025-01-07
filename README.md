@@ -65,6 +65,7 @@ MemoryViewer [-width WIDTH]
 | <kbd>ctrl</kbd> + <kbd>0</kbd> | reset zoom
 | <kbd>page up</kbd> | decrease memory offset by 640KB
 | <kbd>page down</kbd> | increase memory offset by 640KB
+| <kbd>mouse wheel</kbd> | scroll through pages (same as <kbd>page up</kbd> / <kbd>page down</kbd>)
 | <kbd>space</kbd> | display DOS memory control blocks (MCBs)<br>green = free<br>blue = used<br>red = current executable<br>yellow = not current executable
 | <kbd>p</kbd> | show palette
 
