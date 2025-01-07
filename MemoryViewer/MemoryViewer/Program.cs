@@ -235,12 +235,17 @@ namespace MemoryViewer
 
 					if (showpalette)
 					{
-						const int PALETTESIZE = 4;
-						for (int i = 0; i < 256 * PALETTESIZE * PALETTESIZE; i++)
+						const int PALETTESIZE = 20;
+						for (int i = 0; i < 256; i++)
 						{
-							int x = i % (16 * PALETTESIZE);
-							int y = i / (16 * PALETTESIZE);
-							pixelData[x + y * 320] = (byte)(x / PALETTESIZE + y / PALETTESIZE * 16);
+							for (int n = 0; n < PALETTESIZE; n++)
+							{
+								int index = i % 16 * PALETTESIZE + (i / 16 * PALETTESIZE + n) * 320;
+								for (int m = 0; m < PALETTESIZE; m++)
+								{
+									pixelData[index + m] = (byte)i;
+								}
+							}
 						}
 					}
 				}
