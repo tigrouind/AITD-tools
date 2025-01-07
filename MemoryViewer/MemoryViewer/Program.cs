@@ -15,7 +15,7 @@ namespace MemoryViewer
 		const int SCREENS = (DOS_CONV + EMS + RESX * RESY - 1) / (RESX * RESY) + 1; //round up + one extra screen for left over between columns
 
 		static readonly bool[] needRefresh = new bool[SCREENS];
-		static bool mustClearScreen;
+		static bool mustClearScreen = true;
 		static bool needPaletteUpdate;
 		static readonly bool[] needPaletteUpdate256 = new bool[256];
 		static int offset;
@@ -36,6 +36,7 @@ namespace MemoryViewer
 
 			//SDL.SDL_SetHint(SDL.SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 			IntPtr texture = SDL.SDL_CreateTexture(renderer, SDL.SDL_PIXELFORMAT_ARGB8888, (int)SDL.SDL_TextureAccess.SDL_TEXTUREACCESS_STREAMING, RESX, RESY);
+			SDL.SDL_SetTextureBlendMode(texture, SDL.SDL_BlendMode.SDL_BLENDMODE_BLEND);
 
 			uint[] palette = new uint[256];
 			byte[] palette256 = new byte[768];
@@ -153,6 +154,7 @@ namespace MemoryViewer
 									width = sdlEvent.window.data1;
 									height = sdlEvent.window.data2;
 									SetRefreshState(true);
+									mustClearScreen = true;
 									break;
 
 								case SDL.SDL_WindowEventID.SDL_WINDOWEVENT_MINIMIZED:
@@ -250,16 +252,20 @@ namespace MemoryViewer
 					UpdateMCB(pixelData, oldPixelData, mcbPixels);
 				}
 
+				if (mustClearScreen)
+				{
+					SDL.SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255);
+					SDL.SDL_RenderClear(renderer);
+				}
+
 				//render
 				int tm = (width + RESX * zoom - 1) / (RESX * zoom);
 				int tn = (height + RESY * zoom - 1) / (RESY * zoom);
 
-				SDL.SDL_SetTextureBlendMode(texture, SDL.SDL_BlendMode.SDL_BLENDMODE_NONE);
 				Render(renderer, texture, tm, tn, pixels, zoom, height);
 
 				if (mcb)
 				{
-					SDL.SDL_SetTextureBlendMode(texture, SDL.SDL_BlendMode.SDL_BLENDMODE_BLEND);
 					Render(renderer, texture, tm, tn, mcbPixels, zoom, height);
 				}
 
@@ -297,7 +303,7 @@ namespace MemoryViewer
 				var g = palette256[src++];
 				var b = palette256[src++];
 
-				uint val = unchecked((uint)(((r << 2) | (r >> 4 )) << 16 | ((g << 2) | (g >> 4)) << 8 | ((b << 2) | (b >> 4)) << 0));
+				uint val = unchecked((uint)((255 << 24) | ((r << 2) | (r >> 4)) << 16 | ((g << 2) | (g >> 4)) << 8 | ((b << 2) | (b >> 4)) << 0));
 				bool diff = palette[i] != val;
 				needPaletteUpdate256[i] = diff;
 
@@ -340,7 +346,7 @@ namespace MemoryViewer
 							for (int j = start ; j < start + 16 ; j++)
 							{
 								byte color = pixelData[j];
-								if (needPaletteUpdate256[color])
+								if (needPaletteUpdate256[color] && j < (EMS + DOS_CONV))
 								{
 									pixels[j] = palette[color];
 									refresh = true;
@@ -412,29 +418,16 @@ namespace MemoryViewer
 			};
 
 			int skip = 0;
-			for (int m = 0 ; m < tm ; m++)
+			for (int m = 0; m < tm; m++)
 			{
-				for (int n = 0 ; n < tn ; n++)
+				for (int n = 0; n < tn; n++)
 				{
 					int position = skip + n * RESX * RESY;
 					int nextPosition = position + RESX * RESY;
 
-					SDL.SDL_Rect drawRect = new SDL.SDL_Rect
-					{
-						x = m * RESX * zoom,
-						y = n * RESY * zoom,
-						w = RESX * zoom,
-						h = RESY * zoom
-					};
-
 					if (nextPosition > pixels.Length)
 					{
-						if (mustClearScreen)
-						{
-							SDL.SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-							SDL.SDL_RenderFillRect(renderer, ref drawRect);
-						}
-						continue;
+						break;
 					}
 
 					int index = position / (RESX * RESY);
@@ -446,6 +439,14 @@ namespace MemoryViewer
 						{
 							SDL.SDL_UpdateTexture(texture, ref textureRect, (IntPtr)pixelsBuf, RESX * sizeof(uint));
 						}
+
+						SDL.SDL_Rect drawRect = new SDL.SDL_Rect
+						{
+							x = m * RESX * zoom,
+							y = n * RESY * zoom,
+							w = RESX * zoom,
+							h = RESY * zoom
+						};
 
 						SDL.SDL_RenderCopy(renderer, texture, ref textureRect, ref drawRect);
 					}
