@@ -78,18 +78,11 @@ namespace MemoryViewer
 							{
 								if (sdlEvent.wheel.y > 0)
 								{
-									if (offset > 0)
-									{
-										offset--;
-									}
-
+									SetOffset(ref offset, offset - 1, mcb);
 								}
 								else if (sdlEvent.wheel.y < 0)
 								{
-									if (offset < MAXOFFSET)
-									{
-										offset++;
-									}
+									SetOffset(ref offset, offset + 1, mcb);
 								}
 							}
 							break;
@@ -104,17 +97,11 @@ namespace MemoryViewer
 									break;
 
 								case SDL.SDL_Keycode.SDLK_PAGEDOWN:
-									if (offset < MAXOFFSET)
-									{
-										offset++;
-									}
+									SetOffset(ref offset, offset - 1, mcb);
 									break;
 
 								case SDL.SDL_Keycode.SDLK_PAGEUP:
-									if (offset > 0)
-									{
-										offset--;
-									}
+									SetOffset(ref offset, offset + 1, mcb);
 									break;
 
 								case SDL.SDL_Keycode.SDLK_p:
@@ -272,7 +259,7 @@ namespace MemoryViewer
 
 					Render(renderer, texture, tm, tn, pixels, zoom, height);
 
-					if (mcb)
+					if (mcb && offset == 0)
 					{
 						Render(renderer, texture, tm, tn, mcbPixels, zoom, height);
 					}
@@ -485,6 +472,16 @@ namespace MemoryViewer
 			if (newZoom != zoom && newZoom >= 1 && newZoom <= 8)
 			{
 				zoom = newZoom;
+				mustClearScreen = true;
+				SetRefreshState(true);
+			}
+		}
+
+		static void SetOffset(ref int offset, int newOffset, bool mcb)
+		{
+			if (offset != newOffset && newOffset >= 0 && newOffset < MAXOFFSET)
+			{
+				offset = newOffset;
 				mustClearScreen = true;
 				SetRefreshState(true);
 			}
