@@ -161,7 +161,7 @@ namespace MemoryViewer
 									minimized = true;
 									break;
 
-								case SDL.SDL_WindowEventID.SDL_WINDOWEVENT_RESTORED:
+								case SDL.SDL_WindowEventID.SDL_WINDOWEVENT_MAXIMIZED:
 									minimized = false;
 									break;
 							}
@@ -227,7 +227,8 @@ namespace MemoryViewer
 				{
 					if (paletteAddress != -1)
 					{
-						if (process.Read(palette256, paletteAddress, palette256.Length) <= 0) {
+						if (process.Read(palette256, paletteAddress, palette256.Length) <= 0)
+						{
 							process.Close();
 							process = null;
 						}
@@ -257,36 +258,37 @@ namespace MemoryViewer
 					UpdateMCB(pixelData, oldPixelData, mcbPixels);
 				}
 
-				if (mustClearScreen)
+				if (!minimized)
 				{
-					SDL.SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255);
-					SDL.SDL_RenderClear(renderer);
+					//render
+					if (mustClearScreen)
+					{
+						SDL.SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255);
+						SDL.SDL_RenderClear(renderer);
+					}
+
+					int tm = (width + RESX * zoom - 1) / (RESX * zoom);
+					int tn = (height + RESY * zoom - 1) / (RESY * zoom);
+
+					Render(renderer, texture, tm, tn, pixels, zoom, height);
+
+					if (mcb)
+					{
+						Render(renderer, texture, tm, tn, mcbPixels, zoom, height);
+					}
+
+					SDL.SDL_RenderPresent(renderer);
+
+					SetRefreshState(false);
+					mustClearScreen = false;
 				}
-
-				//render
-				int tm = (width + RESX * zoom - 1) / (RESX * zoom);
-				int tn = (height + RESY * zoom - 1) / (RESY * zoom);
-
-				Render(renderer, texture, tm, tn, pixels, zoom, height);
-
-				if (mcb)
-				{
-					Render(renderer, texture, tm, tn, mcbPixels, zoom, height);
-				}
-
-				SDL.SDL_RenderPresent(renderer);
-				SetRefreshState(false);
-				mustClearScreen = false;
-
-				if (minimized)
+				else
 				{
 					SDL.SDL_Delay(1);
 				}
 
 				//swap buffers
-				var tmp = pixelData;
-				pixelData = oldPixelData;
-				oldPixelData = tmp;
+				(oldPixelData, pixelData) = (pixelData, oldPixelData);
 			}
 
 			SDL.SDL_DestroyTexture(texture);
