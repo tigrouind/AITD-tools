@@ -1,5 +1,4 @@
-# Disclaimer
-Some files in the release archive might be detected as malware by some A/V (eg: Windows Defender). The exact reason is unclear but this is probably because it use Win32 API calls such as ReadProcessMemory and WriteProcessMemory. If you know how to fix this, please let me know.
+⚠️ some files in the release archive might be detected as malware by some A/V (eg: Windows Defender). The exact reason is unclear but this is probably because it use Win32 API calls such as `ReadProcessMemory` and `WriteProcessMemory`. If you know how to fix this, please let me know.
 
 # LifeDISA
 
@@ -63,9 +62,7 @@ MemoryViewer [-width WIDTH]
 | :-: | - |
 | <kbd>ctrl</kbd> + <kbd>mouse wheel</kbd> <br> <kbd>ctrl</kbd> + <kbd>+</kbd> or <kbd>-</kbd>| increase / decrease zoom
 | <kbd>ctrl</kbd> + <kbd>0</kbd> | reset zoom
-| <kbd>page up</kbd> | decrease memory offset by 640KB
-| <kbd>page down</kbd> | increase memory offset by 640KB
-| <kbd>mouse wheel</kbd> | scroll through pages (same as <kbd>page up</kbd> / <kbd>page down</kbd>)
+| <kbd>page up</kbd> / <kbd>page down</kbd> / <kbd>mouse wheel</kbd> | increase / decrease memory offset by 640KB
 | <kbd>space</kbd> | display DOS memory control blocks (MCBs)<br>green = free<br>blue = used<br>red = current executable<br>yellow = not current executable
 | <kbd>p</kbd> | show palette
 
@@ -119,10 +116,10 @@ Extracts files from PAK files.
 Same as [LifeDISA](#LifeDISA)
 
 ## Instructions
-- Copy PAK files to GAMEDATA folder
-- Run PAKExtract : all PAK files in GAMEDATA folder are extracted
+- Copy some PAK files to GAMEDATA folder
+- Run PAKExtract : all PAK files in GAMEDATA folder are extracted to new folders (eg: LISTLIFE)
 
-You can also drop files or folders into PAKExtract executable.
+You can also drop files or folders to be extracted into PAKExtract executable.
 
 ## Command-line arguments
 ```
@@ -134,8 +131,27 @@ PAKExtract [-background]
            [<folders>]
 ```
 
-## Extra features
-- Converting backgrounds as PNG files. Extract PAK files (CAMERAxx, ITD_RESS) then run PAKEXtract again (with related command line argument).
-- Rendering floors as SVG files. Extract PAK files (ETAGExx) then run PAKEXtract again (with related command line argument).
-- Displaying archive information (eg: compressed size, flags, ...) without extracting any file.
-- Updating entries in the archive. First, extract some files, edit them, then run PAKExtract again.
+### Converting backgrounds as PNG files
+Extract necessary PAK files (CAMERAxx.PAK, ITD_RESS.PAK) into their respective folders, then run PAKEXtract again : 
+```
+PAKExtract -background
+```
+Files will be exported to BACKGROUND folder.
+
+### Rendering floors as SVG files
+Extract necessary PAK files (ETAGExx.PAK) into their respective folders, then run PAKEXtract again : 
+```
+PAKExtract -svg rotate 90 room 5,7 
+```
+Files will be exported to SVG folder.
+
+### Displaying archive information only (eg: compressed size, flags, ...) 
+```
+PAKExtract LISTLIFE.PAK -info 
+```
+
+### Updating entries in the archive
+Extract some files, edit them in their respective folders (eg: LISTLIFE), then run PAKExtract again :
+```
+PAKExtract LISTLIFE.PAK -update 
+```
