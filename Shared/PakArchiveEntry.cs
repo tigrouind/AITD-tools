@@ -15,7 +15,14 @@ namespace Shared
 
 		public byte[] Read()
 		{
-			return Archive.GetData(this);
+			if (Data != null)
+			{
+				return Data;
+			}
+			else
+			{
+				return Archive.GetData(this);
+			}
 		}
 
 		public void Write(byte[] data)

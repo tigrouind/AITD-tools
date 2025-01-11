@@ -125,8 +125,13 @@ namespace PAKExtract
 							return -1;
 						}
 
-						entries[index].Write(File.ReadAllBytes(file));
-						Console.WriteLine($"{Path.GetFileName(pakFile)} entry {index} updated");
+						var previousData = entries[index].Read();
+						var data = File.ReadAllBytes(file);
+						if (previousData.Length != data.Length || !Enumerable.SequenceEqual(previousData, data))
+						{
+							entries[index].Write(data);
+							Console.WriteLine($"{Path.GetFileName(pakFile)} entry {index} updated");
+						}
 					}
 
 					PakArchive.Save(pakFile, entries);
