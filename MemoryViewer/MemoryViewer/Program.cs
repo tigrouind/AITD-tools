@@ -7,9 +7,7 @@ namespace MemoryViewer
 {
 	class Program
 	{
-		const int RESX = 320;
-		const int RESY = 60;
-
+		const int RESX = 320, RESY = 60;
 		const int DOS_CONV = 640 * 1024;
 		const int EMS = 64000;
 		const int SCREENS = (DOS_CONV + EMS + RESX * RESY - 1) / (RESX * RESY) + 1; //round up + one extra screen for left over between columns
@@ -20,12 +18,30 @@ namespace MemoryViewer
 		static readonly bool[] needPaletteUpdate256 = new bool[256];
 		static int offset;
 
+		static byte[] pixelData = new byte[RESX * RESY * SCREENS];
+		static byte[] oldPixelData = new byte[RESX * RESY * SCREENS];
+		static readonly uint[] pixels = new uint[RESX * RESY * SCREENS];
+		static readonly uint[] mcbPixels = new uint[RESX * RESY * SCREENS];
+
+		static readonly uint[] palette = new uint[256];
+		static readonly byte[] palette256 = new byte[768];
+
+		static int width, height, zoom;
+
 		static int Main(string[] args)
 		{
 			return (int)CommandLine.ParseAndInvoke(args, new Func<int, int, int, int>(Run));
 		}
 
 		static int Run(int width = 640, int height = 480, int zoom = 2)
+		{
+			Program.width = width;
+			Program.height = height;
+			Program.zoom = zoom;
+			return Run();
+		}
+
+		static int Run()
 		{
 			//init SDL
 			SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
@@ -40,15 +56,9 @@ namespace MemoryViewer
 
 			IntPtr paletteTexture = SDL.SDL_CreateTexture(renderer, SDL.SDL_PIXELFORMAT_ARGB8888, (int)SDL.SDL_TextureAccess.SDL_TEXTUREACCESS_STREAMING, 16, 16);
 
-			uint[] palette = new uint[256];
-			byte[] palette256 = new byte[768];
 			SetRefreshState(true);
 
 			bool quit = false, mcb = false, minimized = false, showPalette = false;
-			uint[] pixels = new uint[RESX * RESY * SCREENS];
-			uint[] mcbPixels = new uint[RESX * RESY * SCREENS];
-			byte[] pixelData = new byte[RESX * RESY * SCREENS];
-			byte[] oldPixelData = new byte[RESX * RESY * SCREENS];
 			long paletteAddress = -1;
 
 			ProcessMemory process = null;
@@ -69,22 +79,22 @@ namespace MemoryViewer
 							{
 								if (sdlEvent.wheel.y > 0)
 								{
-									SetZoom(ref zoom, zoom + 1);
+									SetZoom(zoom + 1);
 								}
 								else if (sdlEvent.wheel.y < 0)
 								{
-									SetZoom(ref zoom, zoom - 1);
+									SetZoom(zoom - 1);
 								}
 							}
 							else
 							{
 								if (sdlEvent.wheel.y > 0)
 								{
-									SetOffset(ref offset, offset - 1, mcb);
+									SetOffset(offset - 1);
 								}
 								else if (sdlEvent.wheel.y < 0)
 								{
-									SetOffset(ref offset, offset + 1, mcb);
+									SetOffset(offset + 1);
 								}
 							}
 							break;
@@ -99,16 +109,15 @@ namespace MemoryViewer
 									break;
 
 								case SDL.SDL_Keycode.SDLK_PAGEDOWN:
-									SetOffset(ref offset, offset - 1, mcb);
+									SetOffset(offset + 1);
 									break;
 
 								case SDL.SDL_Keycode.SDLK_PAGEUP:
-									SetOffset(ref offset, offset + 1, mcb);
+									SetOffset(offset - 1);
 									break;
 
 								case SDL.SDL_Keycode.SDLK_p:
 									showPalette = !showPalette;
-									mustClearScreen = true;
 									SetRefreshState(true);
 									break;
 
@@ -116,7 +125,7 @@ namespace MemoryViewer
 								case SDL.SDL_Keycode.SDLK_KP_PLUS:
 									if (control)
 									{
-										SetZoom(ref zoom, zoom + 1);
+										SetZoom(zoom + 1);
 									}
 									break;
 
@@ -124,7 +133,7 @@ namespace MemoryViewer
 								case SDL.SDL_Keycode.SDLK_KP_MINUS:
 									if (control)
 									{
-										SetZoom(ref zoom, zoom - 1);
+										SetZoom(zoom - 1);
 									}
 									break;
 
@@ -132,7 +141,7 @@ namespace MemoryViewer
 								case SDL.SDL_Keycode.SDLK_KP_0:
 									if (control)
 									{
-										SetZoom(ref zoom, 2);
+										SetZoom(2);
 									}
 									break;
 							}
@@ -226,11 +235,11 @@ namespace MemoryViewer
 					}
 				}
 
-				UpdatePalette(palette256, palette);
-				Update(pixelData, oldPixelData, pixels, palette);
+				UpdatePalette();
+				Update();
 				if (offset == 0)
 				{
-					UpdateMCB(pixelData, oldPixelData, mcbPixels);
+					UpdateMCB();
 				}
 
 				if (!minimized)
@@ -245,16 +254,16 @@ namespace MemoryViewer
 					int tm = (width + RESX * zoom - 1) / (RESX * zoom);
 					int tn = (height + RESY * zoom - 1) / (RESY * zoom);
 
-					Render(renderer, texture, tm, tn, pixels, zoom, height);
+					Render(renderer, texture, tm, tn, pixels);
 
 					if (mcb && offset == 0)
 					{
-						Render(renderer, texture, tm, tn, mcbPixels, zoom, height);
+						Render(renderer, texture, tm, tn, mcbPixels);
 					}
 
 					if (showPalette && offset == 0)
 					{
-						RenderPalette(renderer, paletteTexture, palette, zoom);
+						RenderPalette(renderer, paletteTexture);
 					}
 
 					SDL.SDL_RenderPresent(renderer);
@@ -279,7 +288,7 @@ namespace MemoryViewer
 			return 0;
 		}
 
-		static bool UpdatePalette(byte[] palette256, uint[] palette)
+		static void UpdatePalette()
 		{
 			needPaletteUpdate = false;
 
@@ -300,11 +309,9 @@ namespace MemoryViewer
 					needPaletteUpdate = true;
 				}
 			}
-
-			return needPaletteUpdate;
 		}
 
-		static unsafe void Update(byte[] pixelData, byte[] oldPixelData, uint[] pixels, uint[] palette)
+		static unsafe void Update()
 		{
 			//compare current vs old and only update pixels that have changed
 			fixed (byte* pixelsBytePtr = pixelData)
@@ -351,7 +358,7 @@ namespace MemoryViewer
 			}
 		}
 
-		static void UpdateMCB(byte[] pixelData, byte[] oldPixelData, uint[] pixels)
+		static void UpdateMCB()
 		{
 			if (!DosBox.GetMCBs(pixelData).SequenceEqual(DosBox.GetMCBs(oldPixelData)))
 			{
@@ -359,8 +366,8 @@ namespace MemoryViewer
 				foreach (var block in DosBox.GetMCBs(oldPixelData))
 				{
 					int dest = block.Position - 16;
-					int length = Math.Min(block.Size + 16, pixels.Length - dest);
-					Array.Clear(pixels, dest, length);
+					int length = Math.Min(block.Size + 16, mcbPixels.Length - dest);
+					Array.Clear(mcbPixels, dest, length);
 				}
 
 				int psp = pixelData.ReadUnsignedShort(0x0B30) * 16;
@@ -375,16 +382,16 @@ namespace MemoryViewer
 					else color = inverse ? 0x900080F0 : 0x902000A0; //used
 
 					int dest = block.Position - 16;
-					int length = Math.Min(16, pixels.Length - dest);
+					int length = Math.Min(16, mcbPixels.Length - dest);
 					for (int i = 0 ; i < length ; i++)
 					{
-						pixels[dest++] = 0x90FF00FF;
+						mcbPixels[dest++] = 0x90FF00FF;
 					}
 
-					length = Math.Min(block.Size, pixels.Length - dest);
+					length = Math.Min(block.Size, mcbPixels.Length - dest);
 					for (int i = 0 ; i < length ; i++)
 					{
-						pixels[dest++] = color;
+						mcbPixels[dest++] = color;
 					}
 
 					inverse = !inverse;
@@ -394,7 +401,7 @@ namespace MemoryViewer
 			}
 		}
 
-		static unsafe void Render(IntPtr renderer, IntPtr texture, int tm, int tn, uint[] pixels, int zoom, int height)
+		static unsafe void Render(IntPtr renderer, IntPtr texture, int tm, int tn, uint[] source)
 		{
 			var textureRect = new SDL.SDL_Rect { x = 0, y = 0, w = RESX, h = RESY };
 
@@ -406,7 +413,7 @@ namespace MemoryViewer
 					int position = skip + n * RESX * RESY;
 					int nextPosition = position + RESX * RESY;
 
-					if (nextPosition > pixels.Length)
+					if (nextPosition > source.Length)
 					{
 						break;
 					}
@@ -416,7 +423,7 @@ namespace MemoryViewer
 
 					if (needRefresh[index] || needRefresh[nextIndex])
 					{
-						fixed (uint* pixelsBuf = &pixels[position])
+						fixed (uint* pixelsBuf = &source[position])
 						{
 							SDL.SDL_UpdateTexture(texture, ref textureRect, (IntPtr)pixelsBuf, RESX * sizeof(uint));
 						}
@@ -431,7 +438,7 @@ namespace MemoryViewer
 			}
 		}
 
-		static unsafe void RenderPalette(IntPtr renderer, IntPtr texture, uint[] palette, int zoom)
+		static unsafe void RenderPalette(IntPtr renderer, IntPtr texture)
 		{
 			var textureRect = new SDL.SDL_Rect	{ x = 0, y = 0, w = 16, h = 16 };
 			var drawRect = new SDL.SDL_Rect { x = 0, y = 0, w = RESX * zoom, h = RESX * zoom };
@@ -452,7 +459,7 @@ namespace MemoryViewer
 			}
 		}
 
-		static void ClearAll(byte[] pixelData, byte[] oldPixelData, uint[] pixels, uint[] mcbPixels)
+		static void ClearAll()
 		{
 			Array.Clear(pixelData, 0, pixelData.Length);
 			Array.Clear(oldPixelData, 0, oldPixelData.Length);
@@ -461,7 +468,7 @@ namespace MemoryViewer
 			SetRefreshState(true);
 		}
 
-		static void SetZoom(ref int zoom, int newZoom)
+		static void SetZoom(int newZoom)
 		{
 			if (newZoom != zoom && newZoom >= 1 && newZoom <= 8)
 			{
@@ -471,16 +478,15 @@ namespace MemoryViewer
 			}
 		}
 
-		static void SetOffset(ref int offset, int newOffset, bool mcb)
+		static void SetOffset(int newOffset)
 		{
+			const int MAXOFFSET = (16 * 1024 * 1024 - DOS_CONV) / DOS_CONV; //16MB
+
 			if (offset != newOffset && newOffset >= 0 && newOffset < MAXOFFSET)
 			{
 				offset = newOffset;
-				mustClearScreen = true;
 				SetRefreshState(true);
 			}
 		}
-			const int MAXOFFSET = (16 * 1024 * 1024 - DOS_CONV) / DOS_CONV; //16MB
-
 	}
 }
