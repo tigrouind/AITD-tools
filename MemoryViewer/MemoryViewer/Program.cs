@@ -38,11 +38,13 @@ namespace MemoryViewer
 			IntPtr texture = SDL.SDL_CreateTexture(renderer, SDL.SDL_PIXELFORMAT_ARGB8888, (int)SDL.SDL_TextureAccess.SDL_TEXTUREACCESS_STREAMING, RESX, RESY);
 			SDL.SDL_SetTextureBlendMode(texture, SDL.SDL_BlendMode.SDL_BLENDMODE_BLEND);
 
+			IntPtr paletteTexture = SDL.SDL_CreateTexture(renderer, SDL.SDL_PIXELFORMAT_ARGB8888, (int)SDL.SDL_TextureAccess.SDL_TEXTUREACCESS_STREAMING, 16, 16);
+
 			uint[] palette = new uint[256];
 			byte[] palette256 = new byte[768];
 			SetRefreshState(true);
 
-			bool quit = false, mcb = false, minimized = false, showpalette = false;
+			bool quit = false, mcb = false, minimized = false, showPalette = false;
 			uint[] pixels = new uint[RESX * RESY * SCREENS];
 			uint[] mcbPixels = new uint[RESX * RESY * SCREENS];
 			byte[] pixelData = new byte[RESX * RESY * SCREENS];
@@ -105,7 +107,9 @@ namespace MemoryViewer
 									break;
 
 								case SDL.SDL_Keycode.SDLK_p:
-									showpalette = !showpalette;
+									showPalette = !showPalette;
+									mustClearScreen = true;
+									SetRefreshState(true);
 									break;
 
 								case SDL.SDL_Keycode.SDLK_EQUALS:
@@ -220,22 +224,6 @@ namespace MemoryViewer
 							process = null;
 						}
 					}
-
-					if (showpalette)
-					{
-						const int PALETTESIZE = 20;
-						for (int i = 0; i < 256; i++)
-						{
-							for (int n = 0; n < PALETTESIZE; n++)
-							{
-								int index = i % 16 * PALETTESIZE + (i / 16 * PALETTESIZE + n) * 320;
-								for (int m = 0; m < PALETTESIZE; m++)
-								{
-									pixelData[index + m] = (byte)i;
-								}
-							}
-						}
-					}
 				}
 
 				UpdatePalette(palette256, palette);
@@ -262,6 +250,11 @@ namespace MemoryViewer
 					if (mcb && offset == 0)
 					{
 						Render(renderer, texture, tm, tn, mcbPixels, zoom, height);
+					}
+
+					if (showPalette && offset == 0)
+					{
+						RenderPalette(renderer, paletteTexture, palette, zoom);
 					}
 
 					SDL.SDL_RenderPresent(renderer);
@@ -403,13 +396,7 @@ namespace MemoryViewer
 
 		static unsafe void Render(IntPtr renderer, IntPtr texture, int tm, int tn, uint[] pixels, int zoom, int height)
 		{
-			SDL.SDL_Rect textureRect = new SDL.SDL_Rect
-			{
-				x = 0,
-				y = 0,
-				w = RESX,
-				h = RESY
-			};
+			var textureRect = new SDL.SDL_Rect { x = 0, y = 0, w = RESX, h = RESY };
 
 			int skip = 0;
 			for (int m = 0; m < tm; m++)
@@ -434,13 +421,7 @@ namespace MemoryViewer
 							SDL.SDL_UpdateTexture(texture, ref textureRect, (IntPtr)pixelsBuf, RESX * sizeof(uint));
 						}
 
-						SDL.SDL_Rect drawRect = new SDL.SDL_Rect
-						{
-							x = m * RESX * zoom,
-							y = n * RESY * zoom,
-							w = RESX * zoom,
-							h = RESY * zoom
-						};
+						var drawRect = new SDL.SDL_Rect { x = m * RESX * zoom, y = n * RESY * zoom, w = RESX * zoom, h = RESY * zoom };
 
 						SDL.SDL_RenderCopy(renderer, texture, ref textureRect, ref drawRect);
 					}
@@ -448,6 +429,19 @@ namespace MemoryViewer
 
 				skip += RESX * (height / zoom);
 			}
+		}
+
+		static unsafe void RenderPalette(IntPtr renderer, IntPtr texture, uint[] palette, int zoom)
+		{
+			var textureRect = new SDL.SDL_Rect	{ x = 0, y = 0, w = 16, h = 16 };
+			var drawRect = new SDL.SDL_Rect { x = 0, y = 0, w = RESX * zoom, h = RESX * zoom };
+
+			fixed (uint* pixelsBuf = &palette[0])
+			{
+				SDL.SDL_UpdateTexture(texture, ref textureRect, (IntPtr)pixelsBuf, 16 * sizeof(uint));
+			}
+
+			SDL.SDL_RenderCopy(renderer, texture, ref textureRect, ref drawRect);
 		}
 
 		static void SetRefreshState(bool state)
