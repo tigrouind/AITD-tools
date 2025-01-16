@@ -11,7 +11,7 @@ namespace Shared
 			var parameters = del.Method.GetParameters();
 
 			var arguments = GetArguments(args, parameters
-					.ToDictionary(x => "-" + x.Name, x => x.ParameterType, StringComparer.InvariantCultureIgnoreCase))
+					.ToDictionary(x => "-" + x.Name, x => Nullable.GetUnderlyingType(x.ParameterType) ?? x.ParameterType, StringComparer.InvariantCultureIgnoreCase))
 				.ToDictionary(x => x.Name, x => x.Value, StringComparer.InvariantCultureIgnoreCase);
 
 			var values = parameters
@@ -101,6 +101,10 @@ namespace Shared
 							yield return (arg, value);
 							i++;
 						}
+					}
+					else
+					{
+						throw new NotSupportedException();
 					}
 				}
 			}
