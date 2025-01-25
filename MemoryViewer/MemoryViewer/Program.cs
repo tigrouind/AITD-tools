@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using SDL2;
 using Shared;
@@ -177,17 +178,7 @@ namespace MemoryViewer
 						lastCheck = time;
 						paletteAddress = -1;
 
-						int processId = DosBox.SearchProcess();
-						if (processId != -1)
-						{
-							process = new ProcessMemory(processId);
-							process.BaseAddress = process.SearchFor16MRegion();
-							if (process.BaseAddress == -1)
-							{
-								process.Close();
-								process = null;
-							}
-						}
+						process = DosBox.SearchDosBox(false);
 					}
 				}
 
@@ -360,20 +351,20 @@ namespace MemoryViewer
 
 		static void UpdateMCB()
 		{
-			if (!DosBox.GetMCBs(pixelData).SequenceEqual(DosBox.GetMCBs(oldPixelData)))
+			if (!DosMCB.GetMCBs(pixelData).SequenceEqual(DosMCB.GetMCBs(oldPixelData)))
 			{
 				//clear old MCB
-				foreach (var block in DosBox.GetMCBs(oldPixelData))
+				foreach (var block in DosMCB.GetMCBs(oldPixelData))
 				{
 					int dest = block.Position - 16;
 					int length = Math.Min(block.Size + 16, mcbPixels.Length - dest);
 					Array.Clear(mcbPixels, dest, length);
 				}
 
-				int psp = pixelData.ReadUnsignedShort(0x0B30) * 16;
+				int psp = pixelData.ReadUnsignedShort(0x0B20 + 0x10) * 16; // dos swappable area (SDA) + 10h
 
 				bool inverse = true;
-				foreach (var block in DosBox.GetMCBs(pixelData))
+				foreach (var block in DosMCB.GetMCBs(pixelData))
 				{
 					uint color;
 					if (block.Owner == 0) color = 0x90008000; //free
