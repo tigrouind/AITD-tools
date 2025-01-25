@@ -41,7 +41,7 @@ namespace VarsViewer
 				int cachePointer = Program.Memory.ReadFarPointer(Program.EntryPoint + GameConfig[ch.Index]);
 				if (cachePointer != 0 && cachePointer < Program.Memory.Length) //should never happen, unless game crashes
 				{
-					DosMCB block = DosBox.ReadMCB(Program.Memory, cachePointer - 16);
+					DosMCB block = DosMCB.ReadMCB(Program.Memory, cachePointer - 16);
 					if ((block.Tag == 0x4D || block.Tag == 0x5A) && block.Owner != 0 && block.Size < 4096) //block is still allocated
 					{
 						UpdateCache(ch, cachePointer);

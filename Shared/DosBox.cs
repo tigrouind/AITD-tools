@@ -7,19 +7,43 @@ namespace Shared
 {
 	public class DosBox
 	{
-		public static int SearchProcess()
+		static IEnumerable<int> GetProcesses()
 		{
-			int? processId = Process.GetProcesses()
+			return Process.GetProcesses()
 				.Where(x => GetProcessName(x).StartsWith("DOSBOX", StringComparison.InvariantCultureIgnoreCase))
-				.Select(x => (int?)x.Id)
-				.FirstOrDefault();
+				.Select(x => x.Id);
+		}
 
-			if (processId.HasValue)
+		static IEnumerable<ProcessMemory> GetProcessReaders()
+		{
+			foreach (var processId in GetProcesses())
 			{
-				return processId.Value;
+				var proc = new ProcessMemory(processId);
+				proc.BaseAddress = proc.SearchFor16MRegion();
+				if (proc.BaseAddress != -1)
+				{
+					yield return proc;
+				}
+			}
+		}
+
+		public static ProcessMemory SearchDosBox(bool onlyAITD = true)
+		{
+			var processes = GetProcessReaders()
+				.ToArray();
+
+			var process = onlyAITD ? processes
+					.FirstOrDefault(IsAITDProcess) :
+				processes
+					.OrderByDescending(IsAITDProcess) //AITD as preference
+					.FirstOrDefault();
+
+			foreach (var proc in processes.Where(x => x != process))
+			{
+				proc.Close();
 			}
 
-			return -1;
+			return process;
 		}
 
 		static string GetProcessName(Process process)
@@ -34,40 +58,11 @@ namespace Shared
 			}
 		}
 
-		public static DosMCB ReadMCB(byte[] memory, int offset)
+		public static bool IsAITDProcess(ProcessMemory process)
 		{
-			return new DosMCB
-			{
-				Position = offset + 16,
-				Tag = memory[offset],
-				Owner = memory.ReadUnsignedShort(offset + 1) * 16,
-				Size = memory.ReadUnsignedShort(offset + 3) * 16
-			};
-		}
-
-		public static IEnumerable<DosMCB> GetMCBs(byte[] memory)
-		{
-			int firstMCB = memory.ReadUnsignedShort(0x0824) * 16; //sysvars (list of lists) (0x80) + firstMCB (0x24) (see DOSBox/dos_inc.h)
-
-			//scan DOS memory control block (MCB) chain
-			int pos = firstMCB;
-			while (pos <= (memory.Length - 16))
-			{
-				DosMCB block = ReadMCB(memory, pos);
-				if (block.Tag != 0x4D && block.Tag != 0x5A)
-				{
-					break;
-				}
-
-				yield return block;
-
-				if (block.Tag == 0x5A) //last tag should be 0x5A
-				{
-					break;
-				}
-
-				pos += block.Size + 16;
-			}
+			var mcbData = new byte[16384];
+			return process.BaseAddress != -1 && process.Read(mcbData, 0, mcbData.Length) > 0 && DosMCB.GetMCBs(mcbData)
+				.Any(x => x.Name.StartsWith("AITD") || x.Name.StartsWith("INDARK") || x.Name.StartsWith("TIMEGATE") || x.Name.StartsWith("TATOU"));
 		}
 
 		public static bool GetExeEntryPoint(byte[] memory, out int entryPoint)

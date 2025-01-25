@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using Shared;
@@ -50,7 +51,7 @@ namespace VarsViewer
 			{
 				if (Process == null && (!dosboxTimer.IsRunning || dosboxTimer.Elapsed > TimeSpan.FromSeconds(1)))
 				{
-					SearchDosBox();
+					Process = DosBox.SearchDosBox();
 					if (Process != null)
 					{
 						SearchEntryPoint();
@@ -144,20 +145,6 @@ namespace VarsViewer
 				{
 					worker.MouseWheel(delta);
 				};
-			}
-		}
-
-		static void SearchDosBox()
-		{
-			int processId = DosBox.SearchProcess();
-			if (processId != -1)
-			{
-				Process = new ProcessMemory(processId);
-				Process.BaseAddress = Process.SearchFor16MRegion();
-				if (Process.BaseAddress == -1)
-				{
-					CloseReader();
-				}
 			}
 		}
 
