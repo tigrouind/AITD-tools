@@ -33,7 +33,6 @@ namespace VarsViewer
 		bool showAll, fullMode;
 		long timeStamp, refreshTime;
 		string tooltip;
-		int selectedRow;
 
 		public ActorWorker(int view)
 		{
@@ -276,7 +275,7 @@ namespace VarsViewer
 				for (int row = 0; row < Math.Min(height, rowCount - scroll); row++)
 				{
 					Console.CursorLeft = 0;
-					(ConsoleColor Background, ConsoleColor Foreground) = row == selectedRow ? (ConsoleColor.DarkGray, ConsoleColor.Black) : rowColor[row + scroll];
+					(ConsoleColor Background, ConsoleColor Foreground) = rowColor[row + scroll];
 					Console.BackgroundColor = Background;
 
 					int col = 0;
@@ -461,33 +460,12 @@ namespace VarsViewer
 						}
 					}
 					break;
-
-				case ConsoleKey.UpArrow:
-					selectedRow = Math.Max(0, selectedRow - 1);
-					break;
-
-				case ConsoleKey.DownArrow:
-					selectedRow = Math.Min(RowCount - scroll - 1, selectedRow + 1);
-					break;
-
-				case ConsoleKey.Escape:
-					selectedRow = -1;
-					break;
 			}
 		}
 
 		void IWorker.MouseMove(int x, int y)
 		{
 			int totalWidth = config.Where(c => c.Visible).Sum(c => c.Width + 1) - 1;
-
-			if (x < totalWidth)
-			{
-				selectedRow = y - 2;
-			}
-			else
-			{
-				selectedRow = -1;
-			}
 
 			if (!fullMode && x < totalWidth && y < (RowCount - scroll + 2) && TryFindColumn(x, 1, out (Column group, Column column) result))
 			{
