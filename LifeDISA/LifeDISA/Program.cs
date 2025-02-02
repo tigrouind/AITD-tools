@@ -38,7 +38,7 @@ namespace LifeDISA
 
 		static int Main(string[] args)
 		{
-			return (int)CommandLine.ParseAndInvoke(args, new Func<bool, bool, GameVersion?, string, int>(Run));
+			return CommandLine.ParseAndInvoke(args, new Func<bool, bool, GameVersion?, string, int>(Run));
 		}
 
 		static int Run(bool raw, bool verbose, GameVersion? version, string output = "scripts.vb")

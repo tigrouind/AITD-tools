@@ -21,6 +21,11 @@ namespace PAKExtract
 			}
 		}
 
+		public static bool IsAITD1Background(long size)
+		{
+			return size == 64000;
+		}
+
 		public static void GetBackground(byte[] data)
 		{
 			var dest = Bitmap.Bits;
@@ -29,7 +34,7 @@ namespace PAKExtract
 			{
 				case 64000: //AITD1
 					{
-						var pal = Palette.LoadITDPalette(Program.RootFolder);
+						var pal = Palette.LoadITDPalette();
 						for (int i = 0; i < 64000; i++)
 						{
 							dest[i] = pal[data[i]];

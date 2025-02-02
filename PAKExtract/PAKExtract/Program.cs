@@ -12,7 +12,7 @@ namespace PAKExtract
 
 		static int Main(string[] args)
 		{
-			return (int)CommandLine.ParseAndInvoke(args, new Func<bool, SvgInfo, bool, bool, int>((background, svg, update, info) => Run(args, background, svg, update, info)));
+			return CommandLine.ParseAndInvoke(args, new Func<bool, SvgInfo, bool, bool, int>((background, svg, update, info) => Run(args, background, svg, update, info)), true);
 		}
 
 		static int Run(string[] args, bool background, SvgInfo svg, bool update, bool info)
@@ -32,7 +32,7 @@ namespace PAKExtract
 			else
 			{
 				var files = GetFiles(args).ToList();
-				if (!files.Any())
+				if (!files.Any() && !HasFiles(args))
 				{
 					Directory.CreateDirectory(RootFolder);
 					foreach (var filePath in Directory.EnumerateFiles(RootFolder, "*.PAK", SearchOption.TopDirectoryOnly))
@@ -75,6 +75,11 @@ namespace PAKExtract
 			return 0;
 		}
 
+		static bool HasFiles(string[] args)
+		{
+			return args.Any(x => !x.StartsWith("-"));
+		}
+
 		static IEnumerable<string> GetFiles(string[] args)
 		{
 			foreach (var arg in args.Where(x => !x.StartsWith("-")))
@@ -92,7 +97,7 @@ namespace PAKExtract
 				}
 				else
 				{
-					throw new FileNotFoundException($"Cannot find file or folder '{arg}'");
+					Console.Error.WriteLine($"Cannot find file or folder '{arg}'");
 				}
 			}
 		}

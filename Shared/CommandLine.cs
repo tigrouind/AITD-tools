@@ -1,17 +1,20 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.ExceptionServices;
 
 namespace Shared
 {
 	public class CommandLine
 	{
-		public static object ParseAndInvoke(string[] args, Delegate del)
+		public static int ParseAndInvoke(string[] args, Delegate del, bool checkParameters = false)
 		{
 			var parameters = del.Method.GetParameters();
 
+			var invalidArguments = new List<string>();
 			var arguments = GetArguments(args, parameters
-					.ToDictionary(x => "-" + x.Name, x => Nullable.GetUnderlyingType(x.ParameterType) ?? x.ParameterType, StringComparer.InvariantCultureIgnoreCase))
+					.ToDictionary(x => "-" + x.Name, x => Nullable.GetUnderlyingType(x.ParameterType) ?? x.ParameterType, StringComparer.InvariantCultureIgnoreCase), invalidArguments)
 				.ToDictionary(x => x.Name, x => x.Value, StringComparer.InvariantCultureIgnoreCase);
 
 			var values = parameters
@@ -19,7 +22,25 @@ namespace Shared
 					(x.DefaultValue == DBNull.Value ? GetDefaultValue(x.ParameterType) : x.DefaultValue))
 				.ToArray();
 
-			return del.Method.Invoke(del.Target, values);
+			if (checkParameters && invalidArguments.Any())
+			{
+				foreach (var invalidArgument in invalidArguments)
+				{
+					Console.Error.WriteLine($"Invalid argument: {invalidArgument}");
+				}
+
+				return -1;
+			}
+
+			try
+			{
+				return (int)del.Method.Invoke(del.Target, values);
+			}
+			catch (TargetInvocationException ex)
+			{
+				ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
+				return -1;
+			}
 
 			object GetDefaultValue(Type type)
 			{
@@ -27,7 +48,7 @@ namespace Shared
 			}
 		}
 
-		static IEnumerable<(string Name, object Value)> GetArguments(string[] args, Dictionary<string, Type> nameToType)
+		static IEnumerable<(string Name, object Value)> GetArguments(string[] args, Dictionary<string, Type> nameToType, List<string> invalidArguments, bool checkArgumentsWithDashes = true)
 		{
 			for (int i = 0; i < args.Length; i++)
 			{
@@ -77,7 +98,7 @@ namespace Shared
 						var fields = paramType.GetFields();
 
 						var instance = Activator.CreateInstance(paramType);
-						foreach (var item in GetArguments(otherArgs, fields.ToDictionary(x => x.Name, x => x.FieldType, StringComparer.InvariantCultureIgnoreCase))
+						foreach (var item in GetArguments(otherArgs, fields.ToDictionary(x => x.Name, x => x.FieldType, StringComparer.InvariantCultureIgnoreCase), invalidArguments, false)
 							.Join(fields, x => x.Name, x => x.Name, (x, y) => (Field: y, x.Value), StringComparer.InvariantCultureIgnoreCase))
 						{
 							item.Field.SetValue(instance, item.Value);
@@ -106,6 +127,10 @@ namespace Shared
 					{
 						throw new NotSupportedException();
 					}
+				}
+				else if (!checkArgumentsWithDashes || arg.Contains("-"))
+				{
+					invalidArguments.Add(arg);
 				}
 			}
 		}
