@@ -31,7 +31,7 @@ namespace MemoryViewer
 
 		static int Main(string[] args)
 		{
-			return (int)CommandLine.ParseAndInvoke(args, new Func<int, int, int, int>(Run));
+			return CommandLine.ParseAndInvoke(args, new Func<int, int, int, int>(Run));
 		}
 
 		static int Run(int width = 640, int height = 480, int zoom = 2)

@@ -10,7 +10,7 @@ namespace PAKExtract
 		static readonly uint[] paletteCustom = new uint[256];
 		static readonly uint[] paletteITD = new uint[256];
 
-		public static uint[] LoadITDPalette(string RootFolder)
+		public static uint[] LoadITDPalette()
 		{
 			if (!paletteLoaded)
 			{
