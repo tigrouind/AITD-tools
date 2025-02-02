@@ -14,9 +14,11 @@ namespace PAKExtract
 		static readonly int[,] rotateMatrix = new int[,] { { 1, 0, 0, -1 }, { 0, 1, 1, 0 }, { -1, 0, 0, 1 }, { 0, -1, -1, 0 } };
 		static readonly int[] rotateArgs = new int[] { 0, 90, 180, 270 };
 
-		public static byte[] Export(string directory, int[] rooms, int rotate)
+		public static byte[] Export(string directory, HashSet<int> room, int rotate, bool trigger)
 		{
-			var result = new List<(int Index, int X, int Y, List<(int X, int Y, int Width, int Height, int Flags)> Rects)>();
+			var rooms = new List<(int Index, int X, int Y,
+				List<(int X, int Y, int Width, int Height, int Flags)> Colliders,
+				List<(int X, int Y, int Width, int Height, int Flags)> Triggers)>();
 			int rotateIndex = Array.IndexOf(rotateArgs, rotate);
 			if (rotateIndex == -1) rotateIndex = 0;
 
@@ -34,7 +36,7 @@ namespace PAKExtract
 					int currentroom = 0;
 					foreach (var filePath in Directory.EnumerateFiles(directory, "*.*"))
 					{
-						if (!rooms.Any() || rooms.Contains(currentroom))
+						if (!room.Any() || room.Contains(currentroom))
 						{
 							LoadRoom(File.ReadAllBytes(firstFile), 0, currentroom);
 						}
@@ -53,7 +55,7 @@ namespace PAKExtract
 							break;
 						}
 
-						if (!rooms.Any() || rooms.Contains(currentroom))
+						if (!room.Any() || room.Contains(currentroom))
 						{
 							LoadRoom(buffer, roomheader, currentroom);
 						}
@@ -71,14 +73,27 @@ namespace PAKExtract
 				var roomPosition = buffer.ReadVector(roomheader + 4);
 				roomPosition = (roomPosition.X * 10, -roomPosition.Y * 10, -roomPosition.Z * 10);
 
-				//colliders
-				int i = roomheader + buffer.ReadShort(roomheader + 0);
-				int totalpoint = buffer.ReadShort(i + 0);
-				i += 2;
+				int i, totalpoint;
+				var triggers = new List<(int X, int Y, int Width, int Height, int Flags)>();
+				var colliders = new List<(int X, int Y, int Width, int Height, int Flags)>();
 
-				if (totalpoint > 0)
+				GetColliders();
+				if (trigger)
 				{
-					var rects = new List<(int X, int Y, int Width, int Height, int Flags)>();
+					GetTriggers();
+				}
+
+				if (colliders.Any() || triggers.Any())
+				{
+					roomPosition = rotateFunc(roomPosition);
+					rooms.Add((currentroom, roomPosition.X, roomPosition.Z, colliders, triggers));
+				}
+
+				void GetColliders()
+				{
+					i = roomheader + buffer.ReadShort(roomheader + 0);
+					totalpoint = buffer.ReadShort(i + 0);
+					i += 2;
 
 					for (int count = 0; count < totalpoint; count++)
 					{
@@ -88,19 +103,58 @@ namespace PAKExtract
 
 						lower = rotateFunc(lower);
 						upper = rotateFunc(upper);
-						rects.Add((Math.Min(lower.X, upper.X), Math.Min(lower.Z, upper.Z), Math.Abs(upper.X - lower.X), Math.Abs(upper.Z - lower.Z), flags));
+						colliders.Add((Math.Min(lower.X, upper.X), Math.Min(lower.Z, upper.Z), Math.Abs(upper.X - lower.X), Math.Abs(upper.Z - lower.Z), flags));
 						i += 16;
 					}
+				}
 
-					roomPosition = rotateFunc(roomPosition);
-					result.Add((currentroom, roomPosition.X, roomPosition.Z, rects));
+				void GetTriggers()
+				{
+					i = roomheader + buffer.ReadShort(roomheader + 2);
+					totalpoint = buffer.ReadShort(i + 0);
+					i += 2;
+
+					for (int count = 0; count < totalpoint; count++)
+					{
+						var (lower, upper) = buffer.ReadBoundingBox(i + 0);
+						int id = buffer.ReadShort(i + 12);
+						int flags = buffer.ReadShort(i + 14);
+
+						lower = rotateFunc(lower);
+						upper = rotateFunc(upper);
+						triggers.Add((Math.Min(lower.X, upper.X), Math.Min(lower.Z, upper.Z), Math.Abs(upper.X - lower.X), Math.Abs(upper.Z - lower.Z), flags));
+						i += 16;
+					}
+				}
+			}
+
+			string GetColliderClass(int flags)
+			{
+				if ((flags & 4) != 0)
+				{
+					return "link";
+				}
+
+				return null;
+			}
+
+			string GetTriggerClass(int flags)
+			{
+				switch (flags)
+				{
+					case 9:
+						return "custom";
+					case 10:
+						return "exit";
+					default:
+						return "room";
 				}
 			}
 
 			byte[] Render()
 			{
-				var (xMin, xMax, yMin, yMax) = result
-					.SelectMany(x => x.Rects.Select(r => (X: x.X + r.X, Y: x.Y + r.Y, r.Width, r.Height)))
+				var (xMin, xMax, yMin, yMax) = rooms
+					.SelectMany(x => x.Colliders.Concat(x.Triggers).Select(r => (X: x.X + r.X, Y: x.Y + r.Y, r.Width, r.Height)))
 					.Aggregate((xMin: int.MaxValue, xMax: int.MinValue, yMin: int.MaxValue, yMax: int.MinValue),
 						(s, r) => (Math.Min(s.xMin, r.X), Math.Max(s.xMax, r.X + r.Width), Math.Min(s.yMin, r.Y), Math.Max(s.yMax, r.Y + r.Height)));
 
@@ -117,24 +171,29 @@ namespace PAKExtract
 						var svg = new XElement(ns + "svg",
 							new XAttribute("width", Math.Ceiling((xMax - xMin) * scale + padding * 2)),
 							new XAttribute("height", Math.Ceiling((yMax - yMin) * scale + padding * 2)),
-							new XElement(ns + "style", "rect { stroke: black; fill: white; fill-opacity: 0.8; stroke-width: 25; } rect.link { stroke: chocolate } "),
+							new XElement(ns + "style",
+								".colliders rect { stroke: black; fill: white; fill-opacity: 0.8; stroke-width: 25; }\n" +
+								".colliders rect.link { stroke: chocolate; }\n" +
+								".triggers rect { fill-opacity:0.1; }\n" +
+								".triggers rect.custom { fill: orange; }\n" +
+								".triggers rect.exit { fill: yellow; }\n" +
+								".triggers rect.room { fill: red; }"),
 							new XElement(ns + "g",
 								new XAttribute("transform", $"translate({padding} {padding}) scale({scale} {scale}) translate({-xMin} {-yMin})"),
-								result.Select(room =>
-									new XElement(ns + "g",
-										new XAttribute("id", $"room{room.Index}"),
-										new XAttribute("transform", $"translate({room.X} {room.Y})"),
-										room.Rects.OrderBy(x => (x.Flags & 4) == 0).Select(rect =>
-										{
-											return new XElement(ns + "rect",
-												(rect.Flags & 4) != 0 ? new XAttribute("class", "link") : null,
-												new XAttribute("x", rect.X),
-												new XAttribute("y", rect.Y),
-												new XAttribute("width", rect.Width),
-												new XAttribute("height", rect.Height)
-											);
-										})
-									)
+								new XElement(ns + "g",
+									new XAttribute("class", "colliders"),
+									rooms.Where(x => x.Colliders.Any())
+										.Select(x => (x.Index, x.X, x.Y, Rects: x.Colliders
+											.OrderBy(c => (c.Flags & 4) == 0)
+											.Select(c => (c.X, c.Y, c.Width, c.Height, Class: GetColliderClass(c.Flags)))))
+										.Select(x => GetRoom(ns, x))
+								),
+								new XElement(ns + "g",
+									new XAttribute("class", "triggers"),
+									rooms.Where(x => x.Triggers.Any())
+										.Select(x => (x.Index, x.X, x.Y, Rects: x.Triggers
+											.Select(t => (t.X, t.Y, t.Width, t.Height, Class: GetTriggerClass(t.Flags)))))
+										.Select(x => GetRoom(ns, x))
 								)
 							)
 						);
@@ -142,6 +201,24 @@ namespace PAKExtract
 						svg.Save(ms);
 						return ms.ToArray();
 					}
+				}
+
+				XElement GetRoom(XNamespace ns, (int Index, int X, int Y, IEnumerable<(int X, int Y, int Width, int Height, string Class)> Rects) r)
+				{
+					return new XElement(ns + "g",
+						new XAttribute("id", $"room{r.Index}"),
+						new XAttribute("transform", $"translate({r.X} {r.Y})"),
+						r.Rects.Select(rect =>
+						{
+							return new XElement(ns + "rect",
+								rect.Class != null ? new XAttribute("class", rect.Class) : null,
+								new XAttribute("x", rect.X),
+								new XAttribute("y", rect.Y),
+								new XAttribute("width", rect.Width),
+								new XAttribute("height", rect.Height)
+							);
+						})
+					);
 				}
 			}
 		}

@@ -4,5 +4,6 @@
 	{
 		public int[] Room = new int[0];
 		public int Rotate;
+		public bool Trigger;
 	}
 }
