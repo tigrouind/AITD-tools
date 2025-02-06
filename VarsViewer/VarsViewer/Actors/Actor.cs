@@ -1,4 +1,4 @@
-﻿namespace VarsViewer
+namespace VarsViewer
 {
 	public class Actor
 	{

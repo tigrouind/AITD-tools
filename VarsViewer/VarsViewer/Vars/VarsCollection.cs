@@ -1,4 +1,4 @@
-﻿using Shared;
+using Shared;
 using System;
 using System.Collections;
 using System.Collections.Generic;

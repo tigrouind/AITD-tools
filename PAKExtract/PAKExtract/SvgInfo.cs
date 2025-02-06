@@ -1,4 +1,4 @@
-﻿namespace PAKExtract
+namespace PAKExtract
 {
 	public class SvgInfo
 	{
