@@ -59,20 +59,26 @@ namespace Shared
 		{
 			var mcbData = new byte[16384];
 			return process.Read(mcbData, 0, mcbData.Length) > 0 && DosMCB.GetMCBs(mcbData)
-				.Any(x => x.Name.StartsWith("AITD") || x.Name.StartsWith("INDARK") || x.Name.StartsWith("TIMEGATE") || x.Name.StartsWith("TATOU"));
+				.Any(x => IsAITDProcess(x.Name));
+		}
+
+		public static bool IsAITDProcess(string name)
+		{
+			return name.StartsWith("AITD") || name.StartsWith("INDARK") || name.StartsWith("TIMEGATE") || name.StartsWith("TATOU");
 		}
 
 		public static bool GetExeEntryPoint(byte[] memory, out int entryPoint)
 		{
-			int psp = memory.ReadUnsignedShort(0x0B30) * 16; // 0xB2 (dos swappable area) + 0x10 (current PSP) (see DOSBox/dos_inc.h)
+			int psp = DosMCB.GetMCBs(memory)
+				.Where(x => IsAITDProcess(x.Name)) //is AITD exe loaded yet?
+				.OrderByDescending(x => x.Size)
+				.Select(x => x.Owner)
+				.LastOrDefault();
+
 			if (psp > 0)
 			{
-				int exeSize = memory.ReadUnsignedShort(psp - 16 + 3) * 16;
-				if (exeSize > 100 * 1024 && exeSize < 200 * 1024) //is AITD exe loaded yet?
-				{
-					entryPoint = psp + 0x100;
-					return true;
-				}
+				entryPoint = psp + 0x100;
+				return true;
 			}
 
 			entryPoint = -1;
