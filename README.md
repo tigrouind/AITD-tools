@@ -124,7 +124,7 @@ You can also drop files or folders to be extracted into PAKExtract executable.
 ## Command-line arguments
 ```
 PAKExtract [-background]
-           [-svg [rotate {0|90|180|270}] [zoom] [room 1,2,3,...] [trigger]]
+           [-svg [rotate {0|90|180|270}] [zoom] [room 1,2,3,...] [trigger] [camera]]
            [-info]
            [-update]
            [<files>]

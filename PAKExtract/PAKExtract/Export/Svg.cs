@@ -13,12 +13,15 @@ namespace PAKExtract
 	{
 		static readonly int[,] rotateMatrix = new int[,] { { 1, 0, 0, -1 }, { 0, 1, 1, 0 }, { -1, 0, 0, 1 }, { 0, -1, -1, 0 } };
 		static readonly int[] rotateArgs = new int[] { 0, 90, 180, 270 };
+		static readonly int[] cameraColors = { 0xFF8080, 0x789CF0, 0xB0DE6F, 0xCC66C0, 0x5DBAAB, 0xF2BA79, 0x8E71E3, 0x6ED169, 0xBF6080, 0x7CCAF7 };
 
-		public static byte[] Export(string directory, HashSet<int> room, int rotate, int zoom, bool trigger)
+		public static byte[] Export(string directory, HashSet<int> room, int rotate, int zoom, bool trigger, bool camera)
 		{
 			var rooms = new List<(int Index, int X, int Y,
 				List<(int X, int Y, int Width, int Height, int Flags)> Colliders,
-				List<(int X, int Y, int Width, int Height, int Flags)> Triggers)>();
+				List<(int X, int Y, int Width, int Height, int Flags)> Triggers,
+				List<(int Id, List<(int X, int Y)> Polygon)> Cameras)>();
+
 			int rotateIndex = Array.IndexOf(rotateArgs, rotate);
 			if (rotateIndex == -1) rotateIndex = 0;
 
@@ -46,6 +49,7 @@ namespace PAKExtract
 				}
 				else
 				{
+					var cameras = new HashSet<int>();
 					for (int currentroom = 0; currentroom < maxrooms; currentroom++)
 					{
 						int roomheader = buffer.ReadInt(currentroom * 4);
@@ -58,6 +62,26 @@ namespace PAKExtract
 						if (!room.Any() || room.Contains(currentroom))
 						{
 							LoadRoom(buffer, roomheader, currentroom);
+
+							if (camera)
+							{
+								int cameraCount = buffer.ReadShort(roomheader + 10);
+								for (int cameraIndex = 0; cameraIndex < cameraCount; cameraIndex++)
+								{
+									int cameraID = buffer.ReadShort(roomheader + cameraIndex * 2 + 12);  //camera
+									cameras.Add(cameraID);
+								}
+							}
+						}
+					}
+
+					if (camera)
+					{
+						var secondFile = Directory.EnumerateFiles(directory, "*.*").Skip(1).First();
+						buffer = File.ReadAllBytes(secondFile);
+						foreach (var cameraId in cameras)
+						{
+							LoadCamera(buffer, cameraId);
 						}
 					}
 				}
@@ -65,9 +89,9 @@ namespace PAKExtract
 
 			void LoadRoom(byte[] buffer, int roomheader, int currentroom)
 			{
-				(int X, int Y, int z) rotateFunc((int x, int y, int z) vertex)
+				(int X, int Y, int Z) rotateFunc((int X, int Y, int Z) vertex)
 				{
-					return (vertex.x * rotateMatrix[rotateIndex, 0] + vertex.z * rotateMatrix[rotateIndex, 1], 0, vertex.x * rotateMatrix[rotateIndex, 2] + vertex.z * rotateMatrix[rotateIndex, 3]);
+					return (vertex.X * rotateMatrix[rotateIndex, 0] + vertex.Z * rotateMatrix[rotateIndex, 1], 0, vertex.X * rotateMatrix[rotateIndex, 2] + vertex.Z * rotateMatrix[rotateIndex, 3]);
 				}
 
 				var roomPosition = buffer.ReadVector(roomheader + 4);
@@ -76,6 +100,7 @@ namespace PAKExtract
 				int i, totalpoint;
 				var triggers = new List<(int X, int Y, int Width, int Height, int Flags)>();
 				var colliders = new List<(int X, int Y, int Width, int Height, int Flags)>();
+				var cameras = new List<(int Id, List<(int X, int Y)>)>();
 
 				GetColliders();
 				if (trigger)
@@ -86,7 +111,7 @@ namespace PAKExtract
 				if (colliders.Any() || triggers.Any())
 				{
 					roomPosition = rotateFunc(roomPosition);
-					rooms.Add((currentroom, roomPosition.X, roomPosition.Z, colliders, triggers));
+					rooms.Add((currentroom, roomPosition.X, roomPosition.Z, colliders, triggers, cameras));
 				}
 
 				void GetColliders()
@@ -128,6 +153,45 @@ namespace PAKExtract
 				}
 			}
 
+			void LoadCamera(byte[] buffer, int cameraId)
+			{
+				(int X, int Y) rotateFunc((int X, int Y) vertex)
+				{
+					return (vertex.X * rotateMatrix[rotateIndex, 0] + vertex.Y * rotateMatrix[rotateIndex, 1], vertex.X * rotateMatrix[rotateIndex, 2] + vertex.Y * rotateMatrix[rotateIndex, 3]);
+				}
+
+				int cameraHeader = buffer.ReadInt(cameraId * 4);
+				int numentries = buffer.ReadShort(cameraHeader + 0x12);
+				for (int k = 0; k < numentries; k++)
+				{
+					int structSize = 12;
+
+					int i = cameraHeader + 0x14 + k * structSize;
+					int cameraRoomId = buffer.ReadShort(i + 0);
+
+					i = cameraHeader + buffer.ReadShort(i + 4);
+					int totalAreas = buffer.ReadShort(i + 0);
+					i += 2;
+
+					for (int g = 0; g < totalAreas; g++)
+					{
+						int totalPoints = buffer.ReadShort(i + 0);
+						i += 2;
+
+						var pts = new List<(int x, int y)>();
+						for (int u = 0; u < totalPoints; u++)
+						{
+							int px = buffer.ReadShort(i + 0);
+							int py = buffer.ReadShort(i + 2);
+							pts.Add(rotateFunc((px * 10, py * 10)));
+							i += 4;
+						}
+						var cameraRoom = rooms.FirstOrDefault(x => x.Index == cameraRoomId);
+						if (cameraRoom != default) cameraRoom.Cameras.Add((cameraId, pts));
+					}
+				}
+			}
+
 			string GetColliderClass(int flags)
 			{
 				if ((flags & 4) != 0)
@@ -154,7 +218,8 @@ namespace PAKExtract
 			byte[] Render()
 			{
 				var (xMin, xMax, yMin, yMax) = rooms
-					.SelectMany(x => x.Colliders.Concat(x.Triggers).Select(r => (X: x.X + r.X, Y: x.Y + r.Y, r.Width, r.Height)))
+					.SelectMany(x => x.Colliders.Concat(x.Triggers).Concat(x.Cameras.SelectMany(y => y.Polygon).Select(y => (y.X, y.Y, Width: 0, Height: 0, Flags: 0)))
+						.Select(r => (X: x.X + r.X, Y: x.Y + r.Y, r.Width, r.Height)))
 					.Aggregate((xMin: int.MaxValue, xMax: int.MinValue, yMin: int.MaxValue, yMax: int.MinValue),
 						(s, r) => (Math.Min(s.xMin, r.X), Math.Max(s.xMax, r.X + r.Width), Math.Min(s.yMin, r.Y), Math.Max(s.yMax, r.Y + r.Height)));
 
@@ -177,9 +242,25 @@ namespace PAKExtract
 								".triggers rect { fill-opacity:0.1; }\n" +
 								".triggers rect.custom { fill: orange; }\n" +
 								".triggers rect.exit { fill: yellow; }\n" +
-								".triggers rect.room { fill: red; }"),
+								".triggers rect.room { fill: red; }\n" +
+								".cameras polygon { fill-opacity: 0.5; }"),
 							new XElement(ns + "g",
 								new XAttribute("transform", $"translate({padding} {padding}) scale({scale} {scale}) translate({-xMin} {-yMin})"),
+								new XElement(ns + "g",
+									new XAttribute("class", "cameras"),
+									rooms.Where(x => x.Cameras.Any())
+										.Select(x =>
+											new XElement(ns + "g",
+												new XAttribute("transform", $"translate({x.X} {x.Y})"),
+												x.Cameras.Select(c =>
+													new XElement(ns + "polygon",
+														new XAttribute("fill", $"#{cameraColors[c.Id % cameraColors.Length]:X6}"),
+														new XAttribute("points", string.Join(" ", c.Polygon.Select(p => $"{p.X} {p.Y}")))
+													)
+												)
+											)
+										)
+								),
 								new XElement(ns + "g",
 									new XAttribute("class", "colliders"),
 									rooms.Where(x => x.Colliders.Any())
@@ -209,15 +290,14 @@ namespace PAKExtract
 						new XAttribute("id", $"room{r.Index}"),
 						new XAttribute("transform", $"translate({r.X} {r.Y})"),
 						r.Rects.Select(rect =>
-						{
-							return new XElement(ns + "rect",
+							new XElement(ns + "rect",
 								rect.Class != null ? new XAttribute("class", rect.Class) : null,
 								new XAttribute("x", rect.X),
 								new XAttribute("y", rect.Y),
 								new XAttribute("width", rect.Width),
 								new XAttribute("height", rect.Height)
-							);
-						})
+							)
+						)
 					);
 				}
 			}
