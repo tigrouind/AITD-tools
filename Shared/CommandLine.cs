@@ -119,6 +119,11 @@ namespace Shared
 								.Select(x => x.Value)
 								.FirstOrDefault();
 
+							if (value == null)
+							{
+								invalidArguments.Add(args[i + 1]);
+							}
+
 							yield return (arg, value);
 							i++;
 						}
