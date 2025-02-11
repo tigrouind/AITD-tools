@@ -12,7 +12,8 @@ namespace PAKExtract
 			bool paletteNotFoundMessage = false;
 			foreach (var directory in Directory.GetDirectories("."))
 			{
-				if (Path.GetFileName(directory).StartsWith("CAMERA") || Path.GetFileName(directory) == "ITD_RESS")
+				if (Path.GetFileName(directory).StartsWith("CAMERA", StringComparison.InvariantCultureIgnoreCase)
+					|| Path.GetFileName(directory).Equals("ITD_RESS", StringComparison.InvariantCultureIgnoreCase))
 				{
 					foreach (var filePath in Directory.EnumerateFiles(directory, @"*.*", SearchOption.TopDirectoryOnly))
 					{
@@ -44,7 +45,7 @@ namespace PAKExtract
 		{
 			foreach (var directory in Directory.GetDirectories("."))
 			{
-				if (Path.GetFileName(directory).StartsWith("ETAGE"))
+				if (Path.GetFileName(directory).StartsWith("ETAGE", StringComparison.InvariantCultureIgnoreCase))
 				{
 					var data = Svg.Export(directory, svg.Room.ToHashSet(), svg.Rotate, svg.Trigger);
 					Program.WriteFile(Path.Combine("SVG", Path.GetFileNameWithoutExtension(directory) + ".svg"), data);
