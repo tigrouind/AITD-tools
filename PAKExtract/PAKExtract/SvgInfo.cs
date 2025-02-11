@@ -5,5 +5,6 @@ namespace PAKExtract
 		public int[] Room = new int[0];
 		public int Rotate;
 		public bool Trigger;
+		public int Zoom = 100;
 	}
 }

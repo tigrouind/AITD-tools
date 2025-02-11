@@ -14,7 +14,7 @@ namespace PAKExtract
 		static readonly int[,] rotateMatrix = new int[,] { { 1, 0, 0, -1 }, { 0, 1, 1, 0 }, { -1, 0, 0, 1 }, { 0, -1, -1, 0 } };
 		static readonly int[] rotateArgs = new int[] { 0, 90, 180, 270 };
 
-		public static byte[] Export(string directory, HashSet<int> room, int rotate, bool trigger)
+		public static byte[] Export(string directory, HashSet<int> room, int rotate, int zoom, bool trigger)
 		{
 			var rooms = new List<(int Index, int X, int Y,
 				List<(int X, int Y, int Width, int Height, int Flags)> Colliders,
@@ -159,7 +159,7 @@ namespace PAKExtract
 						(s, r) => (Math.Min(s.xMin, r.X), Math.Max(s.xMax, r.X + r.Width), Math.Min(s.yMin, r.Y), Math.Max(s.yMax, r.Y + r.Height)));
 
 				const int padding = 5;
-				float scale = 0.05f;
+				float scale = 0.05f * zoom / 100.0f;
 				return WriteSvg();
 
 				byte[] WriteSvg()
