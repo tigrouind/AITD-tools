@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Shared
 {
-	public class DosBox
+	public static class DosBox
 	{
 		static IEnumerable<int> GetProcesses()
 		{
