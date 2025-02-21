@@ -18,6 +18,7 @@ namespace MemoryViewer
 		static bool needPaletteUpdate;
 		static readonly bool[] needPaletteUpdate256 = new bool[256];
 		static int offset;
+		static int mousePosition = -1, lastMousePosition = -1, lastMouseValue = -1;
 
 		static byte[] pixelData = new byte[RESX * RESY * SCREENS];
 		static byte[] oldPixelData = new byte[RESX * RESY * SCREENS];
@@ -28,6 +29,7 @@ namespace MemoryViewer
 		static readonly byte[] palette256 = new byte[768];
 
 		static int width, height, zoom;
+		const string windowTitle = "AITD memory viewer";
 
 		static int Main(string[] args)
 		{
@@ -47,7 +49,7 @@ namespace MemoryViewer
 			//init SDL
 			SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
 
-			IntPtr window = SDL.SDL_CreateWindow("AITD memory viewer", SDL.SDL_WINDOWPOS_UNDEFINED, SDL.SDL_WINDOWPOS_UNDEFINED, width, height, SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
+			IntPtr window = SDL.SDL_CreateWindow(windowTitle, SDL.SDL_WINDOWPOS_UNDEFINED, SDL.SDL_WINDOWPOS_UNDEFINED, width, height, SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
 			IntPtr renderer = SDL.SDL_CreateRenderer(window, -1, SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL.SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC);
 			//IntPtr renderer = SDL.SDL_CreateRenderer(window, -1, SDL.SDL_RendererFlags.SDL_RENDERER_SOFTWARE);
 
@@ -73,6 +75,21 @@ namespace MemoryViewer
 					{
 						case SDL.SDL_EventType.SDL_QUIT:
 							quit = true;
+							break;
+
+						case SDL.SDL_EventType.SDL_MOUSEMOTION:
+						case SDL.SDL_EventType.SDL_MOUSEBUTTONDOWN:
+							if (sdlEvent.motion.state == 1)
+							{
+								int px = sdlEvent.motion.x / zoom;
+								int py = sdlEvent.motion.y / zoom;
+								int page = RESX * (height / zoom);
+								mousePosition = (px % RESX) + (py * RESX) + (px / RESX * page) + (offset * DOS_CONV);
+							}
+							else if (sdlEvent.motion.state == 3)
+							{
+								mousePosition = -1;
+							}
 							break;
 
 						case SDL.SDL_EventType.SDL_MOUSEWHEEL:
@@ -265,6 +282,25 @@ namespace MemoryViewer
 				else
 				{
 					SDL.SDL_Delay(1);
+				}
+
+				int address = mousePosition == -1 ? -1 : mousePosition - offset * DOS_CONV;
+				if (address >= 0 && address < pixelData.Length)
+				{
+					if (mousePosition != lastMousePosition || lastMouseValue != pixelData[address])
+					{
+						lastMouseValue = pixelData[address];
+						lastMousePosition = mousePosition;
+						SDL.SDL_SetWindowTitle(window, $"{windowTitle} - {lastMousePosition:X} - {lastMouseValue}");
+					}
+				}
+				else
+				{
+					if (mousePosition != lastMousePosition)
+					{
+						lastMousePosition = mousePosition;
+						SDL.SDL_SetWindowTitle(window, windowTitle);
+					}
 				}
 
 				//swap buffers
