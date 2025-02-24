@@ -199,6 +199,11 @@ namespace PAKExtract
 					return "link";
 				}
 
+				if ((flags & 8) != 0)
+				{
+					return "interact";
+				}
+
 				return null;
 			}
 
@@ -237,8 +242,9 @@ namespace PAKExtract
 							new XAttribute("width", Math.Ceiling((xMax - xMin) * scale + padding * 2)),
 							new XAttribute("height", Math.Ceiling((yMax - yMin) * scale + padding * 2)),
 							new XElement(ns + "style",
-								".colliders rect { stroke: black; fill: white; fill-opacity: 0.8; stroke-width: 25; }\n" +
+								".colliders rect { stroke: black; fill: none; stroke-width: 25; }\n" +
 								".colliders rect.link { stroke: chocolate; }\n" +
+								".colliders rect.interact { stroke: gray; }\n" +
 								".triggers rect { fill-opacity:0.1; }\n" +
 								".triggers rect.custom { fill: orange; }\n" +
 								".triggers rect.exit { fill: yellow; }\n" +
