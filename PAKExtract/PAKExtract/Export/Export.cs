@@ -47,7 +47,7 @@ namespace PAKExtract
 			{
 				if (Path.GetFileName(directory).StartsWith("ETAGE", StringComparison.InvariantCultureIgnoreCase))
 				{
-					var data = Svg.Export(directory, svg.Room.ToHashSet(), svg.Rotate, svg.Zoom, svg.Trigger, svg.Camera);
+					var data = Svg.Export(directory, svg.Room.ToHashSet(), svg.Rotate, svg.Zoom, svg.Trigger, svg.Camera, svg.Caption);
 					Program.WriteFile(Path.Combine("SVG", Path.GetFileNameWithoutExtension(directory) + ".svg"), data);
 				}
 			}

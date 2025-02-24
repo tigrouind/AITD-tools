@@ -15,7 +15,7 @@ namespace PAKExtract
 		static readonly int[] rotateArgs = new int[] { 0, 90, 180, 270 };
 		static readonly int[] cameraColors = { 0xFF8080, 0x789CF0, 0xB0DE6F, 0xCC66C0, 0x5DBAAB, 0xF2BA79, 0x8E71E3, 0x6ED169, 0xBF6080, 0x7CCAF7 };
 
-		public static byte[] Export(string directory, HashSet<int> room, int rotate, int zoom, bool trigger, bool camera)
+		public static byte[] Export(string directory, HashSet<int> room, int rotate, int zoom, bool trigger, bool camera, bool caption)
 		{
 			var rooms = new List<(int Index, int X, int Y,
 				List<(int X, int Y, int Width, int Height, int Flags)> Colliders,
@@ -242,6 +242,7 @@ namespace PAKExtract
 							new XAttribute("width", Math.Ceiling((xMax - xMin) * scale + padding * 2)),
 							new XAttribute("height", Math.Ceiling((yMax - yMin) * scale + padding * 2)),
 							new XElement(ns + "style",
+								"text { font-family: arial; fill: whitesmoke; text-anchor: middle; dominant-baseline: central; } ",
 								".colliders rect { stroke: black; fill: none; stroke-width: 25; }\n" +
 								".colliders rect.link { stroke: chocolate; }\n" +
 								".colliders rect.interact { stroke: gray; }\n" +
@@ -252,6 +253,18 @@ namespace PAKExtract
 								".cameras polygon { fill-opacity: 0.5; }"),
 							new XElement(ns + "g",
 								new XAttribute("transform", $"translate({padding} {padding}) scale({scale} {scale}) translate({-xMin} {-yMin})"),
+								new XElement(ns + "g",
+									new XAttribute("class", "captions"),
+									caption ? rooms.Select(r =>
+										new XElement(ns + "text",
+											$"{r.Index}",
+											new XAttribute("id", $"room{r.Index}"),
+											new XAttribute("font-size", $"{Math.Min(r.Colliders.Max(x => x.X + x.Width) - r.Colliders.Min(x => x.X), r.Colliders.Max(x => x.Y + x.Height) - r.Colliders.Min(x => x.Y))}px"),
+											new XAttribute("x", r.X + (r.Colliders.Min(x => x.X) + r.Colliders.Max(x => x.X + x.Width)) / 2),
+											new XAttribute("y", r.Y + (r.Colliders.Min(x => x.Y) + r.Colliders.Max(x => x.Y + x.Height)) / 2)
+										)
+									) : null
+								),
 								new XElement(ns + "g",
 									new XAttribute("class", "cameras"),
 									rooms.Where(x => x.Cameras.Any())

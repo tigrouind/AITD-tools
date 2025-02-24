@@ -7,5 +7,6 @@ namespace PAKExtract
 		public bool Trigger;
 		public bool Camera;
 		public int Zoom = 100;
+		public bool Caption;
 	}
 }
