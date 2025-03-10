@@ -15,7 +15,7 @@ namespace PAKExtract
 			return CommandLine.ParseAndInvoke(args, new Func<string[], bool, SvgInfo, bool, bool, int>(Run));
 		}
 
-		static int Run(string[] args, bool background, SvgInfo svg, bool update, bool info)
+		static int Run(string[] args, bool background, SvgInfo svg, bool archive, bool info)
 		{
 			if (background)
 			{
@@ -33,9 +33,9 @@ namespace PAKExtract
 				}
 				Export.ExportSvg(svg);
 			}
-			else if (update)
+			else if (archive)
 			{
-				UpdateEntries(args);
+				CreateArchive(args);
 			}
 			else
 			{
@@ -126,38 +126,27 @@ namespace PAKExtract
 			}
 		}
 
-		static int UpdateEntries(string[] args)
+		static void CreateArchive(string[] args)
 		{
-			var files = GetFiles(args).ToArray();
-			foreach (var pakFile in files)
+			foreach (var folder in args)
 			{
-				var directory = Path.GetFileNameWithoutExtension(pakFile);
-				if (Directory.Exists(directory))
+				if (!Directory.Exists(folder))
 				{
-					var entries = PakArchive.Load(pakFile);
-					foreach (var file in Directory.EnumerateFiles(directory, "*.*"))
+					Console.Error.WriteLine($"Cannot find file or folder '{folder}'");
+				}
+				else
+				{
+					var entries = new List<PakArchiveEntry>();
+					foreach (var filePath in Directory.EnumerateFiles(folder, "*.*"))
 					{
-						int index = int.Parse(Path.GetFileNameWithoutExtension(file));
-						if (index < 0 || index >= entries.Length)
-						{
-							Console.Error.Write($"Invalid entry index {index} for {Path.GetFileName(pakFile)}");
-							return -1;
-						}
-
-						var previousData = entries[index].Read();
-						var data = File.ReadAllBytes(file);
-						if (previousData.Length != data.Length || !Enumerable.SequenceEqual(previousData, data))
-						{
-							entries[index].Write(data);
-							Console.WriteLine($"{Path.GetFileName(pakFile)} entry {index} updated");
-						}
+						var data = File.ReadAllBytes(filePath);
+						entries.Add(new PakArchiveEntry(data));
 					}
 
-					PakArchive.Save(pakFile, entries);
+					string pakFile = Path.Combine("GAMEDATA", $"{folder}.PAK");
+					WriteFile(pakFile, PakArchive.Save(entries));
 				}
 			}
-
-			return 0;
 		}
 
 	}

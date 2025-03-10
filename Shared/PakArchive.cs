@@ -133,10 +133,12 @@ namespace Shared
 			}
 		}
 
-		public static void Save(string filePath, ICollection<PakArchiveEntry> entries)
+		public static byte[] Save(ICollection<PakArchiveEntry> entries)
 		{
-			using (var writer = new BinaryWriter(File.Open(filePath, FileMode.Create)))
+			using (var ms = new MemoryStream())
+			using (var writer = new BinaryWriter(ms))
 			{
+				//header
 				int offset = 4 + entries.Count * 4;
 				writer.Seek(4, SeekOrigin.Begin);
 				foreach (var entry in entries)
@@ -147,11 +149,14 @@ namespace Shared
 					offset += entry.CompressedSize;
 				}
 
+				//entries
 				foreach (var entry in entries)
 				{
 					WriteEntry(writer, entry);
 					writer.Write(entry.Data);
 				}
+
+				return ms.ToArray();
 			}
 
 			void WriteEntry(BinaryWriter writer, PakArchiveEntry entry)
@@ -171,7 +176,7 @@ namespace Shared
 			//before this entry : might contains first 16 bytes of PKZip 1.0 header (skipped by the game)
 			//after this entry: might contains end of PKZip header (skipped by offset field)
 
-			var entry = new PakArchiveEntry() { Archive = this, Index = index };
+			var entry = new PakArchiveEntry(this, index);
 			stream.Seek(offsets[entry.Index], SeekOrigin.Begin);
 
 			int skip = reader.ReadInt32();

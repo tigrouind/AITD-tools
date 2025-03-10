@@ -2,36 +2,37 @@ namespace Shared
 {
 	public class PakArchiveEntry
 	{
-		public int Index;
+		internal readonly PakArchive Archive;
+		public readonly int Index;
+
 		public int CompressedSize;
 		public int UncompressedSize;
 		public byte CompressionType;
 		public byte[] Extra;
 
 		internal byte[] Data;
-		internal PakArchive Archive;
 		internal byte CompressionFlags;
 		internal ushort Offset;
 
-		public byte[] Read()
+		public PakArchiveEntry(PakArchive archive, int index)
 		{
-			if (Data != null)
-			{
-				return Data;
-			}
-			else
-			{
-				return Archive.GetData(this);
-			}
+			Archive = archive;
+			Index = index;
 		}
 
-		public void Write(byte[] data)
+		public PakArchiveEntry(byte[] data)
 		{
 			Data = data;
 			CompressedSize = data.Length;
 			UncompressedSize = data.Length;
 			CompressionType = 0;
 			CompressionFlags = 0;
+			Extra = new byte[0];
+		}
+
+		public byte[] Read()
+		{
+			return Data ?? Archive.GetData(this);
 		}
 	}
 }
