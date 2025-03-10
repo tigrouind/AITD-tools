@@ -2,6 +2,7 @@ using Shared;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 
 namespace PAKExtract
@@ -12,10 +13,10 @@ namespace PAKExtract
 
 		static int Main(string[] args)
 		{
-			return CommandLine.ParseAndInvoke(args, new Func<string[], bool, SvgInfo, bool, bool, int>(Run));
+			return CommandLine.ParseAndInvoke(args, new Func<string[], bool, SvgInfo, Archive, bool, int>(Run));
 		}
 
-		static int Run(string[] args, bool background, SvgInfo svg, bool update, bool info)
+		static int Run(string[] args, bool background, SvgInfo svg, Archive archive, bool info)
 		{
 			if (background)
 			{
@@ -33,9 +34,9 @@ namespace PAKExtract
 				}
 				Export.ExportSvg(svg);
 			}
-			else if (update)
+			else if (archive != null)
 			{
-				UpdateEntries(args);
+				Archive.CreateArchive(args, archive.Timegate);
 			}
 			else
 			{
@@ -74,6 +75,10 @@ namespace PAKExtract
 							{
 								var destPath = Path.Combine(Path.GetFileNameWithoutExtension(file), $"{entry.Index:D8}.dat");
 								WriteFile(destPath, entry.Read());
+								if (entry.Extra.Length > 0)
+								{
+									WriteFile(Path.Combine(Path.GetDirectoryName(destPath), "EXTRA", Path.GetFileName(destPath)), entry.Extra);
+								}
 							}
 						}
 					}
@@ -125,40 +130,5 @@ namespace PAKExtract
 				File.WriteAllBytes(filePath, data);
 			}
 		}
-
-		static int UpdateEntries(string[] args)
-		{
-			var files = GetFiles(args).ToArray();
-			foreach (var pakFile in files)
-			{
-				var directory = Path.GetFileNameWithoutExtension(pakFile);
-				if (Directory.Exists(directory))
-				{
-					var entries = PakArchive.Load(pakFile);
-					foreach (var file in Directory.EnumerateFiles(directory, "*.*"))
-					{
-						int index = int.Parse(Path.GetFileNameWithoutExtension(file));
-						if (index < 0 || index >= entries.Length)
-						{
-							Console.Error.Write($"Invalid entry index {index} for {Path.GetFileName(pakFile)}");
-							return -1;
-						}
-
-						var previousData = entries[index].Read();
-						var data = File.ReadAllBytes(file);
-						if (previousData.Length != data.Length || !Enumerable.SequenceEqual(previousData, data))
-						{
-							entries[index].Write(data);
-							Console.WriteLine($"{Path.GetFileName(pakFile)} entry {index} updated");
-						}
-					}
-
-					PakArchive.Save(pakFile, entries);
-				}
-			}
-
-			return 0;
-		}
-
 	}
 }

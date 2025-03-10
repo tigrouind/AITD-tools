@@ -126,7 +126,7 @@ You can also drop files or folders to be extracted into PAKExtract executable.
 PAKExtract [-background]
            [-svg [rotate {0|90|180|270}] [zoom] [room 1,2,3,...] [trigger] [camera]]
            [-info]
-           [-update]
+           [-archive [timegate]]
            [<files>]
            [<folders>]
 ```
@@ -150,8 +150,8 @@ Files will be exported to SVG folder.
 PAKExtract LISTLIFE.PAK -info 
 ```
 
-### Updating entries in the archive
+### Creating a new PAK archive (or editing some entries)
 Extract some files, edit them in their respective folders (eg: LISTLIFE), then run PAKExtract again :
 ```
-PAKExtract LISTLIFE.PAK -update 
+PAKExtract LISTLIFE.PAK -archive 
 ```
