@@ -12,17 +12,25 @@ namespace PAKExtract
 
 		static int Main(string[] args)
 		{
-			return CommandLine.ParseAndInvoke(args, new Func<bool, SvgInfo, bool, bool, int>((background, svg, update, info) => Run(args, background, svg, update, info)), true);
+			return CommandLine.ParseAndInvoke(args, new Func<string[], bool, SvgInfo, bool, bool, int>(Run));
 		}
 
 		static int Run(string[] args, bool background, SvgInfo svg, bool update, bool info)
 		{
 			if (background)
 			{
+				if (InvalidArguments(args))
+				{
+					return -1;
+				}
 				Export.ExportBackground();
 			}
 			else if (svg != null)
 			{
+				if (InvalidArguments(args))
+				{
+					return -1;
+				}
 				Export.ExportSvg(svg);
 			}
 			else if (update)
@@ -32,7 +40,7 @@ namespace PAKExtract
 			else
 			{
 				var files = GetFiles(args).ToList();
-				if (!files.Any() && !HasFiles(args))
+				if (!files.Any() && !args.Any())
 				{
 					Directory.CreateDirectory(RootFolder);
 					foreach (var filePath in Directory.EnumerateFiles(RootFolder, "*.PAK", SearchOption.TopDirectoryOnly))
@@ -75,14 +83,20 @@ namespace PAKExtract
 			return 0;
 		}
 
-		static bool HasFiles(string[] args)
+		static bool InvalidArguments(string[] args)
 		{
-			return args.Any(x => !x.StartsWith("-"));
+			if (args.Any())
+			{
+				Console.Error.WriteLine($"Invalid argument(s): {string.Join(", ", args)}");
+				return true;
+			}
+
+			return false;
 		}
 
 		static IEnumerable<string> GetFiles(string[] args)
 		{
-			foreach (var arg in args.Where(x => !x.StartsWith("-")))
+			foreach (var arg in args)
 			{
 				if (Directory.Exists(arg))
 				{
