@@ -38,11 +38,17 @@ namespace LifeDISA
 
 		static int Main(string[] args)
 		{
-			return CommandLine.ParseAndInvoke(args, new Func<bool, bool, GameVersion?, string, int>(Run));
+			return CommandLine.ParseAndInvoke(args, new Func<string[], bool, bool, GameVersion?, string, int>(Run));
 		}
 
-		static int Run(bool raw, bool verbose, GameVersion? version, string output = "scripts.vb")
+		static int Run(string[] args, bool raw, bool verbose, GameVersion? version, string output = "scripts.vb")
 		{
+			if (args.Any())
+			{
+				Console.Error.WriteLine($"Invalid argument(s): {string.Join(", ", args)}");
+				return -1;
+			}
+
 			config = gameConfigs.FirstOrDefault(x => x.Version == version);
 			if (version == null || config == default)
 			{

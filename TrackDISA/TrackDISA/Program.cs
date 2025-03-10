@@ -25,11 +25,17 @@ namespace TrackDISA
 
 		static int Main(string[] args)
 		{
-			return CommandLine.ParseAndInvoke(args, new Func<GameVersion?, bool, string, int>(Run));
+			return CommandLine.ParseAndInvoke(args, new Func<string[], GameVersion?, bool, string, int>(Run));
 		}
 
-		static int Run(GameVersion? version, bool verbose, string output = "tracks.vb")
+		static int Run(string[] args, GameVersion? version, bool verbose, string output = "tracks.vb")
 		{
+			if (args.Any())
+			{
+				Console.Error.WriteLine($"Invalid argument(s): {string.Join(", ", args)}");
+				return -1;
+			}
+
 			Directory.CreateDirectory("GAMEDATA");
 
 			if (File.Exists(@"GAMEDATA\vars.txt"))
