@@ -40,18 +40,11 @@ namespace PAKExtract
 			}
 			else
 			{
-				var files = GetFiles(args).ToList();
-				if (!files.Any() && !args.Any())
-				{
-					Directory.CreateDirectory(RootFolder);
-					foreach (var filePath in Directory.EnumerateFiles(RootFolder, "*.PAK", SearchOption.TopDirectoryOnly))
-					{
-						files.Add(filePath);
-					}
-				}
+				var files = GetFiles(args)
+					.ToList();
 
 				var compressType = new[] { "-", "INFLATE", "", "", "DEFLATE" };
-				if (info)
+				if (info && files.Any())
 				{
 					Console.WriteLine("     PAK Entry   CType   CSize   USize Extra");
 				}
@@ -103,20 +96,34 @@ namespace PAKExtract
 		{
 			foreach (var arg in args)
 			{
-				if (Directory.Exists(arg))
+				if (File.Exists(arg))
+				{
+					yield return arg;
+				}
+				else if (Directory.Exists(arg) && Directory.EnumerateFiles(arg, "*.PAK", SearchOption.TopDirectoryOnly).Any())
 				{
 					foreach (var filePath in Directory.EnumerateFiles(arg, "*.PAK", SearchOption.TopDirectoryOnly))
 					{
 						yield return filePath;
 					}
 				}
-				else if (File.Exists(arg))
+				else if (File.Exists(Path.Combine(RootFolder, arg)))
 				{
-					yield return arg;
+					yield return Path.Combine(RootFolder, arg);
 				}
 				else
 				{
 					Console.Error.WriteLine($"Cannot find file or folder '{arg}'");
+					yield break;
+				}
+			}
+
+			if (!args.Any())
+			{
+				Directory.CreateDirectory(RootFolder);
+				foreach (var filePath in Directory.EnumerateFiles(RootFolder, "*.PAK", SearchOption.TopDirectoryOnly))
+				{
+					yield return filePath;
 				}
 			}
 		}
