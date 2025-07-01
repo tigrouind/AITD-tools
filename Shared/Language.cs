@@ -24,6 +24,7 @@ namespace Shared
 					buffer = pak[0].Read();
 				}
 
+				Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 				foreach (var (Index, Name) in Tools.ReadLines(buffer, Encoding.GetEncoding(850))
 					.Where(x => x.Contains(":"))
 					.Select(x => x.Split(':'))

@@ -55,14 +55,14 @@ namespace Shared
 			{
 				case 0: //uncompressed
 					{
-						stream.Read(result, 0, entry.CompressedSize);
+						stream.ReadExactly(result, 0, entry.CompressedSize);
 						break;
 					}
 
 				case 1: //pak explode
 					{
 						var source = new byte[entry.CompressedSize];
-						stream.Read(source, 0, entry.CompressedSize);
+						stream.ReadExactly(source, 0, entry.CompressedSize);
 						PAK_explode(source, result, (uint)entry.CompressedSize, (uint)entry.UncompressedSize, entry.CompressionFlags);
 						break;
 					}
@@ -71,7 +71,7 @@ namespace Shared
 					{
 						using (var deflateStream = new DeflateStream(stream, CompressionMode.Decompress, true))
 						{
-							deflateStream.Read(result, 0, entry.UncompressedSize);
+							deflateStream.ReadExactly(result, 0, entry.UncompressedSize);
 						}
 						break;
 					}
@@ -87,7 +87,7 @@ namespace Shared
 		{
 			stream.Seek(offsets[entry.Index] + entry.Offset + entry.Extra.Length + 16, SeekOrigin.Begin);
 			var result = new byte[entry.CompressedSize];
-			stream.Read(result, 0, entry.CompressedSize);
+			stream.ReadExactly(result, 0, entry.CompressedSize);
 			return result;
 		}
 

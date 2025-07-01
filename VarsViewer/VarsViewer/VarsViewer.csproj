@@ -1,96 +1,39 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <ProjectGuid>{9C354920-93C7-439F-A7AA-DCB75E2B0D5E}</ProjectGuid>
-    <ProjectTypeGuids>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <TargetFramework>net9.0</TargetFramework>
     <OutputType>Exe</OutputType>
-    <RootNamespace>VarsViewer</RootNamespace>
-    <AssemblyName>VarsViewer</AssemblyName>
-    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
     <NoWin32Manifest>False</NoWin32Manifest>
-    <SignAssembly>False</SignAssembly>
     <DelaySign>False</DelaySign>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
-    <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
     <NoStdLib>False</NoStdLib>
-    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
     <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
-    <WarningLevel>4</WarningLevel>
-    <TargetFrameworkProfile />
+    <AssemblyTitle>VarsViewer</AssemblyTitle>
+    <Product>VarsViewer</Product>
+    <Copyright>Copyright 2019</Copyright>
+    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
-    <PlatformTarget>x86</PlatformTarget>
     <BaseAddress>4194304</BaseAddress>
     <RegisterForComInterop>False</RegisterForComInterop>
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
     <FileAlignment>4096</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-    <OutputPath>bin\Debug\</OutputPath>
-    <DebugSymbols>True</DebugSymbols>
-    <DebugType>Full</DebugType>
-    <Optimize>False</Optimize>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
     <StartAction>Project</StartAction>
     <StartArguments>ListSamp ListBod2 ListAni2 ListLife ListTrak _MEMORY_ </StartArguments>
-    <BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-    <OutputPath>bin\Release\</OutputPath>
-    <DebugSymbols>False</DebugSymbols>
     <DebugType>None</DebugType>
-    <Optimize>True</Optimize>
-    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
-    <DefineConstants>TRACE</DefineConstants>
     <StartAction>Project</StartAction>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Actors\ColumnType.cs" />
-    <Compile Include="Actors\FieldFormatter.cs" />
-    <Compile Include="Buffer.cs" />
-    <Compile Include="Actors\Actor.cs" />
-    <Compile Include="Actors\ActorWorker.cs" />
-    <Compile Include="Cache\Cache.cs" />
-    <Compile Include="Cache\CacheEntry.cs" />
-    <Compile Include="Cache\Comparer\CacheEntryIndexComparer.cs" />
-    <Compile Include="Cache\CacheWorker.cs" />
-    <Compile Include="Cache\Comparer\CacheEntrySlotComparer.cs" />
-    <Compile Include="Cache\Comparer\CacheEntryRemovedComparer.cs" />
-    <Compile Include="Actors\Column.cs" />
-    <Compile Include="Console.cs" />
-    <Compile Include="IWorker.cs" />
-    <Compile Include="Program.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Cache\Sort.cs" />
-    <Compile Include="Cache\SortMode.cs" />
-    <Compile Include="Tools.cs" />
-    <Compile Include="VarParserForCache.cs" />
-    <Compile Include="Vars\Vars.cs" />
-    <Compile Include="Vars\VarsCollection.cs" />
-    <Compile Include="Vars\VarsWorker.cs" />
-    <Compile Include="View.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="app.config" />
     <EmbeddedResource Include="Actors\Config\Actor.json" />
     <EmbeddedResource Include="Actors\Config\Object.json" />
-    <None Include="packages.config" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Shared\Shared.csproj">
-      <Project>{fbf4373d-323c-468c-a2c8-4328ade61276}</Project>
-      <Name>Shared</Name>
-    </ProjectReference>
+    <ProjectReference Include="..\..\Shared\Shared.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\UnPAK\bin\release\UnPAK.dll">
@@ -98,5 +41,4 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
