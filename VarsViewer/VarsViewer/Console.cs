@@ -43,9 +43,19 @@ namespace VarsViewer
 			[FieldOffset(0)] public char UnicodeChar;
 			[FieldOffset(0)] public byte AsciiChar;
 
-			public bool Equals(CharUnion obj)
+			public readonly bool Equals(CharUnion obj)
 			{
 				return UnicodeChar == obj.UnicodeChar && AsciiChar == obj.AsciiChar;
+			}
+
+			public override readonly bool Equals(object obj)
+			{
+				return obj is CharUnion union && Equals(union);
+			}
+
+			public override int GetHashCode()
+			{
+				throw new NotImplementedException();
 			}
 		}
 
@@ -55,9 +65,19 @@ namespace VarsViewer
 			[FieldOffset(0)] public CharUnion Char;
 			[FieldOffset(2)] public short Attributes;
 
-			public bool Equals(CharInfo obj)
+			public readonly bool Equals(CharInfo obj)
 			{
 				return Attributes == obj.Attributes && Char.Equals(obj.Char);
+			}
+
+			public override readonly bool Equals(object obj)
+			{
+				return obj is CharInfo info && Equals(info);
+			}
+
+			public override int GetHashCode()
+			{
+				throw new NotImplementedException();
 			}
 		}
 
@@ -169,8 +189,8 @@ namespace VarsViewer
 		static readonly IntPtr outputHandle;
 		static readonly IntPtr inputHandle;
 
-		static Buffer<CharInfo> buf = new Buffer<CharInfo>();
-		static Buffer<CharInfo> previousBuf = new Buffer<CharInfo>();
+		static Buffer<CharInfo> buf = new();
+		static Buffer<CharInfo> previousBuf = new();
 
 		public static ConsoleColor BackgroundColor = ConsoleColor.Black;
 		public static ConsoleColor ForegroundColor = ConsoleColor.Gray;

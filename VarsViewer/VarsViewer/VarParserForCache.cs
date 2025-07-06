@@ -1,6 +1,7 @@
+using Shared;
 using System.Text.RegularExpressions;
 
-namespace Shared
+namespace VarsViewer
 {
 	public class VarParserForCache : VarParser
 	{

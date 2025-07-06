@@ -8,10 +8,10 @@ namespace TrackDISA
 {
 	class Program
 	{
-		static readonly VarParserForScript vars = new VarParserForScript();
+		static readonly VarParserForScript vars = new();
 
 		static readonly (GameVersion Version, TrackEnum[] TrackMacro)[] gameConfigs =
-		{
+		[
 			(GameVersion.AITD1        , MacroTable.TrackA),
 			(GameVersion.AITD1_FLOPPY , MacroTable.TrackA),
 			(GameVersion.AITD1_DEMO   , MacroTable.TrackA),
@@ -21,7 +21,7 @@ namespace TrackDISA
 			(GameVersion.JACK         , MacroTable.TrackB),
 			(GameVersion.TIMEGATE     , MacroTable.TrackB),
 			(GameVersion.TIMEGATE_DEMO, MacroTable.TrackB)
-		};
+		];
 
 		static int Main(string[] args)
 		{
@@ -56,22 +56,20 @@ namespace TrackDISA
 				return -1;
 			}
 
-			using (var writer = new StreamWriter(output))
-			using (var pak = new PakArchive(@"GAMEDATA\LISTTRAK.PAK"))
+			using var writer = new StreamWriter(output);
+			using var pak = new PakArchive(@"GAMEDATA\LISTTRAK.PAK");
+			foreach (var entry in pak)
 			{
-				foreach (var entry in pak)
-				{
-					writer.WriteLine("'--------------------------------------------------");
-					writer.WriteLine("'#{0} {1}", entry.Index, vars.GetText(VarEnum.TRACKS, entry.Index, string.Empty));
-					writer.WriteLine("'--------------------------------------------------");
-					Dump(entry.Read(), writer, config.TrackMacro, verbose);
-				}
+				writer.WriteLine("'--------------------------------------------------");
+				writer.WriteLine("'#{0} {1}", entry.Index, vars.GetText(VarEnum.TRACKS, entry.Index, string.Empty));
+				writer.WriteLine("'--------------------------------------------------");
+				Dump(entry.Read(), writer, config.TrackMacro, verbose);
 			}
 
 			return 0;
 		}
 
-		static void Dump(byte[] allbytes, TextWriter writer, TrackEnum[] trackMacro, bool verbose)
+		static void Dump(byte[] allbytes, StreamWriter writer, TrackEnum[] trackMacro, bool verbose)
 		{
 			int i = 0;
 

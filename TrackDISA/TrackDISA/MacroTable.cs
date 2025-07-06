@@ -3,7 +3,7 @@ namespace TrackDISA
 	public static class MacroTable
 	{
 		public readonly static TrackEnum[] TrackA =
-		{
+		[
 			TrackEnum.WARP,
 			TrackEnum.GOTO_POS,
 			TrackEnum.END,
@@ -24,10 +24,10 @@ namespace TrackDISA
 			TrackEnum.STAIRS_X,
 			TrackEnum.STAIRS_Z,
 			TrackEnum.ROTATE_XYZ
-		};
+		];
 
 		public readonly static TrackEnum[] TrackB =
-		{
+		[
 			TrackEnum.WARP,
 			TrackEnum.GOTO_POS,
 			TrackEnum.END,
@@ -40,7 +40,7 @@ namespace TrackDISA
 			TrackEnum.UNUSED, //do not do anything (increase offset by 2)
 			TrackEnum.TRIGGERS_DISABLE,
 			TrackEnum.TRIGGERS_ENABLE
-		};
+		];
 	}
 
 }

@@ -12,7 +12,7 @@ namespace VarsViewer
 		bool IWorker.UseMouse => false;
 
 		int[] GameConfig => gameConfigs[Program.GameVersion];
-		readonly Dictionary<GameVersion, int[]> gameConfigs = new Dictionary<GameVersion, int[]>
+		readonly Dictionary<GameVersion, int[]> gameConfigs = new()
 		{
 			// ListSamp / ListLife / ListBody / ListAnim / ListTrak / ListMus / _MEMORY_
 			{ GameVersion.AITD1,        new [] { 0x218CB, 0x218CF, 0x218D7, 0x218D3, 0x218C7, 0x218C3, 0x218BF } },
@@ -21,15 +21,15 @@ namespace VarsViewer
 		};
 
 		IEnumerable<Cache> Cache => Program.GameVersion == GameVersion.AITD1 ? cacheConfig.Where(x => x.Section != VarEnum.MUSIC) : cacheConfig;
-		readonly Cache[] cacheConfig = {
-			new Cache(0, VarEnum.SOUNDS),
-			new Cache(1, VarEnum.LIFES),
-			new Cache(2, VarEnum.BODYS),
-			new Cache(3, VarEnum.ANIMS),
-			new Cache(4, VarEnum.TRACKS),
-			new Cache(5, VarEnum.MUSIC),
-			new Cache(6, VarEnum.NONE)
-		};
+		readonly Cache[] cacheConfig = [
+			new(0, VarEnum.SOUNDS),
+			new(1, VarEnum.LIFES),
+			new(2, VarEnum.BODYS),
+			new(3, VarEnum.ANIMS),
+			new(4, VarEnum.TRACKS),
+			new(5, VarEnum.MUSIC),
+			new(6, VarEnum.NONE)
+		];
 		bool clearCache, showTimestamp;
 		int uniqueId;
 
@@ -168,7 +168,7 @@ namespace VarsViewer
 			}
 		}
 
-		void ClearCache(Cache ch, int cachePointer)
+		static void ClearCache(Cache ch, int cachePointer)
 		{
 			Program.Memory.Write((ushort)ch.MaxFreeData, 0);
 			Program.Process.Write(Program.Memory, cachePointer + 12, 2); //size free data
@@ -181,7 +181,7 @@ namespace VarsViewer
 			ch.Entries.Clear();
 		}
 
-		void WriteStats(int done, int total)
+		static void WriteStats(int done, int total)
 		{
 			Console.BackgroundColor = ConsoleColor.Black;
 			Console.ForegroundColor = ConsoleColor.Gray;

@@ -6,14 +6,9 @@ using System.Linq;
 
 namespace LifeDISA
 {
-	public class Writer : StreamWriter
+	public class Writer(string filePath) : StreamWriter(filePath)
 	{
 		int indent;
-
-		public Writer(string filePath)
-			: base(filePath)
-		{
-		}
 
 		public void Dump(LinkedList<Instruction> nodes, bool raw, bool verbose, byte[] bytes)
 		{
@@ -166,40 +161,23 @@ namespace LifeDISA
 			WriteLine(text);
 		}
 
-		string GetIfArguments(Instruction ins)
+		static string GetIfArguments(Instruction ins)
 		{
-			switch (ins.Type)
+			return ins.Type switch
 			{
-				case LifeEnum.IF_EGAL:
-					return $"{ins.Arguments[0]} = {ins.Arguments[1]}";
-
-				case LifeEnum.IF_DIFFERENT:
-					return $"{ins.Arguments[0]} <> {ins.Arguments[1]}";
-
-				case LifeEnum.IF_SUP_EGAL:
-					return $"{ins.Arguments[0]} >= {ins.Arguments[1]}";
-
-				case LifeEnum.IF_SUP:
-					return $"{ins.Arguments[0]} > {ins.Arguments[1]}";
-
-				case LifeEnum.IF_INF_EGAL:
-					return $"{ins.Arguments[0]} <= {ins.Arguments[1]}";
-
-				case LifeEnum.IF_INF:
-					return $"{ins.Arguments[0]} < {ins.Arguments[1]}";
-
-				case LifeEnum.IF_IN:
-					return $"{ins.Arguments[0]} >= {ins.Arguments[1]} and {ins.Arguments[0]} <= {ins.Arguments[2]}";
-
-				case LifeEnum.IF_OUT:
-					return $"not({ins.Arguments[0]} >= {ins.Arguments[1]} and {ins.Arguments[0]} <= {ins.Arguments[2]})";
-
-				default:
-					throw new NotSupportedException();
-			}
+				LifeEnum.IF_EGAL => $"{ins.Arguments[0]} = {ins.Arguments[1]}",
+				LifeEnum.IF_DIFFERENT => $"{ins.Arguments[0]} <> {ins.Arguments[1]}",
+				LifeEnum.IF_SUP_EGAL => $"{ins.Arguments[0]} >= {ins.Arguments[1]}",
+				LifeEnum.IF_SUP => $"{ins.Arguments[0]} > {ins.Arguments[1]}",
+				LifeEnum.IF_INF_EGAL => $"{ins.Arguments[0]} <= {ins.Arguments[1]}",
+				LifeEnum.IF_INF => $"{ins.Arguments[0]} < {ins.Arguments[1]}",
+				LifeEnum.IF_IN => $"{ins.Arguments[0]} >= {ins.Arguments[1]} and {ins.Arguments[0]} <= {ins.Arguments[2]}",
+				LifeEnum.IF_OUT => $"not({ins.Arguments[0]} >= {ins.Arguments[1]} and {ins.Arguments[0]} <= {ins.Arguments[2]})",
+				_ => throw new NotSupportedException(),
+			};
 		}
 
-		(Instruction, string) GetIfAndConditions(Instruction ins)
+		static (Instruction, string) GetIfAndConditions(Instruction ins)
 		{
 			var conditions = GetNodes().ToArray();
 			return (conditions.Last(), conditions.Length == 1 ? GetIfArguments(conditions[0]) : string.Join(" and ", conditions.Select(x => $"({GetIfArguments(x)})")));
@@ -217,7 +195,7 @@ namespace LifeDISA
 
 		#endregion
 
-		string GetInstructionName(Instruction ins)
+		static string GetInstructionName(Instruction ins)
 		{
 			string name = ins.Type.ToString().ToLowerInvariant();
 			if (ins.Actor != null)

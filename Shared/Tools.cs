@@ -145,14 +145,12 @@ namespace Shared
 
 		public static IEnumerable<string> ReadLines(byte[] buffer, Encoding encoding)
 		{
-			using (var stream = new MemoryStream(buffer))
-			using (var reader = new StreamReader(stream, encoding))
+			using var stream = new MemoryStream(buffer);
+			using var reader = new StreamReader(stream, encoding);
+			string line;
+			while ((line = reader.ReadLine()) != null)
 			{
-				string line;
-				while ((line = reader.ReadLine()) != null)
-				{
-					yield return line;
-				}
+				yield return line;
 			}
 		}
 	}

@@ -10,21 +10,21 @@ namespace VarsViewer
 	class Program
 	{
 		public static readonly byte[] Memory = new byte[640 * 1024];
-		public static readonly VarParserForCache VarParser = new VarParserForCache();
-		public static readonly Language Language = new Language();
+		public static readonly VarParserForCache VarParser = new();
+		public static readonly Language Language = new();
 		public static ProcessMemory Process;
 		public static int EntryPoint;
 		public static GameVersion GameVersion;
-		static readonly Stopwatch dosboxTimer = new Stopwatch();
+		static readonly Stopwatch dosboxTimer = new();
 		public static bool Freeze;
 		static bool quit;
 
-		static readonly Lazy<IWorker>[] workers = new Lazy<IWorker>[] {
-			new Lazy<IWorker>(() => new VarsWorker()),
-			new Lazy<IWorker>(() => new CacheWorker()),
-			new Lazy<IWorker>(() => new ActorWorker(0)),
-			new Lazy<IWorker>(() => new ActorWorker(1))
-		};
+		static readonly Lazy<IWorker>[] workers = [
+			new(() => new VarsWorker()),
+			new(() => new CacheWorker()),
+			new(() => new ActorWorker(0)),
+			new(() => new ActorWorker(1))
+		];
 		static IWorker worker;
 
 		static void Main(string[] args)

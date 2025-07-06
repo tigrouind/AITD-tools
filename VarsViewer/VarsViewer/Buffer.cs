@@ -4,7 +4,7 @@ namespace VarsViewer
 {
 	public class Buffer<T>
 	{
-		T[] array = new T[0];
+		T[] array = [];
 		public T[] AsArray() => array;
 
 		public int Width { private set; get; }

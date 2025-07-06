@@ -16,6 +16,7 @@ namespace Shared
 		readonly FileStream stream;
 		readonly BinaryReader reader;
 		int[] offsets;
+		bool disposed;
 
 		public PakArchive(string filename)
 		{
@@ -69,10 +70,8 @@ namespace Shared
 
 				case 4: //deflate
 					{
-						using (var deflateStream = new DeflateStream(stream, CompressionMode.Decompress, true))
-						{
-							deflateStream.ReadExactly(result, 0, entry.UncompressedSize);
-						}
+						using var deflateStream = new DeflateStream(stream, CompressionMode.Decompress, true);
+						deflateStream.ReadExactly(result, 0, entry.UncompressedSize);
 						break;
 					}
 
@@ -122,15 +121,13 @@ namespace Shared
 
 		public static PakArchiveEntry[] Load(string filePath)
 		{
-			using (var pak = new PakArchive(filePath))
+			using var pak = new PakArchive(filePath);
+			var entries = pak.ToArray();
+			foreach (var entry in entries)
 			{
-				var entries = pak.ToArray();
-				foreach (var entry in entries)
-				{
-					entry.Data = pak.GetRawData(entry);
-				}
-				return entries;
+				entry.Data = pak.GetRawData(entry);
 			}
+			return entries;
 		}
 
 		public static byte[] Save(ICollection<PakArchiveEntry> entries)
@@ -161,7 +158,7 @@ namespace Shared
 				return ms.ToArray();
 			}
 
-			void WriteEntry(BinaryWriter writer, PakArchiveEntry entry)
+			static void WriteEntry(BinaryWriter writer, PakArchiveEntry entry)
 			{
 				writer.Write(entry.Extra.Length == 0 ? 0 : entry.Extra.Length + 4);
 				writer.Write(entry.Extra);
@@ -183,7 +180,7 @@ namespace Shared
 
 			int skip = reader.ReadInt32();
 			//used in AITD2/3 masks (contains several 32-bit integers, all multiple of 4)
-			entry.Extra = skip != 0 ? reader.ReadBytes(skip - 4) : Array.Empty<byte>();
+			entry.Extra = skip != 0 ? reader.ReadBytes(skip - 4) : [];
 			entry.CompressedSize = reader.ReadInt32();
 			entry.UncompressedSize = reader.ReadInt32();
 			entry.CompressionType = reader.ReadByte();
@@ -195,8 +192,21 @@ namespace Shared
 
 		public void Dispose()
 		{
-			reader.Close();
-			stream.Close();
+			Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!disposed)
+			{
+				disposed = true;
+				if (disposing)
+				{
+					reader.Close();
+					stream.Close();
+				}
+			}
 		}
 	}
 }

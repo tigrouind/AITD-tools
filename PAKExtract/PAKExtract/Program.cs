@@ -51,27 +51,25 @@ namespace PAKExtract
 
 				foreach (var file in files)
 				{
-					using (var pak = new PakArchive(file))
+					using var pak = new PakArchive(file);
+					foreach (var entry in pak)
 					{
-						foreach (var entry in pak)
+						if (info)
 						{
-							if (info)
+							Console.WriteLine($"{Path.GetFileNameWithoutExtension(file),8} " +
+								$"{entry.Index,5} " +
+								$"{(entry.CompressionType >= 0 && entry.CompressionType <= 4 ? compressType[entry.CompressionType] : entry.CompressionType.ToString()),7} " +
+								$"{(entry.CompressionType != 0 ? entry.CompressedSize.ToString() : "-"),7} " +
+								$"{entry.UncompressedSize,7} " +
+								$"{string.Join(" ", Enumerable.Range(0, entry.Extra.Length / 4).Select(x => entry.Extra.ReadInt(x * 4)))}");
+						}
+						else
+						{
+							var destPath = Path.Combine(Path.GetFileNameWithoutExtension(file), $"{entry.Index:D8}.dat");
+							WriteFile(destPath, entry.Read());
+							if (entry.Extra.Length > 0)
 							{
-								Console.WriteLine($"{Path.GetFileNameWithoutExtension(file),8} " +
-									$"{entry.Index,5} " +
-									$"{(entry.CompressionType >= 0 && entry.CompressionType <= 4 ? compressType[entry.CompressionType] : entry.CompressionType.ToString()),7} " +
-									$"{(entry.CompressionType != 0 ? entry.CompressedSize.ToString() : "-"),7} " +
-									$"{entry.UncompressedSize,7} " +
-									$"{string.Join(" ", Enumerable.Range(0, entry.Extra.Length / 4).Select(x => entry.Extra.ReadInt(x * 4)))}");
-							}
-							else
-							{
-								var destPath = Path.Combine(Path.GetFileNameWithoutExtension(file), $"{entry.Index:D8}.dat");
-								WriteFile(destPath, entry.Read());
-								if (entry.Extra.Length > 0)
-								{
-									WriteFile(Path.Combine(Path.GetDirectoryName(destPath), "EXTRA", Path.GetFileName(destPath)), entry.Extra);
-								}
+								WriteFile(Path.Combine(Path.GetDirectoryName(destPath), "EXTRA", Path.GetFileName(destPath)), entry.Extra);
 							}
 						}
 					}

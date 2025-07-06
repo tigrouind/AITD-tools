@@ -3,16 +3,10 @@ using System.Collections.Generic;
 
 namespace LifeDISA
 {
-	public class Optimizer
+	public class Optimizer(LinkedList<Instruction> nodes, Dictionary<int, LinkedListNode<Instruction>> nodesMap)
 	{
-		readonly LinkedList<Instruction> nodes;
-		readonly Dictionary<int, LinkedListNode<Instruction>> nodesMap = new Dictionary<int, LinkedListNode<Instruction>>();
-
-		public Optimizer(LinkedList<Instruction> nodes, Dictionary<int, LinkedListNode<Instruction>> nodesMap)
-		{
-			this.nodes = nodes;
-			this.nodesMap = nodesMap;
-		}
+		readonly LinkedList<Instruction> nodes = nodes;
+		readonly Dictionary<int, LinkedListNode<Instruction>> nodesMap = nodesMap;
 
 		public void Run()
 		{
@@ -180,10 +174,10 @@ namespace LifeDISA
 
 		#endregion
 
-		LinkedList<Instruction> GetNodesBetween(LinkedListNode<Instruction> start, LinkedListNode<Instruction> end, LinkedListNode<Instruction> parent)
+		static LinkedList<Instruction> GetNodesBetween(LinkedListNode<Instruction> start, LinkedListNode<Instruction> end, LinkedListNode<Instruction> parent)
 		{
 			//return a linked list with all nodes between start and end (exclusive), set their parent field, remove them from main list
-			LinkedList<Instruction> result = new LinkedList<Instruction>();
+			LinkedList<Instruction> result = new();
 			while (start != null && start.Value != end.Value)
 			{
 				var next = start.Next;

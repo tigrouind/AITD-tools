@@ -15,11 +15,11 @@ namespace VarsViewer
 			{
 				if (ellipsis && length > 1)
 				{
-					return text.Substring(0, length - 1) + "…";
+					return text[..(length - 1)] + "…";
 				}
 				else
 				{
-					return text.Substring(0, length);
+					return text[..length];
 				}
 			}
 

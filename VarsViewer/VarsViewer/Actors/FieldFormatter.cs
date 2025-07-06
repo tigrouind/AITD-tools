@@ -12,32 +12,14 @@ namespace VarsViewer.Actors
 
 		public static int GetSize(Column column)
 		{
-			switch (column.Type)
+			return column.Type switch
 			{
-				case ColumnType.ZVPOS:
-				case ColumnType.ZVSIZE:
-				case ColumnType.ROOM:
-				case ColumnType.TIME:
-					return 4;
-
-				case ColumnType.BODY:
-				case ColumnType.LIFE:
-				case ColumnType.TRACK:
-				case ColumnType.ANIM:
-				case ColumnType.NAME:
-				case ColumnType.ANGLE:
-				case ColumnType.FLAGS:
-				case ColumnType.TIME2:
-				case ColumnType.TIME3:
-				case ColumnType.DEFAULT:
-					return 2;
-
-				case ColumnType.SLOT:
-					return 0;
-
-				default:
-					throw new NotImplementedException();
-			}
+				ColumnType.ZVPOS or ColumnType.ZVSIZE or ColumnType.ROOM or ColumnType.TIME => 4,
+				ColumnType.BODY or ColumnType.LIFE or ColumnType.TRACK or ColumnType.ANIM or ColumnType.NAME or ColumnType.ANGLE or
+					ColumnType.FLAGS or ColumnType.TIME2 or ColumnType.TIME3 or ColumnType.DEFAULT => 2,
+				ColumnType.SLOT => 0,
+				_ => throw new NotImplementedException(),
+			};
 		}
 
 		public static string Format(byte[] memory, Column column, int i, bool fullMode)

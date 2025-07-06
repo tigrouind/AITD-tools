@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Shared
 {
-	public class ProcessMemory
+	public class ProcessMemory(int processId)
 	{
 		const uint PROCESS_QUERY_INFORMATION = 0x0400;
 		const uint PROCESS_VM_READ = 0x0010;
@@ -46,14 +46,9 @@ namespace Shared
 		[DllImport("kernel32.dll")]
 		static extern int VirtualQueryEx(IntPtr hProcess, IntPtr lpAddress, out MEMORY_BASIC_INFORMATION lpBuffer, uint dwLength);
 
-		IntPtr processHandle;
+		IntPtr processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION, false, processId);
 
 		public long BaseAddress;
-
-		public ProcessMemory(int processId)
-		{
-			processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION, false, processId);
-		}
 
 		~ProcessMemory()
 		{
@@ -71,7 +66,7 @@ namespace Shared
 			{
 				if (ReadProcessMemory(processHandle, new IntPtr(BaseAddress + address), new IntPtr(ptr + offset), count, out IntPtr bytesRead))
 				{
-					return (long)bytesRead;
+					return bytesRead;
 				}
 			}
 			return 0;
@@ -79,14 +74,11 @@ namespace Shared
 
 		public long Write(byte[] buffer, long offset, int count)
 		{
-			if (count > buffer.Length)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
+			ArgumentOutOfRangeException.ThrowIfGreaterThan(count, buffer.Length);
 
 			if (WriteProcessMemory(processHandle, new IntPtr(BaseAddress + offset), buffer, count, out IntPtr bytesWritten))
 			{
-				return (long)bytesWritten;
+				return bytesWritten;
 			}
 			return 0;
 		}
@@ -111,7 +103,7 @@ namespace Shared
 				//skip regions smaller than 16M (default DOSBOX memory size)
 				if (mem_info.Protect == PAGE_READWRITE && mem_info.State == MEM_COMMIT && (mem_info.Type & MEM_PRIVATE) == MEM_PRIVATE
 					&& (int)mem_info.RegionSize >= 1024 * 1024 * 16
-					&& Read(memory, (long)mem_info.BaseAddress, memory.Length) > 0
+					&& Read(memory, mem_info.BaseAddress, memory.Length) > 0
 					&& Tools.IndexOf(memory, Encoding.ASCII.GetBytes("CON ")) != -1)
 				{
 					return (long)mem_info.BaseAddress + 32; //skip Windows 32-bytes memory allocation header
@@ -123,15 +115,14 @@ namespace Shared
 
 		IEnumerable<MEMORY_BASIC_INFORMATION> GetMemoryRegions(long min_address = 0, long max_address = 0x7FFFFFFF)
 		{
-
 			//scan process memory regions
 			while (min_address < max_address
-				&& VirtualQueryEx(processHandle, (IntPtr)min_address, out MEMORY_BASIC_INFORMATION mem_info, (uint)Marshal.SizeOf(typeof(MEMORY_BASIC_INFORMATION))) > 0)
+				&& VirtualQueryEx(processHandle, (IntPtr)min_address, out MEMORY_BASIC_INFORMATION mem_info, (uint)Marshal.SizeOf<MEMORY_BASIC_INFORMATION>()) > 0)
 			{
 				yield return mem_info;
 
 				// move to next memory region
-				min_address = (long)mem_info.BaseAddress + (long)mem_info.RegionSize;
+				min_address = mem_info.BaseAddress + (long)mem_info.RegionSize;
 			}
 		}
 
@@ -144,7 +135,7 @@ namespace Shared
 			{
 				if (mem_info.Protect == PAGE_READWRITE && mem_info.State == MEM_COMMIT && (mem_info.Type & MEM_IMAGE) == MEM_IMAGE)
 				{
-					long readPosition = (long)mem_info.BaseAddress;
+					long readPosition = mem_info.BaseAddress;
 					int bytesToRead = (int)mem_info.RegionSize;
 
 					while (bytesToRead > 0 && ReadProcessMemory(processHandle, new IntPtr(readPosition), buffer, Math.Min(buffer.Length, bytesToRead), out IntPtr bytesRead))

@@ -5,7 +5,7 @@ namespace LifeDISA
 	public static class MacroTable
 	{
 		public readonly static LifeEnum[] LifeA =
-		{
+		[
 			LifeEnum.DO_MOVE,
 			LifeEnum.ANIM_ONCE,
 			LifeEnum.ANIM_ALL_ONCE,
@@ -115,10 +115,10 @@ namespace LifeDISA
 			LifeEnum.FIRE_UP_DOWN,
 			LifeEnum.DO_ROT_CLUT,
 			LifeEnum.STOP_CLUT
-		};
+		];
 
 		public readonly static LifeEnum[] LifeB =
-		{
+		[
 			LifeEnum.DO_MOVE,
 			LifeEnum.ANIM_ONCE,
 			LifeEnum.ANIM_ALL_ONCE,
@@ -242,10 +242,10 @@ namespace LifeDISA
 			LifeEnum.DEBUG,
 			LifeEnum.UNKNOWN_5,
 			LifeEnum.UNKNOWN_6
-		};
+		];
 
 		public readonly static EvalEnum[] EvalA =
-		{
+		[
 			EvalEnum.ACTOR_COLLIDER,
 			EvalEnum.TRIGGER_COLLIDER,
 			EvalEnum.HARD_COLLIDER,
@@ -285,10 +285,10 @@ namespace LifeDISA
 			EvalEnum.C_VAR,
 			EvalEnum.STAGE,
 			EvalEnum.THROW
-		};
+		];
 
 		public readonly static EvalEnum[] EvalB =
-		{
+		[
 			EvalEnum.ACTOR_COLLIDER,
 			EvalEnum.TRIGGER_COLLIDER,
 			EvalEnum.HARD_COLLIDER,
@@ -332,6 +332,6 @@ namespace LifeDISA
 			EvalEnum.END_WAY,
 			EvalEnum.DIV_BY_2,
 			EvalEnum.UNKNOWN
-		};
+		];
 	}
 }

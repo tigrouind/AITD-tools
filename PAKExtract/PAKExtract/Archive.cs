@@ -25,20 +25,18 @@ namespace PAKExtract
 					{
 						var data = File.ReadAllBytes(filePath);
 						var extraPath = Path.Combine(Path.GetDirectoryName(filePath), "EXTRA", Path.GetFileName(filePath));
-						var extra = File.Exists(extraPath) ? File.ReadAllBytes(extraPath) : Array.Empty<byte>();
+						var extra = File.Exists(extraPath) ? File.ReadAllBytes(extraPath) : [];
 
 						byte[] compressedData = data;
 						if (timegate)
 						{
-							using (var memoryStream = new MemoryStream())
+							using var memoryStream = new MemoryStream();
+							using (var deflateStream = new DeflateStream(memoryStream, CompressionMode.Compress))
 							{
-								using (var deflateStream = new DeflateStream(memoryStream, CompressionMode.Compress))
-								{
-									deflateStream.Write(data, 0, data.Length);
-								}
-
-								compressedData = memoryStream.ToArray();
+								deflateStream.Write(data, 0, data.Length);
 							}
+
+							compressedData = memoryStream.ToArray();
 						}
 						entries.Add(new PakArchiveEntry(data, extra, compressedData));
 					}

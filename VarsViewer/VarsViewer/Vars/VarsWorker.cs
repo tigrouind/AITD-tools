@@ -12,7 +12,7 @@ namespace VarsViewer
 
 		bool IWorker.UseMouse => true;
 
-		readonly Dictionary<GameVersion, (int, int)> gameConfigs = new Dictionary<GameVersion, (int, int)>
+		readonly Dictionary<GameVersion, (int, int)> gameConfigs = new()
 		{
 			//Vars, Cvars
 			{ GameVersion.AITD1,        (0x2184B, 0x22074) },
@@ -20,8 +20,8 @@ namespace VarsViewer
 			{ GameVersion.AITD1_DEMO,   (0x20456, 0x20480) },
 		};
 
-		readonly VarsCollection vars = new VarsCollection(VarEnum.VARS);
-		readonly VarsCollection cvars = new VarsCollection(VarEnum.CVARS);
+		readonly VarsCollection vars = new(VarEnum.VARS);
+		readonly VarsCollection cvars = new(VarEnum.CVARS);
 
 		int varsPointer;
 
@@ -240,7 +240,7 @@ namespace VarsViewer
 					BeginEdit();
 					if (inputText.Length > 0)
 					{
-						inputText = inputText.Remove(inputText.Length - 1);
+						inputText = inputText[..^1];
 					}
 					break;
 
@@ -339,7 +339,7 @@ namespace VarsViewer
 				case '8':
 				case '9':
 					BeginEdit();
-					if (inputText.Length < (inputText.Contains("-") ? 6 : 5))
+					if (inputText.Length < (inputText.Contains('-') ? 6 : 5))
 					{
 						inputText += keyInfo.KeyChar;
 					}
@@ -381,10 +381,7 @@ namespace VarsViewer
 
 		void BeginEdit()
 		{
-			if (inputText == null)
-			{
-				inputText = string.Empty;
-			}
+			inputText ??= string.Empty;
 			edit = true;
 		}
 

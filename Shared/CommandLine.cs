@@ -38,13 +38,13 @@ namespace Shared
 				return -1;
 			}
 
-			object GetDefaultValue(Type type)
+			static object GetDefaultValue(Type type)
 			{
 				return type.IsValueType ? Activator.CreateInstance(type) : null;
 			}
 		}
 
-		static IEnumerable<(string Name, object Value)> GetArguments(string[] args, Dictionary<string, Type> nameToType, List<string> invalidArguments, List<string> otherArguments, bool checkArgumentsWithDashes = true)
+		static IEnumerable<(string Name, object Value)> GetArguments(string[] args, Dictionary<string, Type> nameToType, List<string> invalidArguments, List<string> otherArguments)
 		{
 			for (int i = 0; i < args.Length; i++)
 			{
@@ -90,11 +90,11 @@ namespace Shared
 					}
 					else if (paramType.IsClass)
 					{
-						var otherArgs = args.Skip(i + 1).TakeWhile(x => x.IndexOf("-") == -1).ToArray();
+						var otherArgs = args.Skip(i + 1).TakeWhile(x => !x.Contains('-', StringComparison.CurrentCulture)).ToArray();
 						var fields = paramType.GetFields();
 
 						var instance = Activator.CreateInstance(paramType);
-						foreach (var item in GetArguments(otherArgs, fields.ToDictionary(x => x.Name, x => x.FieldType, StringComparer.InvariantCultureIgnoreCase), invalidArguments, otherArguments, false)
+						foreach (var item in GetArguments(otherArgs, fields.ToDictionary(x => x.Name, x => x.FieldType, StringComparer.InvariantCultureIgnoreCase), invalidArguments, otherArguments)
 							.Join(fields, x => x.Name, x => x.Name, (x, y) => (Field: y, x.Value), StringComparer.InvariantCultureIgnoreCase))
 						{
 							item.Field.SetValue(instance, item.Value);

@@ -7,7 +7,7 @@ namespace Shared
 {
 	public class Language
 	{
-		readonly Dictionary<int, string> namesByIndex = new Dictionary<int, string>();
+		readonly Dictionary<int, string> namesByIndex = [];
 
 		public void Load()
 		{
@@ -26,13 +26,13 @@ namespace Shared
 
 				Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 				foreach (var (Index, Name) in Tools.ReadLines(buffer, Encoding.GetEncoding(850))
-					.Where(x => x.Contains(":"))
+					.Where(x => x.Contains(':'))
 					.Select(x => x.Split(':'))
 					.Where(x => x[1] != string.Empty)
 					.Select(x => (Index: int.Parse(x[0].TrimStart('@')), Name: x[1])))
 				{
 					string name = string.Join("_", Name.ToLowerInvariant()
-						.Split(new char[] { ' ', '\'' })
+						.Split([' ', '\''])
 						.Where(x => x != "an" && x != "a"));
 
 					namesByIndex.Add(Index, name);

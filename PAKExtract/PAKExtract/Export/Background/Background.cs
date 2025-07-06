@@ -5,20 +5,15 @@ namespace PAKExtract
 {
 	public class Background
 	{
-		public static readonly DirectBitmap Bitmap = new DirectBitmap(320, 200);
+		public static readonly DirectBitmap Bitmap = new(320, 200);
 
 		public static bool IsBackground(long size)
 		{
-			switch (size)
+			return size switch
 			{
-				case 64000:
-				case 64768:
-				case 64770:
-					return true;
-
-				default:
-					return false;
-			}
+				64000 or 64768 or 64770 => true,
+				_ => false,
+			};
 		}
 
 		public static bool IsAITD1Background(long size)
@@ -66,11 +61,9 @@ namespace PAKExtract
 
 		public static byte[] SaveBitmap()
 		{
-			using (var stream = new MemoryStream())
-			{
-				Bitmap.Bitmap.Save(stream, ImageFormat.Png);
-				return stream.ToArray();
-			}
+			using var stream = new MemoryStream();
+			Bitmap.Bitmap.Save(stream, ImageFormat.Png);
+			return stream.ToArray();
 		}
 	}
 }

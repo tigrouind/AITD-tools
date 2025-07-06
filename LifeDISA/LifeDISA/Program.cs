@@ -12,19 +12,19 @@ namespace LifeDISA
 		static int pos;
 		static byte[] allBytes;
 
-		static readonly Dictionary<int, string> objectsByIndex = new Dictionary<int, string>();
-		static readonly Language language = new Language();
+		static readonly Dictionary<int, string> objectsByIndex = [];
+		static readonly Language language = new();
 
 		static (GameVersion Version, LifeEnum[] LifeMacro, EvalEnum[] EvalMacro, int Offset) config;
-		static readonly LinkedList<Instruction> nodes = new LinkedList<Instruction>();
-		static readonly Dictionary<int, LinkedListNode<Instruction>> nodesMap = new Dictionary<int, LinkedListNode<Instruction>>();
-		static readonly string[] flagsNames = { "anim", string.Empty, string.Empty, "back", "push", "coll", "trig", "pick", "grav" };
-		static readonly string[] foundFlagsNames = { "use", "eat_or_drink", "read", "reload", "fight", "jump", "open_or_search", "close", "push", "throw", "drop_or_put" };
+		static readonly LinkedList<Instruction> nodes = new();
+		static readonly Dictionary<int, LinkedListNode<Instruction>> nodesMap = [];
+		static readonly string[] flagsNames = ["anim", string.Empty, string.Empty, "back", "push", "coll", "trig", "pick", "grav"];
+		static readonly string[] foundFlagsNames = ["use", "eat_or_drink", "read", "reload", "fight", "jump", "open_or_search", "close", "push", "throw", "drop_or_put"];
 
-		static readonly VarParserForScript vars = new VarParserForScript();
+		static readonly VarParserForScript vars = new();
 
 		static readonly (GameVersion Version, LifeEnum[] LifeMacro, EvalEnum[] EvalMacro, int Offset)[] gameConfigs =
-		{
+		[
 			(GameVersion.AITD1        , MacroTable.LifeA, MacroTable.EvalA, 52),
 			(GameVersion.AITD1_FLOPPY , MacroTable.LifeA, MacroTable.EvalA, 52),
 			(GameVersion.AITD1_DEMO   , MacroTable.LifeA, MacroTable.EvalA, 52),
@@ -34,7 +34,7 @@ namespace LifeDISA
 			(GameVersion.JACK         , MacroTable.LifeB, MacroTable.EvalB, 54),
 			(GameVersion.TIMEGATE     , MacroTable.LifeB, MacroTable.EvalB, 54),
 			(GameVersion.TIMEGATE_DEMO, MacroTable.LifeB, MacroTable.EvalB, 54)
-		};
+		];
 
 		static int Main(string[] args)
 		{
@@ -81,10 +81,8 @@ namespace LifeDISA
 			int fileCount = 0;
 			if (File.Exists(@"GAMEDATA\LISTLIFE.PAK"))
 			{
-				using (var pak = new PakArchive(@"GAMEDATA\LISTLIFE.PAK"))
-				{
-					fileCount = pak.Count;
-				}
+				using var pak = new PakArchive(@"GAMEDATA\LISTLIFE.PAK");
+				fileCount = pak.Count;
 			}
 
 			language.Load();
@@ -195,7 +193,7 @@ namespace LifeDISA
 				}
 			}
 
-			IEnumerable<Instruction> GetNodes(IEnumerable<Instruction> nodes)
+			static IEnumerable<Instruction> GetNodes(IEnumerable<Instruction> nodes)
 			{
 				foreach (var node in nodes)
 				{
@@ -271,7 +269,7 @@ namespace LifeDISA
 				}
 				LifeEnum life = config.LifeMacro[curr];
 
-				Instruction ins = new Instruction
+				Instruction ins = new()
 				{
 					Type = life
 				};
@@ -833,43 +831,19 @@ namespace LifeDISA
 
 		static string GetConditionName(EvalEnum evalEnum, string value)
 		{
-			switch (evalEnum)
+			return evalEnum switch
 			{
-				case EvalEnum.INHAND:
-				case EvalEnum.COL_BY:
-				case EvalEnum.CONTACT:
-				case EvalEnum.HIT_BY:
-				case EvalEnum.HIT:
-				case EvalEnum.ACTOR_COLLIDER:
-					return GetObjectName(value);
-
-				case EvalEnum.POSREL:
-					return vars.GetText(VarEnum.POSREL, value);
-
-				case EvalEnum.ACTION:
-					return vars.GetText(VarEnum.ACTIONS, value);
-
-				case EvalEnum.ANIM:
-					return vars.GetText(VarEnum.ANIMS, value);
-
-				case EvalEnum.BODY:
-					return vars.GetText(VarEnum.BODYS, value);
-
-				case EvalEnum.KEYBOARD_INPUT:
-					return vars.GetText(VarEnum.KEYBOARD_INPUT, value);
-
-				case EvalEnum.NUM_TRACK:
-					return vars.GetText(VarEnum.TRACKS, value);
-
-				case EvalEnum.MUSIC:
-					return vars.GetText(VarEnum.MUSIC, value);
-
-				case EvalEnum.LIFE:
-					return vars.GetText(VarEnum.LIFES, value);
-
-				default:
-					return value;
-			}
+				EvalEnum.INHAND or EvalEnum.COL_BY or EvalEnum.CONTACT or EvalEnum.HIT_BY or EvalEnum.HIT or EvalEnum.ACTOR_COLLIDER => GetObjectName(value),
+				EvalEnum.POSREL => vars.GetText(VarEnum.POSREL, value),
+				EvalEnum.ACTION => vars.GetText(VarEnum.ACTIONS, value),
+				EvalEnum.ANIM => vars.GetText(VarEnum.ANIMS, value),
+				EvalEnum.BODY => vars.GetText(VarEnum.BODYS, value),
+				EvalEnum.KEYBOARD_INPUT => vars.GetText(VarEnum.KEYBOARD_INPUT, value),
+				EvalEnum.NUM_TRACK => vars.GetText(VarEnum.TRACKS, value),
+				EvalEnum.MUSIC => vars.GetText(VarEnum.MUSIC, value),
+				EvalEnum.LIFE => vars.GetText(VarEnum.LIFES, value),
+				_ => value,
+			};
 		}
 
 		static string GetObjectName(string index)
@@ -924,7 +898,7 @@ namespace LifeDISA
 				return "none";
 			}
 
-			StringBuilder result = new StringBuilder();
+			StringBuilder result = new();
 			int flag = 1;
 			for (int i = 0 ; i < names.Length ; i++)
 			{
@@ -932,7 +906,7 @@ namespace LifeDISA
 				{
 					if (result.Length > 0)
 					{
-						result.Append(" ");
+						result.Append(' ');
 					}
 					result.Append(names[i]);
 				}

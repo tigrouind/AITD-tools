@@ -18,15 +18,15 @@ namespace VarsViewer
 		readonly List<Column> config;
 
 		static (int ActorAddress, int ObjectAddress) GameConfig => gameConfigs[Program.GameVersion];
-		static readonly Dictionary<GameVersion, (int, int)> gameConfigs = new Dictionary<GameVersion, (int, int)>
+		static readonly Dictionary<GameVersion, (int, int)> gameConfigs = new()
 		{
 			{ GameVersion.AITD1,        (0x220CE, 0x2400E) },
 			{ GameVersion.AITD1_FLOPPY, (0x20542, 0x18BF0) },
 			{ GameVersion.AITD1_DEMO,   (0x2050A, 0x18BB8) },
 		};
 
-		readonly Buffer<(ConsoleColor Background, ConsoleColor Foreground)> rowColor = new Buffer<(ConsoleColor, ConsoleColor)>();
-		readonly Buffer<(string Text, ConsoleColor Color)> cells = new Buffer<(string, ConsoleColor)>();
+		readonly Buffer<(ConsoleColor Background, ConsoleColor Foreground)> rowColor = new();
+		readonly Buffer<(string Text, ConsoleColor Color)> cells = new();
 
 		readonly Actor[] actors;
 		int scroll;
@@ -73,15 +73,13 @@ namespace VarsViewer
 				{
 					var assembly = Assembly.GetExecutingAssembly();
 					string ressourceName = $"VarsViewer.Actors.Config.{fileName}";
-					using (var stream = assembly.GetManifestResourceStream(ressourceName))
-					using (var reader = new StreamReader(stream))
+					using var stream = assembly.GetManifestResourceStream(ressourceName);
+					using var reader = new StreamReader(stream);
+					return JsonConvert.DeserializeObject<List<Column>>(reader.ReadToEnd(), new JsonSerializerSettings
 					{
-						return JsonConvert.DeserializeObject<List<Column>>(reader.ReadToEnd(), new JsonSerializerSettings
-						{
-							DefaultValueHandling = DefaultValueHandling.Populate,
-							MissingMemberHandling = MissingMemberHandling.Error
-						});
-					}
+						DefaultValueHandling = DefaultValueHandling.Populate,
+						MissingMemberHandling = MissingMemberHandling.Error
+					});
 				}
 
 				void Populate()
@@ -93,10 +91,10 @@ namespace VarsViewer
 						{
 							config[i] = new Column
 							{
-								Columns = new Column[]
-								{
+								Columns =
+								[
 									column
-								}
+								]
 							};
 						}
 					}

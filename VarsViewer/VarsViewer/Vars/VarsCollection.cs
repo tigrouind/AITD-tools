@@ -6,16 +6,11 @@ using System.Linq;
 
 namespace VarsViewer
 {
-	public class VarsCollection : IReadOnlyCollection<Var>
+	public class VarsCollection(VarEnum type) : IReadOnlyCollection<Var>
 	{
-		readonly VarEnum type;
-		Var[] vars = new Var[0];
+		readonly VarEnum type = type;
+		Var[] vars = [];
 		int count;
-
-		public VarsCollection(VarEnum type)
-		{
-			this.type = type;
-		}
 
 		#region IReadOnlyCollection
 

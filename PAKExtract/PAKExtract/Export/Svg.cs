@@ -12,8 +12,8 @@ namespace PAKExtract
 	public static class Svg
 	{
 		static readonly int[,] rotateMatrix = new int[,] { { 1, 0, 0, -1 }, { 0, 1, 1, 0 }, { -1, 0, 0, 1 }, { 0, -1, -1, 0 } };
-		static readonly int[] rotateArgs = new int[] { 0, 90, 180, 270 };
-		static readonly int[] cameraColors = { 0xFF8080, 0x789CF0, 0xB0DE6F, 0xCC66C0, 0x5DBAAB, 0xF2BA79, 0x8E71E3, 0x6ED169, 0xBF6080, 0x7CCAF7 };
+		static readonly int[] rotateArgs = [0, 90, 180, 270];
+		static readonly int[] cameraColors = [0xFF8080, 0x789CF0, 0xB0DE6F, 0xCC66C0, 0x5DBAAB, 0xF2BA79, 0x8E71E3, 0x6ED169, 0xBF6080, 0x7CCAF7];
 
 		public static byte[] Export(string directory, HashSet<int> room, int rotate, int zoom, bool trigger, bool camera, bool caption)
 		{
@@ -209,15 +209,12 @@ namespace PAKExtract
 
 			string GetTriggerClass(int flags)
 			{
-				switch (flags)
+				return flags switch
 				{
-					case 9:
-						return "custom";
-					case 10:
-						return "exit";
-					default:
-						return "room";
-				}
+					9 => "custom",
+					10 => "exit",
+					_ => "room",
+				};
 			}
 
 			byte[] Render()
@@ -235,72 +232,70 @@ namespace PAKExtract
 				byte[] WriteSvg()
 				{
 					Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo("en-US");
-					using (MemoryStream ms = new MemoryStream())
-					{
-						XNamespace ns = "http://www.w3.org/2000/svg";
-						var svg = new XElement(ns + "svg",
-							new XAttribute("width", Math.Ceiling((xMax - xMin) * scale + padding * 2)),
-							new XAttribute("height", Math.Ceiling((yMax - yMin) * scale + padding * 2)),
-							new XElement(ns + "style",
-								"text { font-family: arial; fill: whitesmoke; text-anchor: middle; dominant-baseline: central; } ",
-								".colliders rect { stroke: black; fill: none; stroke-width: 25; }\n" +
-								".colliders rect.link { stroke: chocolate; }\n" +
-								".colliders rect.interact { stroke: gray; }\n" +
-								".triggers rect { fill-opacity:0.1; }\n" +
-								".triggers rect.custom { fill: orange; }\n" +
-								".triggers rect.exit { fill: yellow; }\n" +
-								".triggers rect.room { fill: red; }\n" +
-								".cameras polygon { fill-opacity: 0.5; }"),
+					using MemoryStream ms = new();
+					XNamespace ns = "http://www.w3.org/2000/svg";
+					var svg = new XElement(ns + "svg",
+						new XAttribute("width", Math.Ceiling((xMax - xMin) * scale + padding * 2)),
+						new XAttribute("height", Math.Ceiling((yMax - yMin) * scale + padding * 2)),
+						new XElement(ns + "style",
+							"text { font-family: arial; fill: whitesmoke; text-anchor: middle; dominant-baseline: central; } ",
+							".colliders rect { stroke: black; fill: none; stroke-width: 25; }\n" +
+							".colliders rect.link { stroke: chocolate; }\n" +
+							".colliders rect.interact { stroke: gray; }\n" +
+							".triggers rect { fill-opacity:0.1; }\n" +
+							".triggers rect.custom { fill: orange; }\n" +
+							".triggers rect.exit { fill: yellow; }\n" +
+							".triggers rect.room { fill: red; }\n" +
+							".cameras polygon { fill-opacity: 0.5; }"),
+						new XElement(ns + "g",
+							new XAttribute("transform", $"translate({padding} {padding}) scale({scale} {scale}) translate({-xMin} {-yMin})"),
 							new XElement(ns + "g",
-								new XAttribute("transform", $"translate({padding} {padding}) scale({scale} {scale}) translate({-xMin} {-yMin})"),
-								new XElement(ns + "g",
-									new XAttribute("class", "captions"),
-									caption ? rooms.Select(r =>
-										new XElement(ns + "text",
-											$"{r.Index}",
-											new XAttribute("id", $"room{r.Index}"),
-											new XAttribute("font-size", $"{Math.Min(r.Colliders.Max(x => x.X + x.Width) - r.Colliders.Min(x => x.X), r.Colliders.Max(x => x.Y + x.Height) - r.Colliders.Min(x => x.Y))}px"),
-											new XAttribute("x", r.X + (r.Colliders.Min(x => x.X) + r.Colliders.Max(x => x.X + x.Width)) / 2),
-											new XAttribute("y", r.Y + (r.Colliders.Min(x => x.Y) + r.Colliders.Max(x => x.Y + x.Height)) / 2)
-										)
-									) : null
-								),
-								new XElement(ns + "g",
-									new XAttribute("class", "cameras"),
-									rooms.Where(x => x.Cameras.Any())
-										.Select(x =>
-											new XElement(ns + "g",
-												new XAttribute("transform", $"translate({x.X} {x.Y})"),
-												x.Cameras.Select(c =>
-													new XElement(ns + "polygon",
-														new XAttribute("fill", $"#{cameraColors[c.Id % cameraColors.Length]:X6}"),
-														new XAttribute("points", string.Join(" ", c.Polygon.Select(p => $"{p.X} {p.Y}")))
-													)
+								new XAttribute("class", "captions"),
+								caption ? rooms.Select(r =>
+									new XElement(ns + "text",
+										$"{r.Index}",
+										new XAttribute("id", $"room{r.Index}"),
+										new XAttribute("font-size", $"{Math.Min(r.Colliders.Max(x => x.X + x.Width) - r.Colliders.Min(x => x.X), r.Colliders.Max(x => x.Y + x.Height) - r.Colliders.Min(x => x.Y))}px"),
+										new XAttribute("x", r.X + (r.Colliders.Min(x => x.X) + r.Colliders.Max(x => x.X + x.Width)) / 2),
+										new XAttribute("y", r.Y + (r.Colliders.Min(x => x.Y) + r.Colliders.Max(x => x.Y + x.Height)) / 2)
+									)
+								) : null
+							),
+							new XElement(ns + "g",
+								new XAttribute("class", "cameras"),
+								rooms.Where(x => x.Cameras.Any())
+									.Select(x =>
+										new XElement(ns + "g",
+											new XAttribute("transform", $"translate({x.X} {x.Y})"),
+											x.Cameras.Select(c =>
+												new XElement(ns + "polygon",
+													new XAttribute("fill", $"#{cameraColors[c.Id % cameraColors.Length]:X6}"),
+													new XAttribute("points", string.Join(" ", c.Polygon.Select(p => $"{p.X} {p.Y}")))
 												)
 											)
 										)
-								),
-								new XElement(ns + "g",
-									new XAttribute("class", "colliders"),
-									rooms.Where(x => x.Colliders.Any())
-										.Select(x => (x.Index, x.X, x.Y, Rects: x.Colliders
-											.OrderBy(c => (c.Flags & 4) == 0)
-											.Select(c => (c.X, c.Y, c.Width, c.Height, Class: GetColliderClass(c.Flags)))))
-										.Select(x => GetRoom(ns, x))
-								),
-								new XElement(ns + "g",
-									new XAttribute("class", "triggers"),
-									rooms.Where(x => x.Triggers.Any())
-										.Select(x => (x.Index, x.X, x.Y, Rects: x.Triggers
-											.Select(t => (t.X, t.Y, t.Width, t.Height, Class: GetTriggerClass(t.Flags)))))
-										.Select(x => GetRoom(ns, x))
-								)
+									)
+							),
+							new XElement(ns + "g",
+								new XAttribute("class", "colliders"),
+								rooms.Where(x => x.Colliders.Any())
+									.Select(x => (x.Index, x.X, x.Y, Rects: x.Colliders
+										.OrderBy(c => (c.Flags & 4) == 0)
+										.Select(c => (c.X, c.Y, c.Width, c.Height, Class: GetColliderClass(c.Flags)))))
+									.Select(x => GetRoom(ns, x))
+							),
+							new XElement(ns + "g",
+								new XAttribute("class", "triggers"),
+								rooms.Where(x => x.Triggers.Any())
+									.Select(x => (x.Index, x.X, x.Y, Rects: x.Triggers
+										.Select(t => (t.X, t.Y, t.Width, t.Height, Class: GetTriggerClass(t.Flags)))))
+									.Select(x => GetRoom(ns, x))
 							)
-						);
+						)
+					);
 
-						svg.Save(ms);
-						return ms.ToArray();
-					}
+					svg.Save(ms);
+					return ms.ToArray();
 				}
 
 				XElement GetRoom(XNamespace ns, (int Index, int X, int Y, IEnumerable<(int X, int Y, int Width, int Height, string Class)> Rects) r)

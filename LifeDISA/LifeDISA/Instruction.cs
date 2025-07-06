@@ -8,7 +8,7 @@ namespace LifeDISA
 	{
 		public LifeEnum Type;
 		public EvalEnum EvalEnum; //first argument of switch
-		readonly List<string> arguments = new List<string>();
+		readonly List<string> arguments = [];
 		public string Actor;
 		public int Goto = -1;
 		public int Position; //used to map gotos to a given instruction
@@ -60,21 +60,11 @@ namespace LifeDISA
 		{
 			get
 			{
-				switch (Type)
+				return Type switch
 				{
-					case LifeEnum.IF_EGAL:
-					case LifeEnum.IF_DIFFERENT:
-					case LifeEnum.IF_SUP_EGAL:
-					case LifeEnum.IF_SUP:
-					case LifeEnum.IF_INF_EGAL:
-					case LifeEnum.IF_INF:
-					case LifeEnum.IF_IN:
-					case LifeEnum.IF_OUT:
-						return true;
-
-					default:
-						return false;
-				}
+					LifeEnum.IF_EGAL or LifeEnum.IF_DIFFERENT or LifeEnum.IF_SUP_EGAL or LifeEnum.IF_SUP or LifeEnum.IF_INF_EGAL or LifeEnum.IF_INF or LifeEnum.IF_IN or LifeEnum.IF_OUT => true,
+					_ => false,
+				};
 			}
 		}
 

@@ -5,9 +5,9 @@ namespace VarsViewer
 	public static class Sort
 	{
 		public static SortMode SortMode;
-		static readonly CacheEntryIndexComparer comparerIndex = new CacheEntryIndexComparer();
-		static readonly CacheEntrySlotComparer comparerSlot = new CacheEntrySlotComparer();
-		static readonly CacheEntryRemovedComparer comparerRemoved = new CacheEntryRemovedComparer();
+		static readonly CacheEntryIndexComparer comparerIndex = new();
+		static readonly CacheEntrySlotComparer comparerSlot = new();
+		static readonly CacheEntryRemovedComparer comparerRemoved = new();
 
 		public static void SortEntries(IEnumerable<Cache> cache)
 		{
@@ -19,7 +19,7 @@ namespace VarsViewer
 				}
 			}
 
-			void SortEntries(Cache ch)
+			static void SortEntries(Cache ch)
 			{
 				switch (SortMode)
 				{
