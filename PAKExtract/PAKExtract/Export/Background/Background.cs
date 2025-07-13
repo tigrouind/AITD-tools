@@ -1,11 +1,13 @@
-using System.Drawing.Imaging;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Png;
+using SixLabors.ImageSharp.PixelFormats;
 using System.IO;
 
 namespace PAKExtract
 {
 	public class Background
 	{
-		public static readonly DirectBitmap Bitmap = new(320, 200);
+		public static readonly Image<Rgba32> Bitmap = new(320, 200);
 
 		public static bool IsBackground(long size)
 		{
@@ -23,8 +25,6 @@ namespace PAKExtract
 
 		public static void GetBackground(byte[] data)
 		{
-			var dest = Bitmap.Bits;
-
 			switch (data.Length)
 			{
 				case 64000: //AITD1
@@ -32,7 +32,7 @@ namespace PAKExtract
 						var pal = Palette.LoadITDPalette();
 						for (int i = 0; i < 64000; i++)
 						{
-							dest[i] = pal[data[i]];
+							Bitmap[i % 320, i / 320] = new Rgba32(pal[data[i]]);
 						}
 						break;
 					}
@@ -42,7 +42,7 @@ namespace PAKExtract
 						var pal = Palette.LoadPalette(data, 64000);
 						for (int i = 0; i < 64000; i++)
 						{
-							dest[i] = pal[data[i]];
+							Bitmap[i % 320, i / 320] = new Rgba32(pal[data[i]]);
 						}
 						break;
 					}
@@ -52,7 +52,7 @@ namespace PAKExtract
 						var pal = Palette.LoadPalette(data, 2);
 						for (int i = 0; i < 64000; i++)
 						{
-							dest[i] = pal[data[i + 770]];
+							Bitmap[i % 320, i / 320] = new Rgba32(pal[data[i + 770]]);
 						}
 						break;
 					}
@@ -62,7 +62,7 @@ namespace PAKExtract
 		public static byte[] SaveBitmap()
 		{
 			using var stream = new MemoryStream();
-			Bitmap.Bitmap.Save(stream, ImageFormat.Png);
+			Bitmap.Save(stream, new PngEncoder()); // Save as PNG
 			return stream.ToArray();
 		}
 	}

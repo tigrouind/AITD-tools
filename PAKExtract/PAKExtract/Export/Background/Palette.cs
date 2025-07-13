@@ -34,7 +34,7 @@ namespace PAKExtract
 			return paletteCustom;
 		}
 
-		public static void LoadPalette(byte[] data, int offset, uint[] pal)
+		static void LoadPalette(byte[] data, int offset, uint[] pal)
 		{
 			bool vgaMap = Enumerable.Range(0, 768)
 				.All(x => data[x + offset] <= 63);
@@ -54,7 +54,7 @@ namespace PAKExtract
 
 				unchecked
 				{
-					pal[i] = (uint)((255 << 24) | (r << 16) | (g << 8) | b);
+					pal[i] = (uint)((255 << 24) | (b << 16) | (g << 8) | r);
 				}
 			}
 		}
