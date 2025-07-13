@@ -1,36 +1,68 @@
 @echo off
 
-"%ProgramFiles%\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\msbuild.exe" /p:Configuration=Release ".\Shared\Shared.csproj" /t:Rebuild
+rd /s/q ".\LifeDISA\LifeDISA\bin\Release\net9.0-windows\"
+rd /s/q ".\MemoryViewer\MemoryViewer\bin\Release\net9.0-windows\"
+rd /s/q ".\TrackDISA\TrackDISA\bin\Release\net9.0\"
+rd /s/q ".\VarsViewer\VarsViewer\bin\Release\net9.0\"
+rd /s/q ".\PAKExtract\PAKExtract\bin\Release\net9.0-windows\"
+
+dotnet build -c Release ".\LifeDISA\LifeDISA.sln"
 if %ERRORLEVEL% NEQ 0 pause
-"%ProgramFiles%\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\msbuild.exe" /p:Configuration=Release ".\LifeDISA\LifeDISA.sln" /t:Rebuild
+dotnet build -c Release ".\MemoryViewer\MemoryViewer.sln"
 if %ERRORLEVEL% NEQ 0 pause
-"%ProgramFiles%\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\msbuild.exe" /p:Configuration=Release ".\MemoryViewer\MemoryViewer.sln" /t:Rebuild
+dotnet build -c Release ".\TrackDISA\TrackDISA.sln"
 if %ERRORLEVEL% NEQ 0 pause
-"%ProgramFiles%\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\msbuild.exe" /p:Configuration=Release ".\TrackDISA\TrackDISA.sln" /t:Rebuild
+dotnet build -c Release ".\VarsViewer\VarsViewer.sln"
 if %ERRORLEVEL% NEQ 0 pause
-"%ProgramFiles%\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\msbuild.exe" /p:Configuration=Release ".\VarsViewer\VarsViewer.sln" /t:Rebuild
+dotnet build -c Release ".\PAKExtract\PAKExtract.sln"
 if %ERRORLEVEL% NEQ 0 pause
-"%ProgramFiles%\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\msbuild.exe" /p:Configuration=Release ".\PAKExtract\PAKExtract.sln" /t:Rebuild
-if %ERRORLEVEL% NEQ 0 pause
+
 if exist C:\MinGW\bin\gcc.exe (
 	C:\MinGW\bin\gcc.exe -shared -O2 -s "UnPAK\unpak.c" -o "UnPAK\bin\Release\UnPAK.dll"
 	if %ERRORLEVEL% NEQ 0 pause
 ) 
 
-"%PROGRAMFILES%\7-Zip\7z" a -tzip "AITD-tools.zip" ^
- ".\LifeDISA\LifeDISA\bin\Release\LifeDISA.exe" ^
- ".\LifeDISA\LifeDISA\bin\Release\GAMEDATA\vars.txt" ^
- ".\MemoryViewer\MemoryViewer\bin\Release\MemoryViewer.exe" ^
- ".\MemoryViewer\MemoryViewer\bin\Release\SDL.dll" ^
- ".\MemoryViewer\MemoryViewer\bin\Release\SDL2.dll" ^
- ".\TrackDISA\TrackDISA\bin\Release\TrackDISA.exe" ^
- ".\VarsViewer\VarsViewer\bin\Release\VarsViewer.exe" ^
- ".\VarsViewer\VarsViewer\bin\Release\Newtonsoft.Json.dll" ^
- ".\PAKExtract\PAKExtract\bin\Release\PAKExtract.exe" ^
- ".\Shared\bin\Release\Shared.dll" ^
- ".\UnPAK\bin\Release\Unpak.dll" ^
+"%PROGRAMFILES%\7-Zip\7z" a -tzip "LifeDISA.zip" ^
+ ".\LifeDISA\LifeDISA\bin\Release\net9.0-windows\*" ^
  "-mx=9"
 if %ERRORLEVEL% NEQ 0 pause
  
+"%PROGRAMFILES%\7-Zip\7z" a -tzip "MemoryViewer.zip" ^
+ ".\MemoryViewer\MemoryViewer\bin\Release\net9.0-windows\*" ^
+ "-mx=9"
+if %ERRORLEVEL% NEQ 0 pause
+ 
+"%PROGRAMFILES%\7-Zip\7z" a -tzip "TrackDISA.zip" ^
+ ".\TrackDISA\TrackDISA\bin\Release\net9.0\*" ^
+ "-mx=9"
+if %ERRORLEVEL% NEQ 0 pause
+ 
+"%PROGRAMFILES%\7-Zip\7z" a -tzip "VarsViewer.zip" ^
+ ".\VarsViewer\VarsViewer\bin\Release\net9.0\*" ^
+ "-mx=9"
+if %ERRORLEVEL% NEQ 0 pause
+ 
+"%PROGRAMFILES%\7-Zip\7z" a -tzip "PAKExtract.zip" ^
+ ".\PAKExtract\PAKExtract\bin\Release\net9.0-windows\*" ^
+ "-mx=9"
+if %ERRORLEVEL% NEQ 0 pause
+ 
+"%PROGRAMFILES%\7-Zip\7z" a -tzip "AITD-tools.zip" ^
+ ".\LifeDISA\LifeDISA\bin\Debug\net9.0-windows\GAMEDATA\vars.txt" ^
+ "LifeDISA.zip" ^
+ "MemoryViewer.zip" ^
+ "TrackDISA.zip" ^
+ "VarsViewer.zip" ^
+ "PAKExtract.zip" ^
+ "-mx=9" 
+if %ERRORLEVEL% NEQ 0 pause
+
 "%PROGRAMFILES%\7-Zip\7z" rn "AITD-tools.zip" "vars.txt" "GAMEDATA\vars.txt"
 if %ERRORLEVEL% NEQ 0 pause
+
+del "LifeDISA.zip"
+del "MemoryViewer.zip"
+del "TrackDISA.zip"
+del "VarsViewer.zip"
+del "PAKExtract.zip"
+

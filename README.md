@@ -155,3 +155,5 @@ Extract some files, edit them in their respective folders (eg: LISTLIFE), then r
 ```
 PAKExtract LISTLIFE.PAK -archive 
 ```
+#Requirements
+You need to install [.NET Desktop Runtime 9.0](https://dotnet.microsoft.com/en-us/download/dotnet/9.0) to run the tools.
