@@ -1,8 +1,13 @@
 ⚠️ some files in the release archive might be detected as malware by some A/V (eg: Windows Defender). The exact reason is unclear but this is probably because it use Win32 API calls such as `ReadProcessMemory` and `WriteProcessMemory`. If you know how to fix this, please let me know.
 
+# Requirements
+
+You need to install [.NET Desktop Runtime 9.0](https://dotnet.microsoft.com/en-us/download/dotnet/9.0) (Windows 10 or newer) to run the tools.
+
 # LifeDISA
 
 This is a disassembler for LIFE scripts in Alone in the Dark series.
+
 
 ## Supported
 * Alone in the Dark 1 / 2 / 3 (CD-ROM, floppy, demo)
@@ -119,41 +124,38 @@ Same as [LifeDISA](#LifeDISA)
 - Copy some PAK files to GAMEDATA folder
 - Run PAKExtract : all PAK files in GAMEDATA folder are extracted to new folders (eg: LISTLIFE)
 
-You can also drop files or folders to be extracted into PAKExtract executable.
+You can also drop files (or folders) to be extracted into PAKExtract executable.
 
 ## Command-line arguments
 ```
-PAKExtract [-background]
-           [-svg [rotate {0|90|180|270}] [zoom] [room 1,2,3,...] [trigger] [camera]]
-           [-info]
-           [-archive [timegate]]
+PAKExtract [background]
+           [svg [-rotate {0|90|180|270}] [-zoom] [-room <rooms>] [-trigger] [-camera]]
+           [archive [-timegate] [<files>]] 
+           [info [<files>]]
            [<files>]
-           [<folders>]
 ```
 
 ### Converting backgrounds as PNG files
 Extract necessary PAK files (CAMERAxx.PAK, ITD_RESS.PAK) into their respective folders, then run PAKEXtract again : 
 ```
-PAKExtract -background
+PAKExtract background
 ```
 Files will be exported to BACKGROUND folder.
 
 ### Rendering floors as SVG files
 Extract necessary PAK files (ETAGExx.PAK) into their respective folders, then run PAKEXtract again : 
 ```
-PAKExtract -svg rotate 90 room 5,7 
+PAKExtract svg -rotate 90 -room 1 4 5 
 ```
 Files will be exported to SVG folder.
 
-### Displaying archive information only (eg: compressed size, flags, ...) 
+### Creating a new PAK archive (or editing some entries)
+Extract some PAK archives, edit them in their respective folders (eg: LISTLIFE), then run PAKExtract again :
 ```
-PAKExtract LISTLIFE.PAK -info 
+PAKExtract archive LISTLIFE
 ```
 
-### Creating a new PAK archive (or editing some entries)
-Extract some files, edit them in their respective folders (eg: LISTLIFE), then run PAKExtract again :
+### Displaying archive information only (eg: compressed size, flags, ...) 
 ```
-PAKExtract LISTLIFE.PAK -archive 
+PAKExtract info LISTLIFE.PAK 
 ```
-#Requirements
-You need to install [.NET Desktop Runtime 9.0](https://dotnet.microsoft.com/en-us/download/dotnet/9.0) to run the tools.

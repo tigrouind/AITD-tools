@@ -1,4 +1,5 @@
 using System;
+using System.CommandLine;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -27,9 +28,16 @@ namespace VarsViewer
 		];
 		static IWorker worker;
 
-		static void Main(string[] args)
+		static int Main(string[] args)
 		{
-			CommandLine.ParseAndInvoke(args, new Action<int, int, View>(Run));
+			var width = new Option<int>("-width");
+			var height = new Option<int>("-height");
+			var view = new Option<View>("-view");
+			var rootCommand = new RootCommand() { width, height, view };
+			rootCommand.SetAction(result => Run(result.GetValue(width), result.GetValue(height), result.GetValue(view)));
+
+			var parseResult = rootCommand.Parse(args);
+			return parseResult.Invoke();
 		}
 
 		static void Run(int width, int height, View view)
