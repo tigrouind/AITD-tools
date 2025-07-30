@@ -4,8 +4,8 @@ namespace VarsViewer
 {
 	public class Buffer<T>
 	{
-		T[] array = [];
-		public T[] AsArray() => array;
+		T[,] array = new T[0, 0];
+		public T[,] AsArray() => array;
 
 		public int Width { private set; get; }
 		public int Height { private set; get; }
@@ -17,12 +17,12 @@ namespace VarsViewer
 
 		public T this[int y, int x]
 		{
-			get => array[y * Width + x];
+			get => array[y, x];
 
 			set
 			{
 				EnsureCapacity(x + 1, y + 1);
-				array[y * Width + x] = value;
+				array[y, x] = value;
 			}
 		}
 
@@ -47,7 +47,7 @@ namespace VarsViewer
 			void Resize()
 			{
 				var oldArray = array;
-				array = new T[width * height];
+				array = new T[height, width];
 
 				for (int row = Height - 1; row >= 0; row--)
 				{

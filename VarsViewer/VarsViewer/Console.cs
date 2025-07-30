@@ -25,7 +25,7 @@ namespace VarsViewer
 		[DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
 		static extern bool WriteConsoleOutput(
 			IntPtr hConsoleOutput,
-			CharInfo[] lpBuffer,
+			CharInfo[,] lpBuffer,
 			Coord dwBufferSize,
 			Coord dwBufferCoord,
 			ref SmallRect lpWriteRegion);

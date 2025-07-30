@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.CommandLine;
 using System.Linq;
 using SDL2;
 using Shared;
@@ -33,15 +34,21 @@ namespace MemoryViewer
 
 		static int Main(string[] args)
 		{
-			return CommandLine.ParseAndInvoke(args, new Func<int, int, int, int>(Run));
-		}
+			var width = new Option<int>("-width") { DefaultValueFactory = x => 640 };
+			var height = new Option<int>("-height") { DefaultValueFactory = x => 480 };
+			var zoom = new Option<int>("-zoom") { DefaultValueFactory = x => 2 };
+			var rootCommand = new RootCommand() { width, height, zoom };
 
-		static int Run(int width = 640, int height = 480, int zoom = 2)
-		{
-			Program.width = width;
-			Program.height = height;
-			Program.zoom = zoom;
-			return Run();
+			rootCommand.SetAction(result =>
+			{
+				Program.width = result.GetValue(width);
+				Program.height = result.GetValue(height);
+				Program.zoom = result.GetValue(zoom);
+				Run();
+			});
+
+			var parseResult = rootCommand.Parse(args);
+			return parseResult.Invoke();
 		}
 
 		static int Run()
