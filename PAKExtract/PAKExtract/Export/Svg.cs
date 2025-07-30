@@ -15,7 +15,7 @@ namespace PAKExtract
 		static readonly int[] rotateArgs = [0, 90, 180, 270];
 		static readonly int[] cameraColors = [0xFF8080, 0x789CF0, 0xB0DE6F, 0xCC66C0, 0x5DBAAB, 0xF2BA79, 0x8E71E3, 0x6ED169, 0xBF6080, 0x7CCAF7];
 
-		public static byte[] Export(string directory, HashSet<int> room, int rotate, int zoom, bool trigger, bool camera, bool caption)
+		public static byte[] Export(string directory, HashSet<int> roomSet, int rotate, int zoom, bool trigger, bool camera, bool caption)
 		{
 			var rooms = new List<(int Index, int X, int Y,
 				List<(int X, int Y, int Width, int Height, int Flags)> Colliders,
@@ -39,7 +39,7 @@ namespace PAKExtract
 					int currentroom = 0;
 					foreach (var filePath in Directory.EnumerateFiles(directory, "*.*"))
 					{
-						if (!room.Any() || room.Contains(currentroom))
+						if (!roomSet.Any() || roomSet.Contains(currentroom))
 						{
 							LoadRoom(File.ReadAllBytes(firstFile), 0, currentroom);
 						}
@@ -59,7 +59,7 @@ namespace PAKExtract
 							break;
 						}
 
-						if (!room.Any() || room.Contains(currentroom))
+						if (!roomSet.Any() || roomSet.Contains(currentroom))
 						{
 							LoadRoom(buffer, roomheader, currentroom);
 
