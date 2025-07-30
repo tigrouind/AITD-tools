@@ -65,7 +65,7 @@
 			{ "type": "anim", "offset": 62, "includeZero": true },
 			{ "name": "Type", "values": {"0": "once", "1": "repeat", "2": "uninter"}, "offset": 64, "includeZero": true, "condition": 62 },
 			{ "name": "Next", "type": "anim", "offset": 66 }
-		],
+		]
 	},
 	{ "name": "NewAnim",
 		"columns":
@@ -73,7 +73,7 @@
 			{ "name": "Anim", "type": "anim", "offset": 68  },
 			{ "name": "Type", "values": {"0": "once", "1": "repeat", "2": "uninter"}, "offset": 70, "condition": 68 },
 			{ "name": "Next", "type": "anim", "offset": 72 }
-		],
+		]
 	},
 	{ "name": "Key",
 		"columns":
@@ -114,7 +114,7 @@
 		[
 			{ "name": "Offset", "offset": 96, "condition": 100, "type":"zvsize", "includeZero": true  },
 			{ "name": "Time", "type": "time2", "offset": 102, "condition": 100 },
-			{ "name": "Param", "offset": 100 },
+			{ "name": "Param", "offset": 100 }
 		]
 	},
 	{ "name": "Speed",

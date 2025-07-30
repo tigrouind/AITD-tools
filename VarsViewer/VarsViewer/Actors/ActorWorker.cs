@@ -1,4 +1,3 @@
-using Newtonsoft.Json;
 using Shared;
 using System;
 using System.Collections.Generic;
@@ -6,6 +5,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using VarsViewer.Actors;
 
 namespace VarsViewer
@@ -75,11 +76,13 @@ namespace VarsViewer
 					string ressourceName = $"VarsViewer.Actors.Config.{fileName}";
 					using var stream = assembly.GetManifestResourceStream(ressourceName);
 					using var reader = new StreamReader(stream);
-					return JsonConvert.DeserializeObject<List<Column>>(reader.ReadToEnd(), new JsonSerializerSettings
+					var options = new JsonSerializerOptions()
 					{
-						DefaultValueHandling = DefaultValueHandling.Populate,
-						MissingMemberHandling = MissingMemberHandling.Error
-					});
+						PropertyNameCaseInsensitive = true,
+						IncludeFields = true
+					};
+					options.Converters.Add(new JsonStringEnumConverter());
+					return JsonSerializer.Deserialize<List<Column>>(reader.ReadToEnd(), options);
 				}
 
 				void Populate()

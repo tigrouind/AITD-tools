@@ -55,7 +55,7 @@
 	{ "name": "FloorLife",
 		"columns":
 		[
-			{ "name": "InventoryVar", "offset": 36 },
+			{ "name": "InventoryVar", "offset": 36 }
 		]
 	},
 	{ "name": "Weight", "offset": 50 },
