@@ -1,7 +1,5 @@
-using Shared;
 using System;
 using System.IO;
-using System.Linq;
 
 namespace PAKExtract
 {
@@ -41,13 +39,13 @@ namespace PAKExtract
 			}
 		}
 
-		public static void ExportSvg(SvgInfo svg)
+		public static void ExportSvg(int[] rooms, int rotate, int zoom, bool trigger, bool camera, bool caption)
 		{
 			foreach (var directory in Directory.GetDirectories("."))
 			{
 				if (Path.GetFileName(directory).StartsWith("ETAGE", StringComparison.InvariantCultureIgnoreCase))
 				{
-					var data = Svg.Export(directory, [.. svg.Room], svg.Rotate, svg.Zoom, svg.Trigger, svg.Camera, svg.Caption);
+					var data = Svg.Export(directory, [.. rooms], rotate, zoom, trigger, camera, caption);
 					Program.WriteFile(Path.Combine("SVG", Path.GetFileNameWithoutExtension(directory) + ".svg"), data);
 				}
 			}

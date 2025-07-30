@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.CommandLine;
 using System.IO;
 using System.Linq;
 using Shared;
@@ -25,17 +26,19 @@ namespace TrackDISA
 
 		static int Main(string[] args)
 		{
-			return CommandLine.ParseAndInvoke(args, new Func<string[], GameVersion?, bool, string, int>(Run));
+			var version = new Option<GameVersion>("-version") { Required = true };
+			var output = new Option<string>("-output") { DefaultValueFactory = x => "tracks.vb"};
+			var verbose = new Option<bool>("-verbose");
+			var rootCommand = new RootCommand() { version, output, verbose };
+
+			rootCommand.SetAction(result => Run(result.GetValue(version), result.GetValue(verbose), result.GetValue(output)));
+
+			var parseResult = rootCommand.Parse(args);
+			return parseResult.Invoke();
 		}
 
-		static int Run(string[] args, GameVersion? version, bool verbose, string output = "tracks.vb")
+		static int Run(GameVersion version, bool verbose, string output)
 		{
-			if (args.Any())
-			{
-				Console.Error.WriteLine($"Invalid argument(s): {string.Join(", ", args)}");
-				return -1;
-			}
-
 			Directory.CreateDirectory("GAMEDATA");
 
 			if (File.Exists(@"GAMEDATA\vars.txt"))
@@ -48,13 +51,7 @@ namespace TrackDISA
 				return -1;
 			}
 
-			var config = gameConfigs.FirstOrDefault(x => x.Version == version);
-			if (version == null || config == default)
-			{
-				var versions = string.Join("|", gameConfigs.Select(x => x.Version.ToString().ToLowerInvariant()));
-				Console.WriteLine($"Usage: TrackDISA -version {{{versions}}} [-output] [-verbose]");
-				return -1;
-			}
+			var config = gameConfigs.First(x => x.Version == version);
 
 			using var writer = new StreamWriter(output);
 			using var pak = new PakArchive(@"GAMEDATA\LISTTRAK.PAK");

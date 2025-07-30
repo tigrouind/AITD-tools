@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.CommandLine;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -38,24 +39,21 @@ namespace LifeDISA
 
 		static int Main(string[] args)
 		{
-			return CommandLine.ParseAndInvoke(args, new Func<string[], bool, bool, GameVersion?, string, int>(Run));
+			var version = new Option<GameVersion>("-version") { Required = true };
+			var output = new Option<string>("-output") { DefaultValueFactory = x => "scripts.vb"};
+			var raw = new Option<bool>("-raw");
+			var verbose = new Option<bool>("-verbose");
+			var rootCommand = new RootCommand()	{ version, output, raw, verbose };
+
+			rootCommand.SetAction(result => Run(result.GetValue(version), result.GetValue(raw), result.GetValue(verbose), result.GetValue(output)));
+
+			var parseResult = rootCommand.Parse(args);
+			return parseResult.Invoke();
 		}
 
-		static int Run(string[] args, bool raw, bool verbose, GameVersion? version, string output = "scripts.vb")
+		static int Run(GameVersion version, bool raw, bool verbose, string output)
 		{
-			if (args.Any())
-			{
-				Console.Error.WriteLine($"Invalid argument(s): {string.Join(", ", args)}");
-				return -1;
-			}
-
-			config = gameConfigs.FirstOrDefault(x => x.Version == version);
-			if (version == null || config == default)
-			{
-				var versions = string.Join("|", gameConfigs.Select(x => x.Version.ToString().ToLowerInvariant()));
-				Console.WriteLine($"Usage: LifeDISA -version {{{versions}}} [-raw] [-verbose] [-output]");
-				return -1;
-			}
+			config = gameConfigs.First(x => x.Version == version);
 
 			Directory.CreateDirectory("GAMEDATA");
 

@@ -1,8 +1,9 @@
 using Shared;
 using System;
 using System.Collections.Generic;
+using System.CommandLine;
+using System.ComponentModel;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 
 namespace PAKExtract
@@ -13,81 +14,83 @@ namespace PAKExtract
 
 		static int Main(string[] args)
 		{
-			return CommandLine.ParseAndInvoke(args, new Func<string[], bool, SvgInfo, Archive, bool, int>(Run));
+			var files = new Argument<string[]>("files") { Arity = ArgumentArity.OneOrMore };
+
+			//background
+			var background = new Command("background");
+			background.SetAction(result => Export.ExportBackground());
+
+			//svg
+			var svgRoom = new Option<int[]>("-room") { AllowMultipleArgumentsPerToken = true };
+			var svgRotate = new Option<int>("-rotate");
+			var svgZoom = new Option<int>("-zoom");
+			var svgTrigger = new Option<bool>("-trigger");
+			var svgCamera = new Option<bool>("-camera");
+			var svgCaption = new Option<bool>("-caption");
+			var svg = new Command("svg") { svgRoom, svgRotate, svgZoom,	svgTrigger, svgCamera, svgCaption };
+			svg.SetAction(result =>
+			{
+				Export.ExportSvg(
+					result.GetValue(svgRoom),
+					result.GetValue(svgRotate),
+					result.GetValue(svgZoom),
+					result.GetValue(svgTrigger),
+					result.GetValue(svgCamera),
+					result.GetValue(svgCaption));
+			});
+
+			//archive
+			var archiveTimegate = new Option<bool>("-timegate");
+			var archive = new Command("archive") { archiveTimegate,	files };
+			archive.SetAction(result => Archive.CreateArchive(args, result.GetValue(archiveTimegate)));
+
+			//info
+			var info = new Command("info") { files };
+			info.SetAction(result => Unpack(result.GetValue(files), true));
+
+			//root
+			var rootCommand = new RootCommand() { info, svg, archive, background, files };
+			rootCommand.SetAction(result => Unpack(result.GetValue(files), false));
+
+			var parseResult = rootCommand.Parse(args);
+			return parseResult.Invoke();
 		}
 
-		static int Run(string[] args, bool background, SvgInfo svg, Archive archive, bool info)
+		static void Unpack(string[] files, bool info)
 		{
-			if (background)
-			{
-				if (InvalidArguments(args))
-				{
-					return -1;
-				}
-				Export.ExportBackground();
-			}
-			else if (svg != null)
-			{
-				if (InvalidArguments(args))
-				{
-					return -1;
-				}
-				Export.ExportSvg(svg);
-			}
-			else if (archive != null)
-			{
-				Archive.CreateArchive(args, archive.Timegate);
-			}
-			else
-			{
-				var files = GetFiles(args)
-					.ToList();
+			string[] pakFiles = [.. GetFiles(files)];
 
-				var compressType = new[] { "-", "INFLATE", "", "", "DEFLATE" };
-				if (info && files.Any())
-				{
-					Console.WriteLine("     PAK Entry   CType   CSize   USize Extra");
-				}
+			var compressType = new[] { "-", "INFLATE", "", "", "DEFLATE" };
+			if (info && pakFiles.Any())
+			{
+				Console.WriteLine("     PAK Entry   CType   CSize   USize Extra");
+			}
 
-				foreach (var file in files)
+			foreach (var file in pakFiles)
+			{
+				using var pak = new PakArchive(file);
+				foreach (var entry in pak)
 				{
-					using var pak = new PakArchive(file);
-					foreach (var entry in pak)
+					if (info)
 					{
-						if (info)
+						Console.WriteLine($"{Path.GetFileNameWithoutExtension(file),8} " +
+							$"{entry.Index,5} " +
+							$"{(entry.CompressionType >= 0 && entry.CompressionType <= 4 ? compressType[entry.CompressionType] : entry.CompressionType.ToString()),7} " +
+							$"{(entry.CompressionType != 0 ? entry.CompressedSize.ToString() : "-"),7} " +
+							$"{entry.UncompressedSize,7} " +
+							$"{string.Join(" ", Enumerable.Range(0, entry.Extra.Length / 4).Select(x => entry.Extra.ReadInt(x * 4)))}");
+					}
+					else
+					{
+						var destPath = Path.Combine(Path.GetFileNameWithoutExtension(file), $"{entry.Index:D8}.dat");
+						WriteFile(destPath, entry.Read());
+						if (entry.Extra.Length > 0)
 						{
-							Console.WriteLine($"{Path.GetFileNameWithoutExtension(file),8} " +
-								$"{entry.Index,5} " +
-								$"{(entry.CompressionType >= 0 && entry.CompressionType <= 4 ? compressType[entry.CompressionType] : entry.CompressionType.ToString()),7} " +
-								$"{(entry.CompressionType != 0 ? entry.CompressedSize.ToString() : "-"),7} " +
-								$"{entry.UncompressedSize,7} " +
-								$"{string.Join(" ", Enumerable.Range(0, entry.Extra.Length / 4).Select(x => entry.Extra.ReadInt(x * 4)))}");
-						}
-						else
-						{
-							var destPath = Path.Combine(Path.GetFileNameWithoutExtension(file), $"{entry.Index:D8}.dat");
-							WriteFile(destPath, entry.Read());
-							if (entry.Extra.Length > 0)
-							{
-								WriteFile(Path.Combine(Path.GetDirectoryName(destPath), "EXTRA", Path.GetFileName(destPath)), entry.Extra);
-							}
+							WriteFile(Path.Combine(Path.GetDirectoryName(destPath), "EXTRA", Path.GetFileName(destPath)), entry.Extra);
 						}
 					}
 				}
 			}
-
-			return 0;
-		}
-
-		static bool InvalidArguments(string[] args)
-		{
-			if (args.Any())
-			{
-				Console.Error.WriteLine($"Invalid argument(s): {string.Join(", ", args)}");
-				return true;
-			}
-
-			return false;
 		}
 
 		static IEnumerable<string> GetFiles(string[] args)

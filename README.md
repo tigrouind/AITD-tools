@@ -123,37 +123,36 @@ You can also drop files or folders to be extracted into PAKExtract executable.
 
 ## Command-line arguments
 ```
-PAKExtract [-background]
-           [-svg [rotate {0|90|180|270}] [zoom] [room 1,2,3,...] [trigger] [camera]]
-           [-info]
-           [-archive [timegate]]
+PAKExtract [background]
+           [svg [-rotate {0|90|180|270}] [-zoom] [-room <rooms>] [-trigger] [-camera]]
+           [archive [timegate]] [<files>]
+           [info] [<files>]
            [<files>]
-           [<folders>]
 ```
 
 ### Converting backgrounds as PNG files
 Extract necessary PAK files (CAMERAxx.PAK, ITD_RESS.PAK) into their respective folders, then run PAKEXtract again : 
 ```
-PAKExtract -background
+PAKExtract background
 ```
 Files will be exported to BACKGROUND folder.
 
 ### Rendering floors as SVG files
 Extract necessary PAK files (ETAGExx.PAK) into their respective folders, then run PAKEXtract again : 
 ```
-PAKExtract -svg rotate 90 room 5,7 
+PAKExtract svg -rotate 90 -room 1 4 5 
 ```
 Files will be exported to SVG folder.
 
 ### Displaying archive information only (eg: compressed size, flags, ...) 
 ```
-PAKExtract LISTLIFE.PAK -info 
+PAKExtract info LISTLIFE.PAK 
 ```
 
 ### Creating a new PAK archive (or editing some entries)
 Extract some files, edit them in their respective folders (eg: LISTLIFE), then run PAKExtract again :
 ```
-PAKExtract LISTLIFE.PAK -archive 
+PAKExtract archive LISTLIFE.PAK 
 ```
 #Requirements
 You need to install [.NET Desktop Runtime 9.0](https://dotnet.microsoft.com/en-us/download/dotnet/9.0) to run the tools.
