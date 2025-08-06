@@ -2,12 +2,7 @@ using Shared;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using VarsViewer.Actors;
 
 namespace VarsViewer
 {
@@ -16,7 +11,7 @@ namespace VarsViewer
 		bool IWorker.UseMouse => true;
 		readonly Func<int> getActorAddress;
 		readonly (int Rows, int Columns) cellConfig;
-		readonly List<Column> config;
+		readonly Column[] config;
 
 		static (int ActorAddress, int ObjectAddress) GameConfig => gameConfigs[Program.GameVersion];
 		static readonly Dictionary<GameVersion, (int, int)> gameConfigs = new()
@@ -40,13 +35,15 @@ namespace VarsViewer
 			switch (view)
 			{
 				case 0:
-					config = LoadConfig("Actor.json");
+					config = Actors.Instance;
+					Populate();
 					getActorAddress = () => GameConfig.ActorAddress + Program.EntryPoint;
 					cellConfig = (50, 80);
 					break;
 
 				case 1:
-					config = LoadConfig("Object.json");
+					config = Objects.Instance;
+					Populate();
 					getActorAddress = () => Program.Memory.ReadFarPointer(GameConfig.ObjectAddress + Program.EntryPoint);
 					cellConfig = (Program.GameVersion == GameVersion.AITD1_DEMO ? 18 : 292, 26);
 					break;
@@ -64,42 +61,20 @@ namespace VarsViewer
 				};
 			}
 
-			List<Column> LoadConfig(string fileName)
+			void Populate()
 			{
-				var config = LoadJSON();
-				Populate();
-				return config;
-
-				List<Column> LoadJSON()
+				for (int i = 0; i < config.Length; i++)
 				{
-					var assembly = Assembly.GetExecutingAssembly();
-					string ressourceName = $"VarsViewer.Actors.Config.{fileName}";
-					using var stream = assembly.GetManifestResourceStream(ressourceName);
-					using var reader = new StreamReader(stream);
-					var options = new JsonSerializerOptions()
+					var column = config[i];
+					if (column.Columns == null)
 					{
-						PropertyNameCaseInsensitive = true,
-						IncludeFields = true
-					};
-					options.Converters.Add(new JsonStringEnumConverter());
-					return JsonSerializer.Deserialize<List<Column>>(reader.ReadToEnd(), options);
-				}
-
-				void Populate()
-				{
-					for (int i = 0; i < config.Count; i++)
-					{
-						var column = config[i];
-						if (column.Columns == null)
+						config[i] = new Column
 						{
-							config[i] = new Column
-							{
-								Columns =
-								[
-									column
-								]
-							};
-						}
+							Columns =
+							[
+								column
+							]
+						};
 					}
 				}
 			}
