@@ -2,7 +2,7 @@ using Shared;
 using System;
 using System.Linq;
 
-namespace VarsViewer.Actors
+namespace VarsViewer
 {
 	public static class FieldFormatter
 	{

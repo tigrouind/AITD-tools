@@ -28,8 +28,6 @@
     <StartAction>Project</StartAction>
   </PropertyGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Actors\Config\Actor.json" />
-    <EmbeddedResource Include="Actors\Config\Object.json" />
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta6.25358.103" />
   </ItemGroup>
   <ItemGroup>
