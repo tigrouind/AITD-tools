@@ -1,21 +1,21 @@
 using System;
-using System.Collections.Generic;
 using System.CommandLine;
 using System.Linq;
-using SDL2;
+using SDL3;
 using Shared;
 
 namespace MemoryViewer
 {
 	class Program
 	{
-		const int RESX = 320, RESY = 60;
+		const int RESX = 320, RESY = 200;
 		const int DOS_CONV = 640 * 1024;
 		const int EMS = 64000;
 		const int SCREENS = (DOS_CONV + EMS + RESX * RESY - 1) / (RESX * RESY) + 1; //round up + one extra screen for left over between columns
 
-		static readonly bool[] needRefresh = new bool[SCREENS];
-		static bool mustClearScreen = true;
+		//static readonly bool[] needRefresh = new bool[SCREENS];
+		//static bool mustClearScreen = true;
+
 		static bool needPaletteUpdate;
 		static readonly bool[] needPaletteUpdate256 = new bool[256];
 		static int offset;
@@ -53,117 +53,133 @@ namespace MemoryViewer
 
 		static int Run()
 		{
-			//init SDL
-			SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
+			if (!SDL.Init(SDL.InitFlags.Video))
+			{
+				SDL.LogError(SDL.LogCategory.Application, $"SDL.Init() fail: {SDL.GetError()}\n");
+				return 1;
+			}
 
-			IntPtr window = SDL.SDL_CreateWindow(windowTitle, SDL.SDL_WINDOWPOS_UNDEFINED, SDL.SDL_WINDOWPOS_UNDEFINED, width, height, SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
-			IntPtr renderer = SDL.SDL_CreateRenderer(window, -1, SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL.SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC);
-			//IntPtr renderer = SDL.SDL_CreateRenderer(window, -1, SDL.SDL_RendererFlags.SDL_RENDERER_SOFTWARE);
+			var window = SDL.CreateWindow(windowTitle, width, height, SDL.WindowFlags.Resizable | SDL.WindowFlags.OpenGL);
+			if (window == IntPtr.Zero)
+			{
+				SDL.LogError(SDL.LogCategory.Application, $"Window creation fail: {SDL.GetError()}\n");
+				return 0;
+			}
 
-			//SDL.SDL_SetHint(SDL.SDL_HINT_RENDER_SCALE_QUALITY, "linear");
-			IntPtr texture = SDL.SDL_CreateTexture(renderer, SDL.SDL_PIXELFORMAT_ARGB8888, (int)SDL.SDL_TextureAccess.SDL_TEXTUREACCESS_STREAMING, RESX, RESY);
-			SDL.SDL_SetTextureBlendMode(texture, SDL.SDL_BlendMode.SDL_BLENDMODE_BLEND);
+			var renderer = SDL.CreateRenderer(window, null);
+			if (renderer == IntPtr.Zero)
+			{
+				SDL.LogError(SDL.LogCategory.Application, $"Renderer creation fail: {SDL.GetError()}\n");
+				return 0;
+			}
 
-			IntPtr paletteTexture = SDL.SDL_CreateTexture(renderer, SDL.SDL_PIXELFORMAT_ARGB8888, (int)SDL.SDL_TextureAccess.SDL_TEXTUREACCESS_STREAMING, 16, 16);
+			SDL.SetRenderVSync(renderer, 1);
 
-			SetRefreshState(true);
+			IntPtr texture = SDL.CreateTexture(renderer, SDL.PixelFormat.ARGB8888, SDL.TextureAccess.Streaming, RESX, RESY);
+			SDL.SetTextureBlendMode(texture, SDL.BlendMode.Blend);
+			SDL.SetTextureScaleMode(texture, SDL.ScaleMode.Nearest);
+
+			IntPtr paletteTexture = SDL.CreateTexture(renderer, SDL.PixelFormat.ARGB8888, SDL.TextureAccess.Streaming, 16, 16);
+			SDL.SetTextureScaleMode(paletteTexture, SDL.ScaleMode.Nearest);
+
+			//SetRefreshState(true);
 
 			bool quit = false, mcb = false, minimized = false, showPalette = false;
 			long paletteAddress = -1;
 
 			ProcessMemory process = null;
-			uint lastCheck = 0, lastCheckPalette = 0;
+			ulong lastCheck = 0, lastCheckPalette = 0;
 
 			while (!quit)
 			{
-				while (SDL.SDL_PollEvent(out SDL.SDL_Event sdlEvent) != 0 && !quit)
+				while (SDL.PollEvent(out SDL.Event sdlEvent) && !quit)
 				{
-					switch (sdlEvent.type)
+					switch ((SDL.EventType)sdlEvent.Type)
 					{
-						case SDL.SDL_EventType.SDL_QUIT:
+						case SDL.EventType.Quit:
 							quit = true;
 							break;
 
-						case SDL.SDL_EventType.SDL_MOUSEMOTION:
-						case SDL.SDL_EventType.SDL_MOUSEBUTTONDOWN:
-							if (sdlEvent.motion.state == 1)
+						case SDL.EventType.MouseMotion:
+						case SDL.EventType.MouseButtonDown:
+							if (sdlEvent.Motion.State == SDL.MouseButtonFlags.Left)
 							{
-								int px = sdlEvent.motion.x / zoom;
-								int py = sdlEvent.motion.y / zoom;
+								int px = (int)sdlEvent.Motion.X / zoom;
+								int py = (int)sdlEvent.Motion.Y / zoom;
 								int page = RESX * (height / zoom);
 								mousePosition = (px % RESX) + (py * RESX) + (px / RESX * page) + (offset * DOS_CONV);
 							}
-							else if (sdlEvent.motion.state == 3)
+							else if (sdlEvent.Motion.State == SDL.MouseButtonFlags.Right)
 							{
 								mousePosition = -1;
 							}
 							break;
 
-						case SDL.SDL_EventType.SDL_MOUSEWHEEL:
-							if ((SDL.SDL_GetModState() & SDL.SDL_Keymod.KMOD_CTRL) != 0)
+						case SDL.EventType.MouseWheel:
+							if ((SDL.GetModState() & SDL.Keymod.Ctrl) != 0)
 							{
-								if (sdlEvent.wheel.y > 0)
+								if (sdlEvent.Wheel.Y > 0)
 								{
 									SetZoom(zoom + 1);
 								}
-								else if (sdlEvent.wheel.y < 0)
+								else if (sdlEvent.Wheel.Y < 0)
 								{
 									SetZoom(zoom - 1);
 								}
 							}
 							else
 							{
-								if (sdlEvent.wheel.y > 0)
+								if (sdlEvent.Wheel.Y > 0)
 								{
 									SetOffset(offset - 1);
 								}
-								else if (sdlEvent.wheel.y < 0)
+								else if (sdlEvent.Wheel.Y < 0)
 								{
 									SetOffset(offset + 1);
 								}
 							}
 							break;
 
-						case SDL.SDL_EventType.SDL_KEYDOWN:
-							bool control = (sdlEvent.key.keysym.mod & SDL.SDL_Keymod.KMOD_CTRL) != 0;
-							switch (sdlEvent.key.keysym.sym)
+						case SDL.EventType.KeyDown:
+							bool control = (sdlEvent.Key.Mod & SDL.Keymod.Ctrl) != 0;
+							switch (sdlEvent.Key.Key)
 							{
-								case SDL.SDL_Keycode.SDLK_SPACE:
+								case SDL.Keycode.Space:
 									mcb = !mcb;
-									SetRefreshState(true);
+									//SetRefreshState(true);
 									break;
 
-								case SDL.SDL_Keycode.SDLK_PAGEDOWN:
+								case SDL.Keycode.Pagedown:
 									SetOffset(offset + 1);
 									break;
 
-								case SDL.SDL_Keycode.SDLK_PAGEUP:
+								case SDL.Keycode.Pageup:
 									SetOffset(offset - 1);
 									break;
 
-								case SDL.SDL_Keycode.SDLK_p:
+								case SDL.Keycode.P:
 									showPalette = !showPalette;
-									SetRefreshState(true);
+									//SetRefreshState(true);
 									break;
 
-								case SDL.SDL_Keycode.SDLK_EQUALS:
-								case SDL.SDL_Keycode.SDLK_KP_PLUS:
+								case SDL.Keycode.Equals:
+								case SDL.Keycode.KpPlus:
 									if (control)
 									{
 										SetZoom(zoom + 1);
 									}
 									break;
 
-								case SDL.SDL_Keycode.SDLK_MINUS:
-								case SDL.SDL_Keycode.SDLK_KP_MINUS:
+								case SDL.Keycode.Minus:
+								case SDL.Keycode.KpMinus:
 									if (control)
 									{
 										SetZoom(zoom - 1);
 									}
 									break;
 
-								case SDL.SDL_Keycode.SDLK_0:
-								case SDL.SDL_Keycode.SDLK_KP_0:
+								case SDL.Keycode.Alpha0:
+								case SDL.Keycode.Kp0:
 									if (control)
 									{
 										SetZoom(2);
@@ -172,31 +188,26 @@ namespace MemoryViewer
 							}
 							break;
 
-						case SDL.SDL_EventType.SDL_WINDOWEVENT:
-							switch (sdlEvent.window.windowEvent)
-							{
-								case SDL.SDL_WindowEventID.SDL_WINDOWEVENT_RESIZED:
-									width = sdlEvent.window.data1;
-									height = sdlEvent.window.data2;
-									SetRefreshState(true);
-									mustClearScreen = true;
-									break;
+						case SDL.EventType.WindowResized:
+							width = sdlEvent.Window.Data1;
+							height = sdlEvent.Window.Data2;
+							//SetRefreshState(true);
+							//mustClearScreen = true;
+							break;
 
-								case SDL.SDL_WindowEventID.SDL_WINDOWEVENT_MINIMIZED:
-									minimized = true;
-									break;
+						case SDL.EventType.WindowMinimized:
+							minimized = true;
+							break;
 
-								case SDL.SDL_WindowEventID.SDL_WINDOWEVENT_MAXIMIZED:
-									minimized = false;
-									break;
-							}
+						case SDL.EventType.WindowMaximized:
+							minimized = false;
 							break;
 					}
 				}
 
 				if (process == null)
 				{
-					uint time = SDL.SDL_GetTicks();
+					ulong time = SDL.GetTicks();
 					if ((time - lastCheck) > 1000 || lastCheck == 0)
 					{
 						lastCheck = time;
@@ -210,7 +221,7 @@ namespace MemoryViewer
 				{
 					if (paletteAddress == -1)
 					{
-						uint time = SDL.SDL_GetTicks();
+						ulong time = SDL.GetTicks();
 						if ((time - lastCheckPalette) > 1000 || lastCheckPalette == 0)
 						{
 							lastCheckPalette = time;
@@ -260,10 +271,10 @@ namespace MemoryViewer
 				if (!minimized)
 				{
 					//render
-					if (mustClearScreen)
+					//if (mustClearScreen)
 					{
-						SDL.SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255);
-						SDL.SDL_RenderClear(renderer);
+						SDL.SetRenderDrawColor(renderer, 30, 30, 30, 255);
+						SDL.RenderClear(renderer);
 					}
 
 					int tm = (width + RESX * zoom - 1) / (RESX * zoom);
@@ -281,14 +292,14 @@ namespace MemoryViewer
 						RenderPalette(renderer, paletteTexture);
 					}
 
-					SDL.SDL_RenderPresent(renderer);
+					SDL.RenderPresent(renderer);
 
-					SetRefreshState(false);
-					mustClearScreen = false;
+					//SetRefreshState(false);
+					//mustClearScreen = false;
 				}
 				else
 				{
-					SDL.SDL_Delay(1);
+					SDL.Delay(1);
 				}
 
 				int address = mousePosition == -1 ? -1 : mousePosition - offset * DOS_CONV;
@@ -298,7 +309,7 @@ namespace MemoryViewer
 					{
 						lastMouseValue = pixelData[address];
 						lastMousePosition = mousePosition;
-						SDL.SDL_SetWindowTitle(window, $"{windowTitle} - {lastMousePosition:X} - {lastMouseValue}");
+						SDL.SetWindowTitle(window, $"{windowTitle} - {lastMousePosition:X} - {lastMouseValue}");
 					}
 				}
 				else
@@ -306,7 +317,7 @@ namespace MemoryViewer
 					if (mousePosition != lastMousePosition)
 					{
 						lastMousePosition = mousePosition;
-						SDL.SDL_SetWindowTitle(window, windowTitle);
+						SDL.SetWindowTitle(window, windowTitle);
 					}
 				}
 
@@ -314,10 +325,10 @@ namespace MemoryViewer
 				(oldPixelData, pixelData) = (pixelData, oldPixelData);
 			}
 
-			SDL.SDL_DestroyTexture(texture);
-			SDL.SDL_DestroyRenderer(renderer);
-			SDL.SDL_DestroyWindow(window);
-			SDL.SDL_Quit();
+			SDL.DestroyTexture(texture);
+			SDL.DestroyRenderer(renderer);
+			SDL.DestroyWindow(window);
+			SDL.Quit();
 
 			return 0;
 		}
@@ -357,7 +368,7 @@ namespace MemoryViewer
 
 				for (int k = 0 ; k < SCREENS ; k++)
 				{
-					bool refresh = false;
+					//bool refresh = false;
 					for (int i = 0 ; i < RESX * RESY ; i += 16)
 					{
 						if (*pixelsPtr != *oldPixelsPtr || *(pixelsPtr+1) != *(oldPixelsPtr+1))
@@ -367,7 +378,7 @@ namespace MemoryViewer
 								pixels[j] = palette[pixelData[j]];
 							}
 
-							refresh = true;
+							//refresh = true;
 						}
 						else if (needPaletteUpdate)
 						{
@@ -377,7 +388,7 @@ namespace MemoryViewer
 								if (needPaletteUpdate256[color] && j < (EMS + DOS_CONV))
 								{
 									pixels[j] = palette[color];
-									refresh = true;
+									//refresh = true;
 								}
 							}
 						}
@@ -387,7 +398,7 @@ namespace MemoryViewer
 						oldPixelsPtr += 2;
 					}
 
-					needRefresh[k] |= refresh;
+					//needRefresh[k] |= refresh;
 				}
 			}
 		}
@@ -431,13 +442,14 @@ namespace MemoryViewer
 					inverse = !inverse;
 				}
 
-				SetRefreshState(true);
+				//SetRefreshState(true);
 			}
 		}
 
 		static unsafe void Render(IntPtr renderer, IntPtr texture, int tm, int tn, uint[] source)
 		{
-			var textureRect = new SDL.SDL_Rect { x = 0, y = 0, w = RESX, h = RESY };
+			var textureRect = new SDL.Rect { X = 0, Y = 0, W = RESX, H = RESY };
+			var textureRectF = new SDL.FRect { X = 0, Y = 0, W = RESX, H = RESY };
 
 			int skip = 0;
 			for (int m = 0; m < tm; m++)
@@ -455,16 +467,16 @@ namespace MemoryViewer
 					int index = position / (RESX * RESY);
 					int nextIndex = (nextPosition - 1) / (RESX * RESY);
 
-					if (needRefresh[index] || needRefresh[nextIndex])
+					//if (needRefresh[index] || needRefresh[nextIndex])
 					{
 						fixed (uint* pixelsBuf = &source[position])
 						{
-							SDL.SDL_UpdateTexture(texture, ref textureRect, (IntPtr)pixelsBuf, RESX * sizeof(uint));
+							SDL.UpdateTexture(texture, in textureRect, (IntPtr)pixelsBuf, RESX * sizeof(uint));
 						}
 
-						var drawRect = new SDL.SDL_Rect { x = m * RESX * zoom, y = n * RESY * zoom, w = RESX * zoom, h = RESY * zoom };
+						var drawRect = new SDL.FRect { X = m * RESX * zoom, Y = n * RESY * zoom, W = RESX * zoom, H = RESY * zoom };
 
-						SDL.SDL_RenderCopy(renderer, texture, ref textureRect, ref drawRect);
+						SDL.RenderTexture(renderer, texture, in textureRectF, in drawRect);
 					}
 				}
 
@@ -474,24 +486,25 @@ namespace MemoryViewer
 
 		static unsafe void RenderPalette(IntPtr renderer, IntPtr texture)
 		{
-			var textureRect = new SDL.SDL_Rect	{ x = 0, y = 0, w = 16, h = 16 };
-			var drawRect = new SDL.SDL_Rect { x = 0, y = 0, w = RESX * zoom, h = RESX * zoom };
+			var textureRect = new SDL.Rect{ X = 0, Y = 0, W = 16, H = 16 };
+			var textureRectF = new SDL.FRect { X = 0, Y = 0, W = 16, H = 16 };
+			var drawRect = new SDL.FRect { X = 0, Y = 0, W = RESX * zoom, H = RESX * zoom };
 
 			fixed (uint* pixelsBuf = &palette[0])
 			{
-				SDL.SDL_UpdateTexture(texture, ref textureRect, (IntPtr)pixelsBuf, 16 * sizeof(uint));
+				SDL.UpdateTexture(texture, in textureRect, (IntPtr)pixelsBuf, 16 * sizeof(uint));
 			}
 
-			SDL.SDL_RenderCopy(renderer, texture, ref textureRect, ref drawRect);
+			SDL.RenderTexture(renderer, texture, in textureRectF, in drawRect);
 		}
 
-		static void SetRefreshState(bool state)
-		{
-			for (int i = 0 ; i < SCREENS ; i++)
-			{
-				needRefresh[i] = state;
-			}
-		}
+		//static void SetRefreshState(bool state)
+		//{
+		//	for (int i = 0 ; i < SCREENS ; i++)
+		//	{
+		//		needRefresh[i] = state;
+		//	}
+		//}
 
 		static void ClearAll()
 		{
@@ -499,7 +512,7 @@ namespace MemoryViewer
 			Array.Clear(oldPixelData, 0, oldPixelData.Length);
 			Array.Clear(pixels, 0, pixels.Length);
 			Array.Clear(mcbPixels, 0, mcbPixels.Length);
-			SetRefreshState(true);
+			//SetRefreshState(true);
 		}
 
 		static void SetZoom(int newZoom)
@@ -507,8 +520,8 @@ namespace MemoryViewer
 			if (newZoom != zoom && newZoom >= 1 && newZoom <= 8)
 			{
 				zoom = newZoom;
-				mustClearScreen = true;
-				SetRefreshState(true);
+				//mustClearScreen = true;
+				//SetRefreshState(true);
 			}
 		}
 
@@ -519,7 +532,7 @@ namespace MemoryViewer
 			if (offset != newOffset && newOffset >= 0 && newOffset < MAXOFFSET)
 			{
 				offset = newOffset;
-				SetRefreshState(true);
+				//SetRefreshState(true);
 			}
 		}
 	}
