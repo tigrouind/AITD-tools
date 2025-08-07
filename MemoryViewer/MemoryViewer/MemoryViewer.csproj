@@ -32,15 +32,14 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Shared\Shared.csproj" />
-    <ProjectReference Include="..\SDL\SDL.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\SDL\SDL2.dll">
-      <Link>SDL2.dll</Link>
+    <PackageReference Include="SDL3-CS" Version="3.2.20" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta6.25358.103" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="SDL3.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="System.CommandLine" Version="2.0.0-beta6.25358.103" />
   </ItemGroup>
 </Project>
