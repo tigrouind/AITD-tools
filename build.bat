@@ -1,5 +1,6 @@
 @echo off
 
+del "AITD-tools.zip"
 rd /s/q ".\LifeDISA\LifeDISA\bin\Release\net9.0-windows\"
 rd /s/q ".\MemoryViewer\MemoryViewer\bin\Release\net9.0-windows\"
 rd /s/q ".\TrackDISA\TrackDISA\bin\Release\net9.0\"
