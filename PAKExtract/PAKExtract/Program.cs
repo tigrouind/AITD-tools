@@ -71,7 +71,13 @@ namespace PAKExtract
 				files = [RootFolder];
 			}
 
-			string[] pakFiles = [.. GetFiles(files)];
+			var errors = new List<string>();
+			string[] pakFiles = [.. GetFiles(files, errors)];
+
+			if (errors.Any())
+			{
+				Console.Error.WriteLine($"Cannot find file(s) or folder(s): {string.Join(", ", errors.Select(x => $"'{x}'"))}");
+			}
 
 			var compressType = new[] { "-", "INFLATE", "", "", "DEFLATE" };
 			if (info && pakFiles.Any())
@@ -106,7 +112,7 @@ namespace PAKExtract
 			}
 		}
 
-		static IEnumerable<string> GetFiles(string[] args)
+		static IEnumerable<string> GetFiles(string[] args, List<string> errors)
 		{
 			foreach (var arg in args)
 			{
@@ -127,8 +133,7 @@ namespace PAKExtract
 				}
 				else
 				{
-					Console.Error.WriteLine($"Cannot find file or folder '{arg}'");
-					yield break;
+					errors.Add(arg);
 				}
 			}
 		}
