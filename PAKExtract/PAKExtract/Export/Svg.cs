@@ -239,9 +239,9 @@ namespace PAKExtract
 						new XAttribute("height", Math.Ceiling((yMax - yMin) * scale + padding * 2)),
 						new XElement(ns + "style",
 							"text { font-family: arial; fill: whitesmoke; text-anchor: middle; dominant-baseline: central; } ",
-							".colliders rect { stroke: black; fill: none; stroke-width: 25; }\n" +
-							".colliders rect.link { stroke: chocolate; }\n" +
-							".colliders rect.interact { stroke: gray; }\n" +
+							".colliders rect { stroke: black; fill: none; stroke-width: 25; fill: lightgray; }\n" +
+							".colliders rect.link { stroke: chocolate; fill: none; }\n" +
+							".colliders rect.interact { stroke: teal; fill: paleturquoise }\n" +
 							".triggers rect { fill-opacity:0.1; }\n" +
 							".triggers rect.custom { fill: orange; }\n" +
 							".triggers rect.exit { fill: yellow; }\n" +
