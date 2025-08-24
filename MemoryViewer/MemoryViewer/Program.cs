@@ -11,6 +11,7 @@ namespace MemoryViewer
 		const int RESX = 320, RESY = 200;
 		const int DOS_CONV = 640 * 1024;
 		const int EMS = 64000;
+		const int EMS_ADDRESS = (1024 + 192) * 1024;
 		const int SCREENS = (DOS_CONV + EMS + RESX * RESY - 1) / (RESX * RESY) + 1; //round up + one extra screen for left over between columns
 
 		//static readonly bool[] needRefresh = new bool[SCREENS];
@@ -19,7 +20,6 @@ namespace MemoryViewer
 		static bool needPaletteUpdate;
 		static readonly bool[] needPaletteUpdate256 = new bool[256];
 		static int offset;
-		static int mousePosition = -1, lastMousePosition = -1, lastMouseValue = -1;
 
 		static byte[] pixelData = new byte[RESX * RESY * SCREENS];
 		static byte[] oldPixelData = new byte[RESX * RESY * SCREENS];
@@ -30,7 +30,8 @@ namespace MemoryViewer
 		static readonly byte[] palette256 = new byte[768];
 
 		static int width, height, zoom;
-		const string windowTitle = "AITD memory viewer";
+		const string windowText = "AITD memory viewer";
+		static string windowTitle, lastWindowTitle;
 
 		static int Main(string[] args)
 		{
@@ -81,7 +82,7 @@ namespace MemoryViewer
 
 			IntPtr paletteTexture = SDL.CreateTexture(renderer, SDL.PixelFormat.ARGB8888, SDL.TextureAccess.Streaming, 16, 16);
 			SDL.SetTextureScaleMode(paletteTexture, SDL.ScaleMode.Nearest);
-
+			UpdateTitle();
 			//SetRefreshState(true);
 
 			bool quit = false, mcb = false, minimized = false, showPalette = false;
@@ -106,12 +107,35 @@ namespace MemoryViewer
 							{
 								int px = (int)sdlEvent.Motion.X / zoom;
 								int py = (int)sdlEvent.Motion.Y / zoom;
-								int page = RESX * (height / zoom);
-								mousePosition = (px % RESX) + (py * RESX) + (px / RESX * page) + (offset * DOS_CONV);
+								int palX = px / 20;
+								int palY = py / 20;
+
+								if (showPalette && palX < 16 && palY < 16)
+								{
+									int index = palX + palY * 16;
+									windowTitle = $"{index} - 0x{palette[index] & 0xFFFFFF:X6}";
+								}
+								else
+								{
+									int page = RESX * (height / zoom);
+									int mousePosition = (px % RESX) + (py * RESX) + (px / RESX * page) + (offset * DOS_CONV);
+
+									int address = mousePosition - offset * DOS_CONV;
+									if (address >= 0 && address < pixelData.Length && address < (DOS_CONV + EMS))
+									{
+										if (address >= DOS_CONV) mousePosition = address - DOS_CONV + EMS_ADDRESS;
+										windowTitle = $"{mousePosition:X} - 0x{pixelData[address]:X2} ({pixelData[address]})";
+									}
+									else
+									{
+										UpdateTitle();
+									}
+								}
+
 							}
 							else if (sdlEvent.Motion.State == SDL.MouseButtonFlags.Right)
 							{
-								mousePosition = -1;
+								UpdateTitle();
 							}
 							break;
 
@@ -132,10 +156,12 @@ namespace MemoryViewer
 								if (sdlEvent.Wheel.Y > 0)
 								{
 									SetOffset(offset - 1);
+									UpdateTitle();
 								}
 								else if (sdlEvent.Wheel.Y < 0)
 								{
 									SetOffset(offset + 1);
+									UpdateTitle();
 								}
 							}
 							break;
@@ -151,14 +177,17 @@ namespace MemoryViewer
 
 								case SDL.Keycode.Pagedown:
 									SetOffset(offset + 1);
+									UpdateTitle();
 									break;
 
 								case SDL.Keycode.Pageup:
 									SetOffset(offset - 1);
+									UpdateTitle();
 									break;
 
 								case SDL.Keycode.P:
 									showPalette = !showPalette;
+									UpdateTitle();
 									//SetRefreshState(true);
 									break;
 
@@ -242,7 +271,7 @@ namespace MemoryViewer
 					//DOS conventional memory (640KB)
 					//EMS memory (64000B) (skip 64KB (HMA) + 128KB (VCPI))
 					if (!(process.Read(pixelData, offset * DOS_CONV, DOS_CONV) > 0 &&
-						process.Read(pixelData, (1024 + 192) * 1024, EMS, DOS_CONV) > 0))
+						process.Read(pixelData, EMS_ADDRESS, EMS, DOS_CONV) > 0))
 					{
 						process.Close();
 						process = null;
@@ -287,7 +316,7 @@ namespace MemoryViewer
 						Render(renderer, texture, tm, tn, mcbPixels);
 					}
 
-					if (showPalette && offset == 0)
+					if (showPalette)
 					{
 						RenderPalette(renderer, paletteTexture);
 					}
@@ -302,23 +331,10 @@ namespace MemoryViewer
 					SDL.Delay(1);
 				}
 
-				int address = mousePosition == -1 ? -1 : mousePosition - offset * DOS_CONV;
-				if (address >= 0 && address < pixelData.Length)
+				if (windowTitle != lastWindowTitle)
 				{
-					if (mousePosition != lastMousePosition || lastMouseValue != pixelData[address])
-					{
-						lastMouseValue = pixelData[address];
-						lastMousePosition = mousePosition;
-						SDL.SetWindowTitle(window, $"{windowTitle} - {lastMousePosition:X} - {lastMouseValue}");
-					}
-				}
-				else
-				{
-					if (mousePosition != lastMousePosition)
-					{
-						lastMousePosition = mousePosition;
-						SDL.SetWindowTitle(window, windowTitle);
-					}
+					SDL.SetWindowTitle(window, $"{windowText} - {windowTitle}");
+					lastWindowTitle = windowTitle;
 				}
 
 				//swap buffers
@@ -331,6 +347,11 @@ namespace MemoryViewer
 			SDL.Quit();
 
 			return 0;
+
+			void UpdateTitle()
+			{
+				windowTitle = $"{offset * DOS_CONV:X}:{(offset + 1) * DOS_CONV:X}";
+			}
 		}
 
 		static void UpdatePalette()
