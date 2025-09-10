@@ -2,7 +2,7 @@
 
 # Requirements
 
-You need to install [.NET Desktop Runtime 9.0](https://dotnet.microsoft.com/en-us/download/dotnet/9.0) (Windows 10 or newer) to run the tools.
+You need to install [.NET Desktop Runtime 9.0](https://dotnet.microsoft.com/en-us/download/dotnet/9.0) (requires Windows 10 or newer) to run the tools. Unless you are a developer, you don't need the SDK, the runtime Windows x64 version is enough.
 
 # LifeDISA
 
@@ -33,6 +33,8 @@ LifeDISA -version {AITD1|AITD1_FLOPPY|AITD1_DEMO|AITD2|AITD2_DEMO|AITD3|JACK|TIM
 
 # TrackDISA
 
+This is a disassembler for TRACK scripts in Alone in the Dark series.
+
 ## Supported 
 Same as [LifeDISA](#LifeDISA)
 
@@ -45,7 +47,7 @@ TrackDISA -version {AITD1|AITD1_FLOPPY|AITD1_DEMO|AITD2|AITD2_DEMO|AITD3|JACK|TI
 
 ## Instructions  
 
-Copy file *LISTTRAK.PAK* into a folder named GAMEDATA
+Copy file *LISTTRAK.PAK* into a folder named GAMEDATA, then run TrackDISA executable.
 
 # MemoryViewer
 
@@ -53,7 +55,7 @@ Allow to view DOS memory in realtime. Each pixel is a byte.
 Current VGA palette is automatically loaded.
 
 Supported :
-* All DOS games (even non AITD related)
+* Most DOS games (even non AITD related)
 
 ## Command-line arguments
 ```
