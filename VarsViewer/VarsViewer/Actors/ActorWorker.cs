@@ -387,32 +387,24 @@ namespace VarsViewer
 		}
 
 		int RowCount => actors.Count(actor => actor.Id != -1 || showAll || actor.Deleted);
+		int PageHeight => Console.WindowHeight - 2;
+
+		void Scroll(int delta)
+		{
+			scroll += delta;
+			scroll = Math.Max(Math.Min(scroll, RowCount - PageHeight), 0); //do not scroll more that needed
+		}
 
 		void IWorker.KeyDown(ConsoleKeyInfo key)
 		{
 			switch (key.Key)
 			{
 				case ConsoleKey.PageDown:
-					{
-						int height = Console.WindowHeight - 2;
-						if (height > 0)
-						{
-							scroll += height;
-							scroll = Math.Min(scroll, RowCount / height * height); //do not scroll more that needed
-						}
-					}
+					Scroll(PageHeight);
 					break;
 
 				case ConsoleKey.PageUp:
-					if (scroll > 0)
-					{
-						int height = Console.WindowHeight - 2;
-						if (height > 0)
-						{
-							scroll -= height;
-							scroll = Math.Max(0, scroll);
-						}
-					}
+					Scroll(-PageHeight);
 					break;
 
 				case ConsoleKey.Spacebar:
@@ -478,14 +470,7 @@ namespace VarsViewer
 
 		void IWorker.MouseWheel(int delta)
 		{
-			if (delta > 0)
-			{
-				((IWorker)this).KeyDown(new ConsoleKeyInfo((char)0, ConsoleKey.PageUp, false, false, false));
-			}
-			else
-			{
-				((IWorker)this).KeyDown(new ConsoleKeyInfo((char)0, ConsoleKey.PageDown, false, false, false));
-			}
+			Scroll(-3 * Math.Sign(delta));
 		}
 
 		void ClearTab()
