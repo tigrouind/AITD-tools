@@ -151,6 +151,11 @@ namespace VarsViewer
 				{
 					worker.MouseWheel(delta);
 				};
+
+				Console.Resize += (sender, size) =>
+				{
+					worker.Resize(size.width, size.height);
+				};
 			}
 		}
 

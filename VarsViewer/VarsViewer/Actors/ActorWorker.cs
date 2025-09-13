@@ -387,7 +387,7 @@ namespace VarsViewer
 		}
 
 		int RowCount => actors.Count(actor => actor.Id != -1 || showAll || actor.Deleted);
-		int PageHeight => Console.WindowHeight - 2;
+		static int PageHeight => Console.WindowHeight - 2;
 
 		void Scroll(int delta)
 		{
@@ -525,6 +525,11 @@ namespace VarsViewer
 
 			result = (null, null);
 			return false;
+		}
+
+		public void Resize(int width, int height)
+		{
+			Scroll(0);
 		}
 	}
 }

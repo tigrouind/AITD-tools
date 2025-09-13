@@ -492,6 +492,10 @@ namespace VarsViewer
 		{
 		}
 
+		public void Resize(int width, int height)
+		{
+		}
+
 		#endregion
 	}
 }

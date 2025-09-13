@@ -203,6 +203,7 @@ namespace VarsViewer
 		public static event EventHandler<(int x, int y)> MouseMove;
 		public static event EventHandler<(int x, int y)> MouseDown;
 		public static event EventHandler<int> MouseWheel;
+		public static event EventHandler<(int width, int height)> Resize;
 
 		static Console()
 		{
@@ -358,6 +359,7 @@ namespace VarsViewer
 						forceRefresh = true;
 						WindowWidth = ir.windowBufferSizeEvent.X;
 						WindowHeight = ir.windowBufferSizeEvent.Y;
+						Resize.Invoke(null, (WindowWidth, WindowHeight));
 						break;
 				}
 			}

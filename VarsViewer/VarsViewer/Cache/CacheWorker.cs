@@ -307,5 +307,10 @@ namespace VarsViewer
 		void IWorker.MouseWheel(int delta)
 		{
 		}
+
+		public void Resize(int width, int height)
+		{
+
+		}
 	}
 }
