@@ -262,6 +262,15 @@ namespace MemoryViewer
 							{
 								paletteAddress += pattern.Length;
 							}
+							else
+							{
+								for (int i = 0; i < 256; i++) //default black & white palette
+								{
+									palette256[i * 3 + 0] = (byte)(i / 4);
+									palette256[i * 3 + 1] = (byte)(i / 4);
+									palette256[i * 3 + 2] = (byte)(i / 4);
+								}
+							}
 						}
 					}
 				}
