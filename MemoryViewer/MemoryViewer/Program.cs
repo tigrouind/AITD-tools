@@ -1,6 +1,7 @@
 using System;
 using System.CommandLine;
 using System.Linq;
+using System.Numerics;
 using SDL3;
 using Shared;
 
@@ -386,50 +387,43 @@ namespace MemoryViewer
 			}
 		}
 
-		static unsafe void Update()
+		static void Update()
 		{
 			//compare current vs old and only update pixels that have changed
-			fixed (byte* pixelsBytePtr = pixelData)
-			fixed (byte* oldPixelsBytePtr = oldPixelData)
+			int start = 0;
+			Debug.Assert(pixelData.Length % Vector<byte>.Count == 0);
+			for (int k = 0 ; k < SCREENS ; k++)
 			{
-				ulong* pixelsPtr = (ulong*)pixelsBytePtr;
-				ulong* oldPixelsPtr = (ulong*)oldPixelsBytePtr;
-				int start = 0;
-
-				for (int k = 0 ; k < SCREENS ; k++)
+				//bool refresh = false;
+				for (int i = 0; i < RESX * RESY; i += Vector<byte>.Count)
 				{
-					//bool refresh = false;
-					for (int i = 0 ; i < RESX * RESY ; i += 16)
+					var va = new Vector<byte>(pixelData, start);
+					var vb = new Vector<byte>(oldPixelData, start);
+					if (!Vector.EqualsAll(va, vb))
 					{
-						if (*pixelsPtr != *oldPixelsPtr || *(pixelsPtr+1) != *(oldPixelsPtr+1))
+						for (int j = start; j < start + Vector<byte>.Count; j++)
 						{
-							for (int j = start ; j < start + 16 ; j++)
-							{
-								pixels[j] = palette[pixelData[j]];
-							}
-
-							//refresh = true;
+							pixels[j] = palette[pixelData[j]];
 						}
-						else if (needPaletteUpdate)
+						//refresh = true;
+					}
+					else if (needPaletteUpdate)
+					{
+						for (int j = start; j < start + Vector<byte>.Count; j++)
 						{
-							for (int j = start ; j < start + 16 ; j++)
+							byte color = pixelData[j];
+							if (needPaletteUpdate256[color] && j < (EMS + DOS_CONV))
 							{
-								byte color = pixelData[j];
-								if (needPaletteUpdate256[color] && j < (EMS + DOS_CONV))
-								{
-									pixels[j] = palette[color];
-									//refresh = true;
-								}
+								pixels[j] = palette[color];
+								//refresh = true;
 							}
 						}
-
-						start += 16;
-						pixelsPtr += 2;
-						oldPixelsPtr += 2;
 					}
 
-					//needRefresh[k] |= refresh;
+					start += Vector<byte>.Count;
 				}
+
+				//needRefresh[k] |= refresh;
 			}
 		}
 
