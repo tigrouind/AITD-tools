@@ -162,3 +162,26 @@ PAKExtract archive LISTLIFE
 ```
 PAKExtract info LISTLIFE.PAK 
 ```
+
+
+# MoviePlayer
+
+This allow to record a game session and then play it back for study.
+All tools from here are compatible as the player imitates DOSBox during playback.
+
+## Instructions
+- Copy the file *movie.dat* to same place as executable (which should be named *DOSBox.exe*). By default, it will always load the latest file written with a *.dat* extension.
+
+You can also drop a specific movie on the executable.
+
+## Commands
+| Key | Description |
+| :-: | - |
+| <kbd>F5</kbd> | Play / pause
+| <kbd>Shift</kbd> + <kbd>F5</kbd> | Record (any movie being played has to be stopped before)
+| <kbd>F6</kbd> | Single frame advance
+| <kbd>F7</kbd> | Fast forward (should be held down)
+| <kbd>F8</kbd> | Stop
+| <kbd>Shift</kbd> + <kbd>1</kbd> ... <kbd>9</kbd> | Save state 1-9
+| <kbd>1</kbd> ... <kbd>9</kbd> | Restore state 1-9
+

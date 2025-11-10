@@ -4,3 +4,4 @@ obj/
 *.user
 VarsViewer/packages/
 /GAMEDATA
+.idea/

@@ -60,7 +60,10 @@ namespace VarsViewer
 					Process = DosBox.SearchDosBox();
 					if (Process != null)
 					{
-						SearchEntryPoint();
+						if (!DosBox.TrySearchEntryPoint(Process, Memory, out EntryPoint, out GameVersion))
+						{
+							CloseReader();
+						}
 					}
 					dosboxTimer.Restart();
 				}
@@ -159,27 +162,6 @@ namespace VarsViewer
 			}
 		}
 
-		static void SearchEntryPoint()
-		{
-			if (Process.Read(Memory, 0, Memory.Length) > 0 &&
-				DosBox.GetExeEntryPoint(Memory, out EntryPoint))
-			{
-				//check if CDROM/floppy version
-				byte[] cdPattern = Encoding.ASCII.GetBytes("CD Not Found");
-				GameVersion = Shared.Tools.IndexOf(Memory, cdPattern) != -1 ? GameVersion.AITD1 : GameVersion.AITD1_FLOPPY;
-				if (GameVersion == GameVersion.AITD1_FLOPPY)
-				{
-					if (Shared.Tools.IndexOf(Memory, Encoding.ASCII.GetBytes("USA.PAK")) != -1)
-					{
-						GameVersion = GameVersion.AITD1_DEMO;
-					}
-				}
-			}
-			else
-			{
-				CloseReader();
-			}
-		}
 
 		static void CloseReader()
 		{
