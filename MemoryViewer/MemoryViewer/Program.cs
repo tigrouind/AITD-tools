@@ -1,5 +1,6 @@
 using System;
 using System.CommandLine;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using SDL3;
@@ -21,6 +22,7 @@ namespace MemoryViewer
 		static bool needPaletteUpdate;
 		static readonly bool[] needPaletteUpdate256 = new bool[256];
 		static int offset;
+		static bool palette8bit;
 
 		static byte[] pixelData = new byte[RESX * RESY * SCREENS];
 		static byte[] oldPixelData = new byte[RESX * RESY * SCREENS];
@@ -255,6 +257,7 @@ namespace MemoryViewer
 						if ((time - lastCheckPalette) > 1000 || lastCheckPalette == 0)
 						{
 							lastCheckPalette = time;
+							palette8bit = false;
 
 							//3 bytes + EGA 16 colors palette (see DOSBox VGA_Dac in vga.h)
 							var pattern = new byte[] { 0x01, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
@@ -262,6 +265,11 @@ namespace MemoryViewer
 							if (paletteAddress != -1)
 							{
 								paletteAddress += pattern.Length;
+							}
+							else if (DosBox.TrySearchEntryPoint(process, pixelData, out var entryPoint, out var gameVersion, 640 * 1024) && gameVersion == GameVersion.AITD1)
+							{
+								paletteAddress = entryPoint + 0x21D64;
+								palette8bit = true;
 							}
 							else
 							{
@@ -375,7 +383,8 @@ namespace MemoryViewer
 				var g = palette256[src++];
 				var b = palette256[src++];
 
-				uint val = unchecked((uint)((255 << 24) | ((r << 2) | (r >> 4)) << 16 | ((g << 2) | (g >> 4)) << 8 | ((b << 2) | (b >> 4)) << 0));
+				uint val = palette8bit ? unchecked((uint)((255 << 24) | (r << 16) | (g << 8) | b)) :
+					unchecked((uint)((255 << 24) | ((r << 2) | (r >> 4)) << 16 | ((g << 2) | (g >> 4)) << 8 | (b << 2) | (b >> 4)));
 				bool diff = palette[i] != val;
 				needPaletteUpdate256[i] = diff;
 

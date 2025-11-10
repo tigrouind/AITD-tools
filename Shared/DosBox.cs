@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 
 namespace Shared
 {
@@ -9,8 +10,9 @@ namespace Shared
 	{
 		static IEnumerable<int> GetProcesses()
 		{
+			int processId = Process.GetCurrentProcess().Id;
 			return Process.GetProcesses()
-				.Where(x => GetProcessName(x).StartsWith("DOSBOX", StringComparison.InvariantCultureIgnoreCase))
+				.Where(x => GetProcessName(x).StartsWith("DOSBOX", StringComparison.InvariantCultureIgnoreCase) && x.Id != processId)
 				.Select(x => x.Id);
 		}
 
@@ -79,6 +81,30 @@ namespace Shared
 			}
 
 			entryPoint = -1;
+			return false;
+		}
+
+		public static bool TrySearchEntryPoint(ProcessMemory process, byte[] memory, out int entryPoint, out GameVersion gameVersion, int length = 640 * 1024)
+		{
+			if (process.Read(memory, 0, length) > 0 &&
+				GetExeEntryPoint(memory, out entryPoint))
+			{
+				//check if CDROM/floppy version
+				byte[] cdPattern = Encoding.ASCII.GetBytes("CD Not Found");
+				gameVersion = Tools.IndexOf(memory, cdPattern) != -1 ? GameVersion.AITD1 : GameVersion.AITD1_FLOPPY;
+				if (gameVersion == GameVersion.AITD1_FLOPPY)
+				{
+					if (Tools.IndexOf(memory, Encoding.ASCII.GetBytes("USA.PAK")) != -1)
+					{
+						gameVersion = GameVersion.AITD1_DEMO;
+					}
+				}
+
+				return true;
+			}
+
+			entryPoint = default;
+			gameVersion = default;
 			return false;
 		}
 	}
