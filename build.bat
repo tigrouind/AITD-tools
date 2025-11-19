@@ -53,9 +53,12 @@ if %ERRORLEVEL% NEQ 0 pause
  "-mx=9"
 if %ERRORLEVEL% NEQ 0 pause
  
+
+md "%TEMP%\GAMEDATA"
+copy /y ".\GAMEDATA\vars.txt" "%TEMP%\GAMEDATA"
+ 
 "%PROGRAMFILES%\7-Zip\7z" a -tzip "AITD-tools.zip" ^
- ".\LifeDISA\LifeDISA\bin\Debug\net9.0-windows\GAMEDATA\vars.txt" ^
- "-x!*\" ^
+ "%TEMP%\GAMEDATA" ^
  "LifeDISA.zip" ^
  "MemoryViewer.zip" ^
  "TrackDISA.zip" ^
@@ -64,9 +67,7 @@ if %ERRORLEVEL% NEQ 0 pause
  "-mx=9" 
 if %ERRORLEVEL% NEQ 0 pause
 
-"%PROGRAMFILES%\7-Zip\7z" rn "AITD-tools.zip" "vars.txt" "GAMEDATA\vars.txt"
-if %ERRORLEVEL% NEQ 0 pause
-
+rd /s/q "%TEMP%\GAMEDATA"
 del "LifeDISA.zip"
 del "MemoryViewer.zip"
 del "TrackDISA.zip"
