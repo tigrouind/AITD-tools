@@ -4,17 +4,26 @@ using System.Numerics;
 
 namespace MoviePlayer
 {
-	public class MovieReader(string filePath) : IDisposable
+	public class MovieReader : IDisposable
 	{
 		public const int DELTA_SIZE = 512;
 
-		readonly BinaryReader reader = new(new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read));
+		readonly BinaryReader reader;
 		bool endOfMovie;
 		BinaryReader? decoder;
 		int frames, currentFrame;
 		readonly Dictionary<int, (long Position, byte[] Memory)> keyFrames = [];
 
-		public (int TotalFrame, TimeSpan TotalTime) ReadHeader()
+		public readonly int TotalFrames;
+		public readonly TimeSpan TotalTime;
+
+		public MovieReader(string filePath)
+		{
+			reader = new(new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read));
+			(TotalFrames, TotalTime) = ReadHeader();
+		}
+
+		(int TotalFrames, TimeSpan TotalTime) ReadHeader()
 		{
 			return (reader.ReadInt32(), new TimeSpan(reader.ReadInt64()));
 		}
@@ -75,7 +84,7 @@ namespace MoviePlayer
 			endOfMovie = false;
 			frames = 0;
 
-			if (keyFrame == default)
+			if (keyFrame == default) //no keyframe found, start from beginning
 			{
 				ReadHeader();
 				Array.Clear(memory, 0, memory.Length);

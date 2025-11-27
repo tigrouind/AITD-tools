@@ -2,9 +2,9 @@
 
 namespace MoviePlayer
 {
-	public class MovieWriter(string filePath) : IDisposable
+	public class MovieWriter : IDisposable
 	{
-		readonly BinaryWriter writer = new(File.Create(filePath));
+		readonly BinaryWriter writer;
 
 		readonly byte[] previousMemory = new byte[640 * 1024];
 
@@ -15,7 +15,13 @@ namespace MoviePlayer
 		int totalFrames;
 		TimeSpan totalTime;
 
-		public void WriteHeader()
+		public MovieWriter(string filePath)
+		{
+			writer = new(File.Create(filePath));
+			WriteHeader();
+		}
+
+		void WriteHeader()
 		{
 			writer.Write(totalFrames);
 			writer.Write(totalTime.Ticks);
@@ -42,8 +48,8 @@ namespace MoviePlayer
 			{
 				Array.Copy(memory, delta, previousMemory, delta, MovieReader.DELTA_SIZE);
 
-				encoder!.Write((ushort)(delta / MovieReader.DELTA_SIZE));
-				encoder!.Write(memory.AsSpan(delta, MovieReader.DELTA_SIZE));
+				encoder.Write((ushort)(delta / MovieReader.DELTA_SIZE));
+				encoder.Write(memory.AsSpan(delta, MovieReader.DELTA_SIZE));
 			}
 
 			//statistics

@@ -16,8 +16,9 @@ public class Movie : IDisposable
 
 	public TimeSpan CurrentTime { get; private set; }
 	public int CurrentFrame { get; private set; }
-	public TimeSpan TotalTime { get; private set; }
-	public int TotalFrames { get; private set; }
+
+	public TimeSpan TotalTime => reader?.TotalTime ?? TimeSpan.Zero;
+	public int TotalFrames => reader?.TotalFrames ?? 0;
 
 	public byte[] Memory => memory;
 
@@ -51,8 +52,6 @@ public class Movie : IDisposable
 		Stop();
 		reader = new MovieReader(filePath);
 
-		(TotalFrames, TotalTime) = reader.ReadHeader();
-
 		if (reader.ReadFrame(memory, out var nextTime))
 		{
 			CurrentTime = nextTime;
@@ -64,7 +63,6 @@ public class Movie : IDisposable
 	{
 		Stop();
 		writer = new MovieWriter(filePath);
-		writer.WriteHeader();
 	}
 
 	public bool Stop()
