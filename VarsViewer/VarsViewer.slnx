@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="../Shared/Shared.csproj" />
+  <Project Path="VarsViewer/VarsViewer.csproj" />
+</Solution>

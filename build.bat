@@ -8,17 +8,17 @@ rd /s/q ".\VarsViewer\VarsViewer\bin\Release\net9.0\"
 rd /s/q ".\PAKExtract\PAKExtract\bin\Release\net9.0-windows\"
 rd /s/q ".\MoviePlayer\MoviePlayer\bin\Release\net9.0\"
 
-dotnet build -c Release ".\LifeDISA\LifeDISA.sln"
+dotnet build -c Release ".\LifeDISA\LifeDISA.slnx"
 if %ERRORLEVEL% NEQ 0 pause
-dotnet build -c Release ".\MemoryViewer\MemoryViewer.sln"
+dotnet build -c Release ".\MemoryViewer\MemoryViewer.slnx"
 if %ERRORLEVEL% NEQ 0 pause
-dotnet build -c Release ".\TrackDISA\TrackDISA.sln"
+dotnet build -c Release ".\TrackDISA\TrackDISA.slnx"
 if %ERRORLEVEL% NEQ 0 pause
-dotnet build -c Release ".\VarsViewer\VarsViewer.sln"
+dotnet build -c Release ".\VarsViewer\VarsViewer.slnx"
 if %ERRORLEVEL% NEQ 0 pause
-dotnet build -c Release ".\PAKExtract\PAKExtract.sln"
+dotnet build -c Release ".\PAKExtract\PAKExtract.slnx"
 if %ERRORLEVEL% NEQ 0 pause
-dotnet build -c Release ".\MoviePlayer\MoviePlayer.sln"
+dotnet build -c Release ".\MoviePlayer\MoviePlayer.slnx"
 if %ERRORLEVEL% NEQ 0 pause
 
 if exist C:\MinGW\bin\gcc.exe (
