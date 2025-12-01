@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="../Shared/Shared.csproj" />
+  <Project Path="MoviePlayer/MoviePlayer.csproj" />
+</Solution>
