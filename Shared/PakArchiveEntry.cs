@@ -1,5 +1,3 @@
-using System.Linq;
-
 namespace Shared
 {
 	public class PakArchiveEntry
@@ -13,6 +11,7 @@ namespace Shared
 		public byte[] Extra;
 
 		internal byte[] Data;
+		internal byte[] UncompressedData;
 		internal byte CompressionFlags;
 		internal ushort Offset;
 
@@ -22,19 +21,25 @@ namespace Shared
 			Index = index;
 		}
 
-		public PakArchiveEntry(byte[] data, byte[] extra, byte[] compressedData)
+		public PakArchiveEntry(int uncompressedSize, byte[] extra, byte[] compressedData, byte compressionType)
 		{
 			Data = compressedData;
 			CompressedSize = compressedData.Length;
-			CompressionType = (byte)(Enumerable.SequenceEqual(data, compressedData) ? 0 : 4);
-			UncompressedSize = data.Length;
+			CompressionType = compressionType;
+			UncompressedSize = uncompressedSize;
 			CompressionFlags = 0;
 			Extra = extra;
 		}
 
 		public byte[] Read()
 		{
-			return Data ?? Archive.GetData(this);
+			return UncompressedData ?? Archive.UncompressData(this, Archive.ReadData(this));
+		}
+
+		public void Write(byte[] data)
+		{
+			Data = data;
+			CompressedSize = data.Length;
 		}
 	}
 }

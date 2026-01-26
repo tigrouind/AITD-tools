@@ -34,7 +34,7 @@ namespace PAKExtract
 			var svgTrigger = new Option<bool>("-trigger");
 			var svgCamera = new Option<bool>("-camera");
 			var svgCaption = new Option<bool>("-caption");
-			var svg = new Command("svg") { svgRoom, svgRotate, svgZoom,	svgTrigger, svgCamera, svgCaption };
+			var svg = new Command("svg") { svgRoom, svgRotate, svgZoom, svgTrigger, svgCamera, svgCaption };
 			svg.SetAction(result =>
 			{
 				Export.ExportSvg(
@@ -48,7 +48,7 @@ namespace PAKExtract
 
 			//archive
 			var archiveTimegate = new Option<bool>("-timegate");
-			var archive = new Command("archive") { archiveTimegate,	files };
+			var archive = new Command("archive") { archiveTimegate, files };
 			archive.SetAction(result => Archive.CreateArchive(result.GetValue(files), result.GetValue(archiveTimegate)));
 
 			//info

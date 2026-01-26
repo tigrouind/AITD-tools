@@ -47,42 +47,37 @@ namespace Shared
 			}
 		}
 
-		internal byte[] GetData(PakArchiveEntry entry)
+		internal byte[] UncompressData(PakArchiveEntry entry, byte[] data)
 		{
-			stream.Seek(offsets[entry.Index] + entry.Offset + entry.Extra.Length + 16, SeekOrigin.Begin);
-
-			var result = new byte[entry.UncompressedSize];
 			switch (entry.CompressionType)
 			{
 				case 0: //uncompressed
 					{
-						stream.ReadExactly(result, 0, entry.CompressedSize);
-						break;
+						return data;
 					}
 
 				case 1: //pak explode
 					{
-						var source = new byte[entry.CompressedSize];
-						stream.ReadExactly(source, 0, entry.CompressedSize);
-						PAK_explode(source, result, (uint)entry.CompressedSize, (uint)entry.UncompressedSize, entry.CompressionFlags);
-						break;
+						var result = new byte[entry.UncompressedSize];
+						PAK_explode(data, result, (uint)entry.CompressedSize, (uint)entry.UncompressedSize, entry.CompressionFlags);
+						return result;
 					}
 
 				case 4: //deflate
 					{
+						var result = new byte[entry.UncompressedSize];
+						using var memoryStream = new MemoryStream(data);
 						using var deflateStream = new DeflateStream(stream, CompressionMode.Decompress, true);
 						deflateStream.ReadExactly(result, 0, entry.UncompressedSize);
-						break;
+						return result;
 					}
 
 				default:
 					throw new NotSupportedException();
 			}
-
-			return result;
 		}
 
-		internal byte[] GetRawData(PakArchiveEntry entry)
+		internal byte[] ReadData(PakArchiveEntry entry)
 		{
 			stream.Seek(offsets[entry.Index] + entry.Offset + entry.Extra.Length + 16, SeekOrigin.Begin);
 			var result = new byte[entry.CompressedSize];
@@ -90,21 +85,9 @@ namespace Shared
 			return result;
 		}
 
-		public int Count
-		{
-			get
-			{
-				return offsets.Length;
-			}
-		}
+		public int Count => offsets.Length;
 
-		public PakArchiveEntry this[int index]
-		{
-			get
-			{
-				return GetEntry(index);
-			}
-		}
+		public PakArchiveEntry this[int index] => GetEntry(index);
 
 		public IEnumerator<PakArchiveEntry> GetEnumerator()
 		{
@@ -125,7 +108,8 @@ namespace Shared
 			var entries = pak.ToArray();
 			foreach (var entry in entries)
 			{
-				entry.Data = pak.GetRawData(entry);
+				entry.Data = pak.ReadData(entry);
+				entry.UncompressedData = pak.UncompressData(entry, entry.Data);
 			}
 			return entries;
 		}
