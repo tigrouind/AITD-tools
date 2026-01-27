@@ -158,11 +158,15 @@ Extract some PAK archives, edit them in their respective folders (eg: LISTLIFE),
 PAKExtract archive LISTLIFE
 ```
 
+> [!NOTE]
+> Entries are not recompressed. This might result in an archive being bigger than expected. AFAIK there is currently no available C source code for the implode compression algorithm used by AITD. It seems to original game files have been compressed with *PKZIP 1.1*.
+>
+> If PKZIP and DOSBox are available on your computer, PAKExtract will use them for compressing back the files. *PKZIP.EXE* should be in main folder (same as PAKExtract), and DOSBox should be located in *C:\Program Files\\*, *C:\Program Files (x86)\\* or main folder. Some distributions of PKZIP are a self-extracting executable, so it might be needed to run that executable once yourself (under DOSBox) to extract *PKZIP.EXE* out of it. You can simply drag and drop the executable on DOSBox. *PKZIP.EXE* should be 30KB-40KB.
+
 ### Displaying archive information only (eg: compressed size, flags, ...) 
 ```
 PAKExtract info LISTLIFE.PAK 
 ```
-
 
 # MoviePlayer
 
