@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Text;
 
 namespace Shared
 {
@@ -19,7 +18,7 @@ namespace Shared
 				Tag = memory[offset],
 				Owner = memory.ReadUnsignedShort(offset + 1) * 16,
 				Size = memory.ReadUnsignedShort(offset + 3) * 16,
-				Name = Encoding.ASCII.GetString(memory, offset + 8, 8).TrimEnd((char)0)
+				Name = memory.ReadString(offset + 8, 8)
 			};
 		}
 

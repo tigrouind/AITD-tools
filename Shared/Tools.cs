@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Linq.Expressions;
 using System.Text;
 
 namespace Shared
@@ -77,11 +75,16 @@ namespace Shared
 				data.ReadShort(offset + 0),
 				data.ReadShort(offset + 4),
 				data.ReadShort(offset + 8)
-			),(
+			), (
 				data.ReadShort(offset + 2),
 				data.ReadShort(offset + 6),
 				data.ReadShort(offset + 10)
 			));
+		}
+
+		public static string ReadString(this byte[] data, int offset, int length)
+		{
+			return Encoding.ASCII.GetString(data, offset, length).TrimEnd('\0');
 		}
 
 		#endregion

@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace PAKExtract
@@ -156,37 +155,27 @@ namespace PAKExtract
 			int offset = 0;
 			var result = new Dictionary<string, (byte[] ComparessedData, int UncompressedSize)>(StringComparer.InvariantCultureIgnoreCase);
 			while ((offset + 0x20) <= data.Length &&
-					ReadInt(offset + 0) == 0x04034b50) //PKZIP header (v1.1 should be used)
+					Tools.ReadUnsignedInt(data, offset + 0) == 0x04034b50) //PKZIP header (v1.1 should be used)
 			{
-				var compressionType = ReadShort(offset + 0x08);
-				var compressedSize = ReadInt(offset + 0x12);
-				var uncompressedSize = ReadInt(offset + 0x16);
-				var fileNameLen = ReadShort(offset + 0x1a);
-				var extraLen = ReadShort(offset + 0x1c);
-				var fileName = Encoding.ASCII.GetString(data, offset + 0x1e, fileNameLen).Trim('\0');
+				var compressionType = data.ReadUnsignedShort(offset + 0x08);
+				var compressedSize = data.ReadUnsignedShort(offset + 0x12);
+				var uncompressedSize = data.ReadUnsignedShort(offset + 0x16);
+				var fileNameLen = data.ReadUnsignedShort(offset + 0x1a);
+				var extraLen = data.ReadUnsignedShort(offset + 0x1c);
+				var fileName = data.ReadString(offset + 0x1e, fileNameLen);
 
 				offset += 0x1e + fileNameLen + extraLen;
 				if ((offset + compressedSize) <= data.Length
 					&& compressionType == 6  //implode
-					&& ReadInt(offset) == 0x0312000F) //implode signature
+					&& Tools.ReadUnsignedInt(data, offset) == 0x0312000F) //implode signature
 				{
-					result[fileName] = (([.. data.AsSpan(offset, compressedSize)], uncompressedSize));
+					result[fileName] = ([.. data.AsSpan(offset, compressedSize)], uncompressedSize);
 				}
 
 				offset += compressedSize;
 			}
 
 			return result;
-
-			ushort ReadShort(int position)
-			{
-				return (ushort)(data[position] | (data[position + 1] << 8));
-			}
-
-			int ReadInt(int position)
-			{
-				return data[position] | (data[position + 1] << 8) | (data[position + 2] << 16) | (data[position + 3] << 24);
-			}
 		}
 
 		static void RunDOSBox(string dosboxExePath, string directory)

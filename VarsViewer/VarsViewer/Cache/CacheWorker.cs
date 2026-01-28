@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 
 namespace VarsViewer
 {
@@ -72,7 +71,7 @@ namespace VarsViewer
 
 			void UpdateCache(Cache ch, int offset)
 			{
-				ch.Name = Encoding.ASCII.GetString(Program.Memory, offset, 8);
+				ch.Name = Program.Memory.ReadString(offset, 8);
 				ch.MaxFreeData = Program.Memory.ReadUnsignedShort(offset + 10);
 				ch.SizeFreeData = Program.Memory.ReadUnsignedShort(offset + 12);
 				ch.NumMaxEntry = Program.Memory.ReadUnsignedShort(offset + 14);
