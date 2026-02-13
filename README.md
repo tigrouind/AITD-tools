@@ -1,5 +1,5 @@
 > [!CAUTION] 
-> some files in the release archive might be detected as malware by some A/V (eg: Windows Defender). The exact reason is unclear but this is probably because it use Win32 API calls such as `ReadProcessMemory` and `WriteProcessMemory`. If you know how to fix this, please let me know.
+> Some files in the release archive might be detected as malware by some A/V (eg: Windows Defender). The exact reason is unclear but this is probably because it use Win32 API calls such as `ReadProcessMemory` and `WriteProcessMemory`. If you know how to fix this, please let me know.
 
 # Requirements
 
@@ -76,6 +76,8 @@ MemoryViewer [-width WIDTH]
 
 # VarsViewer
 
+Allow to view/edit game internals variables (named `VARS` and `CVARS` in scripts), view/clear internal cache, inspect actors/objects, in realtime.
+
 ## Supported
 * Alone in the Dark 1 (CD-ROM, floppy, demo)
 
@@ -131,26 +133,40 @@ You can also drop files (or folders) to be extracted into PAKExtract executable.
 
 ## Command-line arguments
 ```
-PAKExtract [background]
+PAKExtract [<files|folders>]
+           [info [<files|folders>]]
+           [background]
            [svg [-rotate {0|90|180|270}] [-zoom] [-room <rooms>] [-trigger] [-camera]]
-           [archive [-timegate] [<files>]] 
-           [info [<files>]]
-           [<files>]
+           [archive [-timegate] [<folders>]]
+```
+
+### Extracting files or folders with command line
+```
+PAKExtract LISTLIFE.PAK LISTTRACK.PAK
+PAKExtract FOLDER1 FOLDER2
+```
+
+You can also drag and drop files or folder into executables as mentionned earlier.
+
+### Displaying archive information only (eg: compressed size, flags, ...) 
+```
+PAKExtract info LISTBODY.PAK
 ```
 
 ### Converting backgrounds as PNG files
-Extract necessary PAK files (CAMERAxx.PAK, ITD_RESS.PAK) into their respective folders, then run PAKEXtract again : 
+Extract necessary PAK files (CAMERAxx.PAK, ITD_RESS.PAK) into their respective folders, then run PAKExtract again : 
 ```
 PAKExtract background
 ```
 Files will be exported to BACKGROUND folder.
 
 ### Rendering floors as SVG files
-Extract necessary PAK files (ETAGExx.PAK) into their respective folders, then run PAKEXtract again : 
+Extract necessary PAK files (ETAGExx.PAK) into their respective folders, then run PAKExtract again : 
 ```
 PAKExtract svg -rotate 90 -room 1 4 5 
 ```
 Files will be exported to SVG folder.
+
 
 ### Creating a new PAK archive (or editing some entries)
 Extract some PAK archives, edit them in their respective folders (eg: LISTLIFE), then run PAKExtract again :
@@ -159,14 +175,12 @@ PAKExtract archive LISTLIFE
 ```
 
 > [!NOTE]
-> Entries are not recompressed. This might result in an archive being bigger than expected. AFAIK there is currently no available C source code for the implode compression algorithm used by AITD. It seems to original game files have been compressed with *PKZIP 1.1*.
+> When creating a new archive, entries are not recompressed (which might result in an archive being bigger than expected). AFAIK there is currently no C source code available for the implode compression algorithm used by AITD. It seems to original game files have been compressed with *PKZIP 1.1*.
 >
-> If PKZIP and DOSBox are available on your computer, PAKExtract will use them for compressing back the files. *PKZIP.EXE* should be in main folder (same as PAKExtract), and DOSBox should be located in *C:\Program Files\\*, *C:\Program Files (x86)\\* or main folder. Some distributions of PKZIP are a self-extracting executable, so it might be needed to run that executable once yourself (under DOSBox) to extract *PKZIP.EXE* out of it. You can simply drag and drop the executable on DOSBox. *PKZIP.EXE* should be 30KB-40KB.
+> If PKZIP and DOSBox are available, PAKExtract will use them for compressing back the files. *PKZIP.EXE* (v1.1) should be in main folder (same as PAKExtract), and DOSBox should be located in *C:\Program Files\\*, *C:\Program Files (x86)\\* or main folder. 
+> 
+> Some distributions of PKZIP are a self-extracting executable, so it might be needed to run that executable once (under DOSBox) to extract *PKZIP.EXE* out of it. You can simply drag and drop the PKZIP self-extracting executable on DOSBox. *PKZIP.EXE* should be around 40KB.
 
-### Displaying archive information only (eg: compressed size, flags, ...) 
-```
-PAKExtract info LISTLIFE.PAK 
-```
 
 # MoviePlayer
 
