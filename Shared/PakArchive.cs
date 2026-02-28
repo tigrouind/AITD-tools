@@ -67,7 +67,7 @@ namespace Shared
 					{
 						var result = new byte[entry.UncompressedSize];
 						using var memoryStream = new MemoryStream(data);
-						using var deflateStream = new DeflateStream(stream, CompressionMode.Decompress, true);
+						using var deflateStream = new DeflateStream(memoryStream, CompressionMode.Decompress, true);
 						deflateStream.ReadExactly(result, 0, entry.UncompressedSize);
 						return result;
 					}
