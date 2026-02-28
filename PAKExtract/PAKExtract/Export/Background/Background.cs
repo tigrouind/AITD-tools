@@ -61,8 +61,13 @@ namespace PAKExtract
 
 		public static byte[] SaveBitmap()
 		{
+			return SaveBitmap(Bitmap);
+		}
+
+		public static byte[] SaveBitmap(Image<Rgba32> bitmap)
+		{
 			using var stream = new MemoryStream();
-			Bitmap.Save(stream, new PngEncoder()); // Save as PNG
+			bitmap.Save(stream, new PngEncoder()); // Save as PNG
 			return stream.ToArray();
 		}
 	}

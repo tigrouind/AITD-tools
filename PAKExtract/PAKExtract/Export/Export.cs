@@ -36,6 +36,11 @@ namespace PAKExtract
 						}
 					}
 				}
+
+				if (Path.GetFileName(directory).StartsWith("TEXTURES", StringComparison.InvariantCultureIgnoreCase))
+				{
+					Textures.Export();
+				}
 			}
 		}
 
