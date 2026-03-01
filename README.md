@@ -153,8 +153,8 @@ You can also drag and drop files or folder into executables as mentionned earlie
 PAKExtract info LISTBODY.PAK
 ```
 
-### Converting backgrounds as PNG files
-Extract necessary PAK files (CAMERAxx.PAK, ITD_RESS.PAK) into their respective folders, then run PAKExtract again : 
+### Converting backgrounds or textures to PNG files
+Extract necessary PAK files (CAMERAxx.PAK, ITD_RESS.PAK, TEXTURES.PAK) into their respective folders, then run PAKExtract again : 
 ```
 PAKExtract background
 ```
@@ -175,11 +175,11 @@ PAKExtract archive LISTLIFE
 ```
 
 > [!NOTE]
-> When creating a new archive, entries are not recompressed (which might result in an archive being bigger than expected). AFAIK there is currently no C source code available for the implode compression algorithm used by AITD. It seems to original game files have been compressed with *PKZIP 1.1*.
+> When creating a new archive, entries are not recompressed (which might result in an archive being bigger than expected). AFAIK, there is currently no C source code available for the implode compression algorithm used by AITD. It seems to original game files have been compressed with *PKZIP 1.1*.
 >
-> If PKZIP and DOSBox are available, PAKExtract will use them for compressing back the files. *PKZIP.EXE* (v1.1) should be in main folder (same as PAKExtract), and DOSBox should be located in *C:\Program Files\\*, *C:\Program Files (x86)\\* or main folder. 
+> If PKZIP and DOSBox are available, PAKExtract will use them for compressing back the files. *PKZIP.EXE 1.1* should be in main folder (same as PAKExtract), and DOSBox should be located in *C:\Program Files\\*, *C:\Program Files (x86)\\* or main folder. 
 > 
-> Some distributions of PKZIP are a self-extracting executable, so it might be needed to run that executable once (under DOSBox) to extract *PKZIP.EXE* out of it. You can simply drag and drop the PKZIP self-extracting executable on DOSBox. *PKZIP.EXE* should be around 40KB.
+> Some distributions of PKZIP are a self-extracting executable, so it might be needed to run that executable once (under DOSBox) to extract *PKZIP.EXE* out of it. You can simply drag and drop the PKZIP self-extracting executable on DOSBox. *PKZIP.EXE 1.1* should be around 40KB.
 
 
 # MoviePlayer
