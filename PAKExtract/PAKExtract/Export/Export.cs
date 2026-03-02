@@ -13,33 +13,38 @@ namespace PAKExtract
 				if (Path.GetFileName(directory).StartsWith("CAMERA", StringComparison.InvariantCultureIgnoreCase)
 					|| Path.GetFileName(directory).Equals("ITD_RESS", StringComparison.InvariantCultureIgnoreCase))
 				{
-					foreach (var filePath in Directory.EnumerateFiles(directory, @"*.*", SearchOption.TopDirectoryOnly))
-					{
-						var length = new FileInfo(filePath).Length;
-						if (Background.IsBackground(length))
-						{
-							if (Background.IsAITD1Background(length) && !Directory.Exists("ITD_RESS"))
-							{
-								if (!paletteNotFoundMessage)
-								{
-									paletteNotFoundMessage = true;
-									Console.Error.WriteLine("Cannot find folder ITD_RESS. Please extract it first.");
-								}
-							}
-							else
-							{
-								var data = File.ReadAllBytes(filePath);
-								Background.GetBackground(data);
-								var destPath = Path.Combine("BACKGROUND", Path.GetFileName(Path.GetDirectoryName(filePath)), $"{Path.GetFileNameWithoutExtension(filePath)}.png");
-								Program.WriteFile(destPath, Background.SaveBitmap());
-							}
-						}
-					}
+					ExportBackgrounds(ref paletteNotFoundMessage, directory);
 				}
 
 				if (Path.GetFileName(directory).StartsWith("TEXTURES", StringComparison.InvariantCultureIgnoreCase))
 				{
-					Textures.Export();
+					Textures.Export(ref paletteNotFoundMessage);
+				}
+			}
+		}
+
+		public static void ExportBackgrounds(ref bool paletteNotFoundMessage, string directory)
+		{
+			foreach (var filePath in Directory.EnumerateFiles(directory, @"*.*", SearchOption.TopDirectoryOnly))
+			{
+				var length = new FileInfo(filePath).Length;
+				if (Background.IsBackground(length))
+				{
+					if (Background.IsAITD1Background(length) && !Directory.Exists("ITD_RESS"))
+					{
+						if (!paletteNotFoundMessage)
+						{
+							paletteNotFoundMessage = true;
+							Console.Error.WriteLine("Cannot find folder ITD_RESS. Please extract it first.");
+						}
+					}
+					else
+					{
+						var data = File.ReadAllBytes(filePath);
+						Background.GetBackground(data);
+						var destPath = Path.Combine("BACKGROUND", Path.GetFileName(Path.GetDirectoryName(filePath)), $"{Path.GetFileNameWithoutExtension(filePath)}.png");
+						Program.WriteFile(destPath, Background.SaveBitmap());
+					}
 				}
 			}
 		}

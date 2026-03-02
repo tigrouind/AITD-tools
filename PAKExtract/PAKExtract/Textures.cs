@@ -7,9 +7,8 @@ namespace PAKExtract
 {
 	public class Textures
 	{
-		public static void Export()
+		public static void Export(ref bool paletteNotFoundMessage)
 		{
-			bool paletteNotFoundMessage = false;
 			var pal = Palette.LoadITDPalette();
 			foreach (var filePath in Directory.EnumerateFiles("TEXTURES", @"*.*", SearchOption.TopDirectoryOnly))
 			{

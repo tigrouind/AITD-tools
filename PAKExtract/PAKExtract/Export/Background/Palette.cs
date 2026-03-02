@@ -1,4 +1,4 @@
-using Shared;
+using System;
 using System.IO;
 using System.Linq;
 
@@ -15,14 +15,32 @@ namespace PAKExtract
 			if (!paletteLoaded)
 			{
 				paletteLoaded = true;
+
 				foreach (var filePath in Directory.EnumerateFiles("ITD_RESS").Reverse())
 				{
 					if (new FileInfo(filePath).Length == 768)
 					{
 						LoadPalette(File.ReadAllBytes(filePath), 0, paletteITD);
-						break;
+						return paletteITD;
 					}
 				}
+
+				foreach (var directory in Directory.EnumerateDirectories("."))
+				{
+					if (Path.GetFileName(directory).StartsWith("CAMERA", StringComparison.InvariantCultureIgnoreCase))
+					{
+						foreach (var filePath in Directory.EnumerateFiles(directory, @"*.*", SearchOption.TopDirectoryOnly))
+						{
+							if (new FileInfo(filePath).Length == 64768)
+							{
+								LoadPalette(File.ReadAllBytes(filePath), 64000, paletteITD);
+								return paletteITD;
+							}
+						}
+					}
+				}
+
+				Console.Error.WriteLine("No palette could be found in ITD_RESS or CAMERA");
 			}
 
 			return paletteITD;
