@@ -60,16 +60,16 @@ namespace LifeDISA
 			if (previous != null && previous.Value.Type == LifeEnum.GOTO) //else or elseif
 			{
 				previous.List.Remove(previous); //remove goto
-				ins.NodesA = GetNodesBetween(node.Next, target, node);
-				ins.NodesB = GetNodesBetween(target, nodesMap[previous.Value.Goto], node);
+				ins.Left = GetNodesBetween(node.Next, target, node);
+				ins.Right = GetNodesBetween(target, nodesMap[previous.Value.Goto], node);
 
-				Optimize(ins.NodesA);
-				Optimize(ins.NodesB);
+				Optimize(ins.Left);
+				Optimize(ins.Right);
 			}
 			else //if
 			{
-				ins.NodesA = GetNodesBetween(node.Next, target, node);
-				Optimize(ins.NodesA);
+				ins.Left = GetNodesBetween(node.Next, target, node);
+				Optimize(ins.Left);
 			}
 		}
 
@@ -143,7 +143,7 @@ namespace LifeDISA
 
 			if (endOfSwitch == null || target == endOfSwitch) //should be equal, otherwise there is a default case
 			{
-				node.Value.NodesA = GetNodesBetween(node.Next, target, node);
+				node.Value.Left = GetNodesBetween(node.Next, target, node);
 			}
 			else
 			{
@@ -151,10 +151,10 @@ namespace LifeDISA
 				var defNode = node.List.AddBefore(target, def);
 				nodesMap[target.Value.Position] = defNode;
 
-				node.Value.NodesA = GetNodesBetween(node.Next, endOfSwitch, node);
+				node.Value.Left = GetNodesBetween(node.Next, endOfSwitch, node);
 			}
 
-			OptimizeCase(node.Value.NodesA);
+			OptimizeCase(node.Value.Left);
 		}
 
 		void OptimizeCase(LinkedList<Instruction> list)
@@ -166,8 +166,8 @@ namespace LifeDISA
 					node.Value.Type == LifeEnum.CASE_DEFAULT)
 				{
 					var target = nodesMap[node.Value.Goto];
-					node.Value.NodesA = GetNodesBetween(node.Next, target, node);
-					Optimize(node.Value.NodesA);
+					node.Value.Left = GetNodesBetween(node.Next, target, node);
+					Optimize(node.Value.Left);
 				}
 			}
 		}

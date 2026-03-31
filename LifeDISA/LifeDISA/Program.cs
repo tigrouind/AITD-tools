@@ -1,10 +1,10 @@
+using Shared;
 using System;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Shared;
 
 namespace LifeDISA
 {
@@ -40,10 +40,10 @@ namespace LifeDISA
 		static int Main(string[] args)
 		{
 			var version = new Option<GameVersion>("-version") { Required = true };
-			var output = new Option<string>("-output") { DefaultValueFactory = x => "scripts.vb"};
+			var output = new Option<string>("-output") { DefaultValueFactory = x => "scripts.vb" };
 			var raw = new Option<bool>("-raw");
 			var verbose = new Option<bool>("-verbose");
-			var rootCommand = new RootCommand()	{ version, output, raw, verbose };
+			var rootCommand = new RootCommand() { version, output, raw, verbose };
 
 			rootCommand.SetAction(result => Run(result.GetValue(version), result.GetValue(raw), result.GetValue(verbose), result.GetValue(output)));
 
@@ -90,7 +90,7 @@ namespace LifeDISA
 				allBytes = File.ReadAllBytes(@"GAMEDATA\OBJETS.ITD");
 				int count = allBytes.ReadShort(0);
 
-				for (int i = 0 ; i < count ; i++)
+				for (int i = 0; i < count; i++)
 				{
 					string name = null;
 					int n = i * config.Offset + 2;
@@ -178,16 +178,16 @@ namespace LifeDISA
 				{
 					case LifeEnum.CASE:
 					case LifeEnum.MULTI_CASE:
-					{
-						if (ins.Parent != null)
 						{
-							for (int i = 0 ; i < ins.Arguments.Count ; i++)
+							if (ins.Parent != null)
 							{
-								ins.Set(i, GetConditionName(ins.Parent.Value.EvalEnum, ins.Arguments[i]));
+								for (int i = 0; i < ins.Arguments.Count; i++)
+								{
+									ins.Set(i, GetConditionName(ins.Parent.Value.EvalEnum, ins.Arguments[i]));
+								}
 							}
 						}
-					}
-					break;
+						break;
 				}
 			}
 
@@ -197,17 +197,17 @@ namespace LifeDISA
 				{
 					yield return node;
 
-					if (node.NodesA != null)
+					if (node.Left != null)
 					{
-						foreach (var childNode in GetNodes(node.NodesA))
+						foreach (var childNode in GetNodes(node.Left))
 						{
 							yield return childNode;
 						}
 					}
 
-					if (node.NodesB != null)
+					if (node.Right != null)
 					{
-						foreach (var childNode in GetNodes(node.NodesB))
+						foreach (var childNode in GetNodes(node.Right))
 						{
 							yield return childNode;
 						}
@@ -529,31 +529,31 @@ namespace LifeDISA
 					break;
 
 				case LifeEnum.TRACKMODE:
-				{
-					int curr = GetParam();
-					ins.Add(vars.GetText(VarEnum.TRACKMODE, curr));
-
-					switch (curr)
 					{
-						case 0: //none
-						case 1: //manual
-							GetParam();
-							break;
+						int curr = GetParam();
+						ins.Add(vars.GetText(VarEnum.TRACKMODE, curr));
 
-						case 2: //follow
-							ins.Add(GetObjectName(GetParam()));
-							break;
+						switch (curr)
+						{
+							case 0: //none
+							case 1: //manual
+								GetParam();
+								break;
 
-						case 3: //track
-							ins.Add(vars.GetText(VarEnum.TRACKS, GetParam()));
-							break;
+							case 2: //follow
+								ins.Add(GetObjectName(GetParam()));
+								break;
 
-						default:
-							ins.Add(GetParam());
-							break;
+							case 3: //track
+								ins.Add(vars.GetText(VarEnum.TRACKS, GetParam()));
+								break;
+
+							default:
+								ins.Add(GetParam());
+								break;
+						}
+						break;
 					}
-					break;
-				}
 
 				case LifeEnum.ANIM_ONCE:
 				case LifeEnum.ANIM_ALL_ONCE:
@@ -600,7 +600,7 @@ namespace LifeDISA
 
 				case LifeEnum.UNKNOWN_5:
 					int count = GetParam();
-					for (int i = 0 ; i < count ; i++)
+					for (int i = 0; i < count; i++)
 					{
 						ins.Add(Evalvar());
 					}
@@ -775,45 +775,45 @@ namespace LifeDISA
 					break;
 
 				case LifeEnum.VAR:
-				{
-					int curr = GetParam();
-					string name = vars.GetText(VarEnum.VARS, curr, "var_" + curr);
-					string value = Evalvar();
-
-					if (name == "player_current_action" && int.TryParse(value, out int result))
 					{
-						value = GetFlags(result, foundFlagsNames);
-					}
+						int curr = GetParam();
+						string name = vars.GetText(VarEnum.VARS, curr, "var_" + curr);
+						string value = Evalvar();
 
-					ins.Add(name);
-					ins.Add(value);
-					break;
-				}
+						if (name == "player_current_action" && int.TryParse(value, out int result))
+						{
+							value = GetFlags(result, foundFlagsNames);
+						}
+
+						ins.Add(name);
+						ins.Add(value);
+						break;
+					}
 
 				case LifeEnum.ADD:
 				case LifeEnum.SUB:
-				{
-					int curr = GetParam();
-					ins.Add(vars.GetText(VarEnum.VARS, curr, "var_" + curr));
-					ins.Add(Evalvar());
-					break;
-				}
+					{
+						int curr = GetParam();
+						ins.Add(vars.GetText(VarEnum.VARS, curr, "var_" + curr));
+						ins.Add(Evalvar());
+						break;
+					}
 
 				case LifeEnum.INC:
 				case LifeEnum.DEC:
-				{
-					int curr = GetParam();
-					ins.Add(vars.GetText(VarEnum.VARS, curr, "var_" + curr));
-					break;
-				}
+					{
+						int curr = GetParam();
+						ins.Add(vars.GetText(VarEnum.VARS, curr, "var_" + curr));
+						break;
+					}
 
 				case LifeEnum.C_VAR:
-				{
-					int curr = GetParam();
-					ins.Add(vars.GetText(VarEnum.CVARS, curr, "cvar_" + curr));
-					ins.Add(Evalvar());
-					break;
-				}
+					{
+						int curr = GetParam();
+						ins.Add(vars.GetText(VarEnum.CVARS, curr, "cvar_" + curr));
+						ins.Add(Evalvar());
+						break;
+					}
 
 				case LifeEnum.BODY_RESET:
 					ins.Add(Evalvar());
@@ -898,7 +898,7 @@ namespace LifeDISA
 
 			StringBuilder result = new();
 			int flag = 1;
-			for (int i = 0 ; i < names.Length ; i++)
+			for (int i = 0; i < names.Length; i++)
 			{
 				if ((flags & flag) != 0 && !string.IsNullOrEmpty(names[i]))
 				{
@@ -937,7 +937,7 @@ namespace LifeDISA
 			{
 				//variable
 				curr = GetParam();
-				string name =  vars.GetText(VarEnum.VARS, curr, "var_" + curr);
+				string name = vars.GetText(VarEnum.VARS, curr, "var_" + curr);
 				if (name == "player_current_action")
 				{
 					evalEnum = EvalEnum.ACTION;

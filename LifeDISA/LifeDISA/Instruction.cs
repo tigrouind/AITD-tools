@@ -1,5 +1,3 @@
-
-using System;
 using System.Collections.Generic;
 
 namespace LifeDISA
@@ -15,8 +13,8 @@ namespace LifeDISA
 		public int Size; //size in bytes of instruction
 
 		public LinkedListNode<Instruction> Parent; //node above instruction (eg: case -> switch)
-		public LinkedList<Instruction> NodesA; //child nodes below instruction (eg: if -> { ... } )
-		public LinkedList<Instruction> NodesB; //child nodes below instruction (eg: else -> { ... } )
+		public LinkedList<Instruction> Left; //child nodes below instruction (eg: if -> { ... } )
+		public LinkedList<Instruction> Right; //child nodes below instruction (eg: else -> { ... } )
 
 		public void Add(string value)
 		{
@@ -37,9 +35,9 @@ namespace LifeDISA
 		{
 			get
 			{
-				return NodesB != null //must have only one if child inside else part
-					&& NodesB.Count == 1
-					&& NodesB.First.Value.IsIfCondition;
+				return Right != null //must have only one if child inside else part
+					&& Right.Count == 1
+					&& Right.First.Value.IsIfCondition;
 			}
 		}
 
@@ -48,11 +46,11 @@ namespace LifeDISA
 			get
 			{
 				return IsIfCondition
-					&& NodesA != null
-					&& NodesA.Count == 1
-					&& NodesA.First.Value.IsIfCondition  //must have only one if child inside if part
-					&& NodesA.First.Value.NodesB == null //no else for if child
-					&& NodesB == null; //no else part
+					&& Left != null
+					&& Left.Count == 1
+					&& Left.First.Value.IsIfCondition  //must have only one if child inside if part
+					&& Left.First.Value.Right == null //no else for if child
+					&& Right == null; //no else part
 			}
 		}
 

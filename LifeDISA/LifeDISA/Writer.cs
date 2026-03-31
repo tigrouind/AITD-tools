@@ -130,17 +130,17 @@ namespace LifeDISA
 
 		void WriteNodes(Instruction ins)
 		{
-			if (ins.NodesA != null) //if, switch, case
+			if (ins.Left != null) //if, switch, case
 			{
 				indent++;
-				DumpOptimized(ins.NodesA);
+				DumpOptimized(ins.Left);
 				indent--;
 
-				if (ins.NodesB != null) //else, elseif
+				if (ins.Right != null) //else, elseif
 				{
 					if (ins.IsElseIfCondition) //elseif
 					{
-						var (nextIns, parameters) = GetIfAndConditions(ins.NodesB.First.Value);
+						var (nextIns, parameters) = GetIfAndConditions(ins.Right.First.Value);
 						WriteIndent($"elseif {parameters} then");
 						WriteNodes(nextIns);
 					}
@@ -148,7 +148,7 @@ namespace LifeDISA
 					{
 						WriteIndent("else");
 						indent++;
-						DumpOptimized(ins.NodesB);
+						DumpOptimized(ins.Right);
 						indent--;
 					}
 				}
@@ -187,7 +187,7 @@ namespace LifeDISA
 				yield return ins;
 				while (ins.IsAndCondition)
 				{
-					ins = ins.NodesA.First.Value;
+					ins = ins.Left.First.Value;
 					yield return ins;
 				}
 			}
