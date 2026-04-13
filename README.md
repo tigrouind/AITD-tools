@@ -27,10 +27,10 @@ LifeDISA -version {AITD1|AITD1_FLOPPY|AITD1_DEMO|AITD2|AITD2_DEMO|AITD3|JACK|TIM
 
 1. Create a new folder named "GAMEDATA" (located in same folder as the LifeDISA executable).
 2. Copy the following files from game to GAMEDATA :
-   - *LISTLIFE.PAK*
-   - *ENGLISH.PAK* (or *FRANCAIS.PAK*)
-3. Copy the file *OBJETS.ITD* (from AITD folder) into GAMEDATA folder.
-4. Start LifeDISA executable with appropriate arguments. A file named *output.txt* will be created.
+   - `LISTLIFE.PAK`
+   - `ENGLISH.PAK` (or `FRANCAIS.PAK`)
+3. Copy the file `OBJETS.ITD` (from AITD folder) into GAMEDATA folder.
+4. Start LifeDISA executable with appropriate arguments. A file named `output.txt` will be created.
 
 # TrackDISA
 
@@ -48,7 +48,7 @@ TrackDISA -version {AITD1|AITD1_FLOPPY|AITD1_DEMO|AITD2|AITD2_DEMO|AITD3|JACK|TI
 
 ## Instructions  
 
-Copy file *LISTTRAK.PAK* into a folder named GAMEDATA, then run TrackDISA executable.
+Copy file `LISTTRAK.PAK` into a folder named GAMEDATA, then run TrackDISA executable.
 
 # MemoryViewer
 
@@ -136,8 +136,9 @@ You can also drop files (or folders) to be extracted into PAKExtract executable.
 PAKExtract [<files|folders>]
            [info [<files|folders>]]
            [background]
+		   [mask {AITD1|AITD1_FLOPPY|AITD1_DEMO|AITD2|AITD2_DEMO|AITD3|JACK|TIMEGATE|TIMEGATE_DEMO}]
            [svg [-rotate {0|90|180|270}] [-zoom] [-room <rooms>] [-trigger] [-camera]]
-           [archive [-timegate] [<folders>]]
+           [archive [-timegate] [<folders>]]		   
 ```
 
 ### Extracting files or folders with command line
@@ -154,33 +155,37 @@ PAKExtract info LISTBODY.PAK
 ```
 
 ### Converting backgrounds or textures to PNG files
-Extract necessary PAK files (CAMERAxx.PAK, ITD_RESS.PAK, TEXTURES.PAK) into their respective folders, then run PAKExtract again : 
+Extract necessary PAK files (`CAMERAxx.PAK`, `ITD_RESS.PAK`, `TEXTURES.PAK`) into their respective folders, then run PAKExtract again : 
 ```
 PAKExtract background
 ```
-Files will be exported to BACKGROUND folder.
+Files will be exported to `BACKGROUND` folder.
+
+### Rendering backgrounds masks as PNG files
+Extract backgrounds, then necessary PAK files (`ETAGExx.PAK` for AITD, `MASKxx.PAK`, `NASKxx.PAK` for JACK/AITD2/AITD3, `MKxxxxxx.PAK`, `NKxxxxxx.PAK` for TIMEGATE) into their respective folders, then run PAKExtract again : 
+```
+PAKExtract mask AITD1
+```
+Files will be exported to `BACKGROUND_MASK` folder.
 
 ### Rendering floors as SVG files
-Extract necessary PAK files (ETAGExx.PAK) into their respective folders, then run PAKExtract again : 
+Extract necessary PAK files (`ETAGExx.PAK`) into their respective folders, then run PAKExtract again : 
 ```
 PAKExtract svg -rotate 90 -room 1 4 5 
 ```
-Files will be exported to SVG folder.
-
+Files will be exported to `SVG` folder.
 
 ### Creating a new PAK archive (or editing some entries)
 Extract some PAK archives, edit them in their respective folders (eg: LISTLIFE), then run PAKExtract again :
 ```
 PAKExtract archive LISTLIFE
 ```
-
 > [!NOTE]
-> When creating a new archive, entries are not recompressed (which might result in an archive being bigger than expected). AFAIK, there is currently no C source code available for the implode compression algorithm used by AITD. It seems to original game files have been compressed with *PKZIP 1.1*.
+> When creating a new archive, entries are not recompressed (which might result in an archive being bigger than expected). AFAIK, there is currently no C source code available for the implode compression algorithm used by AITD. It seems to original game files have been compressed with PKZIP v1.1.
 >
-> If PKZIP and DOSBox are available, PAKExtract will use them for compressing back the files. *PKZIP.EXE 1.1* should be in main folder (same as PAKExtract), and DOSBox should be located in *C:\Program Files\\*, *C:\Program Files (x86)\\* or main folder. 
+> If PKZIP and DOSBox are available, PAKExtract will use them for compressing back the files. `PKZIP.EXE` should be in main folder (same as PAKExtract), and DOSBox should be located in `C:\Program Files\`, `C:\Program Files (x86)\` or main folder. 
 > 
-> Some distributions of PKZIP are a self-extracting executable, so it might be needed to run that executable once (under DOSBox) to extract *PKZIP.EXE* out of it. You can simply drag and drop the PKZIP self-extracting executable on DOSBox. *PKZIP.EXE 1.1* should be around 40KB.
-
+> Some distributions of PKZIP are a self-extracting executable, so it might be needed to run that executable once (under DOSBox) to extract `PKZIP.EXE` out of it. You can simply drag and drop the PKZIP self-extracting executable on DOSBox. `PKZIP.EXE` should be around 40KB.
 
 # MoviePlayer
 
@@ -188,7 +193,7 @@ This allow to record a game session and then play it back for study.
 All tools from here are compatible as the player imitates DOSBox during playback.
 
 ## Instructions
-- Copy the file *movie.dat* to same place as executable (which should be named *DOSBox.exe*). By default, it will always load the latest file written with a *.dat* extension.
+- Copy the file `movie.dat` to same place as executable (which should be named `DOSBox.exe`). By default, it will always load the latest file written with a `.dat` extension.
 
 You can also drop a specific movie on the executable.
 
