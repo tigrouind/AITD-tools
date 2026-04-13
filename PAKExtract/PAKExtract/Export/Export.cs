@@ -1,5 +1,9 @@
+using Shared;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using System;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace PAKExtract
 {
@@ -57,6 +61,84 @@ namespace PAKExtract
 				{
 					var data = Svg.Export(directory, [.. rooms], rotate, zoom, trigger, camera, caption);
 					Program.WriteFile(Path.Combine("SVG", Path.GetFileNameWithoutExtension(directory) + ".svg"), data);
+				}
+			}
+		}
+
+		public static void ExportMasks(GameVersion version)
+		{
+			var mask = new bool[64000];
+			foreach (var directory in Directory.GetDirectories("."))
+			{
+				switch (version)
+				{
+					case GameVersion.AITD1:
+					case GameVersion.AITD1_FLOPPY:
+					case GameVersion.AITD1_DEMO:
+						if (Path.GetFileName(directory).StartsWith("ETAGE", StringComparison.InvariantCultureIgnoreCase))
+						{
+							var reg = Regex.Match(Path.GetFileName(directory), @"ETAGE(\d{2})");
+							var index = int.Parse(reg.Groups[1].Value);
+
+							foreach (var filePath in Directory.GetFiles(directory, "00000001.*"))
+							{
+								foreach (var cameraID in MaskAITD1.GetMasks(filePath, mask))
+								{
+									var destPath = Path.Combine($"MASK{index:D2}", $"{cameraID:D8}.png");
+									SaveImage(index, cameraID, destPath);
+								}
+							}
+						}
+						break;
+
+					case GameVersion.JACK:
+					case GameVersion.AITD2:
+					case GameVersion.AITD2_DEMO:
+					case GameVersion.AITD3:
+						if (Path.GetFileName(directory).StartsWith("MASK") || Path.GetFileName(directory).StartsWith("NASK"))
+						{
+							var reg = Regex.Match(Path.GetFileName(directory), @"(MASK|NASK)(\d{2})");
+							string directoryName = reg.Groups[1].Value;
+							var index = int.Parse(reg.Groups[2].Value);
+
+							foreach (var filePath in Directory.GetFiles(directory))
+							{
+								int cameraID = int.Parse(Path.GetFileNameWithoutExtension(filePath));
+								MaskAITD2.RenderMask(filePath, mask);
+
+								var destPath = Path.Combine($"{directoryName}{index:D2}", $"{cameraID:D8}.png");
+								SaveImage(index, cameraID, destPath);
+							}
+						}
+						break;
+
+					case GameVersion.TIMEGATE:
+					case GameVersion.TIMEGATE_DEMO:
+						if (Path.GetFileName(directory).StartsWith("MK") || Path.GetFileName(directory).StartsWith("NK"))
+						{
+							var reg = Regex.Match(Path.GetFileName(directory), @"(MK|NK)(\d{2})(\d{2})");
+							string directoryName = reg.Groups[1].Value;
+							int index = int.Parse(reg.Groups[2].Value);
+							int cameraID = int.Parse(reg.Groups[3].Value);
+
+							MaskAITD2.RenderMasksTimeGate(directory, mask);
+							var destPath = Path.Combine($"{directoryName}{index:D2}", $"{cameraID:D8}.png");
+							SaveImage(index, cameraID, destPath);
+						}
+						break;
+				}
+
+				void SaveImage(int cameraFolderId, int cameraId, string destPath)
+				{
+					string backgroundFile = Path.Combine($"BACKGROUND", $"CAMERA{cameraFolderId:D2}", $"{cameraId:D8}.png");
+					if (File.Exists(backgroundFile))
+					{
+						var image = Image.Load(backgroundFile) as Image<Rgba32>;
+						if (image != null && MaskAITD1.RenderMask(mask, image))
+						{
+							Program.WriteFile(Path.Combine($"BACKGROUND_MASK", destPath), Background.SaveBitmap(image));
+						}
+					}
 				}
 			}
 		}

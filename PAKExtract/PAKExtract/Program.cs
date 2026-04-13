@@ -55,8 +55,13 @@ namespace PAKExtract
 			var info = new Command("info") { files };
 			info.SetAction(result => Unpack(result.GetValue(files), true));
 
+			//mask
+			var maskVersion = new Argument<GameVersion>("version");
+			var mask = new Command("mask") { maskVersion };
+			mask.SetAction(result => Export.ExportMasks(result.GetValue(maskVersion)));
+
 			//root
-			var rootCommand = new RootCommand() { info, svg, archive, background, files };
+			var rootCommand = new RootCommand() { info, svg, archive, background, files, mask };
 			rootCommand.SetAction(result => Unpack(result.GetValue(files), false));
 
 			var parseResult = rootCommand.Parse(args);
