@@ -11,23 +11,32 @@ public static class DosBoxZip
 {
 	public static string GetDosBoxPath()
 	{
-		if (File.Exists("pkzip.exe")) //cannot use DOSBox compression without PKZIP.exe (should be v1.01, v1.02 or v1.1)
+		if (!File.Exists("pkzip.exe")) //cannot use DOSBox compression without PKZIP.exe (should be v1.01, v1.02 or v1.1)
 		{
-			var searchDirectories = new[]
+			Console.WriteLine("pkzip.exe not found, DOSBox compression will not be available.");
+			return null;
+		}
+
+		var searchDirectories = new[]
 			{
 				".",
 				Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
 				Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)
 			};
 
-			return searchDirectories
-				.SelectMany(x => Directory.GetDirectories(x))
-				.Where(x => x.Contains("dosbox", StringComparison.InvariantCultureIgnoreCase))
-				.Select(x => Path.Combine(x, "dosbox.exe"))
-				.FirstOrDefault(x => File.Exists(x));
+		var dosBoxPath = searchDirectories
+			.SelectMany(x => Directory.GetDirectories(x))
+			.Where(x => x.Contains("dosbox", StringComparison.InvariantCultureIgnoreCase))
+			.Select(x => Path.Combine(x, "dosbox.exe"))
+			.FirstOrDefault(x => File.Exists(x));
+
+		if (dosBoxPath == null)
+		{
+			Console.WriteLine("dosbox installation not found, DOSBox compression will not be available.");
+			return null;
 		}
 
-		return null;
+		return dosBoxPath;
 	}
 
 	public static void CompressWithDosBox(string dosBoxPath, List<(string FilePath, PakArchiveEntry Entry)> filesToCompressWithDOSBox)
@@ -66,6 +75,10 @@ public static class DosBoxZip
 					}
 				}
 			}
+			else
+			{
+				Console.WriteLine("can't read zip archive created by PKZIP, DOSBox compression will not be available.");
+			}
 		}
 		finally
 		{
@@ -77,7 +90,7 @@ public static class DosBoxZip
 	{
 		int offset = 0;
 		var result = new Dictionary<string, (byte[] ComparessedData, int UncompressedSize)>(StringComparer.InvariantCultureIgnoreCase);
-		while ((offset + 0x20) <= data.Length &&
+		while (offset + 0x20 <= data.Length &&
 			   Tools.ReadUnsignedInt(data, offset + 0) == 0x04034b50) //PKZIP file header 
 		{
 			var compressionType = data.ReadUnsignedShort(offset + 0x08);
@@ -87,9 +100,16 @@ public static class DosBoxZip
 			var extraLen = data.ReadUnsignedShort(offset + 0x1c);
 			var fileName = data.ReadString(offset + 0x1e, fileNameLen);
 
+			if (data[offset + 0x04] != 0x0a //PKZIP 1.x
+				|| (compressionType != 0 && compressionType != 6)) //store or implode
+			{
+				Console.WriteLine("Unsupported PKZIP version, DOSBox compression will not be available.");
+				return [];
+			}
+
 			offset += 0x1e + fileNameLen + extraLen;
 			if ((offset + compressedSize) <= data.Length
-				&& compressionType == 6)  //implode
+				&& compressionType == 6) //implode (might be stored as well)
 			{
 				result[fileName] = ([.. data.AsSpan(offset, compressedSize)], uncompressedSize);
 			}
