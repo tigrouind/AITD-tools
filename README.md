@@ -135,8 +135,7 @@ You can also drop files (or folders) to be extracted into PAKExtract executable.
 ```
 PAKExtract [<files|folders>]
            [info [<files|folders>]]
-           [background]
-		   [mask {AITD1|AITD1_FLOPPY|AITD1_DEMO|AITD2|AITD2_DEMO|AITD3|JACK|TIMEGATE|TIMEGATE_DEMO}]
+           [background [-version {AITD1|AITD1_FLOPPY|AITD1_DEMO|AITD2|AITD2_DEMO|AITD3|JACK|TIMEGATE|TIMEGATE_DEMO}]]
            [svg [-rotate {0|90|180|270}] [-zoom] [-room <rooms>] [-trigger] [-camera]]
            [archive [-timegate] [<folders>]]		   
 ```
@@ -154,22 +153,22 @@ You can also drag and drop files or folder into executables as mentionned earlie
 PAKExtract info LISTBODY.PAK
 ```
 
-### Converting backgrounds or textures to PNG files
-Extract necessary PAK files (`CAMERAxx.PAK`, `ITD_RESS.PAK`, `TEXTURES.PAK`) into their respective folders, then run PAKExtract again : 
+### Converting backgrounds, masks or textures to PNG files
+Copy the necessary PAK files (`CAMERAxx.PAK`, `ITD_RESS.PAK`, `TEXTURES.PAK`) into GAMEDATA folder, then run PAKExtract again : 
 ```
 PAKExtract background
 ```
 Files will be exported to `BACKGROUND` folder.
 
 ### Rendering backgrounds masks as PNG files
-Extract backgrounds, then necessary PAK files (`ETAGExx.PAK` for AITD, `MASKxx.PAK`, `NASKxx.PAK` for JACK/AITD2/AITD3, `MKxxxxxx.PAK`, `NKxxxxxx.PAK` for TIMEGATE) into their respective folders, then run PAKExtract again : 
+Copy the necessary PAK files (`ETAGExx.PAK` for AITD, `MASKxx.PAK`, `NASKxx.PAK` for JACK/AITD2/AITD3, `MKxxxxxx.PAK`, `NKxxxxxx.PAK` for TIMEGATE) into GAMEDATA folder, then run PAKExtract again : 
 ```
-PAKExtract mask AITD1
+PAKExtract background -version AITD1
 ```
-Files will be exported to `BACKGROUND_MASK` folder.
+Files will be exported to `BACKGROUND` folder.
 
 ### Rendering floors as SVG files
-Extract necessary PAK files (`ETAGExx.PAK`) into their respective folders, then run PAKExtract again : 
+Copy necessary PAK files (`ETAGExx.PAK`) into GAMEDATA folder, then run PAKExtract again : 
 ```
 PAKExtract svg -rotate 90 -room 1 4 5 
 ```

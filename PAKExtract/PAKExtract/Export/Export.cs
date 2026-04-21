@@ -68,13 +68,14 @@ namespace PAKExtract
 		public static void ExportMasks(GameVersion version)
 		{
 			var mask = new bool[64000];
-			foreach (var directory in Directory.GetDirectories("."))
+
+			switch (version)
 			{
-				switch (version)
-				{
-					case GameVersion.AITD1:
-					case GameVersion.AITD1_FLOPPY:
-					case GameVersion.AITD1_DEMO:
+				case GameVersion.AITD1:
+				case GameVersion.AITD1_FLOPPY:
+				case GameVersion.AITD1_DEMO:
+					foreach (var directory in Directory.GetDirectories("."))
+					{
 						if (Path.GetFileName(directory).StartsWith("ETAGE", StringComparison.InvariantCultureIgnoreCase))
 						{
 							var reg = Regex.Match(Path.GetFileName(directory), @"ETAGE(\d{2})");
@@ -89,12 +90,15 @@ namespace PAKExtract
 								}
 							}
 						}
-						break;
+					}
+					break;
 
-					case GameVersion.JACK:
-					case GameVersion.AITD2:
-					case GameVersion.AITD2_DEMO:
-					case GameVersion.AITD3:
+				case GameVersion.JACK:
+				case GameVersion.AITD2:
+				case GameVersion.AITD2_DEMO:
+				case GameVersion.AITD3:
+					foreach (var directory in Directory.GetDirectories("."))
+					{
 						if (Path.GetFileName(directory).StartsWith("MASK") || Path.GetFileName(directory).StartsWith("NASK"))
 						{
 							var reg = Regex.Match(Path.GetFileName(directory), @"(MASK|NASK)(\d{2})");
@@ -110,10 +114,13 @@ namespace PAKExtract
 								SaveImage(index, cameraID, destPath);
 							}
 						}
-						break;
+					}
+					break;
 
-					case GameVersion.TIMEGATE:
-					case GameVersion.TIMEGATE_DEMO:
+				case GameVersion.TIMEGATE:
+				case GameVersion.TIMEGATE_DEMO:
+					foreach (var directory in Directory.GetDirectories("."))
+					{
 						if (Path.GetFileName(directory).StartsWith("MK") || Path.GetFileName(directory).StartsWith("NK"))
 						{
 							var reg = Regex.Match(Path.GetFileName(directory), @"(MK|NK)(\d{2})(\d{2})");
@@ -125,19 +132,19 @@ namespace PAKExtract
 							var destPath = Path.Combine($"{directoryName}{index:D2}", $"{cameraID:D8}.png");
 							SaveImage(index, cameraID, destPath);
 						}
-						break;
-				}
+					}
+					break;
+			}
 
-				void SaveImage(int cameraFolderId, int cameraId, string destPath)
+			void SaveImage(int cameraFolderId, int cameraId, string destPath)
+			{
+				string backgroundFile = Path.Combine($"BACKGROUND", $"CAMERA{cameraFolderId:D2}", $"{cameraId:D8}.png");
+				if (File.Exists(backgroundFile))
 				{
-					string backgroundFile = Path.Combine($"BACKGROUND", $"CAMERA{cameraFolderId:D2}", $"{cameraId:D8}.png");
-					if (File.Exists(backgroundFile))
+					var image = Image.Load(backgroundFile) as Image<Rgba32>;
+					if (image != null && MaskAITD1.RenderMask(mask, image))
 					{
-						var image = Image.Load(backgroundFile) as Image<Rgba32>;
-						if (image != null && MaskAITD1.RenderMask(mask, image))
-						{
-							Program.WriteFile(Path.Combine($"BACKGROUND_MASK", destPath), Background.SaveBitmap(image));
-						}
+						Program.WriteFile(Path.Combine($"BACKGROUND", destPath), Background.SaveBitmap(image));
 					}
 				}
 			}

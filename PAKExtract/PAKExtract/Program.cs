@@ -16,8 +16,19 @@ namespace PAKExtract
 			var files = new Argument<string[]>("files") { Arity = ArgumentArity.ZeroOrMore };
 
 			//background
-			var background = new Command("background");
-			background.SetAction(result => Export.ExportBackground());
+			var maskVersion = new Option<GameVersion?>("-version");
+			var background = new Command("background") { maskVersion };
+
+			background.SetAction(result =>
+			{
+				Unpack([], false);
+				Export.ExportBackground();
+				var version = result.GetValue(maskVersion);
+				if (version.HasValue)
+				{
+					Export.ExportMasks(version.Value);
+				}
+			});
 
 			//svg
 			var svgRoom = new Option<int[]>("-room") { AllowMultipleArgumentsPerToken = true };
@@ -37,6 +48,7 @@ namespace PAKExtract
 			var svg = new Command("svg") { svgRoom, svgRotate, svgZoom, svgTrigger, svgCamera, svgCaption };
 			svg.SetAction(result =>
 			{
+				Unpack([], false);
 				Export.ExportSvg(
 					result.GetValue(svgRoom),
 					result.GetValue(svgRotate),
@@ -55,13 +67,8 @@ namespace PAKExtract
 			var info = new Command("info") { files };
 			info.SetAction(result => Unpack(result.GetValue(files), true));
 
-			//mask
-			var maskVersion = new Argument<GameVersion>("version");
-			var mask = new Command("mask") { maskVersion };
-			mask.SetAction(result => Export.ExportMasks(result.GetValue(maskVersion)));
-
 			//root
-			var rootCommand = new RootCommand() { info, svg, archive, background, files, mask };
+			var rootCommand = new RootCommand() { info, svg, archive, background, files };
 			rootCommand.SetAction(result => Unpack(result.GetValue(files), false));
 
 			var parseResult = rootCommand.Parse(args);
