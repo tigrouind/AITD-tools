@@ -9,15 +9,16 @@ namespace PAKExtract
 	{
 		public static void Export(ref bool paletteNotFoundMessage)
 		{
+			if (!Directory.Exists("ITD_RESS") && !paletteNotFoundMessage)
+			{
+				paletteNotFoundMessage = true;
+				Console.Error.WriteLine("Cannot find folder ITD_RESS. Please extract it first.");
+				return;
+			}
+
 			var pal = Palette.LoadITDPalette();
 			foreach (var filePath in Directory.EnumerateFiles("TEXTURES", @"*.*", SearchOption.TopDirectoryOnly))
 			{
-				if (!Directory.Exists("ITD_RESS") && !paletteNotFoundMessage)
-				{
-					paletteNotFoundMessage = true;
-					Console.Error.WriteLine("Cannot find folder ITD_RESS. Please extract it first.");
-				}
-
 				var data = File.ReadAllBytes(filePath);
 				if (data.Length == 256) //single row image, skip it
 				{
