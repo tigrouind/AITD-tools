@@ -2,6 +2,7 @@ using Shared;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 
@@ -68,6 +69,7 @@ namespace PAKExtract
 		public static void ExportMasks(GameVersion version)
 		{
 			var mask = new bool[64000];
+			var backgroundErrorMessage = new HashSet<int>();
 
 			switch (version)
 			{
@@ -138,14 +140,18 @@ namespace PAKExtract
 
 			void SaveImage(int cameraFolderId, int cameraId, string destPath)
 			{
-				string backgroundFile = Path.Combine($"BACKGROUND", $"CAMERA{cameraFolderId:D2}", $"{cameraId:D8}.png");
+				string backgroundFile = Path.Combine("BACKGROUND", $"CAMERA{cameraFolderId:D2}", $"{cameraId:D8}.png");
 				if (File.Exists(backgroundFile))
 				{
 					var image = Image.Load(backgroundFile) as Image<Rgba32>;
 					if (image != null && MaskAITD1.RenderMask(mask, image))
 					{
-						Program.WriteFile(Path.Combine($"BACKGROUND", destPath), Background.SaveBitmap(image));
+						Program.WriteFile(Path.Combine("BACKGROUND", destPath), Background.SaveBitmap(image));
 					}
+				}
+				else if (backgroundErrorMessage.Add(cameraFolderId))
+				{
+					Console.Error.WriteLine($"Cannot find BACKGROUND for CAMERA{cameraFolderId:D2}. Please extract it first.");
 				}
 			}
 		}
