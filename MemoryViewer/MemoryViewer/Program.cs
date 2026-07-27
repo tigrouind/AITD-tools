@@ -1,10 +1,10 @@
+using SDL3;
+using Shared;
 using System;
 using System.CommandLine;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
-using SDL3;
-using Shared;
 
 namespace MemoryViewer
 {
@@ -377,7 +377,7 @@ namespace MemoryViewer
 			needPaletteUpdate = false;
 
 			int src = 0;
-			for (int i = 0 ; i < 256 ; i++)
+			for (int i = 0; i < 256; i++)
 			{
 				var r = palette256[src++];
 				var g = palette256[src++];
@@ -401,7 +401,7 @@ namespace MemoryViewer
 			//compare current vs old and only update pixels that have changed
 			int start = 0;
 			Debug.Assert(pixelData.Length % Vector<byte>.Count == 0);
-			for (int k = 0 ; k < SCREENS ; k++)
+			for (int k = 0; k < SCREENS; k++)
 			{
 				//bool refresh = false;
 				for (int i = 0; i < RESX * RESY; i += Vector<byte>.Count)
@@ -454,20 +454,20 @@ namespace MemoryViewer
 				foreach (var block in DosMCB.GetMCBs(pixelData))
 				{
 					uint color;
-					if (block.Owner == 0) color = 0x90008000; //free
-					else if (block.Owner != psp) color = 0x90808000;
-					else if (block.Position == psp) color = 0x90800000; //current executable
-					else color = inverse ? 0x900080F0 : 0x902000A0; //used
+					if (block.Owner == 0) color = 0x90008000; //free (green)
+					else if (block.Owner != psp) color = 0x90808000; // not current executable (yellow)
+					else if (block.Position == psp) color = 0x90800000; //current executable (red)
+					else color = inverse ? 0x900080F0 : 0x902000A0; //used (blue/light blue)
 
 					int dest = block.Position - 16;
 					int length = Math.Min(16, mcbPixels.Length - dest);
-					for (int i = 0 ; i < length ; i++)
+					for (int i = 0; i < length; i++)
 					{
-						mcbPixels[dest++] = 0x90FF00FF;
+						mcbPixels[dest++] = 0x90FF00FF; //mcb block chain data (pink)
 					}
 
 					length = Math.Min(block.Size, mcbPixels.Length - dest);
-					for (int i = 0 ; i < length ; i++)
+					for (int i = 0; i < length; i++)
 					{
 						mcbPixels[dest++] = color;
 					}
@@ -519,7 +519,7 @@ namespace MemoryViewer
 
 		static unsafe void RenderPalette(IntPtr renderer, IntPtr texture)
 		{
-			var textureRect = new SDL.Rect{ X = 0, Y = 0, W = 16, H = 16 };
+			var textureRect = new SDL.Rect { X = 0, Y = 0, W = 16, H = 16 };
 			var textureRectF = new SDL.FRect { X = 0, Y = 0, W = 16, H = 16 };
 			var drawRect = new SDL.FRect { X = 0, Y = 0, W = RESX * zoom, H = RESX * zoom };
 
