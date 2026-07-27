@@ -106,7 +106,7 @@ namespace MemoryViewer
 
 						case SDL.EventType.MouseMotion:
 						case SDL.EventType.MouseButtonDown:
-							if (sdlEvent.Motion.State == SDL.MouseButtonFlags.Left)
+							if ((sdlEvent.Motion.State & SDL.MouseButtonFlags.Left) != 0)
 							{
 								int px = (int)sdlEvent.Motion.X / zoom;
 								int py = (int)sdlEvent.Motion.Y / zoom;
