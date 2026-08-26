@@ -133,6 +133,7 @@ namespace VarsViewer
 									column.Width = Math.Max(text.Length, column.Width);
 									column.Timer = timeStamp;
 									column.Visible = true;
+
 									if (!group.Hidden)
 									{
 										group.Visible = true;
@@ -454,9 +455,8 @@ namespace VarsViewer
 					result.column.Hidden = true;
 					result.column.Visible = false;
 
-					if (result.group.Columns.All(c => c.Hidden))
+					if (result.group.Columns.All(c => c.Hidden || !c.Visible))
 					{
-						result.group.Hidden = true;
 						result.group.Visible = false;
 					}
 				}
