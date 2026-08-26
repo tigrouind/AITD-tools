@@ -9,7 +9,7 @@ namespace VarsViewer
 		public ColumnType Type;
 		public int Offset; //memory offset
 		public Column[] Columns;
-		public IDictionary<int, string> Values; //to map values to a string, for display
+		public Dictionary<int, string> Values; //to map values to a string, for display
 		public bool IncludeZero; //should be shown if value is zero
 		public int Condition; //the value at that memory offset should be non zero for column to be visible
 
