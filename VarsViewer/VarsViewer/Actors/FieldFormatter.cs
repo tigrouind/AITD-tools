@@ -186,7 +186,7 @@ namespace VarsViewer
 						string name = Tools.SubString(Program.VarParser.GetText(varType, value), 6).Trim().Replace(" ", "_");
 						if (!string.IsNullOrEmpty(name))
 						{
-							return $"{value}:{name}";
+							return $"{value}:{name,-6}";
 						}
 					}
 
