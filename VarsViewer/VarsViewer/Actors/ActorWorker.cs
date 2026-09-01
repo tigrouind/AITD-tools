@@ -131,6 +131,7 @@ namespace VarsViewer
 								if (text != null && !column.Hidden)
 								{
 									column.Width = Math.Max(text.Length, column.Width);
+									column.TextWidth = Math.Max(text.Length, column.TextWidth);
 									column.Timer = timeStamp;
 									column.Visible = true;
 
@@ -159,6 +160,7 @@ namespace VarsViewer
 						{
 							column.Visible = false;
 							column.Width = 0;
+							column.TextWidth = 0;
 							group.Visible = group.Columns.Any(x => x.Visible);
 						}
 					}
@@ -219,7 +221,7 @@ namespace VarsViewer
 				//header (groups)
 				foreach (var group in config.Where(x => x.Visible))
 				{
-					Console.Write(Tools.PadBoth(Tools.SubString(group.Name ?? "", group.Width, true), group.Width));
+					Console.Write(Tools.PadCenter(Tools.SubString(group.Name ?? "", group.Width, true), group.Width));
 					Console.CursorLeft++;
 				}
 
@@ -230,7 +232,7 @@ namespace VarsViewer
 				foreach (var group in config.Where(x => x.Visible))
 				{
 					bool first = true;
-					foreach (var col in group.Columns.Where(x => x.Visible))
+					foreach (var column in group.Columns.Where(x => x.Visible))
 					{
 						if (!first)
 						{
@@ -238,7 +240,7 @@ namespace VarsViewer
 						}
 
 						first = false;
-						Console.Write(Tools.PadBoth(Tools.SubString(col.Name ?? "", col.Width + col.ExtraWidth, true), col.Width + col.ExtraWidth));
+						Console.Write(Tools.PadCenter(Tools.SubString(column.Name ?? "", column.Width + column.ExtraWidth, true), column.Width + column.ExtraWidth));
 					}
 
 					Console.CursorLeft++;
@@ -276,7 +278,7 @@ namespace VarsViewer
 									Console.ForegroundColor = Foreground;
 								}
 
-								Console.Write(Tools.PadBoth(cell.Text ?? "", column.Width + column.ExtraWidth));
+								Console.Write(Tools.PadCenter((cell.Text ?? "").PadLeft(column.TextWidth), column.Width + column.ExtraWidth));
 							}
 
 							col++;
@@ -483,6 +485,7 @@ namespace VarsViewer
 				foreach (var col in group.Columns)
 				{
 					col.Width = 0;
+					col.TextWidth = 0;
 					col.Visible = false;
 				}
 			}

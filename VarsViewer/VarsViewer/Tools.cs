@@ -26,7 +26,7 @@ namespace VarsViewer
 			return text;
 		}
 
-		public static string PadBoth(string text, int length)
+		public static string PadCenter(string text, int length)
 		{
 			int spaces = length - text.Length;
 			int padLeft = spaces / 2 + text.Length;

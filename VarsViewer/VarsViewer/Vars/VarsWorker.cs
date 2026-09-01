@@ -56,7 +56,7 @@ namespace VarsViewer
 					for (int i = 0; i < 20; i++)
 					{
 						Console.SetCursorPosition((i + 1) * cellSize, posY);
-						Console.Write(Tools.PadBoth(i.ToString(), cellSize));
+						Console.Write(Tools.PadCenter(i.ToString(), cellSize));
 					}
 
 					for (int i = 0; i < rows; i++)
@@ -86,7 +86,7 @@ namespace VarsViewer
 							}
 							else
 							{
-								text = Tools.PadBoth(text, cellSize);
+								text = Tools.PadCenter(text, cellSize);
 							}
 
 							Console.Write(Tools.SubString(text, cellSize, true));
@@ -290,7 +290,7 @@ namespace VarsViewer
 								if (offset < 0 && highlightedCell.Type == VarEnum.CVARS)
 								{
 									int x = (offset + 20) % 20;
-									int y = (vars.Count - 1 - x ) / 20;
+									int y = (vars.Count - 1 - x) / 20;
 									offset = x + y * 20;
 									cells = vars;
 								}
