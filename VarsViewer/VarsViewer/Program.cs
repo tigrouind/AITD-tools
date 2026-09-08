@@ -1,10 +1,9 @@
+using Shared;
 using System;
 using System.CommandLine;
 using System.Diagnostics;
 using System.IO;
-using System.Text;
 using System.Threading;
-using Shared;
 
 namespace VarsViewer
 {
@@ -143,6 +142,7 @@ namespace VarsViewer
 				Console.MouseDown += (sender, position) =>
 				{
 					worker.MouseDown(position.x, position.y);
+					worker.MouseMove(position.x, position.y);
 				};
 
 				Console.MouseMove += (sender, position) =>
@@ -161,7 +161,6 @@ namespace VarsViewer
 				};
 			}
 		}
-
 
 		static void CloseReader()
 		{

@@ -12,6 +12,7 @@ namespace VarsViewer
 		readonly Func<int> getActorAddress;
 		readonly (int Rows, int Columns) cellConfig;
 		readonly Column[] config;
+		Column highlightedGroup, highlightedColumn;
 
 		static (int ActorAddress, int ObjectAddress) GameConfig => gameConfigs[Program.GameVersion];
 		static readonly Dictionary<GameVersion, (int, int)> gameConfigs = new()
@@ -216,11 +217,19 @@ namespace VarsViewer
 			void OutputToConsole()
 			{
 				Console.SetCursorPosition(0, 0);
-				(Console.BackgroundColor, Console.ForegroundColor) = (Program.Freeze ? ConsoleColor.Blue : ConsoleColor.DarkGray, ConsoleColor.Black);
+				void SetColor(bool selected = false)
+				{
+					(Console.BackgroundColor, Console.ForegroundColor) = (Program.Freeze ? ConsoleColor.Blue : ConsoleColor.DarkGray, ConsoleColor.Black);
+					if (selected)
+					{
+						Console.BackgroundColor = ConsoleColor.Red;
+					}
+				}
 
 				//header (groups)
 				foreach (var group in config.Where(x => x.Visible))
 				{
+					SetColor(group == highlightedGroup && highlightedColumn == null);
 					Console.Write(Tools.PadCenter(Tools.SubString(group.Name ?? "", group.Width, true), group.Width));
 					Console.CursorLeft++;
 				}
@@ -236,10 +245,12 @@ namespace VarsViewer
 					{
 						if (!first)
 						{
+							SetColor(group == highlightedGroup && highlightedColumn == null);
 							Console.Write("|");
 						}
 
 						first = false;
+						SetColor(column == highlightedColumn || (group == highlightedGroup && highlightedColumn == null));
 						Console.Write(Tools.PadCenter(Tools.SubString(column.Name ?? "", column.Width + column.ExtraWidth, true), column.Width + column.ExtraWidth));
 					}
 
@@ -438,13 +449,19 @@ namespace VarsViewer
 		{
 			int totalWidth = config.Where(c => c.Visible).Sum(c => c.Width + 1) - 1;
 
-			if (!fullMode && x < totalWidth && y < (RowCount - scroll + 2) && TryFindColumn(x, 1, out (Column group, Column column) result))
+			tooltip = null;
+			highlightedGroup = null;
+			highlightedColumn = null;
+
+			if (TryFindColumn(x, 1, out (Column group, Column column) result) && !fullMode && x < totalWidth && y < (RowCount - scroll + 2))
 			{
 				tooltip = string.Join(".", (new string[] { result.group.Name, result.column.Name }).Where(c => c != null));
 			}
-			else
+
+			if (TryFindColumn(x, y, out result))
 			{
-				tooltip = null;
+				highlightedGroup = result.group;
+				highlightedColumn = result.column;
 			}
 		}
 
@@ -514,13 +531,13 @@ namespace VarsViewer
 					{
 						foreach (var column in group.Columns.Where(c => c.Visible))
 						{
-							if (x >= width && x < (width + column.Width))
+							if (x >= width && x < (width + column.Width + column.ExtraWidth))
 							{
 								result = (group, column);
 								return true;
 							}
 
-							width += column.Width + 1;
+							width += column.Width + column.ExtraWidth + 1;
 						}
 					}
 					break;
