@@ -107,7 +107,7 @@ namespace VarsViewer
 
 				void SetHeaderColor()
 				{
-					(Console.BackgroundColor, Console.ForegroundColor) = (Program.Freeze ? ConsoleColor.Blue : ConsoleColor.DarkGray, ConsoleColor.Black);
+					(Console.BackgroundColor, Console.ForegroundColor) = (Program.Freeze ? ConsoleColor.Blue : ConsoleColor.Gray, ConsoleColor.Black);
 				}
 
 				void SetCellColor(Var var)

@@ -219,7 +219,7 @@ namespace VarsViewer
 				Console.SetCursorPosition(0, 0);
 				void SetColor(bool selected = false)
 				{
-					(Console.BackgroundColor, Console.ForegroundColor) = (Program.Freeze ? ConsoleColor.Blue : ConsoleColor.DarkGray, ConsoleColor.Black);
+					(Console.BackgroundColor, Console.ForegroundColor) = (Program.Freeze ? ConsoleColor.Blue : ConsoleColor.Gray, ConsoleColor.Black);
 					if (selected)
 					{
 						Console.BackgroundColor = ConsoleColor.Red;
