@@ -19,5 +19,6 @@ namespace VarsViewer
 		public bool Visible; //at least one value exists
 		public long Timer;
 		public bool Hidden; //explicitly hidden by user
+		public int Index;
 	}
 }

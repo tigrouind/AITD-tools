@@ -7,8 +7,9 @@ namespace VarsViewer
 	{
 		protected override string FormatText(string text)
 		{
-			var result = Regex.Replace(text, @"^(E\d+|R\d+|-|player)+\s+", string.Empty, RegexOptions.IgnoreCase);
-			return result.ToLowerInvariant();
+			text = Regex.Replace(text, @"^(E\d+|R\d+|-|player)+\s+", string.Empty, RegexOptions.IgnoreCase);
+			text = Regex.Replace(text, @"(""|\(|\))", string.Empty);
+			return text.ToLowerInvariant();
 		}
 	}
 }

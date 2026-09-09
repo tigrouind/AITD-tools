@@ -22,7 +22,7 @@ namespace VarsViewer
 			};
 		}
 
-		public static string Format(byte[] memory, Column column, int i, bool fullMode)
+		public static string Format(byte[] memory, Column column, int i, bool fullMode, int maxLength)
 		{
 			if (column.Type == ColumnType.SLOT)
 			{
@@ -77,7 +77,7 @@ namespace VarsViewer
 					{
 						if (fullMode && Program.Language.TryGetValue(value, out string name))
 						{
-							return $"{value}:{Tools.SubString(name, 6).TrimEnd('_')}";
+							return $"{value}:{Tools.SubString(name, maxLength).TrimEnd('_').PadRight(maxLength)}";
 						}
 
 						return value.ToString();
@@ -183,10 +183,10 @@ namespace VarsViewer
 				{
 					if (fullMode)
 					{
-						string name = Tools.SubString(Program.VarParser.GetText(varType, value), 6).Trim().Replace(" ", "_");
+						string name = Tools.SubString(Program.VarParser.GetText(varType, value), maxLength).Trim().Replace(" ", "_");
 						if (!string.IsNullOrEmpty(name))
 						{
-							return $"{value}:{name,-6}";
+							return $"{value}:{name.PadRight(maxLength)}";
 						}
 					}
 

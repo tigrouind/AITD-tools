@@ -24,6 +24,7 @@ namespace VarsViewer
 
 		readonly Buffer<(ConsoleColor Background, ConsoleColor Foreground)> rowColor = new();
 		readonly Buffer<(string Text, ConsoleColor Color)> cells = new();
+		readonly Buffer<string> fullText = new();
 
 		readonly Actor[] actors;
 		int scroll;
@@ -126,8 +127,12 @@ namespace VarsViewer
 							{
 								rowColor[rowCount] = color;
 
-								var text = FieldFormatter.Format(actor.Values, column, i, fullMode);
+								var text = FieldFormatter.Format(actor.Values, column, i, fullMode, 6);
 								cells[rowCount, col] = (text, FieldFormatter.GetSize(column) != 0 && actor.Updated[column.Offset / 2] ? ConsoleColor.DarkYellow : ConsoleColor.Black);
+
+								var full = FieldFormatter.Format(actor.Values, column, i, true, 64)?.TrimEnd();
+								fullText[rowCount, col] = full != null && full != text?.TrimEnd() ? full : null;
+								column.Index = col;
 
 								if (text != null && !column.Hidden)
 								{
@@ -303,8 +308,13 @@ namespace VarsViewer
 				{
 					Console.CursorLeft = 0;
 					Console.CursorTop = Math.Min(Math.Min(height, rowCount - scroll) + 2, Console.WindowHeight - 1);
-					(Console.BackgroundColor, Console.ForegroundColor) = (ConsoleColor.DarkGreen, ConsoleColor.Black);
-					Console.Write(tooltip);
+
+					foreach (var line in tooltip.Split('\n'))
+					{
+						(Console.BackgroundColor, Console.ForegroundColor) = (ConsoleColor.DarkGreen, ConsoleColor.Black);
+						Console.Write(line);
+						Console.CursorLeft++;
+					}
 				}
 			}
 		}
@@ -469,9 +479,29 @@ namespace VarsViewer
 			highlightedGroup = null;
 			highlightedColumn = null;
 
-			if (TryFindColumn(x, 1, out (Column group, Column column) result) && !fullMode && x < totalWidth && y < (RowCount - scroll + 2))
+			if (TryFindColumn(x, 1, out (Column group, Column column) result) && x < totalWidth && y < (RowCount - scroll + 2))
 			{
-				tooltip = string.Join(".", (new string[] { result.group.Name, result.column.Name }).Where(c => c != null));
+				tooltip = null;
+				if (!fullMode)
+				{
+					tooltip = string.Join(".", (new string[] { result.group.Name, result.column.Name }).Where(c => c != null));
+				}
+
+				if (result.column != null && y >= 2)
+				{
+					var full = fullText[y + scroll - 2, result.column.Index];
+					if (full != null)
+					{
+						if (tooltip != null)
+						{
+							tooltip = $"{tooltip}\n{full}";
+						}
+						else
+						{
+							tooltip = full;
+						}
+					}
+				}
 			}
 
 			if (TryFindColumn(x, y, out result))
