@@ -71,7 +71,7 @@
 				]
 			},
 			new() { Name = "Weight", Offset = 50 },
-			new() { Name = "Slot" }
+			new() { Name = "Slot", IncludeZero = true }
 		];
 	}
 }
