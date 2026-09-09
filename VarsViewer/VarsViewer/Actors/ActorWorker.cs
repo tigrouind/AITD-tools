@@ -421,6 +421,22 @@ namespace VarsViewer
 					Scroll(-PageHeight);
 					break;
 
+				case ConsoleKey.Home:
+					Scroll(short.MinValue);
+					break;
+
+				case ConsoleKey.End:
+					Scroll(short.MaxValue);
+					break;
+
+				case ConsoleKey.UpArrow:
+					Scroll(-1);
+					break;
+
+				case ConsoleKey.DownArrow:
+					Scroll(1);
+					break;
+
 				case ConsoleKey.Spacebar:
 					ClearTab();
 					scroll = 0;
