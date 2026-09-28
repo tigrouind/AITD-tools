@@ -21,9 +21,9 @@
 			{
 				Name = "Angle",
 				Columns = [
-					new() { Name = "X", Offset = 22 },
-					new() { Name = "Y", Offset = 24 },
-					new() { Name = "Z", Offset = 26 }
+					new() { Name = "X", Type = ColumnType.ANGLE, Offset = 22 },
+					new() { Name = "Y", Type = ColumnType.ANGLE, Offset = 24 },
+					new() { Name = "Z", Type = ColumnType.ANGLE, Offset = 26 }
 				]
 			},
 			new()

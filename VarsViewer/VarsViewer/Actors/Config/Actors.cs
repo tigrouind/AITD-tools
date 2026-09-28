@@ -121,7 +121,7 @@
 			{
 				Name = "Angle",
 				Columns = [
-					new() { Name = "Offset", Type = ColumnType.ZVSIZE, Offset = 106, IncludeZero = true, Condition = 110 },
+					new() { Name = "Offset", Type = ColumnType.ANGLE, Offset = 106, IncludeZero = true, Condition = 110 },
 					new() { Name = "Time", Type = ColumnType.TIME2, Offset = 112, Condition = 110 },
 					new() { Name = "Param", Offset = 110 }
 				]
