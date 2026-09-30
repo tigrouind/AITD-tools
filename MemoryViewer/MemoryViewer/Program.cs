@@ -85,7 +85,7 @@ namespace MemoryViewer
 
 			IntPtr paletteTexture = SDL.CreateTexture(renderer, SDL.PixelFormat.ARGB8888, SDL.TextureAccess.Streaming, 16, 16);
 			SDL.SetTextureScaleMode(paletteTexture, SDL.ScaleMode.Nearest);
-			UpdateTitle();
+			ResetTitle();
 			//SetRefreshState(true);
 
 			bool quit = false, mcb = false, minimized = false, showPalette = false;
@@ -104,41 +104,21 @@ namespace MemoryViewer
 							quit = true;
 							break;
 
-						case SDL.EventType.MouseMotion:
 						case SDL.EventType.MouseButtonDown:
+							if (sdlEvent.Button.Button == SDL.ButtonLeft)
+							{
+								UpdateMouse((int)sdlEvent.Button.X, (int)sdlEvent.Button.Y);
+							}
+							if (sdlEvent.Button.Button == SDL.ButtonRight)
+							{
+								ResetTitle();
+							}
+							break;
+
+						case SDL.EventType.MouseMotion:
 							if ((sdlEvent.Motion.State & SDL.MouseButtonFlags.Left) != 0)
 							{
-								int px = (int)sdlEvent.Motion.X / zoom;
-								int py = (int)sdlEvent.Motion.Y / zoom;
-								int palX = px / 20;
-								int palY = py / 20;
-
-								if (showPalette && palX < 16 && palY < 16)
-								{
-									int index = palX + palY * 16;
-									windowTitle = $"{index} - 0x{palette[index] & 0xFFFFFF:X6}";
-								}
-								else
-								{
-									int page = RESX * (height / zoom);
-									int mousePosition = (px % RESX) + (py * RESX) + (px / RESX * page) + (offset * DOS_CONV);
-
-									int address = mousePosition - offset * DOS_CONV;
-									if (address >= 0 && address < pixelData.Length && address < (DOS_CONV + EMS))
-									{
-										if (address >= DOS_CONV) mousePosition = address - DOS_CONV + EMS_ADDRESS;
-										windowTitle = $"{mousePosition:X} - 0x{pixelData[address]:X2} ({pixelData[address]})";
-									}
-									else
-									{
-										UpdateTitle();
-									}
-								}
-
-							}
-							else if (sdlEvent.Motion.State == SDL.MouseButtonFlags.Right)
-							{
-								UpdateTitle();
+								UpdateMouse((int)sdlEvent.Motion.X, (int)sdlEvent.Motion.Y);
 							}
 							break;
 
@@ -159,12 +139,12 @@ namespace MemoryViewer
 								if (sdlEvent.Wheel.Y > 0)
 								{
 									SetOffset(offset - 1);
-									UpdateTitle();
+									ResetTitle();
 								}
 								else if (sdlEvent.Wheel.Y < 0)
 								{
 									SetOffset(offset + 1);
-									UpdateTitle();
+									ResetTitle();
 								}
 							}
 							break;
@@ -180,17 +160,17 @@ namespace MemoryViewer
 
 								case SDL.Keycode.Pagedown:
 									SetOffset(offset + 1);
-									UpdateTitle();
+									ResetTitle();
 									break;
 
 								case SDL.Keycode.Pageup:
 									SetOffset(offset - 1);
-									UpdateTitle();
+									ResetTitle();
 									break;
 
 								case SDL.Keycode.P:
 									showPalette = !showPalette;
-									UpdateTitle();
+									ResetTitle();
 									//SetRefreshState(true);
 									break;
 
@@ -366,7 +346,37 @@ namespace MemoryViewer
 
 			return 0;
 
-			void UpdateTitle()
+			void UpdateMouse(int x, int y)
+			{
+				int px = x / zoom;
+				int py = y / zoom;
+				int palX = px / 20;
+				int palY = py / 20;
+
+				if (showPalette && palX < 16 && palY < 16)
+				{
+					int index = palX + palY * 16;
+					windowTitle = $"{index} - 0x{palette[index] & 0xFFFFFF:X6}";
+				}
+				else
+				{
+					int page = RESX * (height / zoom);
+					int mousePosition = (px % RESX) + (py * RESX) + (px / RESX * page) + (offset * DOS_CONV);
+
+					int address = mousePosition - offset * DOS_CONV;
+					if (address >= 0 && address < pixelData.Length && address < (DOS_CONV + EMS))
+					{
+						if (address >= DOS_CONV) mousePosition = address - DOS_CONV + EMS_ADDRESS;
+						windowTitle = $"{mousePosition:X} - 0x{pixelData[address]:X2} ({pixelData[address]})";
+					}
+					else
+					{
+						ResetTitle();
+					}
+				}
+			}
+
+			void ResetTitle()
 			{
 				windowTitle = $"{offset * DOS_CONV:X}:{(offset + 1) * DOS_CONV:X}";
 			}
