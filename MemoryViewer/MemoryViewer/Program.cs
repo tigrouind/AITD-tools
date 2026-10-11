@@ -3,6 +3,7 @@ using Shared;
 using System;
 using System.CommandLine;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 
@@ -196,6 +197,11 @@ namespace MemoryViewer
 									{
 										SetZoom(2);
 									}
+									break;
+
+								case SDL.Keycode.F12: //save palette
+									var programName = DosMCB.GetMCBs(pixelData).Select(x => x.Name).First(x => !string.IsNullOrEmpty(x));
+									File.WriteAllBytes(Path.ChangeExtension(programName.ToLowerInvariant(), ".pal"), palette256);
 									break;
 							}
 							break;
