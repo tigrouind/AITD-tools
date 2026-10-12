@@ -24,6 +24,7 @@ namespace MemoryViewer
 		static readonly bool[] needPaletteUpdate256 = new bool[256];
 		static int offset;
 		static bool palette8bit;
+		static bool paletteRGBA;
 
 		static byte[] pixelData = new byte[RESX * RESY * SCREENS];
 		static byte[] oldPixelData = new byte[RESX * RESY * SCREENS];
@@ -31,7 +32,7 @@ namespace MemoryViewer
 		static readonly uint[] mcbPixels = new uint[RESX * RESY * SCREENS];
 
 		static readonly uint[] palette = new uint[256];
-		static readonly byte[] palette256 = new byte[768];
+		static readonly byte[] palette256 = new byte[1024];
 
 		static int width, height, zoom;
 		const string windowText = "AITD memory viewer";
@@ -201,7 +202,16 @@ namespace MemoryViewer
 
 								case SDL.Keycode.F12: //save palette
 									var programName = DosMCB.GetMCBs(pixelData).Select(x => x.Name).First(x => !string.IsNullOrEmpty(x));
-									File.WriteAllBytes(Path.ChangeExtension(programName.ToLowerInvariant(), ".pal"), palette256);
+									var outputPath = Path.ChangeExtension(programName.ToLowerInvariant(), ".pal");
+									using (var writer = new BinaryWriter(new FileStream(outputPath, FileMode.Create, FileAccess.Write)))
+									{
+										foreach (var color in palette)
+										{
+											writer.Write((byte)(((color >> 16) & 0xFF) / 4));
+											writer.Write((byte)(((color >> 8) & 0xFF) / 4));
+											writer.Write((byte)((color & 0xFF) / 4));
+										}
+									}
 									break;
 							}
 							break;
@@ -243,27 +253,45 @@ namespace MemoryViewer
 						if ((time - lastCheckPalette) > 1000 || lastCheckPalette == 0)
 						{
 							lastCheckPalette = time;
-							palette8bit = false;
 
-							//3 bytes + EGA 16 colors palette (see DOSBox VGA_Dac in vga.h)
-							var pattern = new byte[] { 0x01, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
-							paletteAddress = process.SearchForBytePattern(buffer => Tools.IndexOf(buffer, pattern, 1, 4));
+							//renderer width, start, height, bpp (see DOSBox Render_t pal[] in render.h)
+							var patternRenderer = new byte[] { 0x40, 0x01, 0x00, 0x00, 0x50, 0x00, 0x00, 0x00, 0xC8, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00 };
+
+							paletteAddress = process.SearchForBytePattern(buffer => Tools.IndexOf(buffer, patternRenderer, 1, 1));
 							if (paletteAddress != -1)
 							{
-								paletteAddress += pattern.Length;
-							}
-							else if (DosBox.TrySearchEntryPoint(process, pixelData, out var entryPoint, out var gameVersion, 640 * 1024) && gameVersion == GameVersion.AITD1)
-							{
-								paletteAddress = entryPoint + 0x21D64;
+								paletteAddress += patternRenderer.Length + 0x78;
+								paletteRGBA = true;
 								palette8bit = true;
 							}
 							else
 							{
-								for (int i = 0; i < 256; i++) //default black & white palette
+								//3 bytes + EGA 16 colors palette (see DOSBox VGA_Dac in vga.h)
+								var patternDAC = new byte[] { 0x01, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
+
+								paletteAddress = process.SearchForBytePattern(buffer => Tools.IndexOf(buffer, patternDAC, 1, 4));
+								if (paletteAddress != -1)
 								{
-									palette256[i * 3 + 0] = (byte)(i / 4);
-									palette256[i * 3 + 1] = (byte)(i / 4);
-									palette256[i * 3 + 2] = (byte)(i / 4);
+									paletteAddress += patternDAC.Length;
+								}
+								else if (DosBox.TrySearchEntryPoint(process, pixelData, out var entryPoint, out var gameVersion, 640 * 1024) && gameVersion == GameVersion.AITD1)
+								{
+									//AITD fallback (not updated as often as it should)
+									paletteAddress = entryPoint + 0x21D64;
+									paletteRGBA = false;
+									palette8bit = true;
+								}
+								else
+								{
+									for (int i = 0; i < 256; i++) //default black & white palette
+									{
+										palette256[i * 3 + 0] = (byte)i;
+										palette256[i * 3 + 1] = (byte)i;
+										palette256[i * 3 + 2] = (byte)i;
+									}
+
+									paletteRGBA = false;
+									palette8bit = true;
 								}
 							}
 						}
@@ -398,6 +426,7 @@ namespace MemoryViewer
 				var r = palette256[src++];
 				var g = palette256[src++];
 				var b = palette256[src++];
+				if (paletteRGBA) src++;
 
 				uint val = palette8bit ? unchecked((uint)((255 << 24) | (r << 16) | (g << 8) | b)) :
 					unchecked((uint)((255 << 24) | ((r << 2) | (r >> 4)) << 16 | ((g << 2) | (g >> 4)) << 8 | (b << 2) | (b >> 4)));
