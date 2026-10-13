@@ -115,28 +115,24 @@ namespace Shared
 
 		public static int IndexOf(byte[] buffer, byte[] pattern, int offset = 0, int stride = 1)
 		{
-			for (int index = offset; index < buffer.Length - pattern.Length + 1; index += stride)
+			if (stride == 1)
 			{
-				if (buffer[index] == pattern[0] && buffer.IsMatch(pattern, index))
+				int index = buffer.AsSpan(offset).IndexOf(pattern);
+				return index == -1 ? -1 : index + offset;
+			}
+
+			var firstByte = pattern[0];
+			var maxIndex = buffer.Length - pattern.Length;
+
+			for (var index = offset; index <= maxIndex; index += stride)
+			{
+				if (buffer[index] == firstByte && buffer.AsSpan(index, pattern.Length).SequenceEqual(pattern))
 				{
 					return index;
 				}
 			}
 
 			return -1;
-		}
-
-		static bool IsMatch(this byte[] buffer, byte[] pattern, int index)
-		{
-			for (int i = 0; i < pattern.Length; i++)
-			{
-				if (buffer[i + index] != pattern[i])
-				{
-					return false;
-				}
-			}
-
-			return true;
 		}
 
 		#endregion
