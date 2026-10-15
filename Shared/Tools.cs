@@ -113,26 +113,9 @@ namespace Shared
 
 		#region Pattern
 
-		public static int IndexOf(byte[] buffer, byte[] pattern, int offset = 0, int stride = 1)
+		public static int IndexOf(byte[] buffer, byte[] pattern)
 		{
-			if (stride == 1)
-			{
-				int index = buffer.AsSpan(offset).IndexOf(pattern);
-				return index == -1 ? -1 : index + offset;
-			}
-
-			var firstByte = pattern[0];
-			var maxIndex = buffer.Length - pattern.Length;
-
-			for (var index = offset; index <= maxIndex; index += stride)
-			{
-				if (buffer[index] == firstByte && buffer.AsSpan(index, pattern.Length).SequenceEqual(pattern))
-				{
-					return index;
-				}
-			}
-
-			return -1;
+			return buffer.AsSpan().IndexOf(pattern);
 		}
 
 		#endregion

@@ -257,7 +257,7 @@ namespace MemoryViewer
 							//renderer width, start, height, bpp (see DOSBox Render_t pal[] in render.h)
 							var patternRenderer = new byte[] { 0x40, 0x01, 0x00, 0x00, 0x50, 0x00, 0x00, 0x00, 0xC8, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00 };
 
-							paletteAddress = process.SearchForBytePattern(buffer => Tools.IndexOf(buffer, patternRenderer, 1, 1));
+							paletteAddress = process.SearchForBytePattern(buffer => Tools.IndexOf(buffer, patternRenderer));
 							if (paletteAddress != -1)
 							{
 								paletteAddress += patternRenderer.Length + 0x78;
@@ -269,7 +269,7 @@ namespace MemoryViewer
 								//3 bytes + EGA 16 colors palette (see DOSBox VGA_Dac in vga.h)
 								var patternDAC = new byte[] { 0x01, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
 
-								paletteAddress = process.SearchForBytePattern(buffer => Tools.IndexOf(buffer, patternDAC, 1, 4));
+								paletteAddress = process.SearchForBytePattern(buffer => Tools.IndexOf(buffer, patternDAC));
 								if (paletteAddress != -1)
 								{
 									paletteAddress += patternDAC.Length;
