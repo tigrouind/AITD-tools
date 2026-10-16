@@ -1,9 +1,8 @@
-using System;
-
 namespace Shared
 {
 	public enum GameVersion
 	{
+		UNKNOWN,
 		AITD1,
 		AITD1_FLOPPY,
 		AITD1_DEMO,

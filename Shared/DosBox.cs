@@ -86,25 +86,28 @@ namespace Shared
 
 		public static bool TrySearchEntryPoint(ProcessMemory process, byte[] memory, out int entryPoint, out GameVersion gameVersion, int length = 640 * 1024)
 		{
+			entryPoint = default;
+			gameVersion = default;
+
 			if (process.Read(memory, 0, length) > 0 &&
 				GetExeEntryPoint(memory, out entryPoint))
 			{
-				//check if CDROM/floppy version
-				byte[] cdPattern = Encoding.ASCII.GetBytes("CD Not Found");
-				gameVersion = Tools.IndexOf(memory, cdPattern) != -1 ? GameVersion.AITD1 : GameVersion.AITD1_FLOPPY;
-				if (gameVersion == GameVersion.AITD1_FLOPPY)
+				if (DosMCB.GetMCBs(memory).Any(x => x.Name == "AITD" || x.Name == "TATOU" || x.Name == "INDARK")) //AITD1
 				{
-					if (Tools.IndexOf(memory, Encoding.ASCII.GetBytes("USA.PAK")) != -1)
+					//check if CDROM/floppy version				
+					gameVersion = Tools.IndexOf(memory, Encoding.ASCII.GetBytes("CD Not Found")) != -1 ? GameVersion.AITD1 : GameVersion.AITD1_FLOPPY;
+					if (gameVersion == GameVersion.AITD1_FLOPPY)
 					{
-						gameVersion = GameVersion.AITD1_DEMO;
+						if (Tools.IndexOf(memory, Encoding.ASCII.GetBytes("USA.PAK")) != -1)
+						{
+							gameVersion = GameVersion.AITD1_DEMO;
+						}
 					}
 				}
 
 				return true;
 			}
 
-			entryPoint = default;
-			gameVersion = default;
 			return false;
 		}
 	}
